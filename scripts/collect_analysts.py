@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import html
+from email.utils import parsedate_to_datetime
 from html.parser import HTMLParser
 import json
 import re
@@ -52,7 +53,9 @@ def fetch_public(url: str) -> tuple[str, int]:
     u = urllib.parse.urlsplit(url)
     allowed = ((u.hostname == "t.me" and u.path.startswith("/s/") and not u.query)
                or (u.hostname == "www.youtube.com" and u.path == "/feeds/videos.xml"
-                   and set(urllib.parse.parse_qs(u.query)) == {"channel_id"}))
+                   and set(urllib.parse.parse_qs(u.query)) == {"channel_id"})
+               or (u.hostname == "www.rusi.org" and u.path == "/rss/latest-commentary.xml" and not u.query)
+               or (u.hostname == "missilethreat.csis.org" and u.path == "/author/tom-karako/feed/" and not u.query))
     if u.scheme != "https" or not allowed or u.username or u.password:
         raise ValueError("URL outside official public allowlist")
     req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "text/html, application/atom+xml, application/xml"})
@@ -188,6 +191,69 @@ def youtube_posts(xml: str, source: dict, analyst_id: str, now: datetime) -> lis
     return sorted(result, key=lambda x: x["published_at"], reverse=True)[:MAX_ITEMS]
 
 
+def rss_author_posts(xml: str, source: dict, analyst_id: str, now: datetime) -> list[dict]:
+    """Author-attributed RSS/Atom discovery: metadata ONLY, never reconstructed article body."""
+    if len(xml) > MAX_RESPONSE:
+        raise ValueError("oversized analyst RSS")
+    root = ET.fromstring(xml)
+    rss = root.tag.lower() in ("rss", "rdf")
+    atom = "{http://www.w3.org/2005/Atom}"
+    dc = "{http://purl.org/dc/elements/1.1/}"
+    if root.tag.lower() == "rss":
+        items = root.findall("./channel/item")
+    elif root.tag == "{http://www.w3.org/1999/02/22-rdf-syntax-ns#}RDF":
+        items = root.findall("./item")
+    elif root.tag == atom + "feed":
+        items = root.findall(atom + "entry")
+    else:
+        raise ValueError("not an RSS or Atom feed")
+    if not items:
+        raise ValueError("empty or incompatible official RSS feed")
+    result = []
+    author = source["author_match"].casefold()
+    for item in items:
+        if root.tag == atom + "feed":
+            title = clean_text(item.findtext(atom + "title", ""))
+            authors = [clean_text(e.findtext(atom + "name", "")) for e in item.findall(atom + "author")]
+            hrefs = [link.get("href", "") for link in item.findall(atom + "link") if link.get("rel", "alternate") == "alternate"]
+            link = hrefs[0] if hrefs else ""
+            date = item.findtext(atom + "published", item.findtext(atom + "updated", ""))
+            published = utc_parse(date)
+        else:
+            title = clean_text(item.findtext("title", ""))
+            authors = [clean_text(x.text or "") for x in item.findall(dc + "creator")]
+            authors += [clean_text(item.findtext("author", ""))]
+            link = (item.findtext("link", "") or "").strip()
+            date = item.findtext("pubDate", "") or item.findtext(dc + "date", "")
+            published = utc_parse(date)
+            if published is None:
+                try:
+                    stamp = parsedate_to_datetime(date)
+                    published = stamp.astimezone(timezone.utc) if stamp.tzinfo else None
+                except (ValueError, TypeError):
+                    published = None
+        # RSS author fields (not the item's title or incidental quotations) must identify the author.
+        if not any(re.search(r"(?<!\w)" + re.escape(author) + r"(?!\w)", x.casefold()) for x in authors):
+            continue
+        if not published or published > now + timedelta(hours=3) or published < now - timedelta(days=MAX_DAYS):
+            continue
+        p = urllib.parse.urlsplit(link)
+        prefix = urllib.parse.urlsplit(source["canonical_prefix"])
+        if p.scheme != "https" or p.hostname != prefix.hostname or not p.path.startswith(prefix.path):
+            continue
+        if not title or len(title) > 240:
+            continue
+        item_id = hashlib.sha256(link.encode("utf-8")).hexdigest()[:20]
+        result.append({
+            "id": source["id"] + ":" + item_id, "analyst_id": analyst_id,
+            "source_id": source["id"], "type": "rss_article", "canonical_url": link,
+            "title": title, "published_at": ts(published), "text_status": "metadata_only",
+            "body": "", "language": source.get("language", "en"), "video_timecodes": [],
+            "content_hash": hashlib.sha256((link + title).encode("utf-8")).hexdigest(),
+        })
+    return sorted(result, key=lambda x: x["published_at"], reverse=True)[:MAX_ITEMS]
+
+
 def main() -> int:
     cfg = json.loads(CONFIG.read_text(encoding="utf-8"))
     if cfg.get("schema_version") != 1 or not isinstance(cfg.get("analysts"), list):
@@ -207,9 +273,11 @@ def main() -> int:
                     got = telegram_posts(body, source, aid, now)
                 elif source["type"] == "youtube_rss":
                     got = youtube_posts(body, source, aid, now)
+                elif source["type"] == "rss_author":
+                    got = rss_author_posts(body, source, aid, now)
                 else:
                     raise ValueError("unknown source type")
-                if not got:
+                if not got and source["type"] != "rss_author":
                     raise ValueError("no parsable recent public entries")
                 status.update(state="ok", count=len(got))
                 items.extend(got)
