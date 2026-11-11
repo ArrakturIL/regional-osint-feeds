@@ -1,6 +1,6 @@
 {
-  "checked_at": "2026-11-11T21:23:40Z",
-  "state": "partial",
+  "checked_at": "2026-11-11T21:25:40Z",
+  "state": "ok",
   "sources": [
     {
       "source_id": "auslender-telegram",
@@ -10,9 +10,9 @@
     },
     {
       "source_id": "auslender-youtube",
-      "state": "error",
-      "count": 0,
-      "detail": "ValueError: YouTube feed channel mismatch"
+      "state": "ok",
+      "count": 7,
+      "detail": null
     }
   ]
 }
