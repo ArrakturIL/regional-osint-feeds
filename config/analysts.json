@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "analysts": [
+    {
+      "id": "sergey-auslender",
+      "display_name": "Сергей Ауслендер",
+      "description": "Израильский военный журналист, автор «Войны с Ордой»",
+      "verification": "https://www.9tv.co.il/Author?id=2171",
+      "sources": [
+        {
+          "id": "auslender-telegram",
+          "type": "telegram_public",
+          "feed": "https://t.me/s/voinasordoy",
+          "canonical_prefix": "https://t.me/voinasordoy/",
+          "enabled": true,
+          "language": "ru"
+        },
+        {
+          "id": "auslender-youtube",
+          "type": "youtube_rss",
+          "feed": "https://www.youtube.com/feeds/videos.xml?channel_id=UCygnHvXjsEa_gLMH-WmzeXQ",
+          "canonical_prefix": "https://www.youtube.com/watch?v=",
+          "channel_id": "UCygnHvXjsEa_gLMH-WmzeXQ",
+          "enabled": true,
+          "language": "ru"
+        }
+      ]
+    },
+    {
+      "id": "yigal-levin",
+      "display_name": "Игаль Левин",
+      "description": "Авторский канал военного обозревателя; оценки Ближнего Востока и международной безопасности",
+      "verification": "https://t.me/yigal_levin",
+      "sources": [
+        {
+          "id": "yigal-telegram",
+          "type": "telegram_public",
+          "feed": "https://t.me/s/yigal_levin",
+          "canonical_prefix": "https://t.me/yigal_levin/",
+          "language": "ru",
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "id": "dina-lisnyanskaya",
+      "display_name": "Дина Лиснянская — «Война и мир на Ближнем Востоке»",
+      "description": "Авторский канал Дины Лиснянской и редактора Михаила Шафранова; атрибуция к каналу, не обязательно личная цитата Дины",
+      "verification": "https://t.me/crescentscroissants",
+      "sources": [
+        {
+          "id": "dina-telegram",
+          "type": "telegram_public",
+          "feed": "https://t.me/s/crescentscroissants",
+          "canonical_prefix": "https://t.me/crescentscroissants/",
+          "language": "ru",
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "id": "abu-ali-express",
+      "display_name": "Абу Али Экспресс",
+      "description": "Ивритоязычный региональный аналитический и новостной канал под псевдонимом; сообщения не считаются подтверждёнными фактами",
+      "verification": "https://t.me/abualiexpress",
+      "sources": [
+        {
+          "id": "abuali-telegram",
+          "type": "telegram_public",
+          "feed": "https://t.me/s/abualiexpress",
+          "canonical_prefix": "https://t.me/abualiexpress/",
+          "language": "he",
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "id": "amichai-stein",
+      "display_name": "Амихай Штайн",
+      "description": "Израильский журналист-международник, дипломатический обозреватель i24",
+      "verification": "https://t.me/US2020US",
+      "sources": [
+        {
+          "id": "stein-telegram",
+          "type": "telegram_public",
+          "feed": "https://t.me/s/US2020US",
+          "canonical_prefix": "https://t.me/US2020US/",
+          "language": "he",
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "id": "justin-bronk",
+      "display_name": "Джастин Бронк (Justin Bronk)",
+      "description": "RUSI, Великобритания; боевая авиация, противовоздушная оборона, авиационные технологии",
+      "verification": "https://www.rusi.org/people/bronk",
+      "sources": [
+        {
+          "id": "bronk-rusi-rss",
+          "type": "rss_author",
+          "feed": "https://www.rusi.org/rss/latest-commentary.xml",
+          "canonical_prefix": "https://www.rusi.org/",
+          "author_match": "Justin Bronk",
+          "language": "en",
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "id": "tom-karako",
+      "display_name": "Том Карако (Tom Karako)",
+      "description": "CSIS Missile Defense Project, США; ПРО, ракеты, американские запасы вооружений",
+      "verification": "https://www.csis.org/people/tom-karako",
+      "sources": [
+        {
+          "id": "karako-missile-threat-rss",
+          "type": "rss_author",
+          "feed": "https://missilethreat.csis.org/author/tom-karako/feed/",
+          "canonical_prefix": "https://missilethreat.csis.org/",
+          "author_match": "Tom Karako",
+          "language": "en",
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "id": "michael-knights",
+      "display_name": "Майкл Найтс (Michael Knights)",
+      "description": "The Washington Institute, США; Иран, иракские вооружённые группировки, безопасность региона",
+      "verification": "https://www.washingtoninstitute.org/experts/michael-knights",
+      "sources": []
+    },
+    {
+      "id": "aaron-david-miller",
+      "display_name": "Аарон Дэвид Миллер (Aaron David Miller)",
+      "description": "Carnegie Endowment, США; Ближний Восток, дипломатия США и Израиля",
+      "verification": "https://carnegieendowment.org/people/aaron-david-miller",
+      "sources": []
+    },
+    {
+      "id": "fabian-hinz",
+      "display_name": "Фабиан Хинц (Fabian Hinz)",
+      "description": "IISS, Европа; иранские ракеты, беспилотники и военные технологии",
+      "verification": "https://www.iiss.org/",
+      "sources": []
+    }
+  ]
+}

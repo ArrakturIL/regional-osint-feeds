@@ -1,0 +1,54 @@
+{
+  "checked_at": "2026-11-11T22:07:41Z",
+  "state": "ok",
+  "sources": [
+    {
+      "source_id": "auslender-telegram",
+      "state": "ok",
+      "count": 19,
+      "detail": null
+    },
+    {
+      "source_id": "auslender-youtube",
+      "state": "ok",
+      "count": 7,
+      "detail": null
+    },
+    {
+      "source_id": "yigal-telegram",
+      "state": "ok",
+      "count": 17,
+      "detail": null
+    },
+    {
+      "source_id": "dina-telegram",
+      "state": "ok",
+      "count": 20,
+      "detail": null
+    },
+    {
+      "source_id": "abuali-telegram",
+      "state": "ok",
+      "count": 16,
+      "detail": null
+    },
+    {
+      "source_id": "stein-telegram",
+      "state": "ok",
+      "count": 20,
+      "detail": null
+    },
+    {
+      "source_id": "bronk-rusi-rss",
+      "state": "ok",
+      "count": 0,
+      "detail": null
+    },
+    {
+      "source_id": "karako-missile-threat-rss",
+      "state": "ok",
+      "count": 0,
+      "detail": null
+    }
+  ]
+}
