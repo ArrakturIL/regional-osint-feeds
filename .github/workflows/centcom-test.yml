@@ -1,4 +1,4 @@
-name: Test official CENTCOM DVIDS feed
+name: Refresh official CENTCOM DVIDS news
 
 on:
   push:
@@ -6,9 +6,15 @@ on:
       - "scripts/collect_centcom.py"
       - ".github/workflows/centcom-test.yml"
   workflow_dispatch:
+  schedule:
+    - cron: "*/15 * * * *"
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: official-centcom-feed
+  cancel-in-progress: false
 
 jobs:
   fetch-official-feed:
@@ -16,14 +22,24 @@ jobs:
     timeout-minutes: 3
     steps:
       - uses: actions/checkout@v4
-      - name: Fetch and validate official DVIDS CENTCOM news
-        run: python3 scripts/collect_centcom.py
-      - name: Upload test data and status
-        if: always()
-        uses: actions/upload-artifact@v4
         with:
-          name: centcom-dvids-test
-          path: |
-            data/centcom-news.json
-            data/centcom-status.json
-          if-no-files-found: warn
+          persist-credentials: true
+      - name: Fetch and validate official DVIDS CENTCOM news
+        id: collector
+        continue-on-error: true
+        run: python3 scripts/collect_centcom.py
+      - name: Commit updated news or status heartbeat
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -f data/centcom-news.json ]; then git add data/centcom-news.json; fi
+          if [ -f data/centcom-status.json ]; then git add data/centcom-status.json; fi
+          if ! git diff --cached --quiet; then
+            git commit -m "Update official CENTCOM DVIDS news feed"
+            git push
+          else
+            echo "No new publications or status changes"
+          fi
+      - name: Fail if latest upstream check did not produce current news
+        if: steps.collect.outcome != 'success'
+        run: exit 1
