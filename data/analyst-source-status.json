@@ -1,6 +1,6 @@
 {
-  "checked_at": "2026-11-11T22:06:17Z",
-  "state": "partial",
+  "checked_at": "2026-11-11T22:07:07Z",
+  "state": "ok",
   "sources": [
     {
       "source_id": "auslender-telegram",
@@ -40,15 +40,15 @@
     },
     {
       "source_id": "bronk-rusi-rss",
-      "state": "error",
+      "state": "ok",
       "count": 0,
-      "detail": "ValueError: URL outside official public allowlist"
+      "detail": null
     },
     {
       "source_id": "karako-missile-threat-rss",
-      "state": "error",
+      "state": "ok",
       "count": 0,
-      "detail": "ValueError: URL outside official public allowlist"
+      "detail": null
     }
   ]
 }
