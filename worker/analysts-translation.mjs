@@ -22,9 +22,26 @@ export function splitSource(text,max=MAX_CHUNK_CHARS) {
   }
   return result;
 }
+function numericTokens(text, isTranslation=false) {
+  return (String(text).match(/\\d+(?:[.,\\u00a0 ]\\d+)*/g)||[]).map(raw=>{
+    let value=raw.replace(/(?<=\\d)[\\u00a0 ](?=\\d{3}(?:\\D|$))/g,'').trim();
+    if (!isTranslation) {
+      // Public Hebrew/English sources commonly use a comma for thousands.
+      value=value.replace(/(?<=\\d),(?=\\d{3}(?:\\D|$))/g,'');
+    }
+    return value.replace(/,/g,'.');
+  });
+}
 export function numbersPreserved(original,translated) {
-  const numbers=original.match(/[0-9]+(?:[.,][0-9]+)?/g)||[];
-  return numbers.every(value=>translated.includes(value));
+  // Compare number multisets, not verbatim locale formatting (4,000 = 4000,
+  // 1.7 = 1,7). A missing or changed number must still fail.
+  const available=numericTokens(translated,true);
+  for(const value of numericTokens(original)){
+    const position=available.indexOf(value);
+    if(position<0)return false;
+    available.splice(position,1);
+  }
+  return true;
 }
 export function negativeMeaningNotDropped(original,translated,language) {
   const negation=language==='he'
