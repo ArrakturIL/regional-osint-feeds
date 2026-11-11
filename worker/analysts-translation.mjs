@@ -23,11 +23,11 @@ export function splitSource(text,max=MAX_CHUNK_CHARS) {
   return result;
 }
 function numericTokens(text, isTranslation=false) {
-  return (String(text).match(/\\d+(?:[.,\\u00a0 ]\\d+)*/g)||[]).map(raw=>{
-    let value=raw.replace(/(?<=\\d)[\\u00a0 ](?=\\d{3}(?:\\D|$))/g,'').trim();
+  return (String(text).match(/\d+(?:[.,\u00a0 ]\d+)*/g)||[]).map(raw=>{
+    let value=raw.replace(/(?<=\d)[\u00a0 ](?=\d{3}(?:\D|$))/g,'').trim();
     if (!isTranslation) {
       // Public Hebrew/English sources commonly use a comma for thousands.
-      value=value.replace(/(?<=\\d),(?=\\d{3}(?:\\D|$))/g,'');
+      value=value.replace(/(?<=\d),(?=\d{3}(?:\D|$))/g,'');
     }
     return value.replace(/,/g,'.');
   });
