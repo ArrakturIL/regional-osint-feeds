@@ -301,4 +301,4 @@ export default {
   async scheduled(controller,env) { await runEditor(env,controller.scheduledTime); },
   async fetch(request,env) { return readApi(request,env); },
 };
-export const testHooks = {plain,similarity,validateInput,validateDecision,reserveAi};
+export const testHooks = {plain,similarity,validateInput,validateDecision,reserveAi,aiDecision};
