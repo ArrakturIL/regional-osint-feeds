@@ -32,6 +32,7 @@ Official OpenAPI specification: https://gateway.adsbexchange.com/api/aircraft/v2
 - `worker/test-provider-adapters.mjs` and `worker/test-provider-collectors.mjs`: offline fixtures for zero vs unavailable, freshness, deduplication, military-type hints, cross-source disagreements, key gating and 429.
 - `.github/workflows/worker-check.yml`: validates the deployed Worker snapshot syntax and runs all three aviation test suites on changes. These tests **do not** contact the external providers.
 - These new modules are **not imported by** `worker/regional-osint-monitor.js`; they cannot silently add API calls or alter production quotas.
+- **CI verified:** [GitHub Actions run 43081467776](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43081467776) passed the production Worker syntax check, existing aviation API tests, OpenSky/ADS-B Exchange adapter tests and optional collector tests on 2026-11-11.
 
 ## Acceptance criteria before activation
 
