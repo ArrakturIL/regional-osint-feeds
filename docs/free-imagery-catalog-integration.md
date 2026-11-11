@@ -42,6 +42,15 @@ Worker: `regional-osint-monitor`. Sources are separate from UI and from the exis
 - **Microsoft Planetary Computer**: public STAC alternative; overlaps the already working Earth Search catalogs, not justified as an additional scheduled source at this point.
 - **EUMET/EUMETView**: explicitly excluded by user.
 
+## Production verification
+
+- **Cloudflare Worker version 36** (`74793a53-ad84-4e78-9913-dff0a9a3efe8`) is deployed to 100% of traffic, with the original five bindings and `*/1 * * * *` cron unchanged.
+- GitHub Actions run [43091261040](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43091261040) passed all Worker syntax and regression checks.
+- An initial smoke run failed **before network access** because Cloudflare Workers do not support `fetch(..., {redirect:"error"})`. This was reproduced in a temporary probe. The fix uses `redirect:"manual"`, so unexpected redirects yield non-200 responses without automatic following. The temporary probes were deleted.
+- The two one-hour backoffs from that local error were reset only for these two new providers; no ADS-B provider state changed.
+- A second D1 manual run, `geo_catalog_smoke_retry_20261111`, completed successfully at 2026-11-11 19:55 UTC: `sentinel_catalog` reported **partial** because the STAC result page was capped, with **8 new Sentinel-2 records** for southern Red Sea, acquired **2026-11-10**, and `aerial_archive` reported **empty** because its selected geographic bounding box had no matching archival images. Both `succeeded_at` timestamps advanced properly.
+- Historical acquisition timestamps are stored separately from collection timestamps. **No imagery has been rendered or downloaded at native 10-m resolution**, and no automatic change detection is claimed.
+
 ### Check the result, not just the deployment
 
 1. GitHub Action `Validate Regional Watch Worker`: `worker/test-geo-catalog.mjs` checks bounded queries, real acquisition dates, malformed JSON, rate-limit backoff, legitimate empty responses and metadata-only storage.
