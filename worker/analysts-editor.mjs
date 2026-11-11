@@ -4,7 +4,7 @@ import {translatedForEditorial} from './analysts-translation.mjs';
  * Sources are obtained via verified public GitHub collector mirror. Unsafe/absent
  * source text is never used to invent transcripts or auto-publish articles.
  */
-const EDITOR_VERSION = 'analyst-editor-v1.1-translation';
+const EDITOR_VERSION = 'analyst-editor-v1.1.1-translation';
 const MODEL = '@cf/zai-org/glm-4.7-flash';
 const MIRROR_BASE = 'https://raw.githubusercontent.com/ArrakturIL/regional-osint-feeds/main/data/';
 const HOUR = 3_600_000;
@@ -124,6 +124,17 @@ async function aiDecision(env, it, recent, translated=null) {
   if (translated && checked.decision==='publish' && checked.quote)throw Error('foreign_language_quote_not_verified');
   return checked;
 }
+// Distinguish a globally exhausted AI budget from an item already attempted
+// today. A failed item must never block every other pending source.
+async function reserveAi(db,it,now) {
+  const day=Math.floor(now/DAY)*DAY;
+  const booked=await db.prepare("INSERT OR IGNORE INTO analyst_ai_attempts(item_id,day_start_ms,model,attempted_at_ms) SELECT ?,?,?,? WHERE (SELECT COUNT(*) FROM analyst_ai_attempts WHERE day_start_ms=?) < ?")
+    .bind(it.id,day,MODEL,now,day,MAX_AI_PER_DAY).run();
+  if(booked?.meta?.changes===1)return null;
+  const prior=await db.prepare("SELECT item_id FROM analyst_ai_attempts WHERE item_id=? AND day_start_ms=?")
+    .bind(it.id,day).first();
+  return prior?'already_attempted':'budget_exhausted';
+}
 async function decide(db,env,it,now,recent) {
   let decision,model='rules_only',translated=null,editorialText=it.body;
   const foreign=(it.original_language||'ru')!=='ru';
@@ -135,10 +146,8 @@ async function decide(db,env,it,now,recent) {
   }else {
     if(foreign){
       // Reserve the AI budget before translating. The full foreign text is not public output.
-      const day=Math.floor(now/DAY)*DAY;
-      const booked=await db.prepare("INSERT OR IGNORE INTO analyst_ai_attempts(item_id,day_start_ms,model,attempted_at_ms) SELECT ?,?,?,? WHERE (SELECT COUNT(*) FROM analyst_ai_attempts WHERE day_start_ms=?) < ?")
-        .bind(it.id,day,MODEL,now,day,MAX_AI_PER_DAY).run();
-      if(booked?.meta?.changes!==1)return 'budget_exhausted';
+      const reservation=await reserveAi(db,it,now);
+      if(reservation)return reservation;
       translated=await translatedForEditorial(env,it,now);
       editorialText=translated.text;
     }
@@ -150,10 +159,8 @@ async function decide(db,env,it,now,recent) {
       decision={decision:'skip',reason:'Похожий анализ уже был опубликован; нового содержания недостаточно.',relevance:85,novelty:10,substance:30};
     }else {
       if(!foreign){
-        const day=Math.floor(now/DAY)*DAY;
-        const booked=await db.prepare("INSERT OR IGNORE INTO analyst_ai_attempts(item_id,day_start_ms,model,attempted_at_ms) SELECT ?,?,?,? WHERE (SELECT COUNT(*) FROM analyst_ai_attempts WHERE day_start_ms=?) < ?")
-          .bind(it.id,day,MODEL,now,day,MAX_AI_PER_DAY).run();
-        if(booked?.meta?.changes!==1)return 'budget_exhausted';
+        const reservation=await reserveAi(db,it,now);
+        if(reservation)return reservation;
       }
       model=MODEL;
       decision=await aiDecision(env,it,recent,translated);
@@ -230,6 +237,7 @@ async function runEditor(env, time) {
       try {
         const result=await decide(db,env,original,now,recent);
         if (result==='budget_exhausted') break;
+        if (result==='already_attempted') continue;
         if (original.text_status==='full_text' && original.body.length>=(original.original_language==='ru'?220:160) && (original.original_language!=='ru'||REGION.test(original.body))) usedAi++;
         if (result==='published') {
           const p=await db.prepare('SELECT headline,summary FROM analyst_publications WHERE item_id=?').bind(it.id).first();
@@ -285,4 +293,4 @@ export default {
   async scheduled(controller,env) { await runEditor(env,controller.scheduledTime); },
   async fetch(request,env) { return readApi(request,env); },
 };
-export const testHooks = {plain,similarity,validateInput,validateDecision};
+export const testHooks = {plain,similarity,validateInput,validateDecision,reserveAi};
