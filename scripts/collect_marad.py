@@ -100,7 +100,7 @@ def parse(html):
         parts = urllib.parse.urlsplit(canonical)
         if parts.scheme != "https" or parts.hostname not in ("maritime.dot.gov", "www.maritime.dot.gov"):
             continue
-        if not parts.path.startswith("/msci-advisories/"):
+        if not parts.path.startswith("/msci/"):
             continue
         clean = urllib.parse.urlunsplit(("https", parts.hostname, parts.path, "", ""))
         by_url[clean] = {
