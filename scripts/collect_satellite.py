@@ -252,7 +252,8 @@ def main():
         DATA_PATH, data, volatile_fields=("collected_at",)
     )
     state = "ok" if (observation["quality"]["has_optical_quicklooks"]
-                     and observation["quality"]["has_eonet_response"]) else "partial"
+                     and observation["quality"]["has_eonet_response"]
+                     and not observation["quality"]["issues"]) else "partial"
     if not observation["quality"]["has_optical_quicklooks"] and not observation["quality"]["has_eonet_response"]:
         state = "error"
     status = {
