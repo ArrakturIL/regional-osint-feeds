@@ -1,8 +1,36 @@
 {
   "source": "marad_advisories",
   "source_feed": "https://www.maritime.dot.gov/msci-advisories",
-  "fetched_at": "2026-11-11T16:49:01.913482Z",
-  "count": 0,
+  "fetched_at": "2026-11-11T16:50:44.034654Z",
+  "count": 3,
   "coverage": "Only active, region-matching MARAD advisories; no inferred publication times",
-  "items": []
+  "items": [
+    {
+      "url": "https://www.maritime.dot.gov/msci/2026-013-red-sea-bab-el-mandeb-strait-gulf-aden-arabian-sea-and-somali-basin-houthi-attacks",
+      "title": "2026-013-Red Sea, Bab el Mandeb Strait, Gulf of Aden, Arabian Sea, and Somali Basin-Houthi Attacks on Commercial Vessels",
+      "advisory_id": "2026-013",
+      "source": "U.S. Maritime Administration (MARAD)",
+      "source_feed": "https://www.maritime.dot.gov/msci-advisories",
+      "status": "active",
+      "published_at": null
+    },
+    {
+      "url": "https://www.maritime.dot.gov/msci/2026-011-persian-gulf-strait-hormuz-and-gulf-oman-iranian-attacks-commercial-vessels",
+      "title": "2026-011-Persian Gulf, Strait of Hormuz and Gulf of Oman-Iranian Attacks on Commercial Vessels",
+      "advisory_id": "2026-011",
+      "source": "U.S. Maritime Administration (MARAD)",
+      "source_feed": "https://www.maritime.dot.gov/msci-advisories",
+      "status": "active",
+      "published_at": null
+    },
+    {
+      "url": "https://www.maritime.dot.gov/msci/2026-010-gulf-aden-arabian-sea-indian-ocean-piracyarmed-robberykidnapping-ransom",
+      "title": "2026-010-Gulf of Aden, Arabian Sea, Indian Ocean-Piracy/Armed Robbery/Kidnapping for Ransom",
+      "advisory_id": "2026-010",
+      "source": "U.S. Maritime Administration (MARAD)",
+      "source_feed": "https://www.maritime.dot.gov/msci-advisories",
+      "status": "active",
+      "published_at": null
+    }
+  ]
 }
