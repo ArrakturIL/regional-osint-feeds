@@ -20,3 +20,5 @@ jobs:
         run: node --input-type=module --check < worker/regional-osint-monitor.js
       - name: Run aviation API and data-quality regression tests
         run: node worker/test-aviation.mjs
+      - name: Validate OpenSky and ADS-B Exchange adapters without network calls
+        run: node worker/test-provider-adapters.mjs
