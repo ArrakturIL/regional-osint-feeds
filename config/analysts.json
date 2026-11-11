@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "analysts": [
+    {
+      "id": "sergey-auslender",
+      "display_name": "Сергей Ауслендер",
+      "description": "Израильский военный журналист, автор «Войны с Ордой»",
+      "verification": "https://www.9tv.co.il/Author?id=2171",
+      "sources": [
+        {
+          "id": "auslender-telegram",
+          "type": "telegram_public",
+          "feed": "https://t.me/s/voinasordoy",
+          "canonical_prefix": "https://t.me/voinasordoy/",
+          "enabled": true
+        },
+        {
+          "id": "auslender-youtube",
+          "type": "youtube_rss",
+          "feed": "https://www.youtube.com/feeds/videos.xml?channel_id=UCygnHvXjsEa_gLMH-WmzeXQ",
+          "canonical_prefix": "https://www.youtube.com/watch?v=",
+          "channel_id": "UCygnHvXjsEa_gLMH-WmzeXQ",
+          "enabled": true
+        }
+      ]
+    }
+  ]
+}
