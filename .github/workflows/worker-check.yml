@@ -1,0 +1,22 @@
+name: Validate Regional Watch Worker
+
+on:
+  push:
+    paths:
+      - "worker/**"
+      - ".github/workflows/worker-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Cloudflare Worker module syntax
+        run: node --input-type=module --check < worker/regional-osint-monitor.js
+      - name: Run aviation API and data-quality regression tests
+        run: node worker/test-aviation.mjs
