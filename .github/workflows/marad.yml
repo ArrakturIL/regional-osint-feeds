@@ -1,0 +1,40 @@
+name: Refresh official MARAD maritime advisories
+
+on:
+  push:
+    paths:
+      - "scripts/collect_marad.py"
+      - ".github/workflows/marad.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "27 1,7,13,19 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: marad-official-feed
+  cancel-in-progress: false
+
+jobs:
+  collect-marad:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Read public MARAD advisories
+        run: python3 scripts/collect_marad.py
+      - name: Publish changed official advisories or health heartbeat
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -f data/marad-advisories.json ]; then git add data/marad-advisories.json; fi
+          if [ -f data/marad-status.json ]; then git add data/marad-status.json; fi
+          if ! git diff --cached --quiet; then
+            git commit -m "Update official MARAD advisories"
+            git push
+          else
+            echo "No data or health change to commit"
+          fi
