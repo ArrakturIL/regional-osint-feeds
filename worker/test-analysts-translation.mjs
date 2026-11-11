@@ -7,6 +7,11 @@ assert.ok(parts.length>1&&parts.length<=6);
 assert.equal(parts.join(' '),long.trim());
 assert.ok(parts.every(x=>x.length<=1350));
 assert.ok(numbersPreserved('5 aircraft and 12 flights','5 самолётов и 12 рейсов'));
+assert.ok(numbersPreserved('150 vessels, 4,000 ships and 1.7 billion barrels','150 судов, 4000 кораблей и 1,7 миллиарда баррелей'));
+assert.ok(numbersPreserved('4,000 ships and 1.7 barrels','4 000 кораблей и 1,7 барреля'));
+assert.ok(!numbersPreserved('4,000 ships and 1.7 barrels','4 000 кораблей и 1,8 барреля'));
+assert.ok(!numbersPreserved('150 ships and 150 aircraft','150 судов и 140 самолётов'));
+
 assert.ok(!numbersPreserved('5 aircraft and 12 flights','5 самолётов и 21 рейс'));
 assert.equal(negativeMeaningNotDropped('לא אושרה תקיפה באיראן','Удар по Ирану не подтверждён','he'),true);
 assert.equal(negativeMeaningNotDropped('לא אושרה תקיפה באיראן','Удар по Ирану подтверждён','he'),false);
