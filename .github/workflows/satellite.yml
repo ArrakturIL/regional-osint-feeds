@@ -1,0 +1,46 @@
+name: NASA satellite context and natural events
+
+on:
+  push:
+    paths:
+      - "scripts/collect_satellite.py"
+      - ".github/workflows/satellite.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nasa-satellite-context
+  cancel-in-progress: false
+
+jobs:
+  satellite-context:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install image library
+        run: python -m pip install "Pillow>=11,<13"
+      - name: Syntax check
+        run: python -m py_compile scripts/collect_satellite.py
+      - name: Gather public NASA GIBS and EONET context
+        run: python scripts/collect_satellite.py
+      - name: Commit only metadata, never satellite image files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/satellite-observations.json data/satellite-status.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Update public NASA satellite context metadata"
+            git push
+          else
+            echo "No material metadata changes"
+          fi
