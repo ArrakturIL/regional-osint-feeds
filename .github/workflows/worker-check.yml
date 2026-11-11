@@ -26,3 +26,5 @@ jobs:
         run: node worker/test-provider-collectors.mjs
       - name: Validate ADS-B recovery and cooldown scheduler
         run: node worker/test-adsb-recovery.mjs
+      - name: Validate Sentinel and OpenAerialMap catalog collectors
+        run: node worker/test-geo-catalog.mjs
