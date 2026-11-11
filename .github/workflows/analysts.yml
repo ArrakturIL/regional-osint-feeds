@@ -1,6 +1,8 @@
 name: Regional Watch analyst public-source collection
 on:
   push:
+    branches:
+      - main
     paths:
       - 'scripts/collect_analysts.py'
       - 'scripts/test_analysts.py'
@@ -51,7 +53,7 @@ jobs:
       - name: Collect official public-source content
         run: python scripts/collect_analysts.py
       - name: Commit bounded mirror and source heartbeat
-        if: always() && github.event_name != 'pull_request'
+        if: success() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -59,5 +61,20 @@ jobs:
           if [ -f data/analyst-source-status.json ]; then git add data/analyst-source-status.json; fi
           if ! git diff --cached --quiet; then
             git commit -m 'Refresh analyst public-source mirror'
-            git push
+            # Other independent collectors may commit to main between checkout
+            # and push. Rebase on the newest remote main; never force-push.
+            for attempt in 1 2 3 4; do
+              git fetch origin main
+              if ! git rebase origin/main; then
+                git rebase --abort || true
+                echo 'Analyst mirror rebase conflict; refusing to overwrite other source data.'
+                exit 1
+              fi
+              if git push origin HEAD:main; then
+                exit 0
+              fi
+              sleep $((attempt * 2))
+            done
+            echo 'Unable to publish analyst mirror after four non-force push attempts'
+            exit 1
           fi
