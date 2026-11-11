@@ -24,3 +24,5 @@ jobs:
         run: node worker/test-provider-adapters.mjs
       - name: Validate provider collectors and credential gates
         run: node worker/test-provider-collectors.mjs
+      - name: Validate ADS-B recovery and cooldown scheduler
+        run: node worker/test-adsb-recovery.mjs
