@@ -1,3 +1,14 @@
+# Актуальное состояние после слияния аналитиков — 12.11.2026 (Израиль)
+
+- **PR #1 СЛИТ В `main`**: https://github.com/ArrakturIL/regional-osint-feeds/pull/1 , merge commit `18a0f1f9f935c8abe15d42753376e32fd3915e38`. Все файлы сборщика, реестр 10 авторов/авторских каналов (8 источников), переводчик и код редактора теперь в `main`. Пять базовых авторов/шесть Telegram+YouTube-источников полностью настроены; 2 RSS-подписки англоязычных авторов пока обнаруживают лишь метаданные; остальные 3 автора без активного источника.
+- **Две проверки после merge ЗЕЛЁНЫЕ**: Worker CI https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43111582061 и analyst collector https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43111581772 . GitHub Actions запланирован почасово в `main`, сборщик сконфигурирован публиковать зеркало только в main на schedule/manual с rebase+retry без force push.
+- **Cloudflare D1** `regional-osint`: выполнены 12 операторов `worker/analysts-translation-migration.sql`. Есть поле `analyst_sources.language`, таблица `analyst_translations`, 5 базовых авторов и 6 источников (2 he, 4 ru). Отдельные американские/европейские авторы из GitHub config пока не внесены в D1, их RSS ещё не интегрирован в редактор.
+- **Cloudflare staging Worker** `regional-analysts-editor-staging-20261111` имеет AI/DB bindings, `/health` и `/api/analysts` отвечают, но работающий код всё ещё **v1.0 без модуля перевода**. Cron на нём отсутствует. `analyst_items=0`, `analyst_publications=0`, `analyst_runs=0`, `analyst_translations=0`. **Автоматическая публикация НЕ ЗАПУЩЕНА.** Полный запуск v1.1 пока не подтверждён; в предыдущей попытке обновление модулей было заблокировано на уровне инструмента.
+- Основной монитор `regional-osint-monitor` и его `*/1` cron не менять. Browser Rendering API Cloudflare ответил 429 на второй запрос, это **лимит инструмента проверки**, не доказательство сбоя Worker.
+- Следующие технические задачи: развернуть многофайловый Worker v1.1 из `main`, проверить энд-ту-энд обработку и перевод, включить отдельный cron лишь после проверки; добавить безопасное получение полных текстов статей и RSS адаптер в редактор; затем раздел сайта. Не утверждать, что публикация работает до теста.
+
+---
+
 # Актуализация после инцидента GitHub CI — 2026-11-12 (Asia/Jerusalem)
 
 **Важнее предыдущего описания состояния.** Реальный код/ветки GitHub проверять по текущим файлам и CI, а не продолжать старый план вслепую.
