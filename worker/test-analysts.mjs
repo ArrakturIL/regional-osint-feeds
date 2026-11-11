@@ -20,6 +20,10 @@ assert.ok(validateDecision(good,b));
 assert.equal(validateDecision({...good,quote:'Цитата которой не было'},b),null);
 assert.equal(validateDecision({...good,relevance:5},b),null);
 assert.equal(validateDecision({...good,summary:'Повтор одного предложения.'},b),null);
+// Long exact-source sentences must not be copied verbatim into a summary.
+const copied='Это длинное предложение, представляющее собой практически дословную копию значительной части оригинального аналитического материала из публикации.';
+assert.equal(validateDecision({...good,summary:copied+' '+good.summary},copied),null);
+
 const hebrewSource={id:'abuali-telegram',type:'telegram_public',canonical_prefix:'https://t.me/abualiexpress/',language:'he'};
 const hebrewAuthor={id:'abu-ali-express'};
 const hebrewItem={...raw,id:'abuali-telegram:712',analyst_id:hebrewAuthor.id,source_id:hebrewSource.id,
