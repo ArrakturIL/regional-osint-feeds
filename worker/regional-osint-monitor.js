@@ -200,11 +200,11 @@ async function aviationAlternative(env, slot) {
   const turn = Math.floor(slot / (30 * MINUTE)), primary = turn % 3 !== 2;
   const quota=await env.DB.prepare("SELECT remaining,reset_at,checked_at FROM worker_provider_quota WHERE provider=?")
     .bind("avioadsb.org").first().catch(()=>null);
-  if (quota && quota.reset_at>Date.now() && Date.now()-quota.checked_at<2*HOUR) {
+  if (quota && quota.reset_at>Date.now()) {
     // Shared-network quota is not ours alone: preserve the remaining requests for Tehran.
-    const skip=quota.remaining<=4 ? turn%6!==0
+    const skip=quota.remaining===0 || (quota.remaining<=4 ? turn%6!==0
       : quota.remaining<=12 ? turn%3!==0
-      : quota.remaining<=28 && !primary;
+      : quota.remaining<=28 && !primary);
     if (skip) return {entries:[],missing:["quota_reserved_for_tehran"],
       detail:"AvioADSB sample skipped under shared-network quota pressure; "+
         quota.remaining+" requests remain until "+new Date(quota.reset_at).toISOString()};
@@ -260,7 +260,7 @@ async function airbridgeContext(env,slot) {
   const now=Date.now();
   const quota=await env.DB.prepare("SELECT remaining,reset_at,checked_at FROM worker_provider_quota WHERE provider=?")
     .bind("avioadsb.org").first().catch(()=>null);
-  if (quota && quota.reset_at>now && now-quota.checked_at<2*HOUR && quota.remaining<=28)
+  if (quota && quota.reset_at>now && quota.remaining<=28)
     return {entries:[],missing:["quota_reserved_for_tehran"],
       detail:"Air corridor snapshot skipped: reserve AvioADSB quota for Tehran"};
   const [area,lat,lon]=AIRBRIDGE_REGIONS[Math.floor(slot/HOUR)%AIRBRIDGE_REGIONS.length];
