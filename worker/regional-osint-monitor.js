@@ -848,7 +848,7 @@ async function catalogGet(env, provider, url) {
   let response, result, failure = null;
   try {
     response = await fetch(url, { headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(12000), redirect: "error" });
+      signal: AbortSignal.timeout(12000), redirect: "manual" });
     if (!response.ok) throw new Error("upstream HTTP " + response.status);
     const size = response.headers.get("Content-Length");
     if (size !== null && Number(size) > 2_000_000) throw new Error("unexpected catalog response size");
