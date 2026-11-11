@@ -26,4 +26,16 @@ const hebrewItem={...raw,id:'abuali-telegram:712',analyst_id:hebrewAuthor.id,sou
  canonical_url:'https://t.me/abualiexpress/712',body:'לפי הדיווח אין החלטה סופית על תקיפה באיראן.',language:'he'};
 assert.ok(validateInput(hebrewItem,hebrewSource,hebrewAuthor,now));
 assert.equal(validateInput({...hebrewItem,language:'ru'},hebrewSource,hebrewAuthor,now),null);
+// A failed item already booked today must not stall unrelated pending items.
+const reserveAi = testHooks.reserveAi;
+function fakeBudget(changes, previous) {
+  return {prepare(sql) {
+    return {bind() { return this; },
+      async run() { return {meta: {changes}}; },
+      async first() { return previous ? {item_id: 'item-one'} : null; }};
+  }};
+}
+assert.equal(await reserveAi(fakeBudget(1,false),{id:'item-one'},now),null);
+assert.equal(await reserveAi(fakeBudget(0,true),{id:'item-one'},now),'already_attempted');
+assert.equal(await reserveAi(fakeBudget(0,false),{id:'item-one'},now),'budget_exhausted');
 console.log('analysts editor offline checks: OK');
