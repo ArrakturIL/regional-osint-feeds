@@ -48,9 +48,10 @@ try {
   assert.equal(insert.params[0],"gdelt_context");
   const records=JSON.parse(insert.params[2]);
   assert.equal(records.length,1);
-  assert.equal(records[0].payload.source_type,"machine_coded_news_context");
-  assert.equal(records[0].payload.sample.length,1,"invalid country is not stored");
-  assert.match(records[0].payload.caveat,/NOT confirmation/);
+  const payload=JSON.parse(records[0].payload);
+  assert.equal(payload.source_type,"machine_coded_news_context");
+  assert.equal(payload.sample.length,1,"invalid country is not stored");
+  assert.match(payload.caveat,/NOT confirmation/);
   assert.equal(sourceStatus.params[3],"ok");
 
   // Failure is reported as failure, not a valid 'zero media activity' observation.
