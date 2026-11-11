@@ -160,8 +160,12 @@ def youtube_posts(xml: str, source: dict, analyst_id: str, now: datetime) -> lis
     result = []
     feed_id = root.findtext(atom + "id", "")
     channel_id = source.get("channel_id", "")
-    if channel_id and channel_id not in feed_id:
-        raise ValueError("YouTube feed channel mismatch")
+    if root.tag != atom + "feed":
+        raise ValueError("YouTube did not return an Atom feed: " + root.tag[:75])
+    links = " ".join(el.get("href", "") for el in root.findall(atom + "link") if el.get("rel") == "self")
+    entry_channels = {el.findtext(yt + "channelId", "") for el in root.findall(atom + "entry")}
+    if channel_id and channel_id not in feed_id + links and channel_id not in entry_channels:
+        raise ValueError("YouTube channel mismatch: feed_id=" + feed_id[:85] + ", root=" + root.tag[:55])
     for e in root.findall(atom + "entry"):
         video_id = e.findtext(yt + "videoId", "")
         if not re.fullmatch(r"[\w-]{11}", video_id):
