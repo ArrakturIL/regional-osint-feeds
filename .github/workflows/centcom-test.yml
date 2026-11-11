@@ -25,8 +25,6 @@ jobs:
         with:
           persist-credentials: true
       - name: Fetch and validate official DVIDS CENTCOM news
-        id: collector
-        continue-on-error: true
         run: python3 scripts/collect_centcom.py
       - name: Commit updated news or status heartbeat
         run: |
@@ -40,6 +38,3 @@ jobs:
           else
             echo "No new publications or status changes"
           fi
-      - name: Fail if latest upstream check did not produce current news
-        if: steps.collect.outcome != 'success'
-        run: exit 1
