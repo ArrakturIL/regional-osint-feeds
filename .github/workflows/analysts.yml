@@ -1,0 +1,48 @@
+name: Regional Watch analyst public-source collection
+on:
+  push:
+    paths:
+      - 'scripts/collect_analysts.py'
+      - 'scripts/test_analysts.py'
+      - 'config/analysts.json'
+      - '.github/workflows/analysts.yml'
+      - 'worker/analysts-editor.mjs'
+      - 'worker/test-analysts.mjs'
+  workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+permissions:
+  contents: write
+concurrency:
+  group: regional-watch-analysts-mirror
+  cancel-in-progress: false
+jobs:
+  collect-analysts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Offline tests and syntax checks
+        run: |
+          python -m py_compile scripts/collect_analysts.py
+          python scripts/test_analysts.py
+          node --check worker/analysts-editor.mjs
+          node worker/test-analysts.mjs
+      - name: Collect official public-source content
+        run: python scripts/collect_analysts.py
+      - name: Commit bounded mirror and source heartbeat
+        if: always()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if [ -f data/analyst-source-items.json ]; then git add data/analyst-source-items.json; fi
+          if [ -f data/analyst-source-status.json ]; then git add data/analyst-source-status.json; fi
+          if ! git diff --cached --quiet; then
+            git commit -m 'Refresh analyst public-source mirror'
+            git push
+          fi
