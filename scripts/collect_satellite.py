@@ -7,6 +7,7 @@ EONET covers natural events only. No military incident assertions are generated.
 import hashlib
 import io
 import json
+import math
 import os
 import sys
 import urllib.error
@@ -17,9 +18,9 @@ from pathlib import Path
 
 from PIL import Image, ImageChops, ImageStat
 
-GIBS_WMS = "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi"
+GIBS_WMTS = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best"
 EONET = "https://eonet.gsfc.nasa.gov/api/v3/events/geojson"
-LAYER = "VIIRS_SNPP_CorrectedReflectance_TrueColor"
+LAYER = "VIIRS_NOAA20_CorrectedReflectance_TrueColor"
 DATA_PATH = Path("data/satellite-observations.json")
 STATUS_PATH = Path("data/satellite-status.json")
 SENSOR_MAX_BYTES = 1_200_000
@@ -28,7 +29,8 @@ REGIONS = {
     "strait_of_hormuz": (54.0, 24.5, 59.5, 28.2),
     "red_sea_south": (39.0, 11.0, 47.0, 19.0),
 }
-SIZE = (320, 256)
+SIZE = (256, 256)
+TILE_ZOOM = 7
 
 
 def now_utc():
@@ -77,26 +79,34 @@ def download(url, expected, max_bytes):
 
 
 def gibs_url(bbox, date):
-    # WMS v1.1.1 BBOX order is lon,lat; no credentials or private endpoints.
-    params = {
-        "SERVICE": "WMS",
-        "VERSION": "1.1.1",
-        "REQUEST": "GetMap",
-        "LAYERS": LAYER,
-        "STYLES": "",
-        "FORMAT": "image/jpeg",
-        "TRANSPARENT": "FALSE",
-        "SRS": "EPSG:4326",
-        "BBOX": ",".join(str(x) for x in bbox),
-        "WIDTH": str(SIZE[0]),
-        "HEIGHT": str(SIZE[1]),
-        "TIME": date,
-    }
-    return GIBS_WMS + "?" + urllib.parse.urlencode(params)
+    # NASA public Web Mercator WMTS. One center tile per region, rather than
+    # claiming full coverage of the broader requested area.
+    west, south, east, north = bbox
+    lon, lat = (west + east) / 2, (south + north) / 2
+    n = 2 ** TILE_ZOOM
+    x = int((lon + 180.0) / 360.0 * n)
+    y = int((1.0 - math.asinh(math.tan(math.radians(lat))) / math.pi) / 2.0 * n)
+    if not (0 <= x < n and 0 <= y < n):
+        raise ValueError("Invalid satellite tile coordinates")
+
+    def latitude(row):
+        return math.degrees(math.atan(math.sinh(math.pi * (1 - 2 * row / n))))
+
+    tile_bbox = [
+        round(x / n * 360.0 - 180.0, 5),
+        round(latitude(y + 1), 5),
+        round((x + 1) / n * 360.0 - 180.0, 5),
+        round(latitude(y), 5),
+    ]
+    url = (
+        f"{GIBS_WMTS}/{LAYER}/default/{date}/GoogleMapsCompatible_Level9/"
+        f"{TILE_ZOOM}/{y}/{x}.jpeg"
+    )
+    return url, tile_bbox
 
 
 def fetch_quicklook(name, bbox, date):
-    url = gibs_url(bbox, date)
+    url, tile_bbox = gibs_url(bbox, date)
     content_type, body = download(url, "image/jpeg", SENSOR_MAX_BYTES)
     if content_type != "image/jpeg" or not body.startswith(b"\xff\xd8"):
         raise ValueError("GIBS did not return a JPEG; no imagery can be inferred")
@@ -114,6 +124,9 @@ def fetch_quicklook(name, bbox, date):
         "bbox_wsen": list(bbox),
         "image_date": date,
         "image_url": url,
+        "tile_bbox_wsen": tile_bbox,
+        "tile_zoom": TILE_ZOOM,
+        "coverage": "center_tile_only",
         "sha256": hashlib.sha256(body).hexdigest(),
         "bytes": len(body),
         "pixel_variance": round(sum(variance) / 3, 2),
@@ -189,16 +202,15 @@ def collect(at):
         if previews:
             entry = {
                 "region": name,
-                "bbox_wsen": list(bbox),
+                "requested_area_wsen": list(bbox),
                 "layer": LAYER,
                 "quicklooks": previews,
                 "imagery_coverage": "partial" if len(previews) != 2 else "both_dates",
-                "interpretation": "Optical imagery context only; pixel differences reflect clouds, dust, atmospheric and processing changes as well as ground changes.",
+                "interpretation": "One center WMTS tile only, not full region. Optical imagery context; pixel differences also reflect clouds, dust, atmosphere, and processing changes.",
             }
             if len(previews) == 2:
                 try:
-                    # Both PIL images are still accessible after close() for
-                    # in-memory operations, but their pixels are fully loaded.
+                    # Both source images are loaded in memory before comparison.
                     # Re-fetching is deliberately avoided.
                     entry["visual_change_score"] = compare_imagery(imgs[1], imgs[0])
                 except (ValueError, OSError):
