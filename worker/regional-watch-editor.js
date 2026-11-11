@@ -1,3 +1,4 @@
+import analystService from './analysts-editor.mjs';
 
 const FEEDS=[
  ["BBC Middle East","https://feeds.bbci.co.uk/news/world/middle_east/rss.xml",4],
@@ -182,10 +183,25 @@ async function scan(env){
  return summary;
 }
 export default {
- async scheduled(event,env,ctx){ctx.waitUntil(scan(env))},
- async fetch(request,env){
-  const path=new URL(request.url).pathname;
-  if(path==="/health"){const r=await env.NEWS_DB.prepare("SELECT value FROM editor_state WHERE key='last_scan'").first();return Response.json(r?.value?JSON.parse(r.value):{state:"pending"})}
-  return new Response("Not found",{status:404});
- }
+  async scheduled(event, env, ctx) {
+    // Keep existing news editor independent from the analysts pipeline.
+    ctx.waitUntil(scan(env));
+    // The analyst mirror refreshes hourly at :17 UTC. Run its editor at :30 UTC.
+    // An hourly D1 run ID provides additional duplicate-run protection.
+    if (new Date(event.scheduledTime).getUTCMinutes() === 30) {
+      ctx.waitUntil(analystService.scheduled(event, {DB: env.CORE_DB, AI: env.AI}));
+    }
+  },
+  async fetch(request, env) {
+    const path = new URL(request.url).pathname;
+    if (path === '/api/analysts' || path === '/api/analyst-posts' ||
+        /^\/api\/analyst-posts\/[a-z0-9-]+$/.test(path)) {
+      return analystService.fetch(request, {DB: env.CORE_DB, AI: env.AI});
+    }
+    if (path === '/health') {
+      const r = await env.NEWS_DB.prepare("SELECT value FROM editor_state WHERE key='last_scan'").first();
+      return Response.json(r?.value ? JSON.parse(r.value) : {state: 'pending'});
+    }
+    return new Response('Not found', {status: 404});
+  },
 };
