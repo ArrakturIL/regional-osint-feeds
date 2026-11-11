@@ -16,7 +16,7 @@ function mockEnv({ observations = [], statuses = [], providers = [], aviation = 
         assert.equal(statements.length, 6, "summary must read six bounded D1 result sets");
         return [observations, statuses, providers, aviation, corridor, quotas].map(results => ({ results }));
       },
-      prepare() { throw new Error("unexpected individual D1 query in summary"); },
+      prepare(sql) { return { sql, bind(...params) { return { sql, params }; } }; },
     },
   };
 }
