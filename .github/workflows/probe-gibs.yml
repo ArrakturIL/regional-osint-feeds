@@ -1,0 +1,23 @@
+name: Probe NASA GIBS tile transport
+
+on:
+  push:
+    paths:
+      - "scripts/probe_gibs.py"
+      - ".github/workflows/probe-gibs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install "Pillow>=11,<13"
+      - run: python scripts/probe_gibs.py
