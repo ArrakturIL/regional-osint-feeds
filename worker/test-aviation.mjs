@@ -86,8 +86,88 @@ async function summary(env = mockEnv(), path = "/summary?hours=1") {
   assert.match(body.airbridge_context.note, /No origin\/destination/);
 }
 {
+  const { body } = await summary(mockEnv({
+    statuses: [{ source:"adsb",state:"partial" },{source:"adsb_alt",state:"partial"}],
+    aviation: [
+      {source:"adsb",observed_at:now-60000,payload:JSON.stringify({area:"tehran",observed_aircraft:0})},
+      {source:"adsb_alt",observed_at:now-120000,payload:JSON.stringify({area:"tehran",observed_aircraft:2})},
+    ],
+  }));
+  assert.equal(body.aviation_focus_comparison.status,"source_disagreement");
+  assert.equal(body.aviation_focus_comparison.confirmed_empty_airspace,false);
+  assert.equal(body.aviation_focus_comparison.sample_gap_minutes,1);
+}
+{
+  const { body } = await summary(mockEnv({
+    statuses: [{ source:"adsb",state:"partial" },{source:"adsb_alt",state:"partial"}],
+    aviation: [
+      {source:"adsb",observed_at:now-60000,payload:JSON.stringify({area:"tehran",observed_aircraft:0})},
+      {source:"adsb_alt",observed_at:now-120000,payload:JSON.stringify({area:"tehran",observed_aircraft:0})},
+    ],
+  }));
+  assert.equal(body.aviation_focus_comparison.status,"both_report_zero");
+  assert.equal(body.aviation_focus_comparison.confirmed_empty_airspace,false,"two zeroes do not prove empty airspace");
+}
+{
+  const { body } = await summary(mockEnv({
+    statuses: [{ source:"adsb",state:"partial" },{source:"adsb_alt",state:"partial"}],
+    aviation: [
+      {source:"adsb",observed_at:now-60000,payload:JSON.stringify({area:"tehran",observed_aircraft:3})},
+      {source:"adsb_alt",observed_at:now-30*60000,payload:JSON.stringify({area:"tehran",observed_aircraft:3})},
+    ],
+  }));
+  assert.equal(body.aviation_focus_comparison.status,"not_comparable","non-overlapping samples are not cross-verified");
+}
+{
+  const { body } = await summary(mockEnv({
+    statuses: [{ source:"adsb",state:"error" },{source:"adsb_alt",state:"partial"}],
+    aviation: [
+      {source:"adsb",observed_at:now-60000,payload:JSON.stringify({area:"tehran",observed_aircraft:3})},
+      {source:"adsb_alt",observed_at:now-120000,payload:JSON.stringify({area:"tehran",observed_aircraft:3})},
+    ],
+  }));
+  assert.equal(body.aviation_focus_comparison.status,"not_comparable","errored source is never validated by its historical snapshot");
+}
+{
+  const { body } = await summary(mockEnv({
+    statuses:[{source:"adsb_alt",state:"partial"}],
+    aviation: [
+      {source:"adsb_alt",observed_at:now-60000,payload:JSON.stringify({area:"tehran",observed_aircraft:4})},
+      {source:"adsb_alt",observed_at:now-61*60000,payload:JSON.stringify({area:"tehran",observed_aircraft:2})},
+    ],
+  }));
+  const a=body.aviation_focus.find(x=>x.source==="adsb_alt");
+  assert.equal(a.sample_count_24h,2);
+  assert.equal(a.comparison?.count_difference,2);
+  assert.equal(a.comparison?.status,"two_snapshots_only");
+}
+{
+  const { body } = await summary(mockEnv({
+    corridor:[
+      {observed_at:now-60000,payload:JSON.stringify({area:"north_america_east",observed_aircraft:124})},
+      {observed_at:now-6*3600000,payload:JSON.stringify({area:"north_america_east",observed_aircraft:120})},
+    ],
+  }));
+  const a=body.airbridge_context.regions.find(x=>x.area==="north_america_east");
+  assert.equal(a.sample_count_24h,2);
+  assert.equal(a.comparison?.count_difference,4);
+  assert.equal(a.comparison?.status,"two_snapshots_only");
+  assert.match(a.comparison?.evidence,/not arrivals/);
+}
+{
+  const { body } = await summary(mockEnv({
+    corridor:[
+      {observed_at:now-9*3600000,payload:JSON.stringify({area:"western_europe",observed_aircraft:124})},
+      {observed_at:now-15*3600000,payload:JSON.stringify({area:"western_europe",observed_aircraft:120})},
+    ],
+  }));
+  const a=body.airbridge_context.regions.find(x=>x.area==="western_europe");
+  assert.equal(a.status,"stale_sample");
+  assert.equal(a.comparison,null,"stale samples cannot suggest a current change");
+}
+{
   const { response } = await summary(mockEnv(), "/summary?hours=25");
   assert.equal(response.status, 400, "summary rejects unbounded time windows");
 }
 
-console.log("PASS: 7 Worker auth, freshness, quota and corridor-summary regression checks");
+console.log("PASS: 14 Worker auth, freshness, provider comparison and corridor-summary regression checks");
