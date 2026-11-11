@@ -113,6 +113,33 @@ def write_json(path, data):
     )
 
 
+def read_json(path):
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, OSError, ValueError):
+        return None
+
+
+def write_status_if_needed(status, checked):
+    """Commit a heartbeat at most every four hours unless status changed."""
+    prior = read_json(STATUS_FILE)
+    if prior:
+        same = all(
+            prior.get(key) == value
+            for key, value in status.items()
+            if key != "checked_at"
+        )
+        try:
+            previous = datetime.fromisoformat(
+                prior["checked_at"].replace("Z", "+00:00")
+            )
+        except (KeyError, ValueError, TypeError):
+            previous = datetime(1970, 1, 1, tzinfo=timezone.utc)
+        if same and checked - previous < timedelta(hours=4):
+            return
+    write_json(STATUS_FILE, status)
+
+
 def main():
     checked = utcnow()
     status = {
@@ -135,20 +162,23 @@ def main():
         if not items:
             status["detail"] = "No dated /news/ entries within the last 30 days"
         else:
-            # Do not overwrite the last known good news snapshot on an error.
-            write_json(DATA_FILE, {
-                "source": "centcom_dvids",
-                "source_feed": FEED_URL,
-                "fetched_at": iso(checked),
-                "count": len(items),
-                "coverage": "DVIDS unit news only; not all CENTCOM public releases",
-                "items": items,
-            })
+            prior = read_json(DATA_FILE)
+            # Only commit actual new/changed stories. A separate heartbeat
+            # confirms polling continued during quiet news periods.
+            if not prior or prior.get("items") != items:
+                write_json(DATA_FILE, {
+                    "source": "centcom_dvids",
+                    "source_feed": FEED_URL,
+                    "fetched_at": iso(checked),
+                    "count": len(items),
+                    "coverage": "DVIDS unit news only; not all CENTCOM public releases",
+                    "items": items,
+                })
     except urllib.error.HTTPError as exc:
         status["detail"] = f"Upstream HTTP {exc.code}"
     except Exception as exc:
         status["detail"] = f"{type(exc).__name__}: {str(exc)[:220]}"
-    write_json(STATUS_FILE, status)
+    write_status_if_needed(status, checked)
     print(json.dumps(status, ensure_ascii=False))
     return 0 if status["state"] == "ok" else 1
 
