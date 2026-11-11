@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-11T21:25:40Z",
+  "checked_at": "2026-11-11T21:34:55Z",
   "state": "ok",
   "sources": [
     {
@@ -12,6 +12,30 @@
       "source_id": "auslender-youtube",
       "state": "ok",
       "count": 7,
+      "detail": null
+    },
+    {
+      "source_id": "yigal-telegram",
+      "state": "ok",
+      "count": 17,
+      "detail": null
+    },
+    {
+      "source_id": "dina-telegram",
+      "state": "ok",
+      "count": 20,
+      "detail": null
+    },
+    {
+      "source_id": "abuali-telegram",
+      "state": "ok",
+      "count": 16,
+      "detail": null
+    },
+    {
+      "source_id": "stein-telegram",
+      "state": "ok",
+      "count": 20,
       "detail": null
     }
   ]
