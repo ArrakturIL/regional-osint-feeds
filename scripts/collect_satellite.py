@@ -108,7 +108,7 @@ def fetch_quicklook(name, bbox, date):
     variance = ImageStat.Stat(image).var
     # Uniform placeholder tiles are not useful observations.
     if max(variance) < 5:
-        raise ValueError("GIBS tile appears blank or uniform")
+        raise ValueError("GIBS tile uniform: variance=" + str([round(x, 2) for x in variance]) + ", pixel=" + str(image.getpixel((10, 10))))
     return {
         "region": name,
         "bbox_wsen": list(bbox),
@@ -136,8 +136,8 @@ def natural_events():
     }
     url = EONET + "?" + urllib.parse.urlencode(params)
     kind, raw = download(url, "application/json", 850_000)
-    if kind not in ("application/json", "application/geo+json"):
-        raise ValueError("EONET response not JSON")
+    if not raw.lstrip().startswith(b"{"):
+        raise ValueError("EONET response not JSON: content_type=" + kind + ", prefix=" + raw[:80].decode("utf-8", "replace"))
     result = json.loads(raw)
     if not isinstance(result, dict) or result.get("type") != "FeatureCollection":
         raise ValueError("Unexpected EONET GeoJSON")
@@ -157,8 +157,8 @@ def natural_events():
             link = "https://eonet.gsfc.nasa.gov/"
         cats = prop.get("categories") or []
         categories = [
-            c.get("title") or c.get("id")
-            for c in cats if isinstance(c, dict) and (c.get("title") or c.get("id"))
+            (c.get("title") or c.get("id")) if isinstance(c, dict) else c
+            for c in cats if isinstance(c, (dict, str)) and (isinstance(c, str) or (c.get("title") or c.get("id")))
         ]
         out.append({
             "id": event_id[:100],
@@ -186,8 +186,6 @@ def collect(at):
             except (urllib.error.URLError, ValueError, OSError) as exc:
                 issues.append({"region": name, "date": date,
                                "error": type(exc).__name__ + ": " + str(exc)[:100]})
-        for img in imgs:
-            img.close()
         if previews:
             entry = {
                 "region": name,
@@ -206,6 +204,8 @@ def collect(at):
                 except (ValueError, OSError):
                     entry["visual_change_score"] = None
             overviews.append(entry)
+        for img in imgs:
+            img.close()
     events = []
     try:
         events = natural_events()
