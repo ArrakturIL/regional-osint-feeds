@@ -28,3 +28,5 @@ jobs:
         run: node worker/test-adsb-recovery.mjs
       - name: Validate Sentinel and OpenAerialMap catalog collectors
         run: node worker/test-geo-catalog.mjs
+      - name: Validate GDELT News Context Mirror
+        run: node worker/test-gdelt.mjs
