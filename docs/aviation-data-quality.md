@@ -18,7 +18,8 @@ Regional Watch separates **what a receiver reported** from **what actually happe
 - Observations record aircraft counts and **type/database hints only**; no tail numbers, individual paths or precise aircraft positions are stored in this derived source.
 - `airlift_type_observed`, `tanker_type_observed`, `military_db_flagged` and `flagged_logistics_type` count matches **within each snapshot**. They are not unique flights or proof of US origin, destination, cargo, deployment, affiliation or a transatlantic air bridge.
 - The authenticated `/summary` exposes `airbridge_context.regions` with last snapshot, per-region samples in 24h, and freshness; the UI should label it **«Контекст воздушного коридора»**, never «подтверждённый воздушный мост».
-- If AvioADSB reports 28 or fewer remaining requests and the quota information is fresh, the optional corridor sampler skips its turn to preserve capacity for Tehran.
+- If AvioADSB reports **28 or fewer** remaining requests and the quota information is fresh, the optional corridor sampler skips its turn. The AvioADSB regional-context sampler also skips non-Tehran turns at this threshold. At **12 or fewer** remaining requests, Tehran is reduced to approximately one sample per 90 minutes; at **4 or fewer**, approximately one per three hours. These are conservative caps until the provider's UTC quota reset; other users of the same network can still consume quota.
+- Skipped polls are marked `partial` with a quota-reservation detail. They **do not advance `source_status.succeeded_at`**, so a skipped request cannot make the feed appear freshly sampled.
 
 ## API budget and attribution
 
