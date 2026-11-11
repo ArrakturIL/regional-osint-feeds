@@ -226,9 +226,12 @@ async function runEditor(env, time) {
       const inserted=await insertItem(db,it,now);
       if (inserted) stats.discovered++;
     }
+    // Close records that are too old to process; never leave eternal pending rows.
+    await db.prepare("UPDATE analyst_items SET state='skipped',processed_at_ms=?,last_error='Outside seven-day freshness window' WHERE state='pending' AND source_published_at_ms<?")
+      .bind(now,now-7*DAY).run();
     const pending=await db.prepare(`SELECT i.*,a.display_name AS analyst_name,s.language AS original_language FROM analyst_items i JOIN analysts a ON a.id=i.analyst_id JOIN analyst_sources s ON s.id=i.source_id
        WHERE i.state='pending' AND s.enabled=1 AND i.source_published_at_ms>=?
-       ORDER BY i.source_published_at_ms DESC LIMIT 8`).bind(now-48*HOUR).all();
+       ORDER BY i.source_published_at_ms DESC LIMIT 20`).bind(now-7*DAY).all();
     let usedAi=0;
     for (const it of pending.results||[]) {
       if (it.text_status==='full_text' && it.body.length>=(it.original_language==='ru'?220:160) && (it.original_language!=='ru'||REGION.test(it.body)) && usedAi>=MAX_AI_PER_RUN) break;
@@ -243,7 +246,8 @@ async function runEditor(env, time) {
           const p=await db.prepare('SELECT headline,summary FROM analyst_publications WHERE item_id=?').bind(it.id).first();
           if (p) recent.unshift(p);
         }
-        stats[result]=(stats[result]||0)+1; stats.processed++;
+        const stat=result==='skip'?'skipped':result;
+        stats[stat]=(stats[stat]||0)+1; stats.processed++;
       } catch (e) {
         stats.errors++;
         await db.prepare(`UPDATE analyst_items SET last_error=?,last_attempt_at_ms=?,attempts=attempts+1,
