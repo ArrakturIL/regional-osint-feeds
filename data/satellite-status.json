@@ -1,0 +1,41 @@
+{
+  "source": "satellite_context",
+  "state": "partial",
+  "checked_at": "2026-11-11T17:00:46.059583Z",
+  "snapshot_changed": true,
+  "regions_with_imagery": 0,
+  "natural_events": 6,
+  "errors": [
+    {
+      "region": "persian_gulf",
+      "date": "2026-11-06",
+      "error": "ValueError: GIBS tile uniform: variance=[0.0, 0.0, 0.0], pixel=(0, 0, 0)"
+    },
+    {
+      "region": "persian_gulf",
+      "date": "2026-11-09",
+      "error": "ValueError: GIBS tile uniform: variance=[0.0, 0.0, 0.0], pixel=(0, 0, 0)"
+    },
+    {
+      "region": "strait_of_hormuz",
+      "date": "2026-11-06",
+      "error": "ValueError: GIBS tile uniform: variance=[0.0, 0.0, 0.0], pixel=(0, 0, 0)"
+    },
+    {
+      "region": "strait_of_hormuz",
+      "date": "2026-11-09",
+      "error": "ValueError: GIBS tile uniform: variance=[0.0, 0.0, 0.0], pixel=(0, 0, 0)"
+    },
+    {
+      "region": "red_sea_south",
+      "date": "2026-11-06",
+      "error": "ValueError: GIBS tile uniform: variance=[0.0, 0.0, 0.0], pixel=(0, 0, 0)"
+    },
+    {
+      "region": "red_sea_south",
+      "date": "2026-11-09",
+      "error": "ValueError: GIBS tile uniform: variance=[0.0, 0.0, 0.0], pixel=(0, 0, 0)"
+    }
+  ],
+  "note": "Context imagery & natural events; not verification of attacks or military activity."
+}

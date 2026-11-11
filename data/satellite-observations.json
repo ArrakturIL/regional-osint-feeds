@@ -1,0 +1,118 @@
+{
+  "source": "satellite_context",
+  "collected_at": "2026-11-11T17:00:46.059583Z",
+  "providers": [
+    "NASA GIBS",
+    "NASA EONET"
+  ],
+  "layer": "VIIRS_SNPP_CorrectedReflectance_TrueColor",
+  "latest_requested_date": "2026-11-09",
+  "earlier_requested_date": "2026-11-06",
+  "visual_overviews": [],
+  "natural_events": [
+    {
+      "id": "EONET_26295",
+      "title": "Wildfire in Ethiopia, Sudan 1033702",
+      "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_26295/geojson",
+      "categories": [
+        "Wildfires"
+      ],
+      "event_date": "2026-11-07T19:00:00Z",
+      "closed": "2026-11-09T00:00:00Z",
+      "source": "NASA EONET"
+    },
+    {
+      "id": "EONET_26160",
+      "title": "Flood in Iraq 1104272",
+      "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_26160/geojson",
+      "categories": [
+        "Floods"
+      ],
+      "event_date": "2026-11-06T20:00:00Z",
+      "closed": "2026-11-08T00:00:00Z",
+      "source": "NASA EONET"
+    },
+    {
+      "id": "EONET_26161",
+      "title": "Flood in Israel 1104273",
+      "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_26161/geojson",
+      "categories": [
+        "Floods"
+      ],
+      "event_date": "2026-11-06T20:00:00Z",
+      "closed": "2026-11-08T00:00:00Z",
+      "source": "NASA EONET"
+    },
+    {
+      "id": "EONET_26162",
+      "title": "Flood in Syria 1104274",
+      "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_26162/geojson",
+      "categories": [
+        "Floods"
+      ],
+      "event_date": "2026-11-06T20:00:00Z",
+      "closed": "2026-11-08T00:00:00Z",
+      "source": "NASA EONET"
+    },
+    {
+      "id": "EONET_26322",
+      "title": "Wildfire in Sudan 1033717",
+      "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_26322/geojson",
+      "categories": [
+        "Wildfires"
+      ],
+      "event_date": "2026-11-03T19:00:00Z",
+      "closed": "2026-11-09T00:00:00Z",
+      "source": "NASA EONET"
+    },
+    {
+      "id": "EONET_26156",
+      "title": "Wildfire in Ethiopia, Sudan 1033556",
+      "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_26156/geojson",
+      "categories": [
+        "Wildfires"
+      ],
+      "event_date": "2026-10-28T19:00:00Z",
+      "closed": "2026-11-05T00:00:00Z",
+      "source": "NASA EONET"
+    }
+  ],
+  "quality": {
+    "has_optical_quicklooks": false,
+    "has_eonet_response": true,
+    "issues": [
+      {
+        "region": "persian_gulf",
+        "date": "2026-11-06",
+        "error": "ValueError: GIBS tile uniform: variance=[0.0, 0.0, 0.0], pixel=(0, 0, 0)"
+      },
+      {
+        "region": "persian_gulf",
+        "date": "2026-11-09",
+        "error": "ValueError: GIBS tile uniform: variance=[0.0, 0.0, 0.0], pixel=(0, 0, 0)"
+      },
+      {
+        "region": "strait_of_hormuz",
+        "date": "2026-11-06",
+        "error": "ValueError: GIBS tile uniform: variance=[0.0, 0.0, 0.0], pixel=(0, 0, 0)"
+      },
+      {
+        "region": "strait_of_hormuz",
+        "date": "2026-11-09",
+        "error": "ValueError: GIBS tile uniform: variance=[0.0, 0.0, 0.0], pixel=(0, 0, 0)"
+      },
+      {
+        "region": "red_sea_south",
+        "date": "2026-11-06",
+        "error": "ValueError: GIBS tile uniform: variance=[0.0, 0.0, 0.0], pixel=(0, 0, 0)"
+      },
+      {
+        "region": "red_sea_south",
+        "date": "2026-11-09",
+        "error": "ValueError: GIBS tile uniform: variance=[0.0, 0.0, 0.0], pixel=(0, 0, 0)"
+      }
+    ],
+    "image_change_is_not_evidence_of_conflict": true,
+    "not_an_alert_source": true
+  }
+}
