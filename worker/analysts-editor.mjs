@@ -142,7 +142,9 @@ async function decide(db,env,it,now,recent) {
       translated=await translatedForEditorial(env,it,now);
       editorialText=translated.text;
     }
-    if(!REGION.test(editorialText)){
+    if(PROMO.test(editorialText)&&editorialText.length<1400){
+      decision={decision:'skip',reason:'Рекламное сообщение без аналитической ценности.',relevance:0,novelty:0,substance:0};
+    }else if(!REGION.test(editorialText)){
       decision={decision:'skip',reason:'Нет аналитики по региональной безопасности Израиля и Ближнего Востока.',relevance:0,novelty:0,substance:0};
     }else if(recent.some(x=>similarity(editorialText,x.summary)>0.78)){
       decision={decision:'skip',reason:'Похожий анализ уже был опубликован; нового содержания недостаточно.',relevance:85,novelty:10,substance:30};
