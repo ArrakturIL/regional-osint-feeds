@@ -14,7 +14,7 @@ The separate Cloudflare Worker prioritizes **Tehran** ADS-B snapshots and sample
 
 See [aviation coverage, source quality, quota allocation and UI states](docs/aviation-data-quality.md) for the exact sampling schedule, CC BY-NC attribution and rollback checks.
 
-The [deployed Worker source snapshot](worker/regional-osint-monitor.js) is version-controlled and checked by [aviation regression tests](worker/test-aviation.mjs). The [Pages aviation UI contract](docs/aviation-ui-contract.md) specifies how to display missing, stale and unavailable data without showing false zeroes. **GitHub commits do not automatically deploy the Worker**; production changes require explicit Cloudflare deployment with the existing secret bindings and compatibility date preserved.
+The [deployed Worker source snapshot](worker/regional-osint-monitor.js) is version-controlled and checked by [aviation regression tests](worker/test-aviation.mjs). The [Pages aviation UI contract](docs/aviation-ui-contract.md) specifies how to display missing, stale and unavailable data without showing false zeroes. **GitHub commits do not automatically deploy the Worker**; production changes follow the [safe deployment and rollback checklist](worker/DEPLOY.md), preserving the existing secret bindings and compatibility date.
 
 ## Satellite quality and cost guardrails
 
