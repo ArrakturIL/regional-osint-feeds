@@ -33,7 +33,7 @@ function bySlot(minutes,slotMod,reference=Date.now()) {
 }
 function requestEntries(calls) {
   return calls.batches.flatMap(statements=>statements.filter(x=>x.params?.[2]).flatMap(stmt=>{
-    try { const a=JSON.parse(stmt.params[2]);return Array.isArray(a)?a:[]; } catch{return [];}
+    try { const a=JSON.parse(stmt.params[2]);return Array.isArray(a)?a.map(r=>({...r,payload:JSON.parse(r.payload)})):[]; } catch{return [];}
   }));
 }
 let fetchFn=()=>{throw Error("mock fetch not assigned")};
