@@ -20,6 +20,7 @@ Regional Watch separates **what a receiver reported** from **what actually happe
 - The authenticated `/summary` exposes `airbridge_context.regions` with last snapshot, per-region samples in 24h, and freshness; the UI should label it **«Контекст воздушного коридора»**, never «подтверждённый воздушный мост».
 - If AvioADSB reports **28 or fewer** remaining requests and the quota information is fresh, the optional corridor sampler skips its turn. The AvioADSB regional-context sampler also skips non-Tehran turns at this threshold. At **12 or fewer** remaining requests, Tehran is reduced to approximately one sample per 90 minutes; at **4 or fewer**, approximately one per three hours. These are conservative caps until the provider's UTC quota reset; other users of the same network can still consume quota.
 - Skipped polls are marked `partial` with a quota-reservation detail. They **do not advance `source_status.succeeded_at`**, so a skipped request cannot make the feed appear freshly sampled.
+- The remaining quota is a conservative upper bound until its UTC reset; it is not treated as replenished just because the header was last observed over two hours ago. At **0 remaining**, all AvioADSB requests are skipped until reset instead of intentionally triggering another 429.
 
 ## API budget and attribution
 
