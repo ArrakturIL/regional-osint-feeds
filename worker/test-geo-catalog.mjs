@@ -40,6 +40,7 @@ let fetchFn=()=>{throw Error("mock fetch not assigned")};
 let requested=[];
 const nativeFetch=globalThis.fetch;
 globalThis.fetch=async(url,opt)=>{
+  assert.equal(opt.redirect,"manual","Cloudflare Workers do not support redirect:error");
   requested.push({url:String(url),headers:opt.headers});
   return fetchFn(String(url),opt);
 };
