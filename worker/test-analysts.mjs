@@ -20,4 +20,10 @@ assert.ok(validateDecision(good,b));
 assert.equal(validateDecision({...good,quote:'Цитата которой не было'},b),null);
 assert.equal(validateDecision({...good,relevance:5},b),null);
 assert.equal(validateDecision({...good,summary:'Повтор одного предложения.'},b),null);
+const hebrewSource={id:'abuali-telegram',type:'telegram_public',canonical_prefix:'https://t.me/abualiexpress/',language:'he'};
+const hebrewAuthor={id:'abu-ali-express'};
+const hebrewItem={...raw,id:'abuali-telegram:712',analyst_id:hebrewAuthor.id,source_id:hebrewSource.id,
+ canonical_url:'https://t.me/abualiexpress/712',body:'לפי הדיווח אין החלטה סופית על תקיפה באיראן.',language:'he'};
+assert.ok(validateInput(hebrewItem,hebrewSource,hebrewAuthor,now));
+assert.equal(validateInput({...hebrewItem,language:'ru'},hebrewSource,hebrewAuthor,now),null);
 console.log('analysts editor offline checks: OK');
