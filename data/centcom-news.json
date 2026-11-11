@@ -1,0 +1,30 @@
+{
+  "source": "centcom_dvids",
+  "source_feed": "https://www.dvidshub.net/rss/unit/72",
+  "fetched_at": "2026-11-11T16:19:24.347209Z",
+  "count": 3,
+  "coverage": "DVIDS unit news only; not all CENTCOM public releases",
+  "items": [
+    {
+      "url": "https://www.dvidshub.net/news/578872/us-forces-disable-cargo-vessel-attempting-violate-naval-blockade",
+      "title": "U.S. Forces Disable Cargo Vessel Attempting to Violate Naval Blockade",
+      "published_at": "2026-11-07T20:31:51Z",
+      "source": "DVIDS U.S. Central Command Public Affairs",
+      "source_feed": "https://www.dvidshub.net/rss/unit/72"
+    },
+    {
+      "url": "https://www.dvidshub.net/news/578868/centcom-launches-task-force-disrupt-iranian-ground-transit-routes-supporting-illegal-shipments",
+      "title": "CENTCOM Launches Task Force to Disrupt Iranian Ground Transit Routes Supporting Illegal Shipments",
+      "published_at": "2026-11-07T13:31:30Z",
+      "source": "DVIDS U.S. Central Command Public Affairs",
+      "source_feed": "https://www.dvidshub.net/rss/unit/72"
+    },
+    {
+      "url": "https://www.dvidshub.net/news/577799/centcom-commander-visits-strait-hormuz-during-milestone-week",
+      "title": "CENTCOM Commander Visits Strait of Hormuz during Milestone Week",
+      "published_at": "2026-10-25T16:42:55Z",
+      "source": "DVIDS U.S. Central Command Public Affairs",
+      "source_feed": "https://www.dvidshub.net/rss/unit/72"
+    }
+  ]
+}
