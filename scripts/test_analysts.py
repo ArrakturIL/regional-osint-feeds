@@ -35,4 +35,28 @@ class Tests(unittest.TestCase):
  def test_unknown_markup_is_failure(self):
   with self.assertRaises(ValueError):m.telegram_posts("<html>no posts</html>",TELE,"a",NOW)
 
+ def test_rss_author_verified_only(self):
+  rss='''<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>RUSI</title>
+  <item><title>Air power and strategy</title><link>https://www.rusi.org/article/air-power</link>
+  <pubDate>Wed, 11 Nov 2026 20:00:00 +0000</pubDate><dc:creator>Justin Bronk</dc:creator>
+  <description>Brief metadata: not full text.</description></item>
+  <item><title>Other commentary</title><link>https://www.rusi.org/article/other</link>
+  <pubDate>Wed, 11 Nov 2026 20:01:00 +0000</pubDate><dc:creator>Another Person</dc:creator></item>
+  </channel></rss>'''
+  src={"id":"bronk-rusi-rss","type":"rss_author","canonical_prefix":"https://www.rusi.org/","author_match":"Justin Bronk","language":"en"}
+  found=m.rss_author_posts(rss,src,"justin-bronk",NOW)
+  self.assertEqual(len(found),1)
+  self.assertEqual(found[0]["body"],"")
+  self.assertEqual(found[0]["text_status"],"metadata_only")
+  self.assertEqual(found[0]["language"],"en")
+  self.assertEqual(found[0]["title"],"Air power and strategy")
+ def test_rss_other_host_rejected(self):
+  rss='''<rss><channel><item><title>A title</title><link>https://random.example/blog</link>
+  <pubDate>Wed, 11 Nov 2026 20:00:00 GMT</pubDate><author>Tom Karako</author></item></channel></rss>'''
+  src={"id":"karako-missile-threat-rss","type":"rss_author","canonical_prefix":"https://missilethreat.csis.org/","author_match":"Tom Karako","language":"en"}
+  self.assertEqual(m.rss_author_posts(rss,src,"tom-karako",NOW),[])
+ def test_rss_rejects_html_document(self):
+  with self.assertRaises(ValueError):
+   m.rss_author_posts("<html><body>not a feed</body></html>",{"author_match":"Justin Bronk"},"a",NOW)
+
 if __name__=="__main__":unittest.main()
