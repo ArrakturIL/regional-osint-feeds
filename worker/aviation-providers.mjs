@@ -66,7 +66,8 @@ export function parseOpenSky(data, region, nowMs = Date.now()) {
   let noCallsign = 0, onGroundExcluded = 0, stalePositionsExcluded = 0, missingPositionExcluded = 0;
   for (const state of data.states) {
     if (!Array.isArray(state) || typeof state[0] !== "string" || !/^[a-f\d]{6}$/i.test(state[0])) continue;
-    const [icao, callsign, , timePosition, lastContact, lon, lat, , onGround, , , , , , , , , category] = state;
+    const icao=state[0], callsign=state[1], timePosition=state[3], lastContact=state[4];
+    const lon=state[5], lat=state[6], onGround=state[8], category=state[17];
     if (!validCoords(lat,lon)) { missingPositionExcluded++; continue; }
     if (!finiteNumber(timePosition) || at - timePosition*1000 > 30000 || at - timePosition*1000 < -5000
       || !finiteNumber(lastContact) || at - lastContact*1000 > 30000) { stalePositionsExcluded++; continue; }
