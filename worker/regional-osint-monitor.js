@@ -1158,7 +1158,7 @@ async function runSchedule(controller, env) {
     ...(minute % 30 === 9 ? ["centcom_dvids"] : []),
     ...(minute % 360 === 61 ? ["marad_official"] : []),
     ...(minute % 720 === 53 ? ["satellite_context"] : []),
-    ...(minute % 60 === 52 ? ["gdelt_context"] : []),
+    ...(minute % 60 === 55 ? ["gdelt_context"] : []),
     ...(minute % 180 === 44 ? ["sentinel_catalog"] : []),
     ...(minute % 1440 === 49 ? ["aerial_archive"] : []),
     ...(minute % 30 === 22 ? ["adsb_alt"] : []),
