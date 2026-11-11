@@ -1,3 +1,15 @@
+# Актуализация после инцидента GitHub CI — 2026-11-12 (Asia/Jerusalem)
+
+**Важнее предыдущего описания состояния.** Реальный код/ветки GitHub проверять по текущим файлам и CI, а не продолжать старый план вслепую.
+
+- Исправлен ложный CI fail GDELT: `worker/test-gdelt.mjs` проверял сериализованный JSON payload как готовый объект. В `main` commit `6357823f2fa91ec602f1b0cf3dd0f1b982923ac2`, такой же фикс в `feature/analyst-editor-20261111` commit `20c6cf12281270fbb22593d5101d81b65d75bb23`. Результаты после исправления: [main CI green](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43110191660), [feature CI green](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43110198264).
+- Конфликт `git push` сборщика аналитиков был настоящим: workflow коммитил результаты в изменяемую feature-ветку. Workflow теперь разрешает writeback **только при schedule / manual на `main`**, `pull_request` делает только проверки, retry через `git fetch` + `git rebase`, НЕТ force-push. [Зелёный PR run](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43110308352). Старые failure emails от исторических запусков остаются, новых ошибок после фиксов не выявлено.
+- **Редактор аналитиков — всё ещё в draft PR [#1](https://github.com/ArrakturIL/regional-osint-feeds/pull/1), НЕ активирован в production.** Источники и AI-перевод нельзя считать внедрёнными в рабочий сайт. Есть код редактора и переводов в ветке, CI и 8 публичных источников у 7 авторских единиц (5 первоначальных с Telegram/YouTube, плюс RUSI/Bronk и CSIS/Karako). Ещё 3 американских/европейских аналитика внесены без активных источников. Иранские кандидаты не включены по решению пользователя. RSS у Бронка и Карако проверяет автора, но выдаёт только метаданные — до законного получения полного текста публикации запрещены.
+- Данные для тестового RSS и Telegram в feature ветке — не production. `worker/analysts-translation-migration.sql` ещё не применять вслепую; сверить D1, текущую схему и готовность Worker. Продукционную UI, почту и отдельную задачу США–Иран не менять.
+- Главное правило: **сначала проверка актуальных файлов, CI, branch и D1, затем изменение; после — повторная проверка CI, без обещаний о развёртывании до факта.**
+
+---
+
 # REGIONAL WATCH — CHECKPOINT / HANDOFF
 **Дата:** 2026-11-11, вечер по Израилю (Asia/Jerusalem)
 **Зачем:** продолжить работу в другом чате/с телефона, даже при плохой синхронизации истории.
