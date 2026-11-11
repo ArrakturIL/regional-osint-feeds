@@ -19,6 +19,25 @@ CREATE TABLE IF NOT EXISTS worker_provider_quota (
 );
 ```
 
+### Observation history query index
+
+The additive migration `migrations/2026-11-11_observations_source_time.sql` adds `observations_source_time(source, observed_at DESC)` to D1 `regional-osint`. Keep the existing `observations_time(observed_at)` index for cross-source chronological reads. Applied to production on 2026-11-11; the aviation-history query then read approximately 415 rows rather than 838 for the same 200-row result.
+
+Verify the query plan after applying migrations:
+
+```sql
+EXPLAIN QUERY PLAN
+SELECT observed_at,payload FROM observations
+WHERE source='airbridge_context' AND observed_at>=0
+ORDER BY observed_at DESC LIMIT 30;
+```
+
+It should use `observations_source_time` without a temporary sort.
+
+### Version-first deployments
+
+For source-only Worker changes, upload a new `/workers/scripts/{script_name}/versions` version with explicit `compatibility_date` and `keep_bindings: ["secret_text","d1","plain_text"]`. Before deploying, inspect the new version's `resources.bindings` to verify all five original binding names and the D1 ID. Run offline GitHub tests, then explicitly deploy the validated version at 100%. The previous Worker version remains available for rollback. Do not recreate or expose secret values.
+
 ## Upload metadata
 
 **Important:** A Worker multipart upload that omits `compatibility_date` can reset the existing date to an empty value even if bindings are inherited. This happened during testing and was caught by post-deployment validation.
