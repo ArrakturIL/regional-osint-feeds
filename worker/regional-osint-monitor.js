@@ -918,6 +918,7 @@ async function sentinelCatalog(env, slot) {
       caveat:"Discovery metadata, not an analyzed image. Tile overlap is not evidence of observed activity; no pixel comparison, object identification, or incident confirmation.",
     }));
   }
+  if (data.features.length && !entries.length) throw new Error("unexpected Earth Search scene metadata");
   return {entries,missing:data.links?.some(x=>x.rel==="next")?["catalog_first_page_only"]:[],
     detail:"Limited STAC discovery page. No pixels downloaded; scene availability is not an event."};
 }
@@ -949,6 +950,7 @@ async function aerialArchive(env, slot) {
       caveat:"Archival crowdsourced aerial imagery. Acquisition date may be years old; no current conditions or military event inferred. Check individual image attribution/terms before republication.",
     }));
   }
+  if (data.results.length && !entries.length) throw new Error("unexpected OpenAerialMap imagery metadata");
   return {entries,missing:[],detail:"Historical OpenAerialMap metadata only; coverage is patchy."};
 }
 
