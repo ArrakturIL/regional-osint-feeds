@@ -91,7 +91,7 @@ class PublicTelegramParser(HTMLParser):
         if tag == "div":
             self.depth += 1
             ref = a.get("data-post", "")
-            if self.active is None and "tgme_widget_message" in classes and re.fullmatch(re.escape(self.channel) + r"/\d+", ref):
+            if self.active is None and "tgme_widget_message" in classes and re.fullmatch(re.escape(self.channel) + r"/\d+", ref, re.IGNORECASE):
                 self.active = {"num": int(ref.rsplit("/", 1)[-1]), "text": [], "published_at": None, "forwarded": False}
                 self.active_depth = self.depth
             elif self.active:
@@ -145,7 +145,7 @@ def telegram_posts(markup: str, source: dict, analyst_id: str, now: datetime) ->
             "id": f"{source['id']}:{row['num']}", "analyst_id": analyst_id,
             "source_id": source["id"], "type": "telegram_post", "canonical_url": canonical,
             "title": "", "published_at": ts(published), "text_status": "truncated" if truncated else "full_text",
-            "body": body, "language": "ru", "video_timecodes": [],
+            "body": body, "language": source.get("language", "ru"), "video_timecodes": [],
             "content_hash": hashlib.sha256(body.encode("utf-8")).hexdigest(),
         })
     return sorted(result, key=lambda x: x["published_at"], reverse=True)[:MAX_ITEMS]
@@ -182,7 +182,7 @@ def youtube_posts(xml: str, source: dict, analyst_id: str, now: datetime) -> lis
             "source_id": source["id"], "type": "youtube_video",
             "canonical_url": source["canonical_prefix"] + video_id,
             "title": title, "published_at": ts(published), "text_status": "metadata_only",
-            "body": "", "language": "ru", "video_timecodes": [],
+            "body": "", "language": source.get("language", "ru"), "video_timecodes": [],
             "content_hash": hashlib.sha256((video_id + title).encode("utf-8")).hexdigest(),
         })
     return sorted(result, key=lambda x: x["published_at"], reverse=True)[:MAX_ITEMS]
@@ -216,13 +216,25 @@ def main() -> int:
             except (urllib.error.URLError, TimeoutError, ValueError, ET.ParseError) as exc:
                 status["detail"] = (type(exc).__name__ + ": " + str(exc))[:250]
             sources.append(status)
-    ids = set()
-    unique = []
+    # Fair sampling prevents one high-volume channel from starving other analysts.
+    groups = {}
     for it in sorted(items, key=lambda r: r["published_at"], reverse=True):
-        if it["id"] not in ids:
-            ids.add(it["id"])
-            unique.append(it)
-    unique = unique[:40]
+        group = groups.setdefault(it["source_id"], [])
+        if len(group) < 8 and not any(x["id"] == it["id"] for x in group):
+            group.append(it)
+    unique = []
+    while len(unique) < 40 and any(groups.values()):
+        for source_id in list(groups):
+            if groups[source_id] and len(unique) < 40:
+                unique.append(groups[source_id].pop(0))
+        if not any(groups.values()):
+            break
+    # Keep all original texts intact; shed older items instead of silently truncating content.
+    def encoded_items(data):
+        return json.dumps({"schema_version": 1, "checked_at": ts(now), "items": data},
+                          ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    while unique and len(encoded_items(unique)) > MAX_OUTPUT:
+        unique.pop()
     OUT.parent.mkdir(parents=True, exist_ok=True)
     payload = {"schema_version": 1, "checked_at": ts(now), "items": unique}
     encoded = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
