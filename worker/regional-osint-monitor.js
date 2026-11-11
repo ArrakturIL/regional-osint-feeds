@@ -152,7 +152,11 @@ const AIRBRIDGE_REGIONS = [
 async function aviation(env, slot) {
   const { focus, context } = airSamplingRegions(env);
   // Existing 15-minute budget: 48 focus and 48 context samples per day.
-  const turn = Math.floor(slot / (15 * MINUTE)), primary = turn % 2 === 0;
+  // After a provider rate-limit failure, spend recovery probes on the focus area.
+  const health = await env.DB.prepare("SELECT failures FROM worker_provider_state WHERE provider=?")
+    .bind("adsb.lol").first();
+  const recovering = (health?.failures || 0) > 0;
+  const turn = Math.floor(slot / (15 * MINUTE)), primary = recovering || turn % 2 === 0;
   const region = primary ? focus : context[Math.floor(turn / 2) % context.length];
   const sample = await aviationRegion(region, slot, env);
   sample.payload.sampled_only = true;
@@ -931,6 +935,22 @@ async function runSchedule(controller, env) {
     ...(minute % 60 === 37 ? ["airbridge_context"] : []),
   ];
   const selected = new Set([...group,...supplemental,...(manual?.wanted || [])]);
+  // Shared adsb.lol quota: skip redundant automatic attempts during cooldown.
+  // While recovering, reserve the first successful probe for the Tehran-priority collector,
+  // not for the broad /mil endpoint. Explicit manual requests still report their result.
+  const autoAdsb = ["adsb", "mil_lol"].filter(name =>
+    selected.has(name) && !(manual?.wanted || []).includes(name));
+  if (autoAdsb.length) {
+    const health = await env.DB.prepare(
+      "SELECT failures,next_allowed_at,lease_until FROM worker_provider_state WHERE provider=?"
+    ).bind("adsb.lol").first();
+    const now = Date.now();
+    if ((health?.next_allowed_at || 0) > now || (health?.lease_until || 0) > now) {
+      for (const name of autoAdsb) selected.delete(name);
+    } else if ((health?.failures || 0) > 0) {
+      selected.delete("mil_lol");
+    }
+  }
   const due = sources.filter(s => selected.has(s.name) && (!s.secret || env[s.secret]));
   const results = await Promise.allSettled(due.map(source => collect(env.DB, env, source, slot)));
   if (manual) {
