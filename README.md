@@ -8,6 +8,10 @@ This repository is a low-frequency, publicly auditable data collection layer fee
 | collect_marad.py | [U.S. Maritime Administration](https://www.maritime.dot.gov/msci-advisories) | Every 6 hours | [Active maritime advisories](data/marad-advisories.json), [status](data/marad-status.json) |
 | collect_satellite.py | [NASA GIBS](https://nasa-gibs.github.io/gibs-api-docs/) + [NASA EONET](https://eonet.gsfc.nasa.gov/docs/v3) | Daily | [Satellite/natural-event metadata](data/satellite-observations.json), [status](data/satellite-status.json) |
 
+## Optional aviation providers (not activated)
+
+[OpenSky and ADS-B Exchange readiness](docs/opensky-adsbx-readiness.md) documents the one-shot Cloudflare OpenSky timeout, the ADS-B Exchange API-key requirement, offline adapters and tests, and the activation gates. Neither service has been added to the production cron; AirLabs remains on the registration waitlist.
+
 ## Aviation monitoring and limits
 
 The separate Cloudflare Worker prioritizes **Tehran** ADS-B snapshots and samples a broad US–Europe–Middle East corridor at low frequency. A zero in one receiver snapshot is **not** proof of empty airspace, and corridor observations do **not** establish a specific military flight or route.
