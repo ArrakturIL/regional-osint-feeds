@@ -1,0 +1,42 @@
+name: Temporary Copernicus EMS access check
+
+on:
+  push:
+    paths:
+      - ".github/workflows/temporary-cems-access-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-public-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check official public activation endpoints once
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, urllib.request, urllib.error
+          endpoints = {
+            "unified": "https://mapping.emergency.copernicus.eu/activations/api/activations/?limit=1",
+            "rapid_mapping": "https://rapidmapping.emergency.copernicus.eu/backend/dashboard-api/public-activations-info/?limit=1",
+            "risk_recovery": "https://riskandrecovery.emergency.copernicus.eu/api/public-activations/?limit=1",
+          }
+          for name, url in endpoints.items():
+              req = urllib.request.Request(url, headers={"Accept": "application/json", "User-Agent": "RegionalWatch-OSINT-Noncommercial/1.0"})
+              try:
+                  with urllib.request.urlopen(req, timeout=15) as resp:
+                      payload = resp.read(250000)
+                      try:
+                          data = json.loads(payload)
+                          rows = data.get("results", []) if isinstance(data, dict) else []
+                          print(json.dumps({"name":name,"status":resp.status,"content_type":resp.headers.get("content-type"),"valid_json":True,"result_count":len(rows) if isinstance(rows,list) else None,"count":data.get("count") if isinstance(data,dict) else None},ensure_ascii=False))
+                      except ValueError:
+                          print(json.dumps({"name":name,"status":resp.status,"content_type":resp.headers.get("content-type"),"valid_json":False}))
+              except urllib.error.HTTPError as e:
+                  print(json.dumps({"name":name,"status":e.code,"error":"HTTP error"}))
+              except Exception as e:
+                  print(json.dumps({"name":name,"error_type":type(e).__name__,"message":str(e)[:160]}))
+          PY
