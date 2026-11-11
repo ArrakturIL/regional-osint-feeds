@@ -89,6 +89,61 @@
           "enabled": true
         }
       ]
+    },
+    {
+      "id": "justin-bronk",
+      "display_name": "Джастин Бронк (Justin Bronk)",
+      "description": "RUSI, Великобритания; боевая авиация, противовоздушная оборона, авиационные технологии",
+      "verification": "https://www.rusi.org/people/bronk",
+      "sources": [
+        {
+          "id": "bronk-rusi-rss",
+          "type": "rss_author",
+          "feed": "https://www.rusi.org/rss/latest-commentary.xml",
+          "canonical_prefix": "https://www.rusi.org/",
+          "author_match": "Justin Bronk",
+          "language": "en",
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "id": "tom-karako",
+      "display_name": "Том Карако (Tom Karako)",
+      "description": "CSIS Missile Defense Project, США; ПРО, ракеты, американские запасы вооружений",
+      "verification": "https://www.csis.org/people/tom-karako",
+      "sources": [
+        {
+          "id": "karako-missile-threat-rss",
+          "type": "rss_author",
+          "feed": "https://missilethreat.csis.org/author/tom-karako/feed/",
+          "canonical_prefix": "https://missilethreat.csis.org/",
+          "author_match": "Tom Karako",
+          "language": "en",
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "id": "michael-knights",
+      "display_name": "Майкл Найтс (Michael Knights)",
+      "description": "The Washington Institute, США; Иран, иракские вооружённые группировки, безопасность региона",
+      "verification": "https://www.washingtoninstitute.org/experts/michael-knights",
+      "sources": []
+    },
+    {
+      "id": "aaron-david-miller",
+      "display_name": "Аарон Дэвид Миллер (Aaron David Miller)",
+      "description": "Carnegie Endowment, США; Ближний Восток, дипломатия США и Израиля",
+      "verification": "https://carnegieendowment.org/people/aaron-david-miller",
+      "sources": []
+    },
+    {
+      "id": "fabian-hinz",
+      "display_name": "Фабиан Хинц (Fabian Hinz)",
+      "description": "IISS, Европа; иранские ракеты, беспилотники и военные технологии",
+      "verification": "https://www.iiss.org/",
+      "sources": []
     }
   ]
 }
