@@ -1,0 +1,8 @@
+{
+  "source": "marad_advisories",
+  "source_feed": "https://www.maritime.dot.gov/msci-advisories",
+  "fetched_at": "2026-11-11T16:49:01.913482Z",
+  "count": 0,
+  "coverage": "Only active, region-matching MARAD advisories; no inferred publication times",
+  "items": []
+}

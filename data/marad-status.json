@@ -1,0 +1,9 @@
+{
+  "source": "marad_advisories",
+  "source_feed": "https://www.maritime.dot.gov/msci-advisories",
+  "checked_at": "2026-11-11T16:49:01.913482Z",
+  "state": "ok",
+  "count": 0,
+  "detail": null,
+  "official_active_count": 7
+}
