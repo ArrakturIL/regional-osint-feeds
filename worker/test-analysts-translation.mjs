@@ -14,6 +14,8 @@ assert.equal(negativeMeaningNotDropped('No airstrikes reported','О налёта
 const original='לא אושרה תקיפה באיראן 2026';
 const good={translation:'Удар по Ирану в 2026 году официально не подтверждён.',confidence:91,issues:[]};
 assert.ok(validateTranslation(original,good,'he'));
+assert.equal(validateTranslation(original,{...good,confidence:0.91},'he')?.confidence,91);
+assert.equal(validateTranslation(original,{...good,confidence:0.5},'he'),null);
 assert.equal(validateTranslation(original,{...good,translation:'Удар по Ирану в 2027 году подтверждён.'},'he'),null);
 assert.equal(validateTranslation(original,{...good,confidence:65},'he'),null);
 assert.equal(validateTranslation(original,{...good,issues:['ambiguous name']},'he'),null);
