@@ -110,7 +110,7 @@ async function aiDecision(env, it, recent, translated=null) {
   const sourceText=translated
     ? "ЯЗЫК ОРИГИНАЛА: "+it.original_language+"\n<original_text>\n"+it.body+"\n</original_text>\n<translation_ru>\n"+translated.text+"\n</translation_ru>\nПеревод только для редакционного чтения, не пересказывай дословно."
     : it.body.slice(0,5500);
-  const user=`АВТОР: ${plain(it.analyst_name || it.analyst_id, 100)}\nПУБЛИКАЦИЯ: ${it.canonical_url}\nДата оригинала UTC: ${isoNow(it.published_at_ms)}\nНЕДАВНИЕ ЗАГОЛОВКИ (НЕ ДУБЛИРОВАТЬ):\n${prior || 'нет'}\nОРИГИНАЛ ТЕКСТА:\n<source_text>\n${sourceText}\n</source_text>`;
+  const user=`АВТОР: ${plain(it.analyst_name || it.analyst_id, 100)}\nПУБЛИКАЦИЯ: ${it.canonical_url}\nДата оригинала UTC: ${isoNow(it.source_published_at_ms)}\nНЕДАВНИЕ ЗАГОЛОВКИ (НЕ ДУБЛИРОВАТЬ):\n${prior || 'нет'}\nОРИГИНАЛ ТЕКСТА:\n<source_text>\n${sourceText}\n</source_text>`;
   const result=await env.AI.run(MODEL,{
     messages:[{role:'system',content:system},{role:'user',content:user}],
     response_format:{type:'json_object'},chat_template_kwargs:{enable_thinking:false},
@@ -234,14 +234,18 @@ async function runEditor(env, time) {
        ORDER BY i.source_published_at_ms DESC LIMIT 20`).bind(now-7*DAY).all();
     let usedAi=0;
     for (const it of pending.results||[]) {
-      if (it.text_status==='full_text' && it.body.length>=(it.original_language==='ru'?220:160) && (it.original_language!=='ru'||REGION.test(it.body)) && usedAi>=MAX_AI_PER_RUN) break;
+      const mightUseAi=it.text_status==='full_text' &&
+        it.body.length>=(it.original_language==='ru'?220:160) &&
+        (it.original_language!=='ru'||REGION.test(it.body));
+      if (mightUseAi && usedAi>=MAX_AI_PER_RUN) break;
+      // Count attempted AI candidates even when their model/translation call fails.
+      if (mightUseAi) usedAi++;
       const original=it;
       if (original.state!=='pending') continue;
       try {
         const result=await decide(db,env,original,now,recent);
         if (result==='budget_exhausted') break;
         if (result==='already_attempted') continue;
-        if (original.text_status==='full_text' && original.body.length>=(original.original_language==='ru'?220:160) && (original.original_language!=='ru'||REGION.test(original.body))) usedAi++;
         if (result==='published') {
           const p=await db.prepare('SELECT headline,summary FROM analyst_publications WHERE item_id=?').bind(it.id).first();
           if (p) recent.unshift(p);
