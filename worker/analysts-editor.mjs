@@ -4,7 +4,7 @@ import {translatedForEditorial} from './analysts-translation.mjs';
  * Sources are obtained via verified public GitHub collector mirror. Unsafe/absent
  * source text is never used to invent transcripts or auto-publish articles.
  */
-const EDITOR_VERSION = 'analyst-editor-v1.1.1-translation';
+const EDITOR_VERSION = 'analyst-editor-v1.1.2-translation';
 const MODEL = '@cf/zai-org/glm-4.7-flash';
 const MIRROR_BASE = 'https://raw.githubusercontent.com/ArrakturIL/regional-osint-feeds/main/data/';
 const HOUR = 3_600_000;
@@ -13,7 +13,7 @@ const MAX_AI_PER_RUN = 3;
 const MAX_AI_PER_DAY = 14;
 const MAX_SOURCE_BYTES = 135_000;
 const MAX_BODY = 6_500;
-const REGION = /(?:израил|иран|цахал|сша|вашингтон|пентагон|трамп|байден|американск|ближн(?:ий|его) восток|хусит|хезболл|хамас|йемен|ливан|сири|ирак|орумуз|ормуз|залив|ирак|саудов|катар|иордан|иерусалим|тегеран|хаменеи|нетаньяху|iran|israel|tehran|middle east|centcom|pentagon|hormuz|hezbollah|houthi|gaza|idf|us military)/i;
+const REGION = /(?:израил|иран|цахал|сша|вашингтон|пентагон|трамп|байден|американск|ближн(?:ий|его) восток|хусит|хезболл|хамас|йемен|ливан|сири|ирак|ормуз|залив|саудов|катар|иордан|иерусалим|тегеран|хаменеи|нетаньяху|iran|israel|tehran|middle east|centcom|pentagon|hormuz|hezbollah|houthi|gaza|idf|us military)/i;
 const PROMO = /(?:рекламная интеграция|на правах рекламы|промокод|скидк[аи]|покупайте|подписывайтесь на наш|для рекламы|заказать рекламу|впн.*скидк)/i;
 const VALID_STATES = new Set(['full_text', 'metadata_only', 'truncated']);
 const CORS = {'Access-Control-Allow-Origin':'*','Cache-Control':'public, max-age=120'};
@@ -100,7 +100,7 @@ function validateDecision(d, original) {
   const q=plain(d.quote || '',140);
   if (q && (bodyWords(q).length>18 || !original.includes(q))) return null;
   // Prevent near-verbatim reproductions of source paragraphs.
-  if (d.summary.split(/[.!?]/).some(s=>plain(s,80).length>90 && original.includes(s.trim()))) return null;
+  if (d.summary.split(/[.!?]/).some(s=>s.trim().length>90 && original.includes(s.trim()))) return null;
   return {decision:'publish',headline:plain(d.headline,145),summary:plain(d.summary,650),quote:q,
     relevance:d.relevance,novelty:d.novelty,substance:d.substance,reason:plain(d.reason,360)};
 }
@@ -237,9 +237,14 @@ async function runEditor(env, time) {
       const mightUseAi=it.text_status==='full_text' &&
         it.body.length>=(it.original_language==='ru'?220:160) &&
         (it.original_language!=='ru'||REGION.test(it.body));
-      if (mightUseAi && usedAi>=MAX_AI_PER_RUN) break;
-      // Count attempted AI candidates even when their model/translation call fails.
-      if (mightUseAi) usedAi++;
+      if (mightUseAi) {
+        const day=Math.floor(now/DAY)*DAY;
+        const already=await db.prepare("SELECT item_id FROM analyst_ai_attempts WHERE item_id=? AND day_start_ms=?")
+          .bind(it.id,day).first();
+        // Previously attempted items must not spend this invocation's AI allowance.
+        if (!already && usedAi>=MAX_AI_PER_RUN) continue;
+        if (!already) usedAi++; // Count a new attempt even if translation/model later fails.
+      }
       const original=it;
       if (original.state!=='pending') continue;
       try {
