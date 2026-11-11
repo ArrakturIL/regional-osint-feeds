@@ -198,6 +198,17 @@ async function aviationRegion([area, lat, lon, requestedRadius], slot, env) {
 async function aviationAlternative(env, slot) {
   const { focus, context } = airSamplingRegions(env);
   const turn = Math.floor(slot / (30 * MINUTE)), primary = turn % 3 !== 2;
+  const quota=await env.DB.prepare("SELECT remaining,reset_at,checked_at FROM worker_provider_quota WHERE provider=?")
+    .bind("avioadsb.org").first().catch(()=>null);
+  if (quota && quota.reset_at>Date.now() && Date.now()-quota.checked_at<2*HOUR) {
+    // Shared-network quota is not ours alone: preserve the remaining requests for Tehran.
+    const skip=quota.remaining<=4 ? turn%6!==0
+      : quota.remaining<=12 ? turn%3!==0
+      : quota.remaining<=28 && !primary;
+    if (skip) return {entries:[],missing:["quota_reserved_for_tehran"],
+      detail:"AvioADSB sample skipped under shared-network quota pressure; "+
+        quota.remaining+" requests remain until "+new Date(quota.reset_at).toISOString()};
+  }
   const [area,lat,lon,requestedRadius] = primary
     ? focus : context[Math.floor(turn / 3) % context.length];
   if (![lat,lon,requestedRadius].every(Number.isFinite) || requestedRadius <= 0) {
@@ -875,7 +886,7 @@ async function collect(db, env, source, slot) {
     db.prepare(`INSERT OR IGNORE INTO observations
       SELECT ?, json_extract(value,'$.id'), json_extract(value,'$.payload'), ?, json_extract(value,'$.payload')
       FROM json_each(?)`).bind(source.name, slot, JSON.stringify(records)),
-    db.prepare(statusSql).bind(source.name, slot, slot, state,
+    db.prepare(statusSql).bind(source.name, slot, missing.includes("quota_reserved_for_tehran") ? null : slot, state,
       missing.length ? detail || "Missing regions: " + missing.join(", ") : null),
   ]);
 }
@@ -997,7 +1008,7 @@ async function read(request, env) {
     interpretation: {
       adsb: "One ADS-B sample every 15 minutes: half prioritize the configured focus area. Zero in a sample is not empty airspace.",
       airbridge_context:"AvioADSB corridor context: 24 requests/day in 6 rotating 100 NM zones; counts are snapshots, not unique flights or a confirmed US air bridge. Database military flags and type hints are not proof of affiliation.",
-      adsb_alt: "AvioADSB community data, 48 requests/day: 32 focus, 16 context. Each <=100NM sample has unverified receiver coverage. Data: AvioADSB (CC BY-NC 4.0), https://avioadsb.org — personal/noncommercial use only.",
+      adsb_alt: "AvioADSB community data, up to 48 requests/day, adaptively throttled to protect Tehran when the shared-network quota is low: 32 focus, 16 context. Each <=100NM sample has unverified receiver coverage. Data: AvioADSB (CC BY-NC 4.0), https://avioadsb.org — personal/noncommercial use only.",
       centcom_rss: "Official news RSS; may be archival, not exhaustive CENTCOM coverage. Items older than 30 days excluded; stale feed is partial.",
       centcom_dvids: "Official CENTCOM Public Affairs news via DVIDS, mirrored by GitHub Actions. /news/ entries only, not all CENTCOM press releases. Check original publication dates and collector heartbeat.",
       satellite_context: "NASA GIBS NOAA-20 optical center-tile previews and NASA EONET natural events. Visual differences are not evidence of military activity. Coverage can be partial.",
