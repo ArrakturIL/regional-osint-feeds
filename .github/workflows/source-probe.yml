@@ -1,0 +1,54 @@
+name: Probe additional public OSINT feeds
+
+on:
+  push:
+    paths:
+      - ".github/workflows/source-probe.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe-official-public-sources:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check MARAD advisory page and independent anonymous ADS-B feed
+        run: |
+          python3 - <<'PY'
+          import json
+          import re
+          import urllib.error
+          import urllib.request
+          SOURCES = {
+              "marad_advisories": "https://www.maritime.dot.gov/msci-advisories",
+              "avioadsb_public_one_sample": "https://avioadsb.org/v1/point/26.5/56.4/60",
+          }
+          for name, url in SOURCES.items():
+              try:
+                  req = urllib.request.Request(url, headers={
+                      "User-Agent": "regional-osint-feeds/1.0 (public-source validation)",
+                      "Accept": "text/html,application/json",
+                  })
+                  with urllib.request.urlopen(req, timeout=18) as response:
+                      body = response.read(200_001).decode("utf-8", "replace")
+                      result = {"name": name, "http": response.status,
+                                "length_preview": len(body), "content_type": response.headers.get("Content-Type")}
+                      if name == "marad_advisories":
+                          result["active_section"] = bool(re.search("Active Advisories", body, re.I))
+                          result["numbered_2026"] = len(set(re.findall(r"2026-0\\d{2}", body)))
+                          result["region_keywords"] = any(word in body.lower() for word in ("hormuz", "persian gulf", "red sea"))
+                      else:
+                          try:
+                              data=json.loads(body)
+                              result["aircraft_count"]=len(data.get("ac", []))
+                              result["keys"]=list(data.keys())[:12]
+                          except (json.JSONDecodeError,AttributeError) as exc:
+                              result["parse_error"]=str(exc)
+                      print(json.dumps(result, sort_keys=True))
+              except urllib.error.HTTPError as exc:
+                  print(json.dumps({"name": name, "http": exc.code, "error": "upstream HTTP error"}))
+              except Exception as exc:
+                  print(json.dumps({"name": name, "error": type(exc).__name__ + ": " + str(exc)[:150]}))
+          PY
