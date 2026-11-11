@@ -1,0 +1,29 @@
+name: Test official CENTCOM DVIDS feed
+
+on:
+  push:
+    paths:
+      - "scripts/collect_centcom.py"
+      - ".github/workflows/centcom-test.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fetch-official-feed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch and validate official DVIDS CENTCOM news
+        run: python3 scripts/collect_centcom.py
+      - name: Upload test data and status
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: centcom-dvids-test
+          path: |
+            data/centcom-news.json
+            data/centcom-status.json
+          if-no-files-found: warn
