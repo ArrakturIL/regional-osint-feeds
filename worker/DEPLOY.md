@@ -1,13 +1,13 @@
 # Worker deployment and rollback checklist
 
-Production Worker: `regional-osint-monitor`. GitHub stores a **source snapshot**, not an automatic deployment pipeline.
+Production Workers: `regional-osint-monitor` (OSINT) and `regional-watch-editor` (news + analysts v1.1). GitHub stores **source snapshots**, not an automatic deployment pipeline. The existing Worker and its deployable versions are the rollback mechanism; **do not create backup Workers**.
 
 ## Before deployment
 
-1. Fetch and save the exact production Worker source to a separate, non-routed backup Worker. Keep at least one previous working version.
+1. Confirm the exact deployed version ID, existing bindings and settings; commit the current running code to GitHub before changing it. Use Cloudflare's existing version history for rollback, **never create new backup Workers**.
 2. Read and record the current Worker settings, binding **names and types**, compatibility date and cron schedules. As of 2026-11-11, compatibility date is **`2026-11-10`** and cron is **`*/1 * * * *`**.
 3. Confirm the source contains **no embedded credentials**; keys stay in Cloudflare secret bindings.
-4. Stage the new JavaScript module under a separate Worker name and require Cloudflare to accept/compile it. No staging cron should be added.
+4. Upload a **new version** using `/workers/scripts/{script_name}/versions` with explicit compatibility date, modules and inherited bindings; this compiles the candidate without replacing production. Use a short-lived staging Worker only for an independent end-to-end test; remove it afterwards.
 5. Apply additive D1 migrations before code that depends on the new table. For the AvioADSB quota guard, the table is:
 
 ```sql
@@ -59,10 +59,19 @@ Never upload an empty `bindings` array to the production Worker.
 3. Verify the compatibility date and the original minute cron.
 4. Check a real manual or scheduled D1 collection result and the `source_status` entry. For skipped quota polls, verify that `succeeded_at` is **not** advanced.
 5. Run `node worker/test-aviation.mjs` and the GitHub workflow `Validate Regional Watch Worker` for the version-controlled source. A workflow being committed does **not** imply its result was verified.
-6. Delete the temporary staging Worker after success, **not** the backups.
+6. Delete the temporary staging Worker after success. Rollback via a previously deployed Cloudflare version; do not retain copies as separate Workers.
 
 ## Rollback
 
-If any post-deployment gate fails, restore the exact backup Worker source using the same explicit compatibility date and inherited production bindings. Verify source, bindings and cron again. An additive D1 table can remain after a code rollback.
+If a post-deployment gate fails, deploy the recorded previous Cloudflare version at 100%, preserving its existing binding configuration. Verify exact version, bindings, compatibility date, API and cron. D1 migrations do not automatically roll back; never drop tables to roll back Worker code.
 
 The Pages site is deployed separately. Updating the Worker does not automatically change the Pages frontend or its Functions.
+
+## Integrated news + analyst editor (`regional-watch-editor`)
+
+- Canonical source is `worker/regional-watch-editor.js`, importing `analysts-editor.mjs` and `analysts-translation.mjs`. The original pre-integration source is retained in Git history (commit `8e246b2fd1eb38ba73968b0aea50f7c3efa9bf90`).
+- Preserve bindings **AI**, **NEWS_DB** (`regional-watch-news`) and **CORE_DB** (`regional-osint`) and compatibility date `2026-11-10`.
+- Preserve its existing `*/5 * * * *` cron; the independent analyst editor runs only at minute **:30 UTC** each hour after the `:17` GitHub collector update. Do not introduce a second production cron or third permanent Worker.
+- Public read-only endpoints: `/api/analysts`, `/api/analyst-posts`, `/api/analyst-posts/{id}`. Existing `/health` stays the news editor health; analyst processing status is read from `analyst_runs` in `regional-osint` D1 (do not expose unpublished originals or translations).
+- Deploy three modules together with metadata `main_module: "regional-watch-editor.js"` and explicit inherited AI/D1 bindings. The frontend must use the production `regional-watch-editor` endpoint, not staging. Test the news health, analyst read routes, analyst D1 writes, and translation gates before deleting staging.
+- The GitHub mirror of Telegram/YouTube content is not full YouTube transcripts. Metadata-only material must **never** be fabricated or auto-published. RSS author feeds currently provide metadata only and are not auto-published.
