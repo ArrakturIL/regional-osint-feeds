@@ -18,6 +18,14 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check Cloudflare Worker module syntax
         run: node --input-type=module --check < worker/regional-osint-monitor.js
+      - name: Check integrated news/analyst editor modules and routes
+        run: |
+          node --check worker/regional-watch-editor.js
+          node --check worker/analysts-editor.mjs
+          node --check worker/analysts-translation.mjs
+          node worker/test-news-analysts-integration.mjs
+          node worker/test-analysts.mjs
+          node worker/test-analysts-translation.mjs
       - name: Run aviation API and data-quality regression tests
         run: node worker/test-aviation.mjs
       - name: Validate OpenSky and ADS-B Exchange adapters without network calls
