@@ -947,7 +947,7 @@ async function runSchedule(controller, env) {
     const now = Date.now();
     if ((health?.next_allowed_at || 0) > now || (health?.lease_until || 0) > now) {
       for (const name of autoAdsb) selected.delete(name);
-    } else if ((health?.failures || 0) > 0) {
+    } else if ((health?.failures || 0) > 0 && autoAdsb.includes("mil_lol")) {
       selected.delete("mil_lol");
     }
   }
