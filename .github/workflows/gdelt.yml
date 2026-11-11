@@ -1,0 +1,47 @@
+name: GDELT public regional news context
+
+on:
+  push:
+    paths:
+      - "scripts/collect_gdelt.py"
+      - "scripts/test_gdelt.py"
+      - ".github/workflows/gdelt.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "37 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gdelt-regional-context
+  cancel-in-progress: false
+
+jobs:
+  gdelt-context:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Syntax and offline parser checks
+        run: |
+          python -m py_compile scripts/collect_gdelt.py
+          python scripts/test_gdelt.py
+      - name: Read recent public GDELT Project event exports
+        run: python scripts/collect_gdelt.py
+      - name: Commit only small bounded news-context metadata
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -f data/gdelt-context.json ]; then git add data/gdelt-context.json; fi
+          if [ -f data/gdelt-status.json ]; then git add data/gdelt-status.json; fi
+          if ! git diff --cached --quiet; then
+            git commit -m "Update GDELT public regional news context"
+            git push
+          fi
