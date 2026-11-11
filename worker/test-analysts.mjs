@@ -38,4 +38,21 @@ function fakeBudget(changes, previous) {
 assert.equal(await reserveAi(fakeBudget(1,false),{id:'item-one'},now),null);
 assert.equal(await reserveAi(fakeBudget(0,true),{id:'item-one'},now),'already_attempted');
 assert.equal(await reserveAi(fakeBudget(0,false),{id:'item-one'},now),'budget_exhausted');
+// The database field is source_published_at_ms, not published_at_ms.
+let capturedModelInput='';
+const aiEnv={AI:{async run(_model,args){
+  capturedModelInput=args.messages[1].content;
+  return {choices:[{message:{content:JSON.stringify({
+    decision:'skip',relevance:0,novelty:0,substance:0,
+    reason:'Отсутствует новая информация по региональной безопасности.'
+  })}}]};
+}}};
+const databaseItem={id:'auslender-telegram:123',analyst_id:'sergey-auslender',
+  analyst_name:'Сергей Ауслендер',
+  canonical_url:'https://t.me/voinasordoy/123',
+  source_published_at_ms:now,body:'Заявление об Иране и Израиле.',
+  original_language:'ru'};
+assert.equal((await testHooks.aiDecision(aiEnv,databaseItem,[])).decision,'skip');
+assert.ok(capturedModelInput.includes(new Date(now).toISOString()));
+assert.ok(!capturedModelInput.includes('Invalid Date'));
 console.log('analysts editor offline checks: OK');
