@@ -33,6 +33,7 @@ jobs:
           python scripts/test_analysts.py
           node --check worker/analysts-editor.mjs
           node worker/test-analysts.mjs
+          node worker/test-analysts-translation.mjs
       - name: Collect official public-source content
         run: python scripts/collect_analysts.py
       - name: Commit bounded mirror and source heartbeat
