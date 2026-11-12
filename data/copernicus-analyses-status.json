@@ -1,0 +1,13 @@
+{
+  "source": "copernicus_ems",
+  "checked_at": "2026-11-12T06:23:37.858332Z",
+  "state": "partial",
+  "error_types": [
+    {
+      "provider": "recovery",
+      "type": "ValueError"
+    }
+  ],
+  "total_matching": 0,
+  "published": 0
+}

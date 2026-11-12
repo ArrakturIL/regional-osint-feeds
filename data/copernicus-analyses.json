@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "source": "copernicus_ems",
+  "checked_at": "2026-11-12T06:23:37.858332Z",
+  "state": "partial",
+  "products": [],
+  "pages": {
+    "unified": {
+      "returned": 100,
+      "total": 1069,
+      "truncated": true
+    },
+    "rapid": {
+      "returned": 100,
+      "total": 268,
+      "truncated": true
+    }
+  },
+  "quality": {
+    "scope": "Only first 100 activations from each public listing; not a full historical inventory",
+    "ready_made_analysis": "Product count identifies published products; metadata alone cannot establish damage",
+    "sources_successful": 2,
+    "sources_failed": 1
+  }
+}
