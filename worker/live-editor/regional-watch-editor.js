@@ -3,7 +3,7 @@ import analystService from './analysts-editor.mjs';
 import localization from './localization.mjs';
 import {FEEDS as EVENT_FEEDS,analyze,reconcile} from './news-events.mjs';
 import {readNewsEvents} from './news-api.mjs';
-import {translationQueue,importTranslationMirror} from './news-translation-mirror.mjs';
+import {translationQueue,importTranslationMirror,validateCandidate} from './news-translation-mirror.mjs';
 import {shouldSuppressComment} from './editorial-comment-policy.mjs';
 import {canonicalNewsUrl,normalizedHeadline,articlePriority} from './news-normalization.mjs';
 
@@ -82,8 +82,8 @@ async function translateTitles(env,now){
   const valid=x=>typeof x==="string"&&x.trim().length>=9&&x.length<=550&&/[А-Яа-яЁё]/.test(x)&&!/[<>]/.test(x);
   for(const row of pending){
    const value=map.get(row.id);if(!value||typeof value!=="object")continue;
-   const title=valid(value.title_ru)?value.title_ru.trim().slice(0,260):null;
-   const summary=valid(value.summary_ru)?value.summary_ru.trim().slice(0,480):null;
+   const title=valid(value.title_ru)&&validateCandidate(row.headline,value.title_ru,'ru')?value.title_ru.trim().slice(0,260):null;
+   const summary=valid(value.summary_ru)&&(!row.summary||validateCandidate(row.summary,value.summary_ru,'ru'))?value.summary_ru.trim().slice(0,480):null;
    if(!title&&!row.headline_ru)continue;
    if(!title&&!summary)continue;
    const write=await env.NEWS_DB.prepare("UPDATE news_items SET headline_ru=COALESCE(headline_ru,?),summary_ru=COALESCE(summary_ru,?) WHERE id=?").bind(title,summary,row.id).run();
