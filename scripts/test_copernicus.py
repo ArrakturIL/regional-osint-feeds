@@ -37,13 +37,28 @@ class Tests(unittest.TestCase):
   self.assertEqual(d["products"][0]["product_count"],3)
   self.assertEqual(s["state"],"partial")
   self.assertEqual(d["quality"]["sources_failed"],1)
+ def test_regional_activation_on_second_page(self):
+  seen=[]
+  def fake(url):
+   seen.append(url)
+   if "offset=0" in url:
+    return {"count":150,"next":"https://example.invalid/page2","results":[
+     {"code":"EMSR990","name":"Flood in Germany","countries":["Germany"],"activationTime":"2026-11-01T00:00:00Z"}]}
+   return {"count":150,"next":None,"results":[
+     {"code":"EMSR988","name":"Flash floods in southern Iran","countries":[{"short_name":"Iran"}],
+      "activationTime":"2026-10-21T00:00:00Z","n_products":2}]}
+  d,h=m.collect(now=NOW,getter=fake)
+  self.assertEqual(len(d["products"]),1)
+  self.assertEqual(d["products"][0]["code"],"EMSR988")
+  self.assertTrue(any("offset=100" in x for x in seen))
+  self.assertEqual(h["state"],"ok")
  def test_no_matching_does_not_mean_no_events(self):
   def fake(url):
    return {"count":0,"results":[]}
   d,s=m.collect(now=NOW,getter=fake)
   self.assertEqual(s["state"],"ok")
   self.assertEqual(d["products"],[])
-  self.assertIn("first 100",d["quality"]["scope"])
+  self.assertIn("Bounded",d["quality"]["scope"])
 
 if __name__=="__main__":
  unittest.main()
