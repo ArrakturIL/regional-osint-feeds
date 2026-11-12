@@ -61,33 +61,51 @@ jobs:
       - name: Validate the two fresh mirror files
         run: python scripts/verify_analyst_mirror.py --max-age-minutes 15
       - name: Commit bounded mirror and source heartbeat
-        # Code pushes to main must also publish mirrors. Bot data-only commits
-        # don't retrigger this workflow because data paths are excluded.
+        # Only collector JSON lives in GitHub; no backend files are deployed here.
         if: success() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          if [ -f data/analyst-source-items.json ]; then git add data/analyst-source-items.json; fi
-          if [ -f data/analyst-source-status.json ]; then git add data/analyst-source-status.json; fi
-          if ! git diff --cached --quiet; then
+          mirror_dir="$RUNNER_TEMP/regional-watch-analyst-mirror"
+          mkdir -p "$mirror_dir"
+          cp data/analyst-source-items.json "$mirror_dir/analyst-source-items.json"
+          cp data/analyst-source-status.json "$mirror_dir/analyst-source-status.json"
+          # Snapshot the newest main and overlay only these two generated files.
+          # Rebasing JSON blobs caused collisions against concurrent collector commits.
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            if MIRROR_DIR="$mirror_dir" python - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          local=json.loads((Path(os.environ["MIRROR_DIR"])/"analyst-source-status.json").read_text())
+          try:
+              remote=json.loads(subprocess.check_output(
+                  ["git","show","origin/main:data/analyst-source-status.json"],text=True))
+          except subprocess.CalledProcessError:
+              remote={}
+          # Do not overwrite a more recent collector heartbeat.
+          raise SystemExit(0 if remote.get("checked_at","") >= local.get("checked_at","") else 1)
+          PY
+            then
+              echo 'A newer/equal analyst mirror is already on main.'
+              exit 0
+            fi
+            git reset --hard origin/main
+            cp "$mirror_dir/analyst-source-items.json" data/analyst-source-items.json
+            cp "$mirror_dir/analyst-source-status.json" data/analyst-source-status.json
+            git add data/analyst-source-items.json data/analyst-source-status.json
+            if git diff --cached --quiet; then
+              echo 'Mirror is already current.'
+              exit 0
+            fi
             git commit -m 'Refresh analyst public-source mirror'
-            # Other independent collectors may commit to main between checkout
-            # and push. Rebase on the newest remote main; never force-push.
-            for attempt in 1 2 3 4; do
-              git fetch origin main
-              if ! git rebase origin/main; then
-                git rebase --abort || true
-                echo 'Analyst mirror rebase conflict; refusing to overwrite other source data.'
-                exit 1
-              fi
-              if git push origin HEAD:main; then
-                exit 0
-              fi
-              sleep $((attempt * 2))
-            done
-            echo 'Unable to publish analyst mirror after four non-force push attempts'
-            exit 1
-          fi
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            sleep $((attempt * 2))
+          done
+          echo 'Unable to publish analyst mirror after five non-force push attempts'
+          exit 1
 
       - name: Verify published mirror on remote main
         if: success() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
