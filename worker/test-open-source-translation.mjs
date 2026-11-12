@@ -4,6 +4,13 @@ import {validateCandidate,translationQueue} from './live-editor/news-translation
 assert.equal(validateCandidate('Iran has 50 missiles','Иран имеет 50 ракет','ru'),true);
 assert.equal(validateCandidate('Iran has 50 missiles','Иран имеет 500 ракет','ru'),false);
 assert.equal(validateCandidate('Iran has 50 missiles','איראן מחזיקה ב-50 טילים','he'),true);
+assert.equal(validateCandidate('Iran retains 50 ballistic missiles','לאיראן נותרו 50 טילים טקטיים','he'),false);
+assert.equal(validateCandidate('Iran retains 50 ballistic missiles','לאיראן נותרו 50 טילים בליסטיים','he'),true);
+assert.equal(validateCandidate('Iran retains 50 ballistic missiles','Иран сохранил 50 тактических ракет','ru'),false);
+assert.equal(validateCandidate('Iran retains 50 ballistic missiles','Иран сохранил 50 баллистических ракет','ru'),true);
+assert.equal(validateCandidate('UK councilor shared anti-Jewish posts','חבר מועצה חלק דו"ח נגד יהודים','he'),false);
+assert.equal(validateCandidate('UK councilor shared anti-Jewish posts','חבר מועצה שיתף פוסטים נגד יהודים','he'),true);
+assert.equal(validateCandidate('Iran retains 50 missiles','Иран сохраняет 50 ракет. . . . . . . .','ru'),false);
 assert.equal(validateCandidate('Katz reports new Iran talks','קטז מדווח על שיחות איראן','he'),false);
 assert.equal(validateCandidate('Katz reports new Iran talks','כץ מדווח על שיחות איראן','he'),true);
 assert.equal(validateCandidate('IRGC attacked base','חיל הים האיראני תקף את הבסיס','he'),false);
