@@ -34,16 +34,67 @@ async function localized(db,kind,id,original,lang,prefilled=null){
   }
   return {...original,content_language:/[\u0400-\u04ff]/u.test(original.title+original.body)?'ru':'en',translation_status:'pending'};
 }
+
+/** Locale-invariant provenance. Never regenerate dates or source links by AI. */
+export function storyProvenance(data){
+  const validUrl=value=>{
+    if(typeof value!=='string'||value.length>2048)return null;
+    try{
+      const u=new URL(value);
+      if(u.protocol!=='https:'||u.username||u.password||!u.hostname||
+        /^(?:localhost|127[.]|10[.]|192[.]168[.]|169[.]254[.]|0[.])/.test(u.hostname))return null;
+      return value;
+    }catch{return null}
+  };
+  const sources=[];
+  const seen=new Set();
+  const add=(url,type)=>{
+    const safe=validUrl(url);
+    if(safe&&!seen.has(safe)){
+      sources.push({url:safe,type:typeof type==='string'?type.slice(0,100):'source'});
+      seen.add(safe);
+    }
+  };
+  for(const item of Array.isArray(data.sources)?data.sources:[]){
+    if(typeof item==='string')add(item,'source');
+    else if(item&&typeof item==='object')add(item.url,item.type);
+  }
+  add(data.source, 'primary');
+  add(data.source_url,'primary');
+  add(data.url,'primary');
+  // Preserve partial dates like 2026-09; inventing a day would be worse.
+  const occurredAt=data.occurred_at||data.incident_date||data.event_date||
+    data.first_report_date||data.published_date||null;
+  const announcedAt=data.announced_at||
+    (data.incident_date?data.event_date:null)||data.first_report_date||null;
+  return{
+    event_date:occurredAt,occurred_at:occurredAt,
+    announced_at:announcedAt,
+    published_at:data.published_date||null,
+    source_date:data.first_report_date||null,
+    collected_at:data.first_observed_by_monitor||data.first_verified_monitor_cycle||null,
+    source:data.source||null,
+    sources,source_urls:sources.map(x=>x.url),
+    url:sources[0]?.url||null
+  };
+}
+
 export async function fetchLocalized(request,env,analystService){
   if(request.method==='OPTIONS')return new Response(null,{status:204,headers:HEADERS});
   if(request.method!=='GET')return respond({error:'read_only'},405);
   const lang=locale(request);
   if(!lang)return respond({error:'unsupported_language',supported:['ru','he']},400);
   const url=new URL(request.url),path=url.pathname;
-  const lim=Math.min(40,Math.max(1,Number(url.searchParams.get('limit'))||20));
+  const rawLimit=url.searchParams.get('limit'),rawOffset=url.searchParams.get('offset');
+  const positiveInt=v=>v!==null&&/^\\d+$/.test(v)&&Number.isSafeInteger(Number(v));
+  if(rawLimit!==null&&(!positiveInt(rawLimit)||Number(rawLimit)<1||Number(rawLimit)>40))
+    return respond({error:'invalid_limit',message:'limit must be an integer from 1 to 40'},400);
+  if(rawOffset!==null&&(!positiveInt(rawOffset)||Number(rawOffset)>2000))
+    return respond({error:'invalid_offset',message:'offset must be an integer from 0 to 2000'},400);
+  const lim=rawLimit===null?20:Number(rawLimit);
   if(path==='/api/languages')return respond({default:'ru',supported:['ru','he'],requested_language:lang,direction:{ru:'ltr',he:'rtl'}});
   if(path==='/api/news'){
-    const offset=Math.min(2000,Math.max(0,Math.trunc(Number(url.searchParams.get('offset'))||0)));
+    const offset=rawOffset===null?0:Number(rawOffset);
     const readyOnly=lang==='he'&&['1','true'].includes(url.searchParams.get('ready_only'));
     const base="SELECT n.id,n.source,n.headline,n.headline_ru,n.summary,n.summary_ru,n.comment,n.url,n.published_ms,n.priority";
     const extra=",t.source_hash he_hash,t.title he_title,t.body he_body,t.commentary he_comment,t.quality_score he_quality";
@@ -87,8 +138,8 @@ export async function fetchLocalized(request,env,analystService){
       if(!original.title)return null;
       const cache=lang==='he'?{source_hash:n.he_hash,title:n.he_title,body:n.he_body,commentary:n.he_comment,quality_score:n.he_quality}:null;
       const t=await localized(env.CORE_DB,'story',n.event_id,original,lang,cache);
-      return{id:n.event_id,title:t.title,summary:t.body,event_date:data.event_date||data.published_date||data.first_seen||null,
-        category:data.category||null,source:data.source||null,url:typeof data.url==='string'?data.url:null,updated_at_ms:n.updated_at_ms,
+      return{id:n.event_id,title:t.title,summary:t.body,
+        ...storyProvenance(data),category:data.category||null,updated_at_ms:n.updated_at_ms,
         content_language:t.content_language,translation_status:t.translation_status};
     }));
     const valid=stories.filter(Boolean);
