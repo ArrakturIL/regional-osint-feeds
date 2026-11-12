@@ -4,6 +4,7 @@ import localization from './localization.mjs';
 import {FEEDS as EVENT_FEEDS,analyze,reconcile} from './news-events.mjs';
 import {readNewsEvents} from './news-api.mjs';
 import {translationQueue,importTranslationMirror} from './news-translation-mirror.mjs';
+import {shouldSuppressComment} from './editorial-comment-policy.mjs';
 import {canonicalNewsUrl,normalizedHeadline,articlePriority} from './news-normalization.mjs';
 
 const FEEDS=EVENT_FEEDS.map(x=>[x[0],x[1],x[4],x[3]]);
@@ -45,7 +46,7 @@ async function writeComment(env,row){
  const title=String(row.headline_ru||row.headline||"").trim();
  const summary=String(row.summary_ru||row.summary||"").trim();
  const combined=title+" "+summary;
- if(/погибш|убитых детей|жертв|выживши[ех]|обрушени[яе] .*сем|рак молочной железы|задержанн.*семьи|сексуальн.*насили/i.test(combined))return {comment:null,skip:true,neurons:0};
+ if(shouldSuppressComment(row))return {comment:null,skip:true,neurons:0};
  const system="Ты ироничный редактор русскоязычного ближневосточного новостного издания. Дай одну короткую, острую и умную реплику к новости, максимум 200 символов и не более двух предложений. Цинизм, сарказм и сухой юмор допустимы в адрес политиков, чиновников, бюрократии, дипломатии и политического пиара. Укол должен быть точным и связанным с конкретным фактом из заголовка или RSS-аннотации. Никаких повторов заголовка другими словами, банальных выводов, общих размышлений, дежурного 'это не означает угрозы', морализаторства и самовосхваления. Не выдумывай мотиваций, причин, цифр, цитат или подтверждений. Не изображай судебные обвинения доказанной виной. Категорически не шути над погибшими, пострадавшими, заложниками, врачами, пациентами, мирными жителями, гуманитарными трагедиями. Если можно только повторить новость или юмор окажется натужным — верни пустой comment. Верни только JSON {\"comment\":\"...\"}.";
  const request={messages:[{role:"system",content:system},{role:"user",content:"Источник: "+row.source+"\nЗаголовок: "+title+"\nАннотация: "+summary}],temperature:.7,max_tokens:240};
  const answer=await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast",request);
@@ -54,7 +55,7 @@ async function writeComment(env,row){
  if(!match)throw Error("No commentary JSON");
  const parsed=JSON.parse(match[0]);
  const comment=String(parsed?.comment||"").trim();
- if(comment.length<35||comment.length>300||/^(\s*(похоже|интересно|это ещё|по сообщениям|важно|стоит отметить))/i.test(comment))return {comment:null,skip:true,neurons:Number(answer?.usage?.neurons)||undefined};
+ if(shouldSuppressComment(row)||shouldSuppressComment({headline:comment})||comment.length<35||comment.length>300||/^(\s*(похоже|интересно|это ещё|по сообщениям|важно|стоит отметить))/i.test(comment))return {comment:null,skip:true,neurons:Number(answer?.usage?.neurons)||undefined};
  return {comment:comment.slice(0,220),skip:false,neurons:Number(answer?.usage?.neurons)||undefined};
 }
 
