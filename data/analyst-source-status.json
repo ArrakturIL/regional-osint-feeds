@@ -1,6 +1,6 @@
 {
-  "checked_at": "2026-11-11T22:07:41Z",
-  "state": "ok",
+  "checked_at": "2026-11-12T03:49:42Z",
+  "state": "partial",
   "sources": [
     {
       "source_id": "auslender-telegram",
@@ -10,9 +10,9 @@
     },
     {
       "source_id": "auslender-youtube",
-      "state": "ok",
-      "count": 7,
-      "detail": null
+      "state": "error",
+      "count": 0,
+      "detail": "HTTPError: HTTP Error 500: Internal Server Error"
     },
     {
       "source_id": "yigal-telegram",
