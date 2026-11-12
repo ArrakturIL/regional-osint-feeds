@@ -1,0 +1,84 @@
+name: Regional Watch free open-source news translations
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */2 * * *'
+  push:
+    paths:
+      - 'scripts/translate_news_open_source.py'
+      - 'scripts/test_translate_news_open_source.py'
+      - 'worker/live-editor/news-translation-mirror.mjs'
+      - '.github/workflows/news-open-source-translation.yml'
+  pull_request:
+    paths:
+      - 'scripts/translate_news_open_source.py'
+      - 'scripts/test_translate_news_open_source.py'
+      - 'worker/live-editor/news-translation-mirror.mjs'
+      - '.github/workflows/news-open-source-translation.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: regional-news-free-translations-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run free translation safety tests without model downloads
+        run: python -m unittest discover -s scripts -p 'test_translate_news_open_source.py' -v
+      - name: Restore open-source translation models from cache
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface/hub
+          key: opus-news-en-he-ru-v1
+      - name: Install CPU inference dependencies
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install transformers==4.50.3 sentencepiece==0.2.0 protobuf==5.29.4
+      - name: Translate newest news-event representatives
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          HF_HUB_DISABLE_TELEMETRY: '1'
+          TOKENIZERS_PARALLELISM: 'false'
+        run: python scripts/translate_news_open_source.py
+      - name: Publish bounded validated translation mirror
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: |
+          if [ ! -s data/news-localization-mirror.json ]; then
+            echo 'No new safe translations; retain the last healthy mirror.'
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/news-localization-mirror.json
+          if git diff --cached --quiet; then
+            echo 'No mirror update needed'
+            exit 0
+          fi
+          git commit -m "data: publish validated free RU/HE event translations [skip ci]"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            if ! git rebase origin/main; then
+              git rebase --abort || true
+              echo 'Mirror write conflict, refusing to overwrite a concurrent update'
+              exit 1
+            fi
+            if git push origin HEAD:main; then
+              echo "Published translation mirror on attempt $attempt"
+              exit 0
+            fi
+            sleep $((attempt * 2))
+          done
+          echo 'Unable to publish translation mirror after retries'
+          exit 1
