@@ -37,6 +37,13 @@ class Tests(unittest.TestCase):
   self.assertEqual(d["products"][0]["product_count"],3)
   self.assertEqual(s["state"],"partial")
   self.assertEqual(d["quality"]["sources_failed"],1)
+ def test_exact_country_filter_prevents_oman_romanian_false_positive(self):
+  self.assertTrue(m.relevant(["Oman"]))
+  self.assertTrue(m.relevant(["occupied palestinian territory"]))
+  self.assertTrue(m.relevant(["Iran (Islamic Republic of)"]))
+  self.assertFalse(m.relevant(["Romania"]))
+  self.assertFalse(m.relevant(["Germany, near Oman"]))
+  self.assertFalse(m.relevant(["Sudanese expatriates in France"]))
  def test_regional_activation_on_second_page(self):
   seen=[]
   def fake(url):
