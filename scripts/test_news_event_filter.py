@@ -197,6 +197,8 @@ class FilterTests(unittest.TestCase):
         self.assertEqual(aggregate["mode"],"shadow_only_never_publish")
         self.assertFalse(aggregate["public_release_allowed"])
         self.assertGreater(aggregate["suppressed_duplicate_cards"],0)
+        self.assertEqual(sum(aggregate["merge_reason_counts"].values()),aggregate["candidate_articles"])
+        self.assertEqual(aggregate["candidate_articles"]-aggregate["event_groups"],aggregate["suppressed_duplicate_cards"])
         import json
         self.assertNotIn("Ghalibaf",json.dumps(aggregate))
         self.assertNotIn("Al-Shifa",json.dumps(aggregate))
