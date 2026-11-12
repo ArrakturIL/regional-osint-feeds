@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
 import {factualTranslationIssue} from './live-editor/translation-fact-guard.mjs';
-import {fetchLocalized,fingerprint} from './live-editor/localization.mjs';
+import {fetchLocalized,fingerprint,storyProvenance} from './live-editor/localization.mjs';
 if(!globalThis.crypto)globalThis.crypto=webcrypto;
 
 const original=(title,body,comment='')=>({title,body,comment});
@@ -92,4 +92,54 @@ assert.equal(stories.stories.length,1);
 assert.equal(stories.stories[0].translation_status,'needs_review');
 assert.equal(stories.stories[0].content_language,'ru');
 assert.equal(stories.stories[0].summary,didamar.body);
-console.log('QA localization: 13 actor/name/source/cache tests passed');
+
+const fairford=storyProvenance({
+  event_date:'2026-11-10',
+  incident_date:'2026-09',
+  sources:[
+    {url:'https://www.justice.gov/opa/pr/fairford',type:'US_DOJ'},
+    {url:'https://www.reuters.com/world/europe/fairford',type:'Reuters'},
+    {url:'https://apnews.com/article/fairford',type:'AP'}
+  ]
+});
+assert.equal(fairford.event_date,'2026-09','BE-02: date of incident takes precedence');
+assert.equal(fairford.announced_at,'2026-11-10','BE-02: indictment announcement remains separate');
+assert.equal(fairford.sources.length,3,'BE-11: all original source links retained');
+assert.equal(fairford.source_urls.length,3);
+assert.equal(fairford.url,'https://www.justice.gov/opa/pr/fairford');
+
+const gcc=storyProvenance({
+  first_report_date:'2026-11-10',
+  source:'https://www.reuters.com/world/middle-east/gcc'
+});
+assert.equal(gcc.url,'https://www.reuters.com/world/middle-east/gcc');
+assert.deepEqual(gcc.source_urls,[gcc.url],'BE-02: source must survive localized stories');
+assert.equal(gcc.event_date,'2026-11-10');
+assert.equal(storyProvenance({source:'http://127.0.0.1/private'}).url,null);
+
+const fakeStoryDB=fakeDB(storyRow);
+const ruStory=await (await fetchLocalized(
+  new Request('https://regional.test/api/stories?lang=ru'),
+  {CORE_DB:fakeStoryDB,NEWS_DB:fakeDB(null)},null
+)).json();
+assert.deepEqual(ruStory.stories[0].sources,stories.stories[0].sources,
+  'RU and HE story links must be identical');
+assert.deepEqual(ruStory.stories[0].source_urls,stories.stories[0].source_urls,
+  'RU and HE source_urls must be identical');
+assert.equal(ruStory.stories[0].event_date,stories.stories[0].event_date);
+
+for(const query of ['limit=1.5','limit=0','limit=-1','limit=1000','limit=Infinity','offset=0.5','offset=-1','offset=2001']){
+  const result=await fetchLocalized(
+    new Request('https://regional.test/api/news?lang=he&'+query),envNews,null
+  );
+  assert.equal(result.status,400,'BE-05: '+query+' must be JSON 400, not HTTP 503');
+  assert.ok((await result.json()).error.startsWith('invalid_'));
+}
+for(const query of ['limit=1','limit=40','offset=0','offset=500']){
+  const result=await fetchLocalized(
+    new Request('https://regional.test/api/news?lang=ru&'+query),envNews,null
+  );
+  assert.equal(result.status,200,'BE-05: valid '+query+' must remain accepted');
+}
+console.log('QA localization: actor checks, cached fallback, story provenance and pagination passed');
+
