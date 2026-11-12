@@ -1,0 +1,51 @@
+name: Collect Copernicus EMS analysis metadata
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "13 */6 * * *"
+  push:
+    branches: [main]
+    paths:
+      - scripts/collect_copernicus.py
+      - scripts/test_copernicus.py
+      - .github/workflows/copernicus-analytics.yml
+  pull_request:
+    paths:
+      - scripts/collect_copernicus.py
+      - scripts/test_copernicus.py
+      - .github/workflows/copernicus-analytics.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: copernicus-analytics-mirror
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate collector without network
+        run: python -m unittest discover -s scripts -p "test_copernicus.py" -v
+      - name: Harvest public Copernicus EMS API
+        run: python scripts/collect_copernicus.py
+      - name: Commit public metadata mirror (main only)
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/copernicus-analyses.json data/copernicus-analyses-status.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Refresh Copernicus public analysis metadata mirror"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
