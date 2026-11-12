@@ -61,6 +61,14 @@ ACTION={
  "sanctions":r"\b(?:sanctions?|embargo|blacklist|tariffs?)\b|סנקציות|عقوبات|санкци",
  "statement":r"\b(?:says?|warns?|claims?|accuses?|statement|pledges?|announces?)\b|אמר|הזהיר|הודיע|אומר|صرح|قال|حذر|زعم|заявил|предупредил|объявил",
 }
+SUBTOPIC={
+ "deal":r"\b(?:deal|agreement|mou|treaty)\b|הסכם|עסקה|اتفاق|تسوية|сделк|соглашени",
+ "ceasefire":r"\b(?:ceasefire|truce|armistice)\b|הפסקת אש|هدنة|وقف إطلاق النار|перемири|прекращени[ея] огня",
+ "nuclear":r"\bnuclear\b|גרעין|نووي|ядер",
+ "missile":r"\b(?:missile|ballistic|rocket)\b|טיל|صاروخ|راкет",
+ "elections":r"\b(?:election|elected|vote)\b|בחיר|انتخاب|выбор",
+ "hostages":r"\bhostage\b|חטופ|رهينة|заложник",
+}
 TOPIC_RANK={"strike":6,"military":5,"negotiation":4,"sanctions":4,"election":3,"statement":2,"other":0}
 STRONG_VENUES={"nasser_hospital","fairford","didamar","shifa_hospital"}
 PEOPLE={"katz","vance","ghalibaf","qassem","netanyahu","eisenkot"}
@@ -144,6 +152,7 @@ def analyze(row):
     reasons.append("public_review_required")
     return {**row,"headline":title,"summary":summary,"canonical":url,"timestamp":ts,
             "publisher":pub,"origin":agency_origin(row),"region":region,"detail":details,
+            "subtopics":matched(whole,SUBTOPIC),
             "topic":topic,"tokens":tokens(title),"kind":kind,"score":rank,
             "selection_policy":policy,"reason_codes":reasons}
 
@@ -165,8 +174,13 @@ def same_event(a,b):
     if shared_venue and a["topic"] in ("strike","military"):
         return (True,"same_action_precise_venue_time")
     shared_person=a["detail"]&b["detail"]&PEOPLE
-    if shared_person and a["region"]&b["region"] and similarity(a,b)>=0.26:
-        return (True,"same_actor_context_time")
+    if shared_person and a["region"]&b["region"]:
+        if similarity(a,b)>=0.26:
+            return (True,"same_actor_context_time")
+        # Cross-language paraphrases need a second semantic anchor and a tight
+        # time window, otherwise a politician's different speeches get merged.
+        if delta<=6 and a["subtopics"]&b["subtopics"]:
+            return (True,"same_actor_subtopic_short_window")
     if a["region"]&b["region"] and len(a["tokens"]&b["tokens"])>=4 and similarity(a,b)>=0.70:
         return (True,"very_high_headline_overlap")
     return (False,"insufficient_event_identity")
