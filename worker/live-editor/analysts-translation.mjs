@@ -96,4 +96,20 @@ async function translateChunk(env,source,language) {
 /** Full translation stays in D1, only its source-attributed short editorial summary can publish. */
 export async function translatedForEditorial(env,it,now) {
   const language=it.original_language||'ru';
-  if(language==='ru')return {text:it.bo --- TRUNCATED --- 7,334 chars
+  if(language==='ru')return {text:it.body,confidence:null,original_language:'ru',verified_by:'native'};
+  if(!SUPPORTED_ORIGINAL_LANGUAGES.has(language))throw Error('translation_language_unsupported');
+  const cached=await env.DB.prepare("SELECT translation_ru,quality_score,model FROM analyst_translations WHERE item_id=? AND content_hash=? AND original_language=? AND status='verified'")
+    .bind(it.id,it.content_hash,language).first();
+  if(cached)return {text:cached.translation_ru,confidence:cached.quality_score,
+    original_language:language,verified_by:cached.model};
+  const parts=splitSource(it.body),output=[],scores=[];
+  for(const part of parts){
+    const x=await translateChunk(env,part,language);
+    output.push(x.text);scores.push(x.confidence);
+  }
+  const complete=output.join('\n'),confidence=Math.min(...scores);
+  if(complete.length>MAX_TRANSLATED_CHARS)throw Error('translated_text_too_long');
+  await env.DB.prepare("INSERT OR IGNORE INTO analyst_translations(item_id,content_hash,original_language,translation_ru,quality_score,model,status,created_at_ms) VALUES(?,?,?,?,?,?,?,?)")
+    .bind(it.id,it.content_hash,language,complete,confidence,TRANSLATION_MODEL,'verified',now).run();
+  return {text:complete,confidence,original_language:language,verified_by:TRANSLATION_MODEL};
+}
