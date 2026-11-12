@@ -17,6 +17,20 @@ assert.equal(validateCandidate('IRGC attacked base','חיל הים האיראנ�
 assert.equal(validateCandidate('IRGC attacked base','משמרות המהפכה תקפו את הבסיס','he'),true);
 assert.equal(validateCandidate('Iran has 10,000 drones','У Ирана 10000 беспилотников','ru'),true);
 
+// End-to-end model-output safeguards: actual production false friends.
+assert.equal(validateCandidate('Canada sanctions 11 Iranian entities',
+ 'קנדה מטילה סנקציות על 11 ישויות ירדניות','he'),false);
+assert.equal(validateCandidate('Canada sanctions 11 Iranian entities',
+ 'קנדה מטילה סנקציות על 11 ישויות איראניות','he'),true);
+assert.equal(validateCandidate('Israeli strike on Gaza hospital kills six',
+ 'שביתה ישראלית בבית חולים בעזה הרגה שישה','he'),false);
+assert.equal(validateCandidate('Israeli strike on Gaza hospital kills six',
+ 'תקיפה ישראלית בבית חולים בעזה הרגה שישה','he'),true);
+assert.equal(validateCandidate("Katz: Caretaker govt fully responsible for Israel security",
+ "Кац: Временное правительство не несет полной ответственности за безопасность Израиля",'ru'),false);
+assert.equal(validateCandidate("Katz: Caretaker govt fully responsible for Israel security",
+ "Кац: Временное правительство несёт полную ответственность за безопасность Израиля",'ru'),true);
+
 const english={event_id:'evt_a',id:'abcdefabcdefabcdefabcdef',source:'The Guardian',
  headline:'Iran has 50 missiles',summary:'Iran announced 50 missiles',headline_ru:null,summary_ru:null,
  he_hash:null,he_title:null,he_body:null,he_comment:null,comment:null,event_priority:8};
