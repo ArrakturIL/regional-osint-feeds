@@ -54,6 +54,22 @@ assert.equal(factualTranslationIssue(
   original('Нейтральная новость','Погода в регионе остаётся ясной.'),
   translated('עדכון ניטרלי','מזג האוויר באזור נותר בהיר.')),null);
 
+assert.equal(factualTranslationIssue(
+ original('Canada sanctions 11 Iranian entities','Canadian sanctions target Iranian firms'),
+ translated('קנדה מטילה סנקציות על 11 ישויות ירדניות','סנקציות נגד חברות ירדניות')),
+ 'title:iran_replaced_with_jordan');
+assert.equal(factualTranslationIssue(
+ original('Israeli strike on Gaza hospital kills six','Military strike in Gaza'),
+ translated('שביתה ישראלית בבית חולים בעזה הרגה שישה','שביתה צבאית בעזה')),
+ 'title:military_strike_misread_as_labor_action');
+assert.equal(factualTranslationIssue(
+ original("Katz says cabinet fully responsible for security",'The cabinet is fully responsible'),
+ translated('כץ: הממשלה אינה נושאת באחריות','הממשלה אינה נושאת באחריות')),
+ 'title:responsibility_negation_inverted');
+assert.equal(factualTranslationIssue(
+ original('Israeli strike on Gaza hospital kills six','Military strike in Gaza'),
+ translated('תקיפה ישראלית בבית חולים בעזה הרגה שישה','תקיפה צבאית בעזה')),null);
+
 function fakeDB(row){
   return{prepare(_sql){return{bind(..._args){return this;},
     async all(){return {results:[row]};},async first(){return null;}};}};

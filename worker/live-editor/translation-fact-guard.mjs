@@ -57,6 +57,17 @@ export function factualTranslationIssue(original,candidate) {
       if(rule.source.test(src)&&!rule.target.test(translated))
         return field+':'+rule.code;
     }
+    // High-impact false-friend and entity substitutions seen in production.
+    const sourceIran=/(?:\bIran(?:ian)?\b|Иран[\p{L}]*)/iu.test(src);
+    const sourceJordan=/(?:\bJordan(?:ian)?\b|Иордан[\p{L}]*)/iu.test(src);
+    if(sourceIran&&!sourceJordan&&/(?:ירד(?:ן|נ[\p{L}]*)|\bJordan(?:ian)?\b)/iu.test(translated))
+      return field+':iran_replaced_with_jordan';
+    if(/(?:\b(?:Israeli|IDF|Gaza|Hamas|military|air)\b.{0,90}\bstrike\b|\bstrike\b.{0,90}\b(?:Gaza|Hamas|hospital|killed|IDF)\b|(?:удар|авиаудар|обстрел)[\p{L}]*)/iu.test(src)
+       &&/שבית[\p{L}]*/iu.test(translated))
+      return field+':military_strike_misread_as_labor_action';
+    if(/(?:\bfully\s+responsible\b|\bfull\s+responsibility\b|нес[её]т\s+полн[\p{L}]*\s+ответственн)/iu.test(src)
+       &&/(?:לא|אינו|אינה|אינם)\s+[^.]{0,35}(?:אחראי|אחריות|נושא|נושאת)/iu.test(translated))
+      return field+':responsibility_negation_inverted';
     // Ballistic and tactical missiles are not interchangeable. Keep the
     // weapon classification invariant in Hebrew as well as the number.
     if(/\bballistic\b|баллистическ/iu.test(src)&&!/בליסט/iu.test(translated))
