@@ -31,6 +31,8 @@ def run():
         "worker_he_ready":WORKER+"/api/news?lang=he&ready_only=1&limit=30",
         "worker_ru_full":WORKER+"/api/news?lang=ru&limit=40",
         "worker_he_full":WORKER+"/api/news?lang=he&limit=40",
+        "worker_analysts_ru":WORKER+"/api/analyst-posts?lang=ru&limit=40",
+        "worker_analysts_he":WORKER+"/api/analyst-posts?lang=he&limit=40",
         "worker_events":WORKER+"/api/events?lang=ru&limit=10",
         "worker_queue":WORKER+"/api/translation-queue?limit=10",
         "worker_limit_error":WORKER+"/api/news?lang=ru&limit=1.5",
@@ -69,6 +71,42 @@ def run():
     for a in ru.get("articles",[]):
         if not a.get("event_id") or not isinstance(a.get("sources"),list) or not a["sources"]:
             errors.append("missing event ID or provenance")
+    # Full-page composition, identity, and ordering are locale-invariant, not
+    # merely equal card counts. "ready_only" is deprecated for the main feed.
+    ru40=(results["worker_ru_full"].get("data") or {})
+    he40=(results["worker_he_full"].get("data") or {})
+    ready30=(results["worker_he_ready"].get("data") or {})
+    ru_seq=[(x.get("event_id"),x.get("id"),x.get("feed_rank")) for x in ru40.get("articles",[])]
+    he_seq=[(x.get("event_id"),x.get("id"),x.get("feed_rank")) for x in he40.get("articles",[])]
+    if ru_seq!=he_seq:errors.append("RU/HE first 40 differ by canonical event ID, item ID, or rank")
+    if not ru40.get("feed_order_hash") or ru40.get("feed_order_hash")!=he40.get("feed_order_hash"):
+        errors.append("RU/HE full feed_order_hash mismatch")
+    if len(ready30.get("articles",[]))!=min(30,len(he40.get("articles",[]))) or (
+        [x.get("event_id") for x in ready30.get("articles",[])]!=
+        [x.get("event_id") for x in he40.get("articles",[])[:30]]):
+        errors.append("ready_only changed the Hebrew main-feed composition")
+    for lang,data in (("ru",ru40),("he",he40)):
+        for item in data.get("articles",[]):
+            if not item.get("translation_state") or not isinstance(item.get("translation_available"),bool):
+                errors.append("missing explicit news translation state ("+lang+")")
+                break
+    # Published analyst posts (not raw pending drafts) must appear in both
+    # localizations, with the same IDs and explicit per-item translation states.
+    ar=(results["worker_analysts_ru"].get("data") or {})
+    ah=(results["worker_analysts_he"].get("data") or {})
+    ru_posts=ar.get("posts",[])
+    he_posts=ah.get("posts",[])
+    if not isinstance(ru_posts,list) or not isinstance(he_posts,list):
+        errors.append("analyst posts API response invalid")
+    elif [p.get("id") for p in ru_posts]!=[p.get("id") for p in he_posts]:
+        errors.append("analyst published post IDs/order differ across locales")
+    for lang,posts,body in (("ru",ru_posts,ar),("he",he_posts,ah)):
+        if body.get("post_count")!=len(posts) or not isinstance(body.get("translation_summary"),dict):
+            errors.append("analyst translation summary missing ("+lang+")")
+        for post in posts:
+            if not isinstance(post.get("translation_available"),bool) or not post.get("translation_state"):
+                errors.append("analyst post lacks translation state ("+lang+")")
+                break
     # P1 editorial safety: never publish a joke on fatality/patient reporting.
     sensitive=re.compile(r"(?:\b(?:kill(?:s|ed|ing(?:s)?)?|dead|death|hospital|victim|patient|injured|wounded|hostage)\b|погиб|убит|убива|жертв|госпитал|больниц|врач|пациент|נהרג|נרצח|הרוג|פצוע|בית\s+חולים)",re.I)
     for key in ("worker_ru_full","worker_he_full"):
@@ -92,6 +130,11 @@ def run():
              "he_items":len(he.get("articles",[])),"ru_ready":ru_ready,"he_ready":he_ready,
              "he_approved":he_approved,"queue_size":len(queue.get("items",[])),
              "sources":seen_sources,"site_he_news_items":len(items) if isinstance(items,list) else None,
+             "worker_ru_feed_hash":ru40.get("feed_order_hash"),
+             "worker_he_feed_hash":he40.get("feed_order_hash"),
+             "analyst_ru_count":len(ru_posts),"analyst_he_count":len(he_posts),
+             "analyst_ru_translation":ar.get("translation_summary"),
+             "analyst_he_translation":ah.get("translation_summary"),
              "site_ru_news_contract":site_news_contract,
              "statuses":{name:r["status"] for name,r in results.items()},
              "errors":errors}
