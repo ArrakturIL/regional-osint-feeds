@@ -234,6 +234,7 @@ def cluster_articles(articles):
                        "publisher_count":len(publisher_ids),"reporting_origin_count":len(distinct_origins),
                        "publisher_ids":sorted(publisher_ids),"member_count":len(members),
                        "reason_codes":sorted(set(group["reasons"])),
+                       "merge_reason_counts":dict(Counter(group["reasons"])),
                        "articles":members,"published":max(i["timestamp"] for i in members),
                        "public_release_allowed":False})
     events.sort(key=lambda e:(-e["score"],-e["published"].timestamp(),e["shadow_id"]))
@@ -256,7 +257,8 @@ def diversified(events,limit=12,per_owner=0.35):
 
 def report(articles):
     events,held=cluster_articles(articles)
-    reason_count=Counter(code for e in events for code in e["reason_codes"])
+    reason_count=Counter()
+    for e in events:reason_count.update(e["merge_reason_counts"])
     hold_count=Counter(r["selection_policy"] for r in held)
     type_count=Counter(e["topic"] for e in events)
     publication_count=sum(e["member_count"] for e in events)
