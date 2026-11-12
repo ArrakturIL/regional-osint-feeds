@@ -3,6 +3,8 @@ import {shouldSuppressComment,safePublishedComment} from './live-editor/editoria
 const samples=[
  [{headline:'Gaza goalkeeper killed in Israeli attack',headline_ru:'Вратарь из Газы убит в атаке'},true],
  [{headline:'Israeli strike on hospital kills patients'},true],
+ [{headline:'Iran war live: Tehran warns, Israel kills in Gaza'},true],
+ [{headline:'Израиль убивает в Газе'},true],
  [{headline:'IDF strikes Hamas terrorists from Nasser Hospital'},true],
  [{headline:'Хирург получил ранение в Газе'},true],
  [{headline:'בית חולים בעזה נפגע בתקיפה'},true],
