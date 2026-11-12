@@ -32,6 +32,13 @@ def valid(source,target,lang):
     if lang=="ru" and not CYRILLIC.search(target):return False
     if lang=="he" and not HEBREW.search(target):return False
     if numbers(source)!=numbers(target):return False
+    if re.search(r"&(?:quot|amp|lt|gt);|(?:\.\s*){6,}",target,re.I):return False
+    if re.search(r"\bballistic\b|баллистическ",source,re.I):
+        if lang=="he" and "בליסט" not in target:return False
+        if lang=="ru" and "баллист" not in target.lower():return False
+    if re.search(r"\bshared[\s\w-]{0,50}posts?\b",source,re.I):
+        if lang=="he" and not re.search(r"פוסטים|פרסומ|שיתפ",target):return False
+        if lang=="ru" and not re.search(r"пост|публикац|делилс",target,re.I):return False
     if re.search(r"\bKatz\b|Кац",source,re.I):
         if lang=="he" and "כץ" not in target:return False
         if lang=="ru" and "Кац" not in target:return False
