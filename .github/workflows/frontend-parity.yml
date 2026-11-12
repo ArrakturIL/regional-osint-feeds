@@ -1,0 +1,27 @@
+name: Regional Watch frontend parity
+on:
+  pull_request:
+    paths:
+      - "site/unified/**"
+      - ".github/workflows/frontend-parity.yml"
+  push:
+    branches:
+      - "fix/frontend-ru-he-home-parity-20261112"
+    paths:
+      - "site/unified/**"
+      - ".github/workflows/frontend-parity.yml"
+permissions:
+  contents: read
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Syntax check
+        run: node --check site/unified/app.js
+      - name: RU/HE component parity
+        run: node site/unified/tests/parity.test.cjs
