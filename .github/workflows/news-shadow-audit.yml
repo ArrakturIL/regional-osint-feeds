@@ -1,6 +1,9 @@
 name: Regional Watch read-only news source shadow audit
 on:
   workflow_dispatch:
+  schedule:
+    # Two lightweight read-only snapshots/day. Never alter public feeds or D1.
+    - cron: '41 1,13 * * *'
   push:
     paths:
       - 'config/news-source-registry.json'
@@ -53,6 +56,9 @@ jobs:
             f"- Conservative event groups (shadow): {d['event_filter']['event_groups']}",
             f"- Potential duplicate cards (shadow): {d['event_filter']['suppressed_duplicate_cards']}",
             f"- Held irrelevant/non-news articles: {d['event_filter']['held_articles']}",
+            f"- Event actions: {d['event_filter']['event_action_counts']}",
+            f"- Selection holds: {d['event_filter']['hold_reason_counts']}",
+            f"- Merge reasons: {d['event_filter']['merge_reason_counts']}",
             '- This run never changes the public site, D1, or Workers.',
             '| Provider | Status | Fresh relevant | Error |',
             '|---|---|---:|---|',
