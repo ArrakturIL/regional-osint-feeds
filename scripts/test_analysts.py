@@ -4,6 +4,8 @@ import importlib.util
 from pathlib import Path
 import json
 import unittest
+from unittest.mock import patch
+from urllib.error import HTTPError
 
 spec=importlib.util.spec_from_file_location("analysts",Path(__file__).with_name("collect_analysts.py"))
 m=importlib.util.module_from_spec(spec)
@@ -29,6 +31,30 @@ class Tests(unittest.TestCase):
   self.assertEqual(len(got),1)
   self.assertEqual(got[0]["text_status"],"metadata_only")
   self.assertEqual(got[0]["body"],"")
+ def test_youtube_500_retry_then_success(self):
+  url='https://www.youtube.com/feeds/videos.xml?channel_id=UCygnHvXjsEa_gLMH-WmzeXQ'
+  class FakeResponse:
+   url=url
+   status=200
+   headers={'Content-Type':'application/atom+xml'}
+   def __enter__(self):return self
+   def __exit__(self,*args):return False
+   def read(self,n):return b'<feed/>'
+  error=HTTPError(url,500,'Internal Server Error',{},None)
+  with patch.object(m.urllib.request,'urlopen',side_effect=[error,FakeResponse()]) as mocked:
+   with patch.object(m.time,'sleep') as sleep:
+    body,status=m.fetch_public(url)
+  self.assertEqual((body,status),('<feed/>',200))
+  self.assertEqual(mocked.call_count,2)
+  sleep.assert_called_once_with(1)
+ def test_youtube_429_never_retried(self):
+  url='https://www.youtube.com/feeds/videos.xml?channel_id=UCygnHvXjsEa_gLMH-WmzeXQ'
+  error=HTTPError(url,429,'Too Many Requests',{},None)
+  with patch.object(m.urllib.request,'urlopen',side_effect=error) as mocked:
+   with patch.object(m.time,'sleep') as sleep:
+    with self.assertRaises(HTTPError):m.fetch_public(url)
+  self.assertEqual(mocked.call_count,1)
+  sleep.assert_not_called()
  def test_disallowed_private_url(self):
   for url in ["http://t.me/s/voinasordoy","https://evil.example/path","https://t.me/private?secret=true"]:
    with self.assertRaises(ValueError):m.fetch_public(url)
