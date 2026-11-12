@@ -48,6 +48,20 @@ def valid(source,target,lang):
     if re.search(r"\bIDF\b|ЦАХАЛ",source,re.I):
         if lang=="he" and not re.search(r'צה[״"\']?ל|צבא ההגנה|IDF',target):return False
         if lang=="ru" and not re.search(r"ЦАХАЛ|армии\s+Израил",target,re.I):return False
+    # Known production semantic failures: entity swap, military false friend,
+    # and reversal of responsibility. Conservative rejection, not translation.
+    if re.search(r"\bIran(?:ian)?\b|Иран\w*",source,re.I) and \
+            not re.search(r"\bJordan(?:ian)?\b|Иордан\w*",source,re.I):
+        if re.search(r"ירד(?:ן|נ\w*)",target) if lang=="he" else re.search(r"Иордан\w*",target,re.I):
+            return False
+    if re.search(r"(?:\b(?:Israeli|IDF|Gaza|Hamas|military|air)\b.{0,90}\bstrike\b|\bstrike\b.{0,90}\b(?:Gaza|Hamas|hospital|killed|IDF)\b|(?:удар|авиаудар|обстрел)\w*)",source,re.I):
+        if re.search(r"שבית\w*",target) if lang=="he" else re.search(r"забастовк\w*",target,re.I):
+            return False
+    if re.search(r"\bfully\s+responsible\b|\bfull\s+responsibility\b",source,re.I):
+        if lang=="he" and re.search(r"(?:לא|אינו|אינה|אינם)\s+[^.]{0,35}(?:אחראי|אחריות|נושא)",target):
+            return False
+        if lang=="ru" and re.search(r"не\s+(?:нес[её]т|отвеча\w*)\s+[^.]{0,35}ответствен",target,re.I):
+            return False
     return True
 
 def read_queue():
