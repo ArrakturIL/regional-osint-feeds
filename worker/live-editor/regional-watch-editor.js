@@ -1,6 +1,7 @@
 import {enrichNewMonitorStories} from './story-enrichment.mjs';
 import analystService from './analysts-editor.mjs';
 import localization from './localization.mjs';
+import {canonicalNewsUrl,normalizedHeadline,articlePriority} from './news-normalization.mjs';
 
 const FEEDS=[
  ["BBC Middle East","https://feeds.bbci.co.uk/news/world/middle_east/rss.xml",4],
@@ -10,7 +11,7 @@ const FEEDS=[
  ["Al Jazeera","https://www.aljazeera.com/xml/rss/all.xml",3]
 ];
 const REGION=/iran|israel|israeli|hezbollah|lebanon|gaza|hamas|syria|syrian|yemen|houthi|red sea|middle east|iraq|idf|centcom|hormuz|netanyahu|tehran|jerusalem|tel aviv|persian gulf|khamenei|trump.*(iran|israel)/i;
-const STRONG=/strike|attack|war|missile|drone|aircraft|fighter|jet|carrier|military|evacuat|nuclear|deal|talk|negotiat|ceasefire|border|rocket|explos|killed|injur|dead|warning|alert|intercept|threat|sanction|deploy|security/i;
+// High-impact headline terms are token-boundary checked in news-normalization.mjs.
 function decode(s){return (s||"").replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g,"$1").replace(/&(?:amp|lt|gt|quot|apos|nbsp|#(\d+)|#x([0-9a-f]+));/gi,(m,d,h)=>{if(d||h){const n=d?Number(d):parseInt(h,16);return n>0&&n<1114112?String.fromCodePoint(n):""}return {amp:"&",lt:"<",gt:">",quot:'"',apos:"'",nbsp:" "}[m.slice(1,-1).toLowerCase()]||m}).replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim()}
 function tag(s,key){const m=s.match(new RegExp("<(?:[\\w.-]+:)?"+key+"\\b[^>]*>([\\s\\S]*?)<\\/(?:[\\w.-]+:)?"+key+">","i"));return m?decode(m[1]):""}
 function safeLink(u){try{const x=new URL(u);return x.protocol==="https:"?x.href.slice(0,1000):null}catch{return null}}
@@ -21,7 +22,7 @@ function entries(xml,feed,now){
   const title=tag(it,"title").slice(0,260),summary=tag(it,"description").slice(0,480);
   const link=safeLink(tag(it,"link")),pub=Date.parse(tag(it,"pubDate")||tag(it,"published")||tag(it,"date"));
   if(!title||!link||!Number.isFinite(pub)||pub>now+600000||pub<now-48*3600000||!REGION.test(title+" "+summary))continue;
-  const score=feed[2]+(REGION.test(title)?3:0)+(STRONG.test(title)?3:0)-(/opinion|as it happened/i.test(title)?3:0);
+  const score=articlePriority(feed[2],title,REGION.test(title));
   out.push({source:feed[0],title,summary,link,pub,score});
  }
  return out;
@@ -147,12 +148,22 @@ async function scan(env){
  const now=Date.now(),runs=await Promise.all(FEEDS.map(x=>load(x,now))),all=runs.flatMap(x=>x.items);
  for(const r of runs)await env.NEWS_DB.prepare("INSERT INTO feed_status(name,checked_ms,status,http_status,items_count,error) VALUES(?,?,?,?,?,?) ON CONFLICT(name) DO UPDATE SET checked_ms=excluded.checked_ms,status=excluded.status,http_status=excluded.http_status,items_count=excluded.items_count,error=excluded.error").bind(r.name,now,r.state,r.http,r.items.length,r.error).run();
  all.sort((a,b)=>b.score-a.score||b.pub-a.pub);
- const dedup=new Set();let inserted=0;
+ // A canonical URL is one technical article identity, regardless of UTM order.
+ // Query existing IDs once to avoid introducing new duplicates during migration.
+ const known=(await env.NEWS_DB.prepare("SELECT url FROM news_items WHERE published_ms>=?").bind(now-8*86400000).all()).results||[];
+ const existingUrls=new Set(known.map(row=>canonicalNewsUrl(row.url)).filter(Boolean));
+ const seenUrls=new Set(),samePublisherTitles=new Set();let inserted=0;
  for(const item of all.slice(0,85)){
-  const titleKey=item.title.toLowerCase().replace(/[^a-z0-9а-яё]+/gi," ").slice(0,110);
-  if(dedup.has(titleKey))continue;dedup.add(titleKey);
-  const id=await digest(item.link.replace(/[?&](?:utm_[^=]+|fbclid)=[^&]+/g,""));
+  const canonical=canonicalNewsUrl(item.link);
+  if(!canonical||seenUrls.has(canonical)||existingUrls.has(canonical))continue;
+  const titleKey=item.source+'\u0000'+normalizedHeadline(item.title)+'\u0000'+Math.floor(item.pub/(6*3600000));
+  // Avoid an identical same-publisher headline repeated in the same time window,
+  // without suppressing independent publishers or unrelated events.
+  if(samePublisherTitles.has(titleKey))continue;
+  seenUrls.add(canonical);samePublisherTitles.add(titleKey);
+  const id=await digest(canonical);
   const r=await env.NEWS_DB.prepare("INSERT OR IGNORE INTO news_items (id,source,headline,summary,url,published_ms,discovered_ms,priority) VALUES(?,?,?,?,?,?,?,?)").bind(id,item.source,item.title,item.summary,item.link,item.pub,now,item.score).run();
+  existingUrls.add(canonical);
   if(r.meta?.changes)inserted++;
  }
  await env.NEWS_DB.prepare("DELETE FROM news_items WHERE published_ms < ?").bind(now-8*86400000).run();
