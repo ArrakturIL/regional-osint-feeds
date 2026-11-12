@@ -24,6 +24,9 @@ COUNTRIES=("israel","iran","iraq","syria","lebanon","jordan","oman","yemen",
  "palestine","palestinian","egypt","turkey","türkiye","cyprus","sudan")
 MAX_RESULT=30
 MAX_FETCH_BYTES=1_000_000
+# Bounded pages; unified service covers both Rapid and Risk/Recovery sources.
+MAX_PAGES={'unified':7,'rapid':2,'recovery':5}
+PAGE_SIZES={'unified':100,'rapid':100,'recovery':10}
 
 def iso_now():
  return datetime.now(timezone.utc).isoformat().replace("+00:00","Z")
@@ -89,29 +92,46 @@ def as_product(row,origin,now,cutoff):
 
 def collect(now=None,getter=get_json):
  now=now or iso_now()
- cutoff=datetime.fromisoformat(now.replace("Z","+00:00"))-timedelta(days=365)
+ cutoff=datetime.fromisoformat(now.replace("Z","+00:00"))-timedelta(days=900)
  records={};errors=[];successful=0;pages={}
  for label,base in SOURCES.items():
+  found=0
   try:
-   payload=getter(base+"?limit=100")
-   if not isinstance(payload,dict) or not isinstance(payload.get("results"),list):
-    raise ValueError("CEMS unexpected listing schema")
+   last=None;scanned=0;fully_scanned=False;recent_scanned=0
+   for page in range(MAX_PAGES[label]):
+    payload=getter(base+"?limit="+str(PAGE_SIZES[label])+"&offset="+str(page*PAGE_SIZES[label]))
+    if not isinstance(payload,dict) or not isinstance(payload.get("results"),list):
+     raise ValueError("CEMS unexpected listing schema")
+    rows=payload["results"]
+    if page==0:
+     last=payload
+     # Field names are public schema metadata, useful for diagnosing upstream API drift.
+     pages[label]={"returned":0,"total":payload.get("count"),"pages_fetched":0,
+                   "sample_fields":sorted(rows[0].keys())[:30] if rows and isinstance(rows[0],dict) else []}
+    pages[label]["returned"]+=len(rows)
+    pages[label]["pages_fetched"]+=1
+    scanned+=len(rows)
+    for row in rows:
+     item=as_product(row,label,now,cutoff)
+     if not item:continue
+     recent_scanned+=1
+     old=records.get(item["code"])
+     if old is None or (item["product_count"] or 0)>(old["product_count"] or 0):
+      records[item["code"]]=item
+     found+=1
+    if not rows or not payload.get("next") or (isinstance(payload.get("count"),int) and scanned>=payload["count"]):
+     fully_scanned=True;break
+   pages[label]["matched_region"]=recent_scanned
+   pages[label]["truncated"]=not fully_scanned
    successful+=1
-   rows=payload["results"]
-   pages[label]={"returned":len(rows),"total":payload.get("count"),"truncated":bool(payload.get("next"))}
-   for row in rows:
-    item=as_product(row,label,now,cutoff)
-    if not item:continue
-    old=records.get(item["code"])
-    if old is None or (item["product_count"] or 0)>(old["product_count"] or 0):
-     records[item["code"]]=item
   except (ValueError,KeyError,TimeoutError,urllib.error.URLError,OSError) as e:
-   errors.append({"provider":label,"type":type(e).__name__})
+   errors.append({"provider":label,"type":type(e).__name__,
+                  "reason":str(e)[:120] if isinstance(e,ValueError) else "upstream_request_error"})
  products=sorted(records.values(),key=lambda x:x["activation_at"],reverse=True)[:MAX_RESULT]
  state="error" if successful==0 else "partial" if errors or any(v["truncated"] for v in pages.values()) else "ok"
  return {"schema_version":1,"source":"copernicus_ems","checked_at":now,"state":state,
          "products":products,"pages":pages,"quality":{
-           "scope":"Only first 100 activations from each public listing; not a full historical inventory",
+           "scope":"Bounded first pages: 7 unified, 2 Rapid, 5 smaller Recovery pages (past 900 days); partial if not exhaustive",
            "ready_made_analysis":"Product count identifies published products; metadata alone cannot establish damage",
            "sources_successful":successful,"sources_failed":len(errors)}}, {
            "source":"copernicus_ems","checked_at":now,"state":state,
