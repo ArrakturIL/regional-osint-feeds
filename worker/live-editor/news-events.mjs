@@ -103,6 +103,9 @@ export async function reconcile(db,now=Date.now()){
   for(const m of members)batch.push(db.prepare("INSERT INTO news_event_members(article_id,event_id,updated_ms) VALUES(?,?,?) ON CONFLICT(article_id) DO UPDATE SET event_id=excluded.event_id,updated_ms=excluded.updated_ms WHERE news_event_members.event_id!=excluded.event_id").bind(m.id,eventId,now));
  }
  for(let i=0;i<batch.length;i+=80)await db.batch(batch.slice(i,i+80));
+ // Delete obsolete event heads after a former cluster has been re-assigned.
+ // Never remove historical news_items; only stale materialized event summaries.
+ await db.prepare("DELETE FROM news_event_groups WHERE NOT EXISTS (SELECT 1 FROM news_event_members m WHERE m.article_id=news_event_groups.representative_id AND m.event_id=news_event_groups.event_id)").run();
  const state={time:new Date(now).toISOString(),input:rows.length,events:groups.length,held:held.length,
   duplicated:groups.reduce((n,g)=>n+g.members.length-1,0),publishers:new Set(rows.map(r=>publisher(r.source))).size};
  await db.prepare("INSERT INTO editor_state(key,value,updated_ms) VALUES('last_event_filter',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_ms=excluded.updated_ms").bind(JSON.stringify(state),now).run();
