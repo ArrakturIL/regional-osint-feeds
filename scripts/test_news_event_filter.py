@@ -32,6 +32,9 @@ def gold_corpus():
       article("shifa","shifa","bbc",
         "Israeli strike hits Al-Shifa Hospital in Gaza",
         "A separate strike on Shifa Hospital in Gaza",hours=1),
+      article("nasser-next","h6","bbc",
+        "Second Israeli strike at Nasser Hospital in Gaza hours later",
+        "Another IDF strike on Nasser Hospital in Gaza, separate incident.",hours=14),
       article("nasser-later","h5","bbc",
         "Another Israeli strike hits Nasser Hospital in Gaza two days later",
         "Nasser Hospital in Gaza affected again.",hours=50),
@@ -118,6 +121,7 @@ class FilterTests(unittest.TestCase):
             labels={r["test_label"] for r in e["articles"]}
             self.assertFalse("nasser" in labels and "shifa" in labels)
             self.assertFalse("nasser" in labels and "nasser-later" in labels)
+            self.assertFalse("nasser" in labels and "nasser-next" in labels)
 
     def test_cross_language_named_actor_and_matching_subject(self):
         ev,_=cluster_articles(gold_corpus())
@@ -138,7 +142,7 @@ class FilterTests(unittest.TestCase):
     def test_irrelevant_opinion_sponsored_and_liveblog_held(self):
         ev,held=cluster_articles(gold_corpus())
         self.assertEqual(len(held),5)
-        self.assertEqual(len([e for e in ev if e["topic"]=="strike"]),3)
+        self.assertEqual(len([e for e in ev if e["topic"]=="strike"]),4)
         kinds={a["selection_policy"] for a in held}
         self.assertIn("hold_nonnews",kinds)
         self.assertIn("hold_low_signal",kinds)
@@ -156,6 +160,22 @@ class FilterTests(unittest.TestCase):
         y=analyze(article("x","y","toi","Iran missile strike reported"))
         x["timestamp"]=None
         self.assertEqual(same_event(x,y),(False,"missing_publication_time"))
+
+    def test_israeli_governance_and_un_diplomacy(self):
+        residence=analyze(article("budget","bu","toi",
+            "Netanyahu home repairs funded by Israeli state budget",
+            "Israeli taxpayer funding for Netanyahu residence."))
+        self.assertEqual(residence["topic"],"governance")
+        self.assertEqual(residence["selection_policy"],"candidate")
+        council=analyze(article("council","un","bbc",
+            "UN Security Council calls emergency session on Gaza and Israel",
+            "UN diplomatic officials discuss Israel and Gaza."))
+        self.assertEqual(council["topic"],"diplomacy")
+        self.assertEqual(council["selection_policy"],"candidate")
+        theater=analyze(article("theater","fa","jpost",
+            "Israel theater festival starts with Netanyahu portrait",
+            "The performance is in Tel Aviv."))
+        self.assertEqual(theater["selection_policy"],"hold_low_signal")
 
     def test_no_war_keyword_in_warsaw(self):
         a=analyze(article("x","w","bbc","Warsaw opens Israel history exhibit"))
