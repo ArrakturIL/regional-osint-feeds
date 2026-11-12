@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "source": "copernicus_ems",
-  "checked_at": "2026-11-12T11:44:52.629146Z",
+  "checked_at": "2026-11-12T11:51:40.367588Z",
   "state": "partial",
   "products": [
     {
@@ -21,7 +21,7 @@
       "report_url": null,
       "source_api": "unified",
       "evidence_type": "official_activation_metadata_not_damage_confirmation",
-      "collected_at": "2026-11-12T11:44:52.629146Z"
+      "collected_at": "2026-11-12T11:51:40.367588Z"
     },
     {
       "code": "EMSR750",
@@ -40,7 +40,7 @@
       "report_url": null,
       "source_api": "unified",
       "evidence_type": "official_activation_metadata_not_damage_confirmation",
-      "collected_at": "2026-11-12T11:44:52.629146Z"
+      "collected_at": "2026-11-12T11:51:40.367588Z"
     }
   ],
   "pages": {
