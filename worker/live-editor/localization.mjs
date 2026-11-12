@@ -86,7 +86,7 @@ export async function fetchLocalized(request,env,analystService){
   if(!lang)return respond({error:'unsupported_language',supported:['ru','he']},400);
   const url=new URL(request.url),path=url.pathname;
   const rawLimit=url.searchParams.get('limit'),rawOffset=url.searchParams.get('offset');
-  const positiveInt=v=>v!==null&&/^\\d+$/.test(v)&&Number.isSafeInteger(Number(v));
+  const positiveInt=v=>v!==null&&/^\d+$/.test(v)&&Number.isSafeInteger(Number(v));
   if(rawLimit!==null&&(!positiveInt(rawLimit)||Number(rawLimit)<1||Number(rawLimit)>40))
     return respond({error:'invalid_limit',message:'limit must be an integer from 1 to 40'},400);
   if(rawOffset!==null&&(!positiveInt(rawOffset)||Number(rawOffset)>2000))
