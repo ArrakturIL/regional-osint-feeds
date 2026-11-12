@@ -20,6 +20,15 @@ export function validateCandidate(input,result,lang){
  if(lang==='he'&&!hasHe(translated))return false;
  if(lang==='ru'&&!hasRu(translated))return false;
  if(JSON.stringify(numbers(source))!==JSON.stringify(numbers(translated)))return false;
+ if(/&(?:quot|amp|lt|gt);|(?:\.\s*){6,}/iu.test(translated))return false;
+ if(/\bballistic\b|баллистическ/iu.test(source)){
+  if(lang==='he'&&!/בליסט/iu.test(translated))return false;
+  if(lang==='ru'&&!/баллист/iu.test(translated))return false;
+ }
+ if(/\bshared[\s\w-]{0,50}posts?\b/iu.test(source)){
+  if(lang==='he'&&!/פוסטים|פרסומ|שיתפ/iu.test(translated))return false;
+  if(lang==='ru'&&!/пост|публикац|делилс/iu.test(translated))return false;
+ }
  if(/(?:\bKatz\b|Ка[цз])/iu.test(source)){
   if(lang==='he'&&!/כץ/.test(translated))return false;
   if(lang==='ru'&&!/Кац/.test(translated))return false;
