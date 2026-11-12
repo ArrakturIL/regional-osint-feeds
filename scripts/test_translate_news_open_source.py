@@ -25,6 +25,20 @@ class FreeTranslationTests(unittest.TestCase):
         self.assertFalse(valid("IRGC launched a strike","חיל הים האיראני ביצע תקיפה","he"))
         self.assertFalse(valid("IDF said missile warning","המשטרה דיווחה על טיל","he"))
 
+    def test_fact_fidelity_high_impact(self):
+        self.assertFalse(valid("Canada sanctions Iranian entities",
+            "קנדה מטילה סנקציות על ישויות ירדניות","he"))
+        self.assertTrue(valid("Canada sanctions Iranian entities",
+            "קנדה מטילה סנקציות על ישויות איראניות","he"))
+        self.assertFalse(valid("Israeli strike on Gaza hospital kills six",
+            "שביתה ישראלית בבית חולים בעזה הרגה שישה","he"))
+        self.assertTrue(valid("Israeli strike on Gaza hospital kills six",
+            "תקיפה ישראלית בבית חולים בעזה הרגה שישה","he"))
+        self.assertFalse(valid("Katz: Caretaker govt fully responsible",
+            "Кац: Временное правительство не несет полной ответственности","ru"))
+        self.assertTrue(valid("Katz: Caretaker govt fully responsible",
+            "Кац: Временное правительство несёт полную ответственность","ru"))
+
     def test_russian_and_native_hebrew_queue(self):
         items=[{"id":"a","source_language":"en","original_title":"Israel and Iran talk about peace",
                 "original_summary":"Officials said talks continue.","need_ru":True,"need_he":True,"source":"BBC Middle East"},
