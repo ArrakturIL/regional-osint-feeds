@@ -1,11 +1,11 @@
 {
-  "checked_at": "2026-11-12T11:44:50Z",
+  "checked_at": "2026-11-12T17:50:42Z",
   "state": "ok",
   "sources": [
     {
       "source_id": "auslender-telegram",
       "state": "ok",
-      "count": 20,
+      "count": 19,
       "detail": null
     },
     {
@@ -17,7 +17,7 @@
     {
       "source_id": "yigal-telegram",
       "state": "ok",
-      "count": 20,
+      "count": 19,
       "detail": null
     },
     {
@@ -29,13 +29,13 @@
     {
       "source_id": "abuali-telegram",
       "state": "ok",
-      "count": 18,
+      "count": 12,
       "detail": null
     },
     {
       "source_id": "stein-telegram",
       "state": "ok",
-      "count": 18,
+      "count": 20,
       "detail": null
     },
     {
