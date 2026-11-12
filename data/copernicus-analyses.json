@@ -1,47 +1,9 @@
 {
   "schema_version": 1,
   "source": "copernicus_ems",
-  "checked_at": "2026-11-12T07:01:30.144448Z",
+  "checked_at": "2026-11-12T07:04:53.299152Z",
   "state": "partial",
   "products": [
-    {
-      "code": "EMSN225",
-      "title": "Course change detection of the Mureș river, Romania",
-      "countries": [
-        "Romania"
-      ],
-      "category": "Flood",
-      "phase": "recovery",
-      "activation_at": "2025-10-28T17:52:56",
-      "last_update": "2025-12-19T16:05:37.593283",
-      "product_count": 1,
-      "aoi_count": 1,
-      "closed": true,
-      "source_url": "https://mapping.emergency.copernicus.eu/activations/api/activations/EMSN225/",
-      "report_url": null,
-      "source_api": "unified",
-      "evidence_type": "official_activation_metadata_not_damage_confirmation",
-      "collected_at": "2026-11-12T07:01:30.144448Z"
-    },
-    {
-      "code": "EMSN224",
-      "title": "Flood Extent and Damage Assessment in Suceava and Neamț, Romania (July 2025)",
-      "countries": [
-        "Romania"
-      ],
-      "category": "Flood",
-      "phase": "recovery",
-      "activation_at": "2025-09-18T00:00:00",
-      "last_update": "2025-12-18T16:00:26.257520",
-      "product_count": 2,
-      "aoi_count": 1,
-      "closed": true,
-      "source_url": "https://mapping.emergency.copernicus.eu/activations/api/activations/EMSN224/",
-      "report_url": null,
-      "source_api": "unified",
-      "evidence_type": "official_activation_metadata_not_damage_confirmation",
-      "collected_at": "2026-11-12T07:01:30.144448Z"
-    },
     {
       "code": "EMSR811",
       "title": "Wildfire in Latakia, Syria",
@@ -59,45 +21,7 @@
       "report_url": null,
       "source_api": "unified",
       "evidence_type": "official_activation_metadata_not_damage_confirmation",
-      "collected_at": "2026-11-12T07:01:30.144448Z"
-    },
-    {
-      "code": "EMSR802",
-      "title": "Flood in Romania",
-      "countries": [
-        "Romania"
-      ],
-      "category": "Flood",
-      "phase": "response",
-      "activation_at": "2025-05-28T17:20:00",
-      "last_update": "2025-06-05T08:33:33.137076",
-      "product_count": 3,
-      "aoi_count": 3,
-      "closed": true,
-      "source_url": "https://mapping.emergency.copernicus.eu/activations/api/activations/EMSR802/",
-      "report_url": null,
-      "source_api": "unified",
-      "evidence_type": "official_activation_metadata_not_damage_confirmation",
-      "collected_at": "2026-11-12T07:01:30.144448Z"
-    },
-    {
-      "code": "EMSR758",
-      "title": "Flood in Galati and Vaslui counties, Romania",
-      "countries": [
-        "Romania"
-      ],
-      "category": "Flood",
-      "phase": "response",
-      "activation_at": "2024-09-14T13:44:00",
-      "last_update": "2024-10-02T22:20:06",
-      "product_count": 8,
-      "aoi_count": 4,
-      "closed": true,
-      "source_url": "https://mapping.emergency.copernicus.eu/activations/api/activations/EMSR758/",
-      "report_url": null,
-      "source_api": "unified",
-      "evidence_type": "official_activation_metadata_not_damage_confirmation",
-      "collected_at": "2026-11-12T07:01:30.144448Z"
+      "collected_at": "2026-11-12T07:04:53.299152Z"
     },
     {
       "code": "EMSR750",
@@ -116,7 +40,7 @@
       "report_url": null,
       "source_api": "unified",
       "evidence_type": "official_activation_metadata_not_damage_confirmation",
-      "collected_at": "2026-11-12T07:01:30.144448Z"
+      "collected_at": "2026-11-12T07:04:53.299152Z"
     }
   ],
   "pages": {
@@ -139,7 +63,7 @@
         "past_items_search_text",
         "search_snippet"
       ],
-      "matched_region": 6,
+      "matched_region": 2,
       "truncated": true
     },
     "rapid": {
@@ -160,7 +84,7 @@
         "n_products",
         "name"
       ],
-      "matched_region": 4,
+      "matched_region": 2,
       "truncated": true
     },
     "recovery": {
@@ -199,7 +123,7 @@
         "subCategory",
         "viewerUrl"
       ],
-      "matched_region": 2,
+      "matched_region": 0,
       "truncated": false
     }
   },
