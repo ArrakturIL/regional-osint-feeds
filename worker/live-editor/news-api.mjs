@@ -1,5 +1,5 @@
 // Event-card response compatible with the legacy /api/news articles DTO.
-import {eventRows,hebrew,publisher,language} from './news-events.mjs';
+import {eventRows,reconcile,hebrew,publisher,language} from './news-events.mjs';
 import {localizeNewsRow} from './localization.mjs';
 const HEADERS={'Access-Control-Allow-Origin':'*','Cache-Control':'public,max-age=60',
                'X-Content-Type-Options':'nosniff'};
@@ -16,6 +16,15 @@ export async function readNewsEvents(request,env){
  if(limit===null||limit<1||offset===null)return respond({error:'invalid_pagination'},400);
  const readyOnly=lang==='he'&&['1','true'].includes(url.searchParams.get('ready_only'));
  let rows=await eventRows(env.NEWS_DB,200);
+ // Initialize the event index once on first public request, avoiding an empty
+ // homepage during the first five-minute cron window after deployment.
+ if(!rows.length){
+  const exists=await env.NEWS_DB.prepare("SELECT COUNT(*) n FROM news_event_groups").first();
+  if(!(exists?.n||0)){
+   await reconcile(env.NEWS_DB);
+   rows=await eventRows(env.NEWS_DB,200);
+  }
+ }
  // A native Hebrew source is already translated; do not require Workers AI
  // translation for its appearance in the Hebrew edition.
  const substitutions=new Map();
