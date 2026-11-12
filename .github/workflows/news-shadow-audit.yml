@@ -6,12 +6,16 @@ on:
       - 'config/news-source-registry.json'
       - 'scripts/collect_news_shadow.py'
       - 'scripts/test_news_shadow.py'
+      - 'scripts/news_event_filter.py'
+      - 'scripts/test_news_event_filter.py'
       - '.github/workflows/news-shadow-audit.yml'
   pull_request:
     paths:
       - 'config/news-source-registry.json'
       - 'scripts/collect_news_shadow.py'
       - 'scripts/test_news_shadow.py'
+      - 'scripts/news_event_filter.py'
+      - 'scripts/test_news_event_filter.py'
       - '.github/workflows/news-shadow-audit.yml'
 
 permissions:
@@ -32,6 +36,8 @@ jobs:
           python-version: '3.12'
       - name: Validate multilingual RSS and Atom parser offline
         run: python -m unittest discover -s scripts -p 'test_news_shadow.py' -v
+      - name: Evaluate multilingual event grouping against labeled corpus
+        run: python -m unittest discover -s scripts -p 'test_news_event_filter.py' -v
       - name: Probe candidate RSS/Atom once without publishing any headlines
         run: python scripts/collect_news_shadow.py
       - name: Summarize probe states and copyright-safe aggregate counts
@@ -44,6 +50,9 @@ jobs:
             f"- Feeds probed: {d['source_count']}",
             f"- Healthy: {d['ok_sources']}",
             f"- Fresh relevant articles by canonical URL: {d['canonical_articles']}",
+            f"- Conservative event groups (shadow): {d['event_filter']['event_groups']}",
+            f"- Potential duplicate cards (shadow): {d['event_filter']['suppressed_duplicate_cards']}",
+            f"- Held irrelevant/non-news articles: {d['event_filter']['held_articles']}",
             '- This run never changes the public site, D1, or Workers.',
             '| Provider | Status | Fresh relevant | Error |',
             '|---|---|---:|---|',
