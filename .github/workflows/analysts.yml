@@ -26,7 +26,9 @@ on:
       - 'worker/test-analysts-translation.mjs'
   workflow_dispatch:
   schedule:
+    # Two independent chances per hour: GitHub scheduled jobs can be delayed or skipped.
     - cron: '17 * * * *'
+    - cron: '47 * * * *'
 permissions:
   contents: write
 concurrency:
