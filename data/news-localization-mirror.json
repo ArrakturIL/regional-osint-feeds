@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-12T15:29:38.026407+00:00",
+  "generated_at": "2026-11-12T21:30:56.908543+00:00",
   "source": "Helsinki-NLP/Opus-MT via GitHub Actions CPU (Apache-2.0)",
   "items": [
     {
@@ -15,6 +15,55 @@
       }
     },
     {
+      "id": "799c9fb411bd1da879188859",
+      "original_title": "IDF begins establishing 'attack battalions' ahead of next ground operations in Gaza, Lebanon",
+      "source_language": "en",
+      "source": "Jerusalem Post / Israel",
+      "he": {
+        "title": "צה\"ל מתחיל להקים גדודי תקיפה לפני פעולות הקרקע הבאות בעזה, לבנון.",
+        "summary": "תוכנית הפיילוט תתחיל בשבוע הבא בחטיבת הכבאים ה-215, שהרגה כ-3,000 טרוריסטים מאז תחילת המלחמה.",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      }
+    },
+    {
+      "id": "4d4568e64350bf2c6264d2f6",
+      "original_title": "התפכחות בוושינגטון: טראמפ מאותת על שינוי דרמטי מול איראן | עמית יגור",
+      "source_language": "he",
+      "source": "Maariv",
+      "ru": {
+        "title": "Протрезвение в Вашингтоне: Трамп сигнализирует о драматических изменениях против Ирана.",
+        "summary": "Трамп объявил, что США больше не нуждается в соглашении с Ираном и направил своего помощника Вэнса на отдел внутренних расследований.",
+        "model": "Helsinki-NLP/opus-mt-he-ru"
+      }
+    },
+    {
+      "id": "fa4636306792171870cbab4d",
+      "original_title": "Eisenkot meets Netanyahu for security briefing amid tensions over potential Iran strikes",
+      "source_language": "en",
+      "source": "Jerusalem Post / Israel",
+      "he": {
+        "title": "Eisenkot פוגש נתניהו לתדרוך ביטחוני בין מתחים על שביתות איראן פוטנציאליות",
+        "summary": "הפגישה הגיעה יום לאחר שאייזנקוט ביקש מ-א-ג'י גלי בהארב-מירא להתערב, ואמר שנטניהא מנע ממנו את התדרוך בזמן שהממשלה משרתת בתפקיד משגיח.",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      }
+    },
+    {
+      "id": "1f41fbf73126024aa076f616",
+      "original_title": "Eisenkot meets Netanyahu in bid to avoid Iran strikes",
+      "source_language": "en",
+      "source": "Al-Monitor",
+      "he": {
+        "title": "אייזנקוט פוגש את נתניהו כדי להימנע מתקיפה באיראן.",
+        "summary": "מנהיג Yashar Gadi Eisenkot נפגש ראש הממשלה בנימין נתניהו לתדרוך ביטחוני בתוך חששות התנגדות שהממשלה יכולה להשיק פעולה צבאית נגד איראן.",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      },
+      "ru": {
+        "title": "Айзенкот встречается с Нетаньяху в попытке избежать иранских ударов.",
+        "summary": "Лидер Яшара Гади Эйзенкот встретился с премьер-министром Бенджамином Нетаньяху для брифинга по вопросам безопасности, несмотря на опасения оппозиции о том, что правительство может начать военную операцию против Ирана.",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
+      }
+    },
+    {
       "id": "5255560da8334c50190ed532",
       "original_title": "Israeli strikes hit tent camp as five killed in Gaza",
       "source_language": "en",
@@ -26,122 +75,282 @@
       }
     },
     {
-      "id": "8edda465f74b7b6bc9975876",
-      "original_title": "At least five injured in Washington, DC, shooting near Logan Circle",
-      "source_language": "en",
-      "source": "Al Jazeera",
-      "ru": {
-        "title": "По меньшей мере пять раненых в Вашингтоне, округ Колумбия, стреляли вблизи Логанского круга",
-        "summary": "Власти выдали убежище недалеко от места нападения в столице США.",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
-      "he": {
-        "title": "לפחות חמישה פצועים בוושינגטון הבירה, ירי ליד לוגן סירקל",
-        "summary": "הרשויות הוציאו מקלט במקום ליד זירת התקיפה בבירת ארה\"ב.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "e3be13ae85a832fccc645704",
-      "original_title": "בניסיון להוציא לפועל ייצור מקומי של טילי יירוט: רפאל במהלך חדש",
-      "source_language": "he",
-      "source": "Maariv",
-      "ru": {
-        "title": "В попытке запустить производство ракет для перехвата:",
-        "summary": "Румыния возобновилась против компании Рафаэль, цель: реализация местного производства ракет для перехвата, основанного на перехвате системы \"Руки Давида\"",
-        "model": "Helsinki-NLP/opus-mt-he-ru"
-      }
-    },
-    {
-      "id": "549928f170bd9d65945665bc",
-      "original_title": "Trump says Vance should focus on domestic corruption, 'we don't need a deal with Iran'",
-      "source_language": "en",
-      "source": "Al-Monitor",
-      "ru": {
-        "title": "Трамп говорит, что Вэнсу следует сосредоточиться на внутренней коррупции, \"мы не нуждаемся в сделке с Ираном\".",
-        "summary": "ВАШИНГТОН, 12 ноября (Рейтер) - Президент Дональд Трамп сказал в четверг, что он хочет, чтобы вице-президент Дж.Д. Вэнс сосредоточил свое внимание на любых преступлениях и коррупции в демократических городах США, заявив, что усилия могут сэкономить больше денег, чем сделка с Ираном.",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      }
-    },
-    {
-      "id": "23d482d7d357817b66b3ed33",
-      "original_title": "Trump pulls JD Vance away from Iran: 'We don't need a deal'",
-      "source_language": "en",
-      "source": "Arutz Sheva",
-      "ru": {
-        "title": "Трамп вытаскивает Джей Ди Вэнса из Ирана: \"Нам не нужна сделка\"",
-        "summary": "Президент Дональд Трамп поручает вице-президенту Дж.Д. Вэнсу полностью сосредоточиться на предполагаемой коррупции в государствах, возглавляемых демократическими властями, и перестать фокусироваться на Иране.",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
-      "he": {
-        "title": "טראמפ מושך את ג'יי-די ואנס מאיראן: \"אנחנו לא צריכים עסקה.\"",
-        "summary": "הנשיא דונלד טראמפ מנחה את סגן הנשיא ג'יי-די ואנס להתמקד בשחיתות לכאורה במדינות דמוקרטיות וכדי להפסיק להתמקד באיראן.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "d135179b7a9a5c78fc468863",
-      "original_title": "Canada reimposes sanctions on 11 entities over Iranian non-compliance with nuclear obligations",
-      "source_language": "en",
-      "source": "Jerusalem Post / Iran",
-      "he": {
-        "title": "קנדה משיבה סנקציות על 11 ישויות על אי-ציות איראנית עם חובות גרעיניות",
-        "summary": "סנקציות נגד הישויות, הכוללות חברות לרכישת נשק גרעיני איראני, חברות נפט ובנקים, הוסרו בעבר בשנת 2016.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "a498acc187e47ffe83b3f6d7",
-      "original_title": "Inside Netanyahu’s sprawling media machine — and how it might impact the election’s chaotic aftermath",
+      "id": "fc4502ce3e76e100474ef5c2",
+      "original_title": "Flydubai attack sparks tighter flight screenings, but some security issues left up in air",
       "source_language": "en",
       "source": "Times of Israel",
-      "ru": {
-        "title": "Внутри Нетаньяхуа — разрастающаяся медийная машина — и как это может повлиять на последствия выборов.",
-        "summary": "Канал 14 и его союзники в социальных сетях усиливают атаки премьера, когда он борется за власть.",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
       "he": {
-        "title": "בתוך נתניהו יש מכונת מדיה משתרעת ואיך היא עלולה להשפיע על תוצאות הבחירות הכאוטיות",
-        "summary": "ערוץ 14 ובעלי בריתו ברשתות החברתיות מגבירים את קווי ההתקפה של ראש הממשלה כשהוא נלחם כדי להחזיק בכוח.",
+        "title": "התקפת Flydubai ניצוצות ההקרנת טיסה הדוקה יותר, אבל כמה בעיות אבטחה נשאר באוויר",
+        "summary": "חוקים חדשים מכוונים לתקן חורים שנחשפו על ידי טייס טרור Omani שהיה צריך להיות מסומן, אבל מומחים אומרים שהם נכשלים לטפל בכל הבעיות, חוסר קווים מנחים ברורים וחברות תעופה נטל",
         "model": "Helsinki-NLP/opus-mt-en-he"
+      },
+      "ru": {
+        "title": "Нападение Флайдубаи приводит к ужесточению контроля за полетами, но некоторые проблемы с безопасностью остались в воздухе",
+        "summary": "Новые правила направлены на устранение дыр, вскрытых оманским пилотом-террористом, который должен был быть замечен, но эксперты говорят, что они не решают всех проблем, не имеют четких руководящих принципов и не несут ответственности авиакомпаниям.",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
       }
     },
     {
-      "id": "e40294180f2eed92af94d8c5",
-      "original_title": "Trump heads to China amid Nvidia scandal: Will he get tougher on Beijing?",
+      "id": "4e11876b8a0b884501319328",
+      "original_title": "Iran threatens US bases in Europe if Washington resumes war: What to know",
       "source_language": "en",
-      "source": "Al Jazeera",
-      "ru": {
-        "title": "Трамп ведёт в Китай во время скандала с Нвидией: станет ли он сильнее в Пекине?",
-        "summary": "Выбывающий вождь Нвидии отметил ослабление связей между США и Китаем, но личный скандал вряд ли поднимет переговоры на следующей неделе.",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
+      "source": "Al-Monitor",
       "he": {
-        "title": "טראמפ נוסע לסין בין שערוריית נווידיה, האם הוא יתקשה על בייג'ינג?",
-        "summary": "צ'יף נווידיה היוצא זוכה עם קשרים קלים עם צ'יפס ארה\"ב-סין, אבל סקנדל אישי לא סביר שיסיים את השיחות בשבוע הבא.",
+        "title": "איראן מאיימת על בסיסי ארה\"ב באירופה אם וושינגטון תמשיך מלחמה: מה לדעת",
+        "summary": "איראן בונה מחדש את יכולות הטילים שלה, ולאחרונה אמרה שהוא הסיר את הגבולות העצמיים על הטווח של הטילים הבליסטיים שלה.",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      },
+      "ru": {
+        "title": "Иран угрожает американским базам в Европе, если Вашингтон возобновит войну: что знать",
+        "summary": "Иран восстанавливает свой ракетный потенциал и недавно заявил, что он снял самовведенные ограничения на дальность действия своих баллистических ракет.",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
+      }
+    },
+    {
+      "id": "6974c10ab44af79a75e1c558",
+      "original_title": "UAE's Ras Al Khaimah, Sharjah reopen several beaches after tanker oil spill",
+      "source_language": "en",
+      "source": "Al-Monitor",
+      "he": {
+        "title": "ראס אל ח'ימה של UAE, Sharjah לפתוח מחדש כמה חופים לאחר דליפת שמן מכלית",
+        "summary": "DUBAI, Nov 12 (Rotters) - הרשויות באיחוד האמירויות של ערב ראס אל ח'אימה וSharjah emirates אמרו שהם פתחו מחדש כמה חופים בעקבות דליפת נפט מכלית שנפגעה בהתקפה חשודה במפרץ בחודש שעבר.",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      },
+      "ru": {
+        "title": "Рас аль-Хайма, Шарджа, вновь открыл несколько пляжей после разлива нефти танкерами",
+        "summary": "ДУБАИ, 12 ноября (Рейтер) - Власти в эмиратах Рас-эль-Хайма и Шарджа заявили, что они вновь открыли несколько пляжей после закрытия, вызванного разливом нефти из танкера, поврежденного в результате предполагаемого нападения в Заливе в прошлом месяце.",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
+      }
+    },
+    {
+      "id": "c8998d2ebd26d3c4250e1345",
+      "original_title": "Israel bars entry to French far-left leaders over ‘anti-Israel incitement’",
+      "source_language": "en",
+      "source": "Times of Israel",
+      "he": {
+        "title": "ישראל סורגת כניסה למנהיגים צרפתים רחוק-שמאליים מעל çanti-ישראל להסית SS",
+        "summary": "ע\"י שר החוץ גדעון סאהאר מגיע כנקמה על סירובה של צרפת להודות במנהיג ההתיישבות יוסי דאגן, פקיד רשמי אומר; מלנצ'ון אומר שהוא מעולם לא ביקש להיכנס לישראל",
         "model": "Helsinki-NLP/opus-mt-en-he"
       }
     },
     {
-      "id": "7e8d4b0bf5d0178a7555ae3f",
-      "original_title": "טראמפ: \"אנחנו לא צריכים שום הסכם עם איראן\"",
-      "source_language": "he",
-      "source": "Israel Hayom",
+      "id": "bd6305dcc036639395f37fc5",
+      "original_title": "Dozens of nations demand more Gaza aid, Israel blames Hamas for crisis",
+      "source_language": "en",
+      "source": "Arutz Sheva",
+      "he": {
+        "title": "עשרות מדינות דורשות סיוע עזה יותר, ישראל מאשימה חמאס במשבר",
+        "summary": "קואליציה בינלאומית דורשת פחות הגבלות על סיוע עזה לפני החורף, בעוד שגריר האו\"ם הישראלי דני Danon מאשים חמאס בגניבת אספקה.",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      },
       "ru": {
-        "title": "Трамп: \"Нам не нужен договор с Ираном\".",
-        "summary": "Американский президент заявил, что в твиттере в иранской сети США находится иранская нефть, и в Проливе Хумуз, и поэтому у нее нет причин строить отношения с Тегераном • • Вице-президент Трамп приказал вице-президенту сосредоточиться на расследовании коррупции в демократических странах.",
-        "model": "Helsinki-NLP/opus-mt-he-ru"
+        "title": "Десятки государств требуют больше помощи в Газе, Израиль обвиняет ХАМАС в кризисе",
+        "summary": "Международная коалиция требует сокращения ограничений на оказание помощи Газе до наступления зимы, в то время как израильский посол ООН Дэнни Данон обвиняет ХАМАС в краже поставок.",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
       }
     },
     {
-      "id": "1d67eb5aa6614f4188c7e895",
-      "original_title": "המחאה מחליפה כיוון - והאש מופנית פנימה: ראשי גוש השינוי על הכוונת",
+      "id": "3188ea78bc06d60306e4ede3",
+      "original_title": "Trump tells Vance to shift his focus as US doesn’t ‘need a deal with Iran’",
+      "source_language": "en",
+      "source": "Times of Israel",
+      "he": {
+        "title": "טראמפ אומר לואנס לשנות את המיקוד שלו כי ארה\"ב לא צריכה עסקה עם איראן.",
+        "summary": "כסגן הנשיא שלו מחפש שיחות ישירות, נשיא ארה\"ב אומר \"עבר זמן רב\" להסכם עם טהראן, בטענה 'יש לנו את הכסף שלהם... ויש לנו את המצר שלהם'",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      },
+      "ru": {
+        "title": "Трамп говорит Вэнсу, чтобы он передумал, как США «нужна сделка с Ираном»",
+        "summary": "Так как его вице-президент, согласно сообщениям, добивается прямых переговоров, президент США говорит, что с тех пор прошло время для соглашения с Тегераном, утверждая, что \"у нас есть их деньги... и у нас есть их пролив\"",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
+      }
+    },
+    {
+      "id": "dfd929a688ba20ec928d4959",
+      "original_title": "Iran sets conditions for US, issues warning",
+      "source_language": "en",
+      "source": "Arutz Sheva",
+      "he": {
+        "title": "איראן קובעת תנאים לארה\"ב, אזהרת נושאים",
+        "summary": "נואם הפרלמנט של איראן דורש הקלה בסנקציות, שחרור כספים וסיום למלחמה בכל החזיתות כתנאי להתקדמות בשיחות ופתיחתו מחדש של מצר הורמוז.",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      },
+      "ru": {
+        "title": "Иран устанавливает условия для США, выносит предупреждение",
+        "summary": "Оратор парламента Ирана требует облегчения санкций, высвобождения средств и прекращения войны на всех фронтах в качестве условий для прогресса на переговорах и возобновления работы над Хормузским проливом.",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
+      }
+    },
+    {
+      "id": "14fd55743174ef9cf9c8af99",
+      "original_title": "Trump: ‘We don’t need a deal with Iran’",
+      "source_language": "en",
+      "source": "JNS",
+      "he": {
+        "title": "טראמפ: אנחנו לא צריכים עסקה עם איראן.",
+        "summary": "",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      }
+    },
+    {
+      "id": "ca54a142484966436cd4387f",
+      "original_title": "Daily Briefing Nov. 11 – New IDF brigades to sharpen battlefield edge, ease strain on reservists",
+      "source_language": "en",
+      "source": "Times of Israel",
+      "he": {
+        "title": "לתדרך את נוב מדי יום ראשון. 11 □ מחלקות צה\"ל חדשות לחדד את קצה שדה הקרב, להקל לחץ על מילואים",
+        "summary": "כתב צבאי עמנואל פביאן על היווצרותם של שני גדודים צבאיים חדשים, סיוע לGazans כאשר מתחיל החורף, ומשימת משרד ההגנה למרוקו",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      }
+    },
+    {
+      "id": "802694fd719c8696dc06aef8",
+      "original_title": "Pro-Palestinian group seeks ban on Israeli real-estate fair in Paris",
+      "source_language": "en",
+      "source": "Al-Monitor",
+      "he": {
+        "title": "קבוצה פרו-פלסטינית מחפשת איסור על יריד הנדל\"ן הישראלי בפריז.",
+        "summary": "פעילי פרו-פלסטינים ביקשו מבית המשפט הצרפתי לאסור על יריד נדל\"ן ישראלי בפריז, שלטענתם מציע בונוס למתיישבים יהודים פוטנציאליים בשטחים הכבושים, מקורות אמרו ל-איי.אף.פי. ביום חמישי, איגוד פרנקו-פלסטיניאן-אן-איי.איי.די.אל הגיש עתירת חירום לבית משפט נגד ה-9 איקוב נדל\"ן אמיתי והשקיעה",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      }
+    },
+    {
+      "id": "99b90ed3ca653a94c00813f1",
+      "original_title": "Mother of MK in Eisenkot’s party says he’ll resign if coalition is formed with Arab parties",
+      "source_language": "en",
+      "source": "Times of Israel",
+      "he": {
+        "title": "אמא של MK במפלגת Eisenkots אומר שהוא יתפטר אם הקואליציה נוצרת עם מפלגות ערביות",
+        "summary": "חתן פרס ישראל מרים פרץ אומר בנו אליאסאף פרץ בפני לחץ להתנגד ממשלת מיעוט; חוקן Yashar החדש שלל יושב עם Ra'am בראיון טרום בחירות",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      },
+      "ru": {
+        "title": "Мать Кеннеди из партии Эйзенкоттс говорит, что если коалиция будет сформирована с арабскими партиями, то она уйдет в отставку.",
+        "summary": "Лауреат премии Израиля Мириам Перец говорит, что сын Элясаф Перец сталкивается с давлением, чтобы противостоять правительству меньшинства; новый законодатель Яшара исключил сесть с Раамом в предварительном интервью для выборов",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
+      }
+    },
+    {
+      "id": "7fdc45dd284d2fe541886ff5",
+      "original_title": "The man standing in the way of a government with the Haredim isn’t even in the Knesset",
+      "source_language": "en",
+      "source": "JNS",
+      "he": {
+        "title": "האיש שעומד בדרכה של ממשלה עם הארדים אפילו לא בקנסט.",
+        "summary": "מסיבות הרדי בוהות בליברמן ותוהות: האם הפוליטיקאי האכזרי ביותר בישראל באמת מציע לנו כל מה שאנחנו רוצים?",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      },
+      "ru": {
+        "title": "Человек, стоящий на пути правительства с Харедимом, даже не в кнессете.",
+        "summary": "Партии Хареди смотрят на Либермана и задаются вопросом: действительно ли самый безжалостный политик Израиля предлагает нам все, что мы хотим?",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
+      }
+    },
+    {
+      "id": "b25e214406bde0df24670f47",
+      "original_title": "Likud weighs tapping MK Elisha Medan for Knesset speaker against Yashar's Kahana - report",
+      "source_language": "en",
+      "source": "Jerusalem Post / Israel",
+      "he": {
+        "title": "ליקוד שוקל הקשה MK אלישע מדאן עבור Knesset נואם נגד Kahana של Yashar - דו\"ח",
+        "summary": "מדן נפצעה קשה במהלך מלחמת ישראל-האמאס, ואיבדה את שתי הרגליים בפיצוץ בצפון עזה שהרג ארבעה מילואים נוספים בשלבים המוקדמים של המלחמה.",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      },
+      "ru": {
+        "title": "Ликуд взвесил, как ударить МК Элиша Медана за оратора кнессета против сообщения Яшара Каханы.",
+        "summary": "Медан был серьезно ранен во время израильской-хамасской войны, потеряв обе ноги в результате взрыва в северной части Газы, в результате которого погибли еще четыре резервиста на ранних этапах войны.",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
+      }
+    },
+    {
+      "id": "67b080eae75cd592b18dcc82",
+      "original_title": "בכיר השב\"כ לשעבר על החקירה שמעסיקה את כל ישראל: \"חסרת הגיון מקצועי\"",
       "source_language": "he",
       "source": "Maariv",
       "ru": {
-        "title": "Чек меняет направление - и огонь направлен внутрь.",
-        "summary": "Активы протеста против Нафанио теряют терпение, когда они вступают в контакт с правительством трансформации, и протесты приходят в дома лидеров блока, члены резервного управления предупреждают: \"Нам нужно немедленно создать экстренное правительство\".",
+        "title": "Бывший П.Б.В.Р. по поводу расследования, которое касается всего Израиля: \"профессиональная нелогия\".",
+        "summary": "Бывший заместитель начальника штаб-квартиры Израиль Хасан ссылался на 103fm, ссылаясь на новые доказательства иностранного вмешательства на выборы, критиковал расследование и выражал опасения, что решения, которые он говорит, не исходят от государственной логики,",
         "model": "Helsinki-NLP/opus-mt-he-ru"
+      }
+    },
+    {
+      "id": "b12ebfc40919bc8c0e14c159",
+      "original_title": "Judges in Netanyahu’s trial order AG to appear in court next week",
+      "source_language": "en",
+      "source": "JNS",
+      "he": {
+        "title": "שופטים בנתניהואס, סדר המשפט של התובע הכללי, יופיעו בבית המשפט בשבוע הבא.",
+        "summary": "",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      },
+      "ru": {
+        "title": "Судьи в Нетаньяхутсе, постановление о явке в суд на следующей неделе",
+        "summary": "",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
+      }
+    },
+    {
+      "id": "be5bb6e47cfe4235a2e8020e",
+      "original_title": "Miriam Peretz: If Yashar forms a government with an Arab party, my son will leave Knesset",
+      "source_language": "en",
+      "source": "Jerusalem Post / Israel",
+      "he": {
+        "title": "מרים פרץ: אם ישאר מקימה ממשלה עם מפלגה ערבית, בני יעזוב את קנסט",
+        "summary": "יומיים קודם לכן, בטקס ההשבעה של בנה בקנסט, פרץ נשמע אחרת, הדגיש את חשיבות האחדות ופעל לטובת כל האזרחים הישראלים.",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      },
+      "ru": {
+        "title": "Мириам Перец: Если Яшар образует правительство с арабской партией, мой сын покинет кнессет",
+        "summary": "Всего за два дня до этого, на церемонии приведения присяги ее сына в кнессете, Перец забил другой тон, подчеркнув важность единства и работая от имени всех израильских граждан.",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
+      }
+    },
+    {
+      "id": "ec202c95a03dbabd20cd5c38",
+      "original_title": "Supreme Court orders Israel to recognize private Orthodox conversions",
+      "source_language": "en",
+      "source": "Arutz Sheva",
+      "he": {
+        "title": "בית המשפט העליון מצווה על ישראל להכיר בהמרה אורתודוקסית פרטית",
+        "summary": "בית המשפט העליון של ישראל מכיר פה אחד בבית המשפט הפרטי של רבי חיים אמסלם להמרה אורתודוקסית לחוק ההחזרות, ודוחה ערעור מדיני.",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      },
+      "ru": {
+        "title": "Верховный суд приказывает Израилю признать частные православные обращения в другую веру",
+        "summary": "Верховный суд Израиля единодушно признает частный православный суд по вопросам обращения к Закону о возвращении раввина Хаима Амсалема, отклонив апелляцию государства.",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
+      }
+    },
+    {
+      "id": "7131c8955dec30383c4b5e04",
+      "original_title": "UK court finds two Iranian men guilty of spying for Iran",
+      "source_language": "en",
+      "source": "Al Jazeera",
+      "he": {
+        "title": "בית המשפט הבריטי מוצא שני גברים איראנים אשמים בריגול למען איראן.",
+        "summary": "הזוג הובטח פרסים לשלוח מודיעין בחזרה לאיראן, בעוד אחד היה מוכן לבצע \"התקפה אלימה.\"",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      },
+      "ru": {
+        "title": "Суд Соединенного Королевства признает двух иранских мужчин виновными в шпионаже за Иран",
+        "summary": "Паре обещали награды за то, что она отправит разведданные в Иран, в то время как один был готов совершить \"насильственное нападение\".",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
+      }
+    },
+    {
+      "id": "3f767a2dba9eddadc5315a1c",
+      "original_title": "Oman monitors handling of oil tanker run aground off its coast",
+      "source_language": "en",
+      "source": "Al-Monitor",
+      "he": {
+        "title": "Oman לפקח על טיפול של מכלית נפט לעלות על שרטון מול חופיה",
+        "summary": "DUBAI, Nov 12 (Reuters) - ועדת ניהול החירום הלאומית של עומן דנה ביום חמישי בהתפתחויות האחרונות בטיפול בהארקת מכלית נפט מחוץ לאי אל-קיבליה והתקדמות הפעולות להתמודד עם המטען שלה.",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      },
+      "ru": {
+        "title": "Оман следит за обращением с нефтеналивными танкерами, находящимися на мели у своего побережья",
+        "summary": "ДУБАИ, ноябрь 12 (Рейтер) - Национальный комитет Омана по чрезвычайным ситуациям обсудил в четверг последние события, связанные с заземлением нефтяного танкера у острова Эль-Киблия, и ход операций по обработке его грузов.",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
       }
     },
     {
@@ -156,111 +365,105 @@
       }
     },
     {
-      "id": "d34a190df8eec69818f893f1",
-      "original_title": "Bishop warns Israel risks losing support of younger American Evangelicals",
+      "id": "ae97d9cbb55c2f004e303285",
+      "original_title": "Israel’s 91,000 Gaza tents fall short, aid expert says, as Hamas accused of weaponizing crisis",
       "source_language": "en",
       "source": "Jerusalem Post / Israel",
       "he": {
-        "title": "בישוף מזהיר את ישראל מסכנת אובדן תמיכתם של האוונגליסטים האמריקאים הצעירים יותר",
-        "summary": "הבישוף רוברט סטרנס מעודד את ממשלת ישראל הבאה לפתח אסטרטגיה לאומית ארוכת טווח כדי לחזק את הקשר עם נוצרים אוונגליסטים צעירים בתוך שינוי הגישה הפוליטית והתרבותית בארה\"ב",
+        "title": "ישראל 91,000 אוהלי עזה נופלים קצר, מומחה סיוע אומר, כמו חמאס האשים של נשק משבר",
+        "summary": "רק שמונה עד 10 ארגוני סיוע מורשים כעת להביא אספקה, מומחה לסיוע ישראלי אומר, כפי שישראל חוסמת כמה חומרי בנייה על פני דאגות שימוש כפול.",
         "model": "Helsinki-NLP/opus-mt-en-he"
       }
     },
     {
-      "id": "d26ce53088dabe72975a257d",
-      "original_title": "Diaspora Ministry moves to ban entry of UK-based Amos Trust activists over Israel BDS push",
+      "id": "5f6a8c13e247e2c5744661e6",
+      "original_title": "French FM claims Israel barred far-left politicians from entering country",
       "source_language": "en",
-      "source": "Jerusalem Post / Israel",
+      "source": "Arutz Sheva",
       "he": {
-        "title": "משרד התפוצות מבקש לאסור כניסה לפעילי אמוס מבוססי בריטניה, על דחקת BDS בישראל.",
-        "summary": "צג לא ממשלתי גם תיעד קישורים לכאורה בין מנהיגות אירו-מד וחמאס, כולל טענות שדמויות בכירות הופיעו ברשימה של פעילי חמאס ומוסדות שפורסמו בשנת 2013.",
+        "title": "FM הצרפתי טוען ישראל אסרה על פוליטיקאים רחוק שמאל מלהיכנס למדינה",
+        "summary": "שר החוץ הצרפתי ז'אן-נואל בארו טוען שישראל אסרה על פקידים ממפלגת צרפת הרחוקה ללא קשת מלהיכנס למדינה.",
         "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "9ba3f7e5d6adf11afc2677d2",
-      "original_title": "‘No war, no peace’: Can Iran break the deadlock with the US?",
-      "source_language": "en",
-      "source": "Al Jazeera",
-      "he": {
-        "title": "אין מלחמה, אין שלום: האם איראן יכולה לשבור את המבוי סתום עם ארה\"ב?",
-        "summary": "קיפאון בר קיימא או חניקה בהילוך איטי?",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "8f482c4770a38c3a018cf62e",
-      "original_title": "נוגסים במיתוס: ישראל לא \"המציאה\" את עגבניית השרי",
-      "source_language": "he",
-      "source": "Israel Hayom",
-      "ru": {
-        "title": "В мифе говорится: Израиль не \"нашел\" помидор Шери.",
-        "summary": "Некоторые предложения говорят, что уже так трудно принять тот факт, что они неверны • Итак, что Израиль сделал с этими крошечными вкусными помидорами?",
-        "model": "Helsinki-NLP/opus-mt-he-ru"
-      }
-    },
-    {
-      "id": "441221b8570d7a78ec481be1",
-      "original_title": "Haredi parties welcome in Eisenkot-led gov't if they accept four principles, Yashar's Meridor says",
-      "source_language": "en",
-      "source": "Jerusalem Post / Israel",
-      "ru": {
-        "title": "Партии Хареди приветствуются в правительстве, возглавляемом Эйзенкотом, если они принимают четыре принципа, говорит Меридор Яшара.",
-        "summary": "Яшар МК Шауль Меридор заявил, что партии хареди могут вступить в возглавляемое Эйсенкотом чрезвычайное правительство, если они согласятся с четырьмя принципами, включая универсальную службу и признание ХАМАС в качестве террористической группы.",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
       },
-      "he": {
-        "title": "מסיבות Haredi בברכה בEisenkot-Led gov לא אם הם מקבלים ארבעה עקרונות, המרידור של Yashar אומר",
-        "summary": "ישאר MK Shaul Mridor אמר Haredi מפלגות יכול להצטרף ממשלת חירום Eisenkot-Led אם הם מקבלים ארבעה עקרונות, כולל שירות אוניברסלי והכרה של חמאס כקבוצת טרור.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "63b456d9df48b2968238a4d9",
-      "original_title": "Israel risks losing young American evangelicals, warns Bishop Robert Stearns",
-      "source_language": "en",
-      "source": "JNS",
       "ru": {
-        "title": "Израиль рискует потерять молодых американских евангелистов, предупреждает епископа Роберта Стернса.",
-        "summary": "",
+        "title": "Французская ФМ утверждает, что Израиль запретил политикам, находящимся на крайнем левом расстоянии, въезжать в страну",
+        "summary": "Министр иностранных дел Франции Жан-Ноэль Баррот утверждает, что Израиль запретил должностным лицам крайне левой Франции, не охваченной запретом, въезжать в страну.",
         "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
+      }
+    },
+    {
+      "id": "dffec15e86aec2ccc0d08650",
+      "original_title": "Four oil tankers hit by explosions in Strait of Hormuz after ignoring warnings, Iran claims",
+      "source_language": "en",
+      "source": "Jerusalem Post / Iran",
       "he": {
-        "title": "ישראל מסתכנת באובדן אוונגליסטים אמריקאים צעירים, מזהירה את הבישוף רוברט סטרנס",
-        "summary": "",
+        "title": "ארבע מכליות נפט שנפגעו על ידי פיצוצים במצר הורמוז לאחר התעלמות מאזהרות, איראן טוענת",
+        "summary": "טנקים עדיין מתמודדים עם התקפות על פני המצר, למרות ריבאונד בתנועה וציפיות של דה-הסלמה במלחמה בין ארצות הברית לאיראן.",
         "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "f8bf34c3eac44b3f2e334b77",
-      "original_title": "למרות התנגדותה: היועמ\"שית זומנה לדיון במשפט נתניהו",
-      "source_language": "he",
-      "source": "Israel Hayom",
+      },
       "ru": {
-        "title": "Несмотря на ее протест, было назначено слушание по делу Натанио.",
-        "summary": "После того, как генеральный прокурор узнал в раввинаре, что не видит места для ее присутствия в суде, судьи Альп решили, что в ее личном присутствии есть \"Секретное значение\" • Судей необходимо, чтобы продвигать процесс по делу премьер-министра Нафании:",
-        "model": "Helsinki-NLP/opus-mt-he-ru"
+        "title": "Иран утверждает, что четыре нефтеналивных танкера, попавшие в результате взрывов в Хормузском проливе, не предупредив об этом.",
+        "summary": "Танкеры по-прежнему сталкиваются с нападениями через пролив, несмотря на оживление движения и ожидания деэскалации войны между Соединенными Штатами и Ираном.",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
       }
     },
     {
-      "id": "33f9b89f2c20b30d6cd61fc5",
-      "original_title": "Eisenkot to receive security briefing after accusing Netanyahu of refusing to grant one",
+      "id": "cf2518ea9247386a326c00d9",
+      "original_title": "Saudi Arabia pressures EU to label Yemen’s Houthis a terrorist group",
       "source_language": "en",
       "source": "Times of Israel",
       "he": {
-        "title": "Eisenkot כדי לקבל תדרוך ביטחוני לאחר שהאשים את נתניהו של סירובו להעניק אחד",
-        "summary": "הצהרה משותפת מיריבים פוליטיים באה בעקבות ערעור מצד ראש Yashar נגד \"פעולה צבאית לא רצויה\" בתקופת מעבר; כץ: הממשלה \"לא צריכה רשות\"",
+        "title": "ערב הסעודית לוחצת על האיחוד האירופי לתימן את אוטוהו קבוצת טרוריסטים",
+        "summary": "אבל פקידים אירופיים אומרים שהגוש לא רוצה למנות את המורדים באיראן כטרוריסטים כי זה עלול לערער את יכולתה של אירופה להשפיע על תהליך שלום עתידי.",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      },
+      "ru": {
+        "title": "Саудовская Аравия настаивает на том, чтобы Европейский союз назвал Йеменс Хаутисом террористическую группу",
+        "summary": "Но европейские официальные лица говорят, что блок не хочет называть поддерживаемых Ираном мятежников террористами, потому что это может подорвать способность Европы влиять на будущий мирный процесс.",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
+      }
+    },
+    {
+      "id": "783c24839e02846425ed8859",
+      "original_title": "Report: US warns Israel of imminent possibility of renewed Iran fighting",
+      "source_language": "en",
+      "source": "Arutz Sheva",
+      "he": {
+        "title": "דו \" ח: ארה \" ב מזהירה את ישראל מפני אפשרות קרובה של לחימה איראן מחודשת",
+        "summary": "לפי הדיווחים, הפיקוד המרכזי של ארה\"ב מזהיר פקידים צבאיים ישראלים להתכונן ללחימה מחודשת עם איראן בזמן שוושינגטון מחזק את כוחותיה האזוריים.",
         "model": "Helsinki-NLP/opus-mt-en-he"
       }
     },
     {
-      "id": "caabc3985a60607af165c4d3",
-      "original_title": "Iran war live: Tehran warns of wider retaliation; Israel kills in Gaza",
+      "id": "fc9bcbb71a5289aeef2944cf",
+      "original_title": "Lewis Hamilton says ‘Israel’s genocide in Gaza is appalling’ after Rafah visit",
+      "source_language": "en",
+      "source": "The Guardian",
+      "he": {
+        "title": "לואיס המילטון אומר שרצח העם של ישראל בעזה מזעזע לאחר ביקורו של ראפה.",
+        "summary": "נהג F1 מאיץ בישראל לתת סיוע לתוך מסע עזה מעורב סיור של מתקנים עם עובדי סיוע פורמולה אחד נהג לואיס המילטון אמר ביום רביעי כי ישראל חייבת לאפשר Étrucks סיוע לתוך עזה, יום אחרי שהוא ביקר מעבר גבול רפאח במצרים. המילטון, אלוף העולם שבע פעמים, הגיע Óin El Arish ביום שלישי, שם הוא היה BRRAH מעבר גבול במצרים.",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      }
+    },
+    {
+      "id": "77a61c8d19667c2ab7ab6603",
+      "original_title": "הקרע עם צרפת מעמיק: ישראל הודיעה על צעד חריג",
+      "source_language": "he",
+      "source": "Maariv",
+      "ru": {
+        "title": "Разлом с Францией глубже: Израиль объявил о необычном шаге",
+        "summary": "Министр иностранных дел Гидеон Стурм решил запретить въезд в Израиль двух лидеров французской партии, после того как они выступили против Израиля и поддержали валеты Газы.",
+        "model": "Helsinki-NLP/opus-mt-he-ru"
+      }
+    },
+    {
+      "id": "2aac2d1c0d321cabf5c684c2",
+      "original_title": "BDS claims win as energy giants quit Israeli gas project off Gaza",
       "source_language": "en",
       "source": "Al Jazeera",
       "he": {
-        "title": "מלחמת איראן חיה: טהרן מזהיר מפני נקמה רחבה יותר; ישראל הורגת בעזה",
-        "summary": "ישראל פוקדת על הצבא להגביר את ההכנות להתקפה אפשרית על איראן, כפי שטהרן אומר שיגיב אם יתקוף.",
+        "title": "BDS טוען לנצח כענקי אנרגיה להפסיק פרויקט גז ישראלי מעזה",
+        "summary": "תנועת \"החרטה,\" \"דיבסט\" ו\"סנקשן\" טוענת ניצחון לאחר שחברה השאירה פרויקט גז ישראלי מחוץ לעזה.",
         "model": "Helsinki-NLP/opus-mt-en-he"
       }
     },
@@ -269,42 +472,20 @@
       "original_title": "Israeli Hollywood star Gal Gadot to produce screen adaptation of children’s novel on antisemitism",
       "source_language": "en",
       "source": "Jerusalem Post / Israel",
-      "he": {
-        "title": "כוכב הוליווד ישראלי גאל גאדוט להפיק עיבוד מסך של ספר ילדים על אנטישמיות",
-        "summary": "זהו סיפור שמרגיש לנו אישי במיוחד, הן כהורים והן כמשפחה, □ גדוט ובעלה, והן מפיקות שותף, ג'רון ורסאנו, אמר בהצהרה משותפת.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "63ccc728e793d00ebd9963f5",
-      "original_title": "Senior settler leader Yossi Dagan denied entry into France",
-      "source_language": "en",
-      "source": "Times of Israel",
-      "he": {
-        "title": "מנהיג המתיישבים הבכיר יוסי דאגן הכחיש כניסה לצרפת",
-        "summary": "ישראל אומרת שההחלטה הצרפתית לבר שומרון ראש המועצה האזורית, שקראה לספח את הגדה המערבית ולהשיב את עזה, היא \"לא מקובלת לחלוטין.\"",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "c1fac336654d66f655481a78",
-      "original_title": "Fresh concerns raised over Gaza doctor held by Israel for 23 months without charge",
-      "source_language": "en",
-      "source": "The Guardian",
-      "he": {
-        "title": "דאגות חדשות שהועלו על רופא עזה שנערך על ידי ישראל במשך 23 חודשים ללא תשלום",
-        "summary": "פרופסור ישראלי עצמאי אומר שחייו של חוסאם אבו סאפיה יהיו בסכנה עד שיקבל טיפול רפואי הולם פרופסור עצמאי שבדק את הרשומות הרפואיות של רופא עזה בולט שהוחזק בכלא ישראלי במשך כמעט 23 חודשים העלה חששות רציניים לגבי בריאותו.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
+      "ru": {
+        "title": "Израильская голливудская звезда Gal Gadot для создания экранной адаптации детского романа по антисемитизму",
+        "summary": "Это история, которая чувствуется нам особенно лично, как родителям, так и семье, Гадот и ее муж и партнер-производитель, Ярон Варсано, сказали в совместном заявлении.",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
       }
     }
   ],
   "quality": {
-    "accepted": 30,
-    "rejected": 29,
+    "accepted": 53,
+    "rejected": 36,
     "model_tasks": {
-      "Helsinki-NLP/opus-mt-en-ru": 23,
-      "Helsinki-NLP/opus-mt-en-he": 31,
-      "Helsinki-NLP/opus-mt-he-ru": 5
+      "Helsinki-NLP/opus-mt-en-he": 42,
+      "Helsinki-NLP/opus-mt-en-ru": 43,
+      "Helsinki-NLP/opus-mt-he-ru": 4
     }
   }
 }
