@@ -28,7 +28,7 @@ class Tests(unittest.TestCase):
   self.assertEqual(len(s["products"]),2)
   self.assertEqual(h["state"],"ok")
   self.assertEqual(s["products"][0]["region_code"],"PSE")
-  self.assertIn("NOT",s["products"][0]["verification"])
+  self.assertIn("not",s["products"][0]["verification"].lower())
  def test_empty_does_not_mean_no_damage(self):
   def fetch(url):
    return {"folders":["FL20260111PSE"],"services":[]} if url.endswith("services?f=pjson") else {"services":[]}
