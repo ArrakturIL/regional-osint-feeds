@@ -48,7 +48,7 @@ def collect(now=None,getter=get):
  base=getter(ROOT_URL+"?f=pjson")
  if not isinstance(base.get("folders"),list) or len(base["folders"])>500:
   raise ValueError("invalid UNOSAT root catalogue schema")
- selected=sorted((x for x in base["folders"] if is_recent_region(x)),reverse=True)[:MAX_FOLDERS]
+ selected=sorted((x for x in base["folders"] if is_recent_region(x)),key=lambda name:name[2:10],reverse=True)[:MAX_FOLDERS]
  results=[];errors=[];successful=0
  for folder in selected:
   try:
