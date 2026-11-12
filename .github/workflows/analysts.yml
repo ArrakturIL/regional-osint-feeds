@@ -6,6 +6,8 @@ on:
     paths:
       - 'scripts/collect_analysts.py'
       - 'scripts/test_analysts.py'
+      - 'scripts/verify_analyst_mirror.py'
+      - 'scripts/test_analyst_mirror.py'
       - 'config/analysts.json'
       - '.github/workflows/analysts.yml'
       - 'worker/analysts-editor.mjs'
@@ -17,6 +19,8 @@ on:
     paths:
       - 'scripts/collect_analysts.py'
       - 'scripts/test_analysts.py'
+      - 'scripts/verify_analyst_mirror.py'
+      - 'scripts/test_analyst_mirror.py'
       - 'config/analysts.json'
       - '.github/workflows/analysts.yml'
       - 'worker/analysts-editor.mjs'
@@ -26,9 +30,8 @@ on:
       - 'worker/test-analysts-translation.mjs'
   workflow_dispatch:
   schedule:
-    # Two independent chances per hour: GitHub scheduled jobs can be delayed or skipped.
-    - cron: '17 * * * *'
-    - cron: '47 * * * *'
+    # Four staggered chances per hour; GitHub may delay or drop scheduled runs.
+    - cron: '7,22,37,52 * * * *'
 permissions:
   contents: write
 concurrency:
@@ -37,7 +40,7 @@ concurrency:
 jobs:
   collect-analysts:
     runs-on: ubuntu-latest
-    timeout-minutes: 4
+    timeout-minutes: 6
     steps:
       - uses: actions/checkout@v4
         with:
@@ -49,13 +52,18 @@ jobs:
         run: |
           python -m py_compile scripts/collect_analysts.py
           python scripts/test_analysts.py
+          python scripts/test_analyst_mirror.py
           node --check worker/analysts-editor.mjs
           node worker/test-analysts.mjs
           node worker/test-analysts-translation.mjs
       - name: Collect official public-source content
         run: python scripts/collect_analysts.py
+      - name: Validate the two fresh mirror files
+        run: python scripts/verify_analyst_mirror.py --max-age-minutes 15
       - name: Commit bounded mirror and source heartbeat
-        if: success() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+        # Code pushes to main must also publish mirrors. Bot data-only commits
+        # don't retrigger this workflow because data paths are excluded.
+        if: success() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -80,3 +88,18 @@ jobs:
             echo 'Unable to publish analyst mirror after four non-force push attempts'
             exit 1
           fi
+
+      - name: Verify published mirror on remote main
+        if: success() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: |
+          git fetch origin main
+          python - <<'PY'
+          import json, subprocess
+          from scripts.verify_analyst_mirror import validate
+          read = lambda file: json.loads(subprocess.check_output(
+              ['git','show','origin/main:data/'+file], text=True))
+          status = read('analyst-source-status.json')
+          items = read('analyst-source-items.json')
+          report = validate(items, status, max_age_minutes=20)
+          print('Published analyst mirror:', json.dumps(report, ensure_ascii=False))
+          PY

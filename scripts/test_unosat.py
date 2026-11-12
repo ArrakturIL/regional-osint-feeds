@@ -14,6 +14,9 @@ class Tests(unittest.TestCase):
   self.assertTrue(m.is_recent_region("FL20240421IRN"))
   self.assertFalse(m.is_recent_region("EQ20150425NPL"))
   self.assertFalse(m.is_recent_region("bad_folder"))
+  self.assertFalse(m.is_recent_region("FL20260230PSE"))
+  self.assertFalse(m.is_recent_region("FL20260431IRN"))
+  self.assertFalse(m.is_recent_region("FL20261301PSE"))
  def test_analysis_services_only_and_attributed(self):
   def fetch(url):
    if url.endswith("services?f=pjson"):
@@ -44,4 +47,37 @@ class Tests(unittest.TestCase):
   s,h=m.collect(now="2026-11-12T07:00:00Z",getter=fetch)
   self.assertEqual(h["state"],"partial")
   self.assertEqual(len(s["products"]),1)
+ def test_malformed_folder_is_isolated_from_healthy_data(self):
+  def fetch(url):
+   if url.endswith("services?f=pjson"):
+    return {"folders":["FL20260111PSE","FL20240421IRN"],"services":[]}
+   if "PSE" in url:
+    return ["broken", "unexpected list"]
+   return {"services":[{"name":"FL20240421IRN/UNOSAT_Analysis","type":"MapServer"}]}
+  snapshot,health=m.collect(now="2026-11-12T07:00:00Z",getter=fetch)
+  self.assertEqual(health["state"],"partial")
+  self.assertEqual(len(snapshot["products"]),1)
+  self.assertEqual(health["errors"][0]["folder"],"FL20260111PSE")
+
+ def test_malformed_root_returns_validation_error(self):
+  def fetch(url):
+   return ["bad root"]
+  with self.assertRaisesRegex(ValueError,"root catalogue"):
+   m.collect(now="2026-11-12T07:00:00Z",getter=fetch)
+
+ def test_all_twelve_relevant_folders_counted_as_complete(self):
+  folders=[f"FL202601{day:02d}PSE" for day in range(1,13)]
+  def fetch(url):
+   return {"folders":folders,"services":[]} if url.endswith("services?f=pjson") else {"services":[]}
+  snapshot,health=m.collect(now="2026-11-12T07:00:00Z",getter=fetch)
+  self.assertEqual(health["state"],"ok")
+  self.assertEqual(snapshot["quality"]["folder_total_region_candidates"],12)
+  self.assertEqual(snapshot["quality"]["folders_scanned"],12)
+
+ def test_no_region_folders_is_not_transport_error(self):
+  def fetch(url):return {"folders":[],"services":[]}
+  snapshot,health=m.collect(now="2026-11-12T07:00:00Z",getter=fetch)
+  self.assertEqual(health["state"],"ok")
+  self.assertEqual(snapshot["products"],[])
+
 if __name__=="__main__":unittest.main()

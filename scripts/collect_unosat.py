@@ -41,18 +41,25 @@ def get(url):
 def is_recent_region(folder):
  if not isinstance(folder,str):return False
  match=re.fullmatch(r"[A-Z]{2}(20\d{6})([A-Z]{3})",folder)
- return bool(match and match.group(2) in REGION_CODES and int(match.group(1)[:4])>=2024)
+ if not match or match.group(2) not in REGION_CODES:return False
+ try:
+  calendar_day=datetime.strptime(match.group(1),"%Y%m%d").date()
+ except ValueError:return False
+ return calendar_day.year>=2024
 
 def collect(now=None,getter=get):
  now=now or checked_time()
  base=getter(ROOT_URL+"?f=pjson")
- if not isinstance(base.get("folders"),list) or len(base["folders"])>500:
+ if not isinstance(base,dict) or not isinstance(base.get("folders"),list) or len(base["folders"])>500:
   raise ValueError("invalid UNOSAT root catalogue schema")
+ regional_count=sum(is_recent_region(x) for x in base["folders"])
  selected=sorted((x for x in base["folders"] if is_recent_region(x)),key=lambda name:name[2:10],reverse=True)[:MAX_FOLDERS]
  results=[];errors=[];successful=0
  for folder in selected:
   try:
    listing=getter(ROOT_URL+"/"+folder+"?f=pjson")
+   if not isinstance(listing,dict) or "error" in listing:
+    raise ValueError("invalid UNOSAT folder response")
    services=listing.get("services")
    if not isinstance(services,list) or len(services)>80:
     raise ValueError("invalid UNOSAT service listing")
@@ -74,16 +81,16 @@ def collect(now=None,getter=get):
      "collected_at":now
     })
    successful+=1
-  except (ValueError,KeyError,TimeoutError,urllib.error.URLError,OSError) as e:
+  except (ValueError,KeyError,TypeError,TimeoutError,urllib.error.URLError,OSError) as e:
    errors.append({"folder":folder,"type":type(e).__name__})
  results.sort(key=lambda x:(x["event_date_from_folder"],x["service_id"]),reverse=True)
  results=results[:MAX_LAYERS]
- state="error" if successful==0 else "partial" if errors or len(selected)==MAX_FOLDERS else "ok"
+ state="ok" if not selected else "error" if successful==0 else "partial" if errors or regional_count>len(selected) else "ok"
  snapshot={
   "schema_version":1,"source":"unosat_analysis","checked_at":now,"state":state,
   "products":results,"quality":{
    "folders_scanned":len(selected),"folders_successful":successful,
-   "folder_total_region_candidates":sum(is_recent_region(x) for x in base["folders"]),
+   "folder_total_region_candidates":regional_count,
    "coverage":"Sample up to 12 most recent regional folders; catalog is not exhaustive",
    "meaning":"Official geospatial analysis layer availability; NOT new detected damage or activity"
   }

@@ -110,6 +110,11 @@ def collect(now=None,getter=get_json):
     if not isinstance(payload,dict) or not isinstance(payload.get("results"),list):
      raise ValueError("CEMS unexpected listing schema")
     rows=payload["results"]
+    declared=payload.get("count")
+    if declared is not None and (type(declared) is not int or declared<0):
+     raise ValueError("CEMS invalid declared count")
+    if declared is not None and scanned+len(rows)>declared:
+     raise ValueError("CEMS page exceeds declared total")
     if page==0:
      last=payload
      # Field names are public schema metadata, useful for diagnosing upstream API drift.
@@ -126,16 +131,19 @@ def collect(now=None,getter=get_json):
      if old is None or (item["product_count"] or 0)>(old["product_count"] or 0):
       records[item["code"]]=item
      found+=1
-    if not rows or not payload.get("next") or (isinstance(payload.get("count"),int) and scanned>=payload["count"]):
+    if not rows or not payload.get("next") or (declared is not None and scanned>=declared):
+     if declared is not None and scanned<declared:
+      raise ValueError("CEMS total count inconsistent with pagination/empty results")
      fully_scanned=True;break
    pages[label]["matched_region"]=recent_scanned
    pages[label]["truncated"]=not fully_scanned
    successful+=1
   except (ValueError,KeyError,TimeoutError,urllib.error.URLError,OSError) as e:
+   if label in pages:pages[label]["truncated"]=True
    errors.append({"provider":label,"type":type(e).__name__,
                   "reason":str(e)[:120] if isinstance(e,ValueError) else "upstream_request_error"})
  products=sorted(records.values(),key=lambda x:x["activation_at"],reverse=True)[:MAX_RESULT]
- state="error" if successful==0 else "partial" if errors or any(v["truncated"] for v in pages.values()) else "ok"
+ state="error" if successful==0 else "partial" if errors or any(v.get("truncated",True) for v in pages.values()) else "ok"
  return {"schema_version":1,"source":"copernicus_ems","checked_at":now,"state":state,
          "products":products,"pages":pages,"quality":{
            "scope":"Bounded first pages: 7 unified, 2 Rapid, 5 smaller Recovery pages (past 900 days); partial if not exhaustive",

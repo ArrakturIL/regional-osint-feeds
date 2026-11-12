@@ -49,9 +49,10 @@ class Tests(unittest.TestCase):
   def fake(url):
    seen.append(url)
    if "offset=0" in url:
-    return {"count":150,"next":"https://example.invalid/page2","results":[
-     {"code":"EMSR990","name":"Flood in Germany","countries":["Germany"],"activationTime":"2026-11-01T00:00:00Z"}]}
-   return {"count":150,"next":None,"results":[
+    # A real 100-item page must account for a count of 101.
+    return {"count":101,"next":"https://example.invalid/page2","results":[
+     {"code":"EMSR990","name":"Flood in Germany","countries":["Germany"],"activationTime":"2026-11-01T00:00:00Z"} for _ in range(100)]}
+   return {"count":101,"next":None,"results":[
      {"code":"EMSR988","name":"Flash floods in southern Iran","countries":[{"short_name":"Iran"}],
       "activationTime":"2026-10-21T00:00:00Z","n_products":2}]}
   d,h=m.collect(now=NOW,getter=fake)
@@ -59,6 +60,38 @@ class Tests(unittest.TestCase):
   self.assertEqual(d["products"][0]["code"],"EMSR988")
   self.assertTrue(any("offset=100" in x for x in seen))
   self.assertEqual(h["state"],"ok")
+ def test_provider_claims_nonzero_count_with_empty_page(self):
+  def bad(url):
+   return {"count":25,"results":[],"next":None}
+  d,h=m.collect(now=NOW,getter=bad)
+  self.assertNotEqual(h["state"],"ok")
+  self.assertEqual(h["state"],"error")
+  self.assertEqual(len(h["error_types"]),3)
+
+ def test_partial_provider_preserves_healthy_catalogue(self):
+  def mixed(url):
+   if "rapidmapping.emergency" in url:
+    return {"count":25,"results":[],"next":None}
+   return {"count":0,"results":[],"next":None}
+  d,h=m.collect(now=NOW,getter=mixed)
+  self.assertEqual(h["state"],"partial")
+  self.assertEqual(d["quality"]["sources_successful"],2)
+  self.assertEqual(h["error_types"][0]["provider"],"rapid")
+
+ def test_timeout_on_page_two_marks_partial_without_keyerror(self):
+  def intermittent(url):
+   if "mapping.emergency.copernicus.eu/activations/" in url:
+    if "offset=0" in url:
+     return {"count":101,"next":"https://example.invalid/2",
+             "results":[{"code":"EMSR911","countries":["Germany"],"name":"Flood",
+                         "activationTime":"2026-10-01T00:00:00Z"} for _ in range(100)]}
+    raise TimeoutError("page 2 timed out")
+   return {"count":0,"results":[],"next":None}
+  d,h=m.collect(now=NOW,getter=intermittent)
+  self.assertEqual(h["state"],"partial")
+  self.assertTrue(d["pages"]["unified"]["truncated"])
+  self.assertEqual(d["quality"]["sources_successful"],2)
+
  def test_no_matching_does_not_mean_no_events(self):
   def fake(url):
    return {"count":0,"results":[]}
