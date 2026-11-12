@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "source": "unosat_analysis",
-  "checked_at": "2026-11-12T06:39:26.372454Z",
+  "checked_at": "2026-11-12T11:51:39.770103Z",
   "state": "ok",
   "products": [
     {
@@ -15,7 +15,7 @@
       "method": "Official UNOSAT ArcGIS geospatial analysis service metadata",
       "date_caveat": "Folder code encodes event date; it is NOT a satellite acquisition date, analysis date or publication date",
       "verification": "Publication/service existence only; inspect GIS layer methods and data before using damage figures",
-      "collected_at": "2026-11-12T06:39:26.372454Z"
+      "collected_at": "2026-11-12T11:51:39.770103Z"
     },
     {
       "service_id": "FL20260111PSE/UNOSAT_Analysis:FeatureServer",
@@ -28,7 +28,7 @@
       "method": "Official UNOSAT ArcGIS geospatial analysis service metadata",
       "date_caveat": "Folder code encodes event date; it is NOT a satellite acquisition date, analysis date or publication date",
       "verification": "Publication/service existence only; inspect GIS layer methods and data before using damage figures",
-      "collected_at": "2026-11-12T06:39:26.372454Z"
+      "collected_at": "2026-11-12T11:51:39.770103Z"
     },
     {
       "service_id": "FR20250707SYR/UNOSAT_Analysis:MapServer",
@@ -41,7 +41,7 @@
       "method": "Official UNOSAT ArcGIS geospatial analysis service metadata",
       "date_caveat": "Folder code encodes event date; it is NOT a satellite acquisition date, analysis date or publication date",
       "verification": "Publication/service existence only; inspect GIS layer methods and data before using damage figures",
-      "collected_at": "2026-11-12T06:39:26.372454Z"
+      "collected_at": "2026-11-12T11:51:39.770103Z"
     },
     {
       "service_id": "FR20250707SYR/Copernicus_EMS_analysis:MapServer",
@@ -54,7 +54,7 @@
       "method": "Official UNOSAT ArcGIS geospatial analysis service metadata",
       "date_caveat": "Folder code encodes event date; it is NOT a satellite acquisition date, analysis date or publication date",
       "verification": "Publication/service existence only; inspect GIS layer methods and data before using damage figures",
-      "collected_at": "2026-11-12T06:39:26.372454Z"
+      "collected_at": "2026-11-12T11:51:39.770103Z"
     },
     {
       "service_id": "FL20241126PSE/UNOSAT_analysis:MapServer",
@@ -67,7 +67,7 @@
       "method": "Official UNOSAT ArcGIS geospatial analysis service metadata",
       "date_caveat": "Folder code encodes event date; it is NOT a satellite acquisition date, analysis date or publication date",
       "verification": "Publication/service existence only; inspect GIS layer methods and data before using damage figures",
-      "collected_at": "2026-11-12T06:39:26.372454Z"
+      "collected_at": "2026-11-12T11:51:39.770103Z"
     },
     {
       "service_id": "FL20241126PSE/UNOSAT_Building_damage_assessment:MapServer",
@@ -80,7 +80,7 @@
       "method": "Official UNOSAT ArcGIS geospatial analysis service metadata",
       "date_caveat": "Folder code encodes event date; it is NOT a satellite acquisition date, analysis date or publication date",
       "verification": "Publication/service existence only; inspect GIS layer methods and data before using damage figures",
-      "collected_at": "2026-11-12T06:39:26.372454Z"
+      "collected_at": "2026-11-12T11:51:39.770103Z"
     },
     {
       "service_id": "FL20240826SDN/Analysis:MapServer",
@@ -93,7 +93,7 @@
       "method": "Official UNOSAT ArcGIS geospatial analysis service metadata",
       "date_caveat": "Folder code encodes event date; it is NOT a satellite acquisition date, analysis date or publication date",
       "verification": "Publication/service existence only; inspect GIS layer methods and data before using damage figures",
-      "collected_at": "2026-11-12T06:39:26.372454Z"
+      "collected_at": "2026-11-12T11:51:39.770103Z"
     }
   ],
   "quality": {
