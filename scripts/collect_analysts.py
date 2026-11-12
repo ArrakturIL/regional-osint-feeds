@@ -13,6 +13,7 @@ from email.utils import parsedate_to_datetime
 from html.parser import HTMLParser
 import json
 import re
+import time
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 import sys
@@ -59,18 +60,26 @@ def fetch_public(url: str) -> tuple[str, int]:
     if u.scheme != "https" or not allowed or u.username or u.password:
         raise ValueError("URL outside official public allowlist")
     req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "text/html, application/atom+xml, application/xml"})
-    # Default urlopen redirects are not followed blindly to another host.
-    with urllib.request.urlopen(req, timeout=16) as response:
-        final = urllib.parse.urlsplit(response.url)
-        if final.scheme != "https" or final.hostname != u.hostname:
-            raise ValueError("unexpected off-domain redirect")
-        content_type = response.headers.get("Content-Type", "").lower()
-        if not ("xml" in content_type or "html" in content_type or "text/plain" in content_type):
-            raise ValueError("unexpected content type")
-        body = response.read(MAX_RESPONSE + 1)
-        if len(body) > MAX_RESPONSE:
-            raise ValueError("source response exceeds maximum")
-        return body.decode("utf-8", "replace"), response.status
+    # Retry only temporary 5xx errors from the official YouTube Atom endpoint.
+    # Never retry 429/rate limits or change hosts to work around restrictions.
+    max_tries = 3 if u.hostname == "www.youtube.com" else 1
+    for attempt in range(max_tries):
+        try:
+            with urllib.request.urlopen(req, timeout=16) as response:
+                final = urllib.parse.urlsplit(response.url)
+                if final.scheme != "https" or final.hostname != u.hostname:
+                    raise ValueError("unexpected off-domain redirect")
+                content_type = response.headers.get("Content-Type", "").lower()
+                if not ("xml" in content_type or "html" in content_type or "text/plain" in content_type):
+                    raise ValueError("unexpected content type")
+                body = response.read(MAX_RESPONSE + 1)
+                if len(body) > MAX_RESPONSE:
+                    raise ValueError("source response exceeds maximum")
+                return body.decode("utf-8", "replace"), response.status
+        except urllib.error.HTTPError as exc:
+            if exc.code not in (500, 502, 503, 504) or attempt == max_tries - 1:
+                raise
+            time.sleep(1 if attempt == 0 else 2)
 
 
 class PublicTelegramParser(HTMLParser):
