@@ -1,4 +1,5 @@
 import {factualTranslationIssue} from './translation-fact-guard.mjs';
+import {shouldSuppressComment,safePublishedComment} from './editorial-comment-policy.mjs';
 // REGIONAL WATCH: locale-aware public readers, no client-side credentials.
 const HEADERS={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET, HEAD, OPTIONS','Access-Control-Allow-Headers':'Content-Type','X-Content-Type-Options':'nosniff','Cache-Control':'public,max-age=60'};
 const DAY=86400000;
@@ -6,7 +7,7 @@ function respond(body,code=200){return Response.json(body,{status:code,headers:H
 function locale(request){const l=new URL(request.url).searchParams.get('lang')||'ru';return l==='ru'||l==='he'?l:null;}
 function val(s,len=1800){return String(s||'').trim().slice(0,len);}
 function sourceText(kind,row){
-  if(kind==='news')return{title:val(row.headline_ru||row.headline,260),body:val(row.summary_ru||row.summary,650),comment:val(row.comment,300)};
+  if(kind==='news')return{title:val(row.headline_ru||row.headline,260),body:val(row.summary_ru||row.summary,650),comment:val(safePublishedComment(row,row.comment),300)};
   if(kind==='editorial')return{title:val(row.headline,260),body:val(row.text,1900),comment:''};
   if(kind==='analyst')return{title:val(row.headline,260),body:val(row.summary,850),comment:val(row.short_quote,300)};
   if(kind==='profile')return{title:val(row.display_name,180),body:val(row.description,600),comment:''};
@@ -43,7 +44,8 @@ export async function localizeNewsRow(db,row,lang){
   }
   const cached=row.he_hash?{source_hash:row.he_hash,title:row.he_title,body:row.he_body,
     commentary:row.he_comment,quality_score:row.he_quality}:null;
-  return localized(db,'news',row.id,sourceText('news',row),lang,cached);
+  const result=await localized(db,'news',row.id,sourceText('news',row),lang,cached);
+  return shouldSuppressComment(row)?{...result,comment:''}:result;
 }
 
 /** Locale-invariant provenance. Never regenerate dates or source links by AI. */
@@ -116,7 +118,7 @@ export async function fetchLocalized(request,env,analystService){
     const rows=await env.NEWS_DB.prepare(sql).bind(Date.now()-7*DAY,lim,offset).all();
     const articles=await Promise.all((rows.results||[]).map(async n=>{
       const cache=lang==='he'?{source_hash:n.he_hash,title:n.he_title,body:n.he_body,commentary:n.he_comment,quality_score:n.he_quality}:null;
-      const t=await localized(env.NEWS_DB,'news',n.id,sourceText('news',n),lang,cache);
+      const t=await localizeNewsRow(env.NEWS_DB,n,lang);
       return{id:n.id,source:n.source,headline:t.title,summary:t.body,comment:t.comment,url:n.url,published_ms:n.published_ms,priority:n.priority,content_language:t.content_language,translation_status:t.translation_status};
     }));
     const visible=readyOnly?articles.filter(x=>x.content_language==='he'&&x.translation_status==='available'):articles;
