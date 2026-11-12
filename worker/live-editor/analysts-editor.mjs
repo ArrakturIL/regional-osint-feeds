@@ -309,4 +309,15 @@ async function readApi(request,env) {
       await env.DB.prepare(`SELECT p.id,p.headline,p.summary,p.short_quote,p.original_url,p.original_published_at_ms,
       p.published_at_ms,p.source_type,p.fact_check_status,p.authorship_status,p.importance_score,
       p.status,p.version,p.editor_version,a.display_name AS analyst,s.language AS original_language
-      FROM analyst_publications p JOIN analysts a ON a.id=p.analyst_id JOIN analyst_items i ON i.id=p.item_id JOIN analyst_sou --- TRUNCATED --- 24,270 chars
+      FROM analyst_publications p JOIN analysts a ON a.id=p.analyst_id JOIN analyst_items i ON i.id=p.item_id JOIN analyst_sources s ON s.id=i.source_id WHERE p.status IN ('published','corrected')
+      ORDER BY p.published_at_ms DESC LIMIT ?`).bind(limit).all();
+    if (detail && !q.results?.length) return json({error:'not_found'},404);
+    return json(detail?q.results[0]:{posts:q.results||[],disclaimer:'Attributed analyst interpretations. Claims not independently verified unless indicated.'});
+  }
+  return json({error:'not_found'},404);
+}
+export default {
+  async scheduled(controller,env) { await runEditor(env,controller.scheduledTime); },
+  async fetch(request,env) { return readApi(request,env); },
+};
+export const testHooks = {plain,similarity,validateInput,validateDecision,reserveAi,aiDecision};
