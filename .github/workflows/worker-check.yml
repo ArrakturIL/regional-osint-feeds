@@ -34,6 +34,8 @@ jobs:
           node --check worker/live-editor/analysts-editor.mjs
           node --check worker/live-editor/analysts-translation.mjs
           node --check worker/live-editor/translation-fact-guard.mjs
+          node --check worker/live-editor/editorial-comment-policy.mjs
+          node worker/test-editorial-comment-policy.mjs
           node worker/test-live-editor-integrity.mjs
           node --check worker/live-editor/news-normalization.mjs
           node worker/test-live-news-normalization.mjs
