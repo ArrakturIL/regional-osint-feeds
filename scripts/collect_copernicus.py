@@ -19,9 +19,16 @@ SOURCES={
  "rapid":"https://rapidmapping.emergency.copernicus.eu/backend/dashboard-api/public-activations-info/",
  "recovery":"https://riskandrecovery.emergency.copernicus.eu/api/public-activations/",
 }
-COUNTRIES=("israel","iran","iraq","syria","lebanon","jordan","oman","yemen",
+# Exact official country names and explicitly enumerated variants; never substring-match.
+# E.g. 'Oman' inside 'Romania' is a dangerous false positive.
+COUNTRIES=frozenset({
+ "israel","iran","islamic republic of iran","iran (islamic republic of)",
+ "iraq","syria","syrian arab republic","lebanon","jordan","oman","yemen",
  "saudi arabia","kuwait","qatar","bahrain","united arab emirates",
- "palestine","palestinian","egypt","turkey","türkiye","cyprus","sudan")
+ "palestine","state of palestine","palestinian territory","occupied palestinian territory",
+ "occupied palestinian territories","palestinian territories",
+ "egypt","turkey","türkiye","republic of türkiye","cyprus","sudan"
+})
 MAX_RESULT=30
 MAX_FETCH_BYTES=1_000_000
 # Bounded pages; unified service covers both Rapid and Risk/Recovery sources.
@@ -55,7 +62,7 @@ def country_names(raw):
  return out
 
 def relevant(names):
- return any(any(term in name.lower() for term in COUNTRIES) for name in names)
+ return any(isinstance(name,str) and name.strip().casefold() in COUNTRIES for name in names)
 
 def safe_url(url):
  if not isinstance(url,str):return None
