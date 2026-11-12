@@ -42,6 +42,18 @@ export function validateCandidate(input,result,lang){
   if(lang==='ru'&&!/ЦАХАЛ|армии\s+Израил/iu.test(translated))return false;
  }
  if(/RAF\s+Fairford/iu.test(source)&&lang==='he'&&!/RAF|חיל האוויר המלכותי/.test(translated))return false;
+
+ // Never replace Iran/Iranian with Jordan/Jordanian without source support.
+ if(/\bIran(?:ian)?\b|Иран[\p{L}]*/iu.test(source)&&
+    !/\bJordan(?:ian)?\b|Иордан[\p{L}]*/iu.test(source)&&
+    (lang==='he'?/ירד(?:ן|נ[\p{L}]*)/iu:/Иордан[\p{L}]*/iu).test(translated))return false;
+ // In a military report, "strike" never means a labour stoppage.
+ if(/(?:\b(?:Israeli|IDF|Gaza|Hamas|military|air)\b.{0,90}\bstrike\b|\bstrike\b.{0,90}\b(?:Gaza|Hamas|hospital|killed|IDF)\b|(?:удар|авиаудар|обстрел)[\p{L}]*)/iu.test(source)&&
+    (lang==='he'?/שבית[\p{L}]*/iu:/забастовк[\p{L}]*/iu).test(translated))return false;
+ // Do not invert the responsibility/negation in highly consequential claims.
+ if(/\bfully\s+responsible\b|\bfull\s+responsibility\b/iu.test(source)&&
+    (lang==='he'?/(?:לא|אינו|אינה|אינם)\s+[^.]{0,35}(?:אחראי|אחריות|נושא)/iu:/(?:не\s+(?:нес[её]т|несёт|отвеча[\p{L}]*)\s+[^.]{0,35}ответствен|не\s+нес[её]т\s+полн[\p{L}]*\s+ответствен)/iu).test(translated))return false;
+
  return true;
 }
 export async function translationQueue(env,request){
