@@ -1,25 +1,212 @@
 {
   "schema_version": 1,
   "source": "copernicus_ems",
-  "checked_at": "2026-11-12T06:23:37.858332Z",
+  "checked_at": "2026-11-12T07:01:30.144448Z",
   "state": "partial",
-  "products": [],
+  "products": [
+    {
+      "code": "EMSN225",
+      "title": "Course change detection of the Mureș river, Romania",
+      "countries": [
+        "Romania"
+      ],
+      "category": "Flood",
+      "phase": "recovery",
+      "activation_at": "2025-10-28T17:52:56",
+      "last_update": "2025-12-19T16:05:37.593283",
+      "product_count": 1,
+      "aoi_count": 1,
+      "closed": true,
+      "source_url": "https://mapping.emergency.copernicus.eu/activations/api/activations/EMSN225/",
+      "report_url": null,
+      "source_api": "unified",
+      "evidence_type": "official_activation_metadata_not_damage_confirmation",
+      "collected_at": "2026-11-12T07:01:30.144448Z"
+    },
+    {
+      "code": "EMSN224",
+      "title": "Flood Extent and Damage Assessment in Suceava and Neamț, Romania (July 2025)",
+      "countries": [
+        "Romania"
+      ],
+      "category": "Flood",
+      "phase": "recovery",
+      "activation_at": "2025-09-18T00:00:00",
+      "last_update": "2025-12-18T16:00:26.257520",
+      "product_count": 2,
+      "aoi_count": 1,
+      "closed": true,
+      "source_url": "https://mapping.emergency.copernicus.eu/activations/api/activations/EMSN224/",
+      "report_url": null,
+      "source_api": "unified",
+      "evidence_type": "official_activation_metadata_not_damage_confirmation",
+      "collected_at": "2026-11-12T07:01:30.144448Z"
+    },
+    {
+      "code": "EMSR811",
+      "title": "Wildfire in Latakia, Syria",
+      "countries": [
+        "Syria"
+      ],
+      "category": "Wildfire",
+      "phase": "response",
+      "activation_at": "2025-07-07T16:28:00",
+      "last_update": "2025-07-25T16:31:57.883010",
+      "product_count": 9,
+      "aoi_count": 1,
+      "closed": true,
+      "source_url": "https://mapping.emergency.copernicus.eu/activations/api/activations/EMSR811/",
+      "report_url": null,
+      "source_api": "unified",
+      "evidence_type": "official_activation_metadata_not_damage_confirmation",
+      "collected_at": "2026-11-12T07:01:30.144448Z"
+    },
+    {
+      "code": "EMSR802",
+      "title": "Flood in Romania",
+      "countries": [
+        "Romania"
+      ],
+      "category": "Flood",
+      "phase": "response",
+      "activation_at": "2025-05-28T17:20:00",
+      "last_update": "2025-06-05T08:33:33.137076",
+      "product_count": 3,
+      "aoi_count": 3,
+      "closed": true,
+      "source_url": "https://mapping.emergency.copernicus.eu/activations/api/activations/EMSR802/",
+      "report_url": null,
+      "source_api": "unified",
+      "evidence_type": "official_activation_metadata_not_damage_confirmation",
+      "collected_at": "2026-11-12T07:01:30.144448Z"
+    },
+    {
+      "code": "EMSR758",
+      "title": "Flood in Galati and Vaslui counties, Romania",
+      "countries": [
+        "Romania"
+      ],
+      "category": "Flood",
+      "phase": "response",
+      "activation_at": "2024-09-14T13:44:00",
+      "last_update": "2024-10-02T22:20:06",
+      "product_count": 8,
+      "aoi_count": 4,
+      "closed": true,
+      "source_url": "https://mapping.emergency.copernicus.eu/activations/api/activations/EMSR758/",
+      "report_url": null,
+      "source_api": "unified",
+      "evidence_type": "official_activation_metadata_not_damage_confirmation",
+      "collected_at": "2026-11-12T07:01:30.144448Z"
+    },
+    {
+      "code": "EMSR750",
+      "title": "Flood in Sudan",
+      "countries": [
+        "Sudan"
+      ],
+      "category": "Flood",
+      "phase": "response",
+      "activation_at": "2024-08-27T09:50:00",
+      "last_update": "2024-09-01T21:49:22",
+      "product_count": 8,
+      "aoi_count": 5,
+      "closed": true,
+      "source_url": "https://mapping.emergency.copernicus.eu/activations/api/activations/EMSR750/",
+      "report_url": null,
+      "source_api": "unified",
+      "evidence_type": "official_activation_metadata_not_damage_confirmation",
+      "collected_at": "2026-11-12T07:01:30.144448Z"
+    }
+  ],
   "pages": {
     "unified": {
-      "returned": 100,
+      "returned": 700,
       "total": 1069,
+      "pages_fetched": 7,
+      "sample_fields": [
+        "activationTime",
+        "category",
+        "centroid",
+        "closed",
+        "code",
+        "countries",
+        "drmPhase",
+        "lastUpdate",
+        "n_aois",
+        "n_products",
+        "name",
+        "past_items_search_text",
+        "search_snippet"
+      ],
+      "matched_region": 6,
       "truncated": true
     },
     "rapid": {
-      "returned": 100,
+      "returned": 200,
       "total": 268,
+      "pages_fetched": 2,
+      "sample_fields": [
+        "activationTime",
+        "category",
+        "centroid",
+        "closed",
+        "code",
+        "countries",
+        "eventTime",
+        "gdacsId",
+        "lastUpdate",
+        "n_aois",
+        "n_products",
+        "name"
+      ],
+      "matched_region": 4,
       "truncated": true
+    },
+    "recovery": {
+      "returned": 43,
+      "total": 43,
+      "pages_fetched": 5,
+      "sample_fields": [
+        "GeneralArcGISLayers",
+        "GeneralArcGISRestAPILayers",
+        "actDrmPhase",
+        "activationTime",
+        "activator",
+        "all_finished_timestamp",
+        "ancillaryProductsDownload",
+        "category",
+        "centroid",
+        "closed",
+        "code",
+        "continent",
+        "countries",
+        "dashboardUrl",
+        "deliveryTime",
+        "enduser",
+        "eventTime",
+        "geodataDownload",
+        "last_update",
+        "name",
+        "products",
+        "publicationDate",
+        "rasterDataDownload",
+        "reason",
+        "registrationTime",
+        "reportingDownload",
+        "sensitive",
+        "storyMapUrl",
+        "subCategory",
+        "viewerUrl"
+      ],
+      "matched_region": 2,
+      "truncated": false
     }
   },
   "quality": {
-    "scope": "Only first 100 activations from each public listing; not a full historical inventory",
+    "scope": "Bounded first pages: 7 unified, 2 Rapid, 5 smaller Recovery pages (past 900 days); partial if not exhaustive",
     "ready_made_analysis": "Product count identifies published products; metadata alone cannot establish damage",
-    "sources_successful": 2,
-    "sources_failed": 1
+    "sources_successful": 3,
+    "sources_failed": 0
   }
 }
