@@ -1,3 +1,4 @@
+import {factualTranslationIssue} from './translation-fact-guard.mjs';
 // REGIONAL WATCH: locale-aware public readers, no client-side credentials.
 const HEADERS={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET, HEAD, OPTIONS','Access-Control-Allow-Headers':'Content-Type','X-Content-Type-Options':'nosniff','Cache-Control':'public,max-age=60'};
 const DAY=86400000;
@@ -24,8 +25,13 @@ async function localized(db,kind,id,original,lang,prefilled=null){
   const h=await fingerprint(original);
   const t=prefilled||await db.prepare("SELECT source_hash,title,body,commentary,quality_score FROM regional_i18n WHERE kind=? AND item_id=? AND language='he'").bind(kind,id).first();
   if(t&&t.source_hash===h&&t.quality_score>=85&&/[\u0590-\u05ff]/u.test(t.title||'')
-     &&(!original.body||/[\u0590-\u05ff]/u.test(t.body||'')))
-    return{title:t.title,body:t.body,comment:t.commentary||'',content_language:'he',translation_status:'available'};
+     &&(!original.body||/[\u0590-\u05ff]/u.test(t.body||''))){
+    const mismatch=factualTranslationIssue(original,{title:t.title,body:t.body,comment:t.commentary||''});
+    if(!mismatch)return{title:t.title,body:t.body,comment:t.commentary||'',content_language:'he',translation_status:'available'};
+    // Fail closed: a high confidence score is not proof of accurate attribution.
+    return {...original,content_language:/[\u0400-\u04ff]/u.test(original.title+original.body)?'ru':'en',
+      translation_status:'needs_review'};
+  }
   return {...original,content_language:/[\u0400-\u04ff]/u.test(original.title+original.body)?'ru':'en',translation_status:'pending'};
 }
 export async function fetchLocalized(request,env,analystService){
@@ -132,7 +138,7 @@ function checkHebrew(original,translation){
       ||after.length>Math.max(80,before.length*4+30)||/[<>]/.test(after)
       ||!translationPreservesNumbers(before,after))return false;
   }
-  return true;
+  return !factualTranslationIssue(original,translation);
 }
 async function localeCandidates(env,kind,now){
   let db=env.NEWS_DB,rows=[];
@@ -168,13 +174,20 @@ function hebrewQualityIssue(original,value){
     if(/[<>]/.test(after))return'forbidden_markup_'+field;
     if(!translationPreservesNumbers(before,after))return'numbers_changed_'+field;
   }
-  return'translation_quality_gate';
+  return factualTranslationIssue(original,value)||'translation_quality_gate';
 }
 async function translateLocaleItem(env,item,day,now){
   const {db,kind,id,text,cachedSourceHash}=item;
   const sha=await fingerprint(text);
   const cached=cachedSourceHash!==undefined?{source_hash:cachedSourceHash}:await db.prepare("SELECT source_hash FROM regional_i18n WHERE kind=? AND item_id=? AND language='he'").bind(kind,id).first();
-  if(cached?.source_hash===sha)return'cached';
+  if(cached?.source_hash===sha){
+    const existing=await db.prepare("SELECT title,body,commentary FROM regional_i18n WHERE kind=? AND item_id=? AND language='he'").bind(kind,id).first();
+    if(existing&&!factualTranslationIssue(text,{
+      title:existing.title,body:existing.body,comment:existing.commentary||''
+    }))return'cached';
+    // A previously approved translation is no longer trusted. Regenerate
+    // through the ordinary daily-budget/attempt gates, not an unbounded loop.
+  }
   const claimed=await db.prepare("INSERT OR IGNORE INTO regional_i18n_attempts(kind,item_id,language,source_hash,day_utc,attempted_at_ms,state) VALUES(?,?,'he',?,?,?,'running')").bind(kind,id,sha,day,now).run();
   if(claimed.meta?.changes!==1){
     const prev=await db.prepare("SELECT state,retry_count FROM regional_i18n_attempts WHERE kind=? AND item_id=? AND language='he' AND source_hash=? AND day_utc=?").bind(kind,id,sha,day).first();
