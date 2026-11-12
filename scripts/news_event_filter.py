@@ -37,6 +37,7 @@ REGIONAL={
  "idf":r"\bIDF\b|צה[״\"']?ל|צבא ההגנה לישראל|цахал",
  "irgc":r"\bIRGC\b|\brevolutionary guards?\b|משמרות המהפכה|الحرس الثوري|ксир",
  "us":r"\b(?:US|USA|United States|American)\b|ארה[״\"']?ב|الولايات المتحدة|сша",
+ "israeli_politics":r"\b(?:knesset|netanyahu|eisenkot|likud)\b|כנסת|נתניהו|איזנקוט|الكنيست|نتنياهو|кнессет|нетаньяху|айзенкот",
 }
 DETAIL={
  "nasser_hospital":r"\bnasser\s+hospital\b|\bnasser\b.{0,15}\bhospital\b|בית\s*החולים\s*נאסר|مستشفى\s*ناصر|больниц[аы]\s+нассер|нассер",
@@ -60,6 +61,8 @@ ACTION={
  "military":r"\b(?:ballistic|missiles?|rockets?|intercept(?:ed|ion)?|fighter jets?|deploy(?:ed|ment)?|air defense|naval|drone)\b|טילים|רקטות|יירוט|כטב.?ם|صواريخ|طائرات مسيرة|ракет|беспилотник|перехват|воен",
  "sanctions":r"\b(?:sanctions?|embargo|blacklist|tariffs?)\b|סנקציות|عقوبات|санкци",
  "statement":r"\b(?:says?|warns?|claims?|accuses?|statement|pledges?|announces?)\b|אמר|הזהיר|הודיע|אומר|صرح|قال|حذر|زعم|заявил|предупредил|объявил",
+ "diplomacy":r"\b(?:un security council|uns c|unsc|summit|ambassador|embassy|diplomatic|resolution|foreign minister)\b|מועצת הביטחון|דיפלומט|שגריר|פסגה|مجلس الأمن|قمة|دبلوماسية|سفير|совет безопасности|дипломат|посол|саммит",
+ "governance":r"\b(?:budget|funding|taxpayer|judicial reform|supreme court|protests?|resign|indictment|corruption|bribery|knesset|government spending)\b|בג.?ץ|תקציב|מימון|מחאה|שחיתות|ميزانية|فساد|احتجاج|бюджет|финансирован|коррупци|протест|суд",
 }
 SUBTOPIC={
  "deal":r"\b(?:deal|agreement|mou|treaty)\b|הסכם|עסקה|اتفاق|تسوية|сделк|соглашени",
@@ -69,7 +72,7 @@ SUBTOPIC={
  "elections":r"\b(?:election|elected|vote)\b|בחיר|انتخاب|выбор",
  "hostages":r"\bhostage\b|חטופ|رهينة|заложник",
 }
-TOPIC_RANK={"strike":6,"military":5,"negotiation":4,"sanctions":4,"election":3,"statement":2,"other":0}
+TOPIC_RANK={"strike":6,"military":5,"negotiation":4,"diplomacy":4,"sanctions":4,"election":3,"governance":3,"statement":2,"other":0}
 STRONG_VENUES={"nasser_hospital","fairford","didamar","shifa_hospital"}
 PEOPLE={"katz","vance","ghalibaf","qassem","netanyahu","eisenkot"}
 TRACKER=re.compile(r"^(?:utm_.+|fbclid|gclid|dclid|msclkid|mc_cid|mc_eid|_ga|_gl)$",re.I)
@@ -81,8 +84,8 @@ AGENCIES={
  "afp":re.compile(r"\bagence france.presse\b|\bAFP\b|فرانس برس",re.I)
 }
 HIGH_STAKES=("strike","military")
-MAX_WINDOW_HOURS={"strike":18,"military":24,"negotiation":36,"sanctions":48,"election":48,
-                  "statement":24,"other":18}
+MAX_WINDOW_HOURS={"strike":8,"military":24,"negotiation":36,"diplomacy":36,"sanctions":48,"election":48,
+                  "governance":30,"statement":24,"other":18}
 
 def normalize(text):
     text=unicodedata.normalize("NFKC",str(text or "")).casefold()
@@ -131,7 +134,7 @@ def analyze(row):
     region=matched(whole,REGIONAL)
     details=matched(whole,DETAIL)
     actions=matched(title,ACTION) or matched(whole,ACTION)
-    topic=next((t for t in ["strike","negotiation","election","military","sanctions","statement"] if t in actions),"other")
+    topic=next((t for t in ["strike","negotiation","election","military","sanctions","diplomacy","governance","statement"] if t in actions),"other")
     kind=str(row.get("kind") or "news")
     reasons=[]
     if region or details:reasons.append("regional_evidence")
@@ -174,7 +177,7 @@ def same_event(a,b):
         return (False,"conflicting_precise_venue")
     # Matching generic countries like Iran/Israel never proves same event.
     shared_venue=a["detail"]&b["detail"]&STRONG_VENUES
-    if shared_venue and a["topic"] in ("strike","military"):
+    if shared_venue and a["topic"] in ("strike","military") and bool(a["region"]&b["region"]):
         return (True,"same_action_precise_venue_time")
     shared_person=a["detail"]&b["detail"]&PEOPLE
     if shared_person and a["region"]&b["region"]:
