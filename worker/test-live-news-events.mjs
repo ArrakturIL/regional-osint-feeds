@@ -25,6 +25,11 @@ assert.equal(moved.groups[0].members.length,4,'EN/HE/AR single incident group');
 assert.equal(analyze(hospital[2]).policy,'candidate','Hebrew source reaches classifier');
 assert.equal(analyze(hospital[3]).policy,'candidate','Arabic source reaches classifier');
 assert.equal(analyze(moved.held[0]).policy,'hold_low_signal');
+// Regional false negatives and generic US/archive false positives from QA.
+assert.equal(analyze(row('oman','BBC Middle East','Oman condemns missile attack on port','Official statement')).policy,'candidate');
+assert.equal(analyze(row('iraq','BBC Middle East','Iraq reports drone strike in Baghdad','Local reporting')).policy,'candidate');
+assert.equal(analyze(row('usdomestic','BBC Middle East','US court rules on domestic student funding','State education funds')).policy,'hold_irrelevant');
+assert.equal(analyze(row('archive','BBC Middle East','The 2014 Israeli strike: archive video','Historical footage')).policy,'hold_nonnews');
 const a=analyze(row('a','Al Jazeera','Iran can produce 50 ballistic missiles','Iran retains ballistic missiles'));
 const b=analyze(row('b','Jerusalem Post / Iran','Iran can produce 50 ballistic missiles','Reuters cites 50 ballistic missiles',1));
 assert.equal(sameEvent(a,b).ok,true);
@@ -87,4 +92,36 @@ for(const q of ['limit=1.5','limit=-2','offset=0.2','limit=500']){
  const e=await readNewsEvents(new Request('https://regional.test/api/news?'+q),{NEWS_DB:mock});
  assert.equal(e.status,400,'Invalid '+q+' must be 400');
 }
+// One previous event splits in two. Only one successor inherits its ID.
+db.rows=db.rows.map(x=>x.id==='h1'?{...x,
+  headline:'Israeli strike hits Al-Shifa Hospital in Gaza',
+  summary:'IDF says Al-Shifa Hospital in Gaza was targeted.'}:x);
+const split=await reconcile(db,now);
+assert.equal(split.events,2,'Two distinct venues must remain separate after reclassification');
+assert.equal(db.events.length,2,'Split must leave two persisted D1 event heads, not overwrite');
+const splitIds=db.events.map(x=>x.event_id).sort();
+assert.equal(new Set(splitIds).size,2,'Each split group needs a unique stable ID');
+assert.ok(splitIds.includes(eventIds[0]),'Majority branch retains the original ID');
+await reconcile(db,now);
+assert.deepEqual(db.events.map(x=>x.event_id).sort(),splitIds,'Split IDs must stay stable on repeated scan');
+
+// Page-size changes must not change the global diversity ordering.
+const pageDb=new MemoryDB();
+pageDb.events=Array.from({length:26},(_,i)=>({
+  event_id:'evt_page_'+i,id:'page_'+i,source:i<15?'Times of Israel':'Al Jazeera',
+  headline:'Iran and Israel news event '+i,headline_ru:null,summary:'Regional update',summary_ru:null,
+  comment:null,url:'https://example.org/page_'+i,published_ms:now-i*1000,
+  event_priority:8,topic:'statement',last_seen_ms:now-i*1000,
+  member_count:1,source_count:1,origin_count:1,
+  verification_status:'single_origin_reporting',reason_codes:'[]',sources_json:'[]'
+}));
+async function page(limit,offset){
+ const r=await readNewsEvents(new Request('https://regional.test/api/news?lang=ru&limit='+limit+'&offset='+offset),{NEWS_DB:pageDb});
+ assert.equal(r.status,200);
+ return (await r.json()).articles.map(x=>x.event_id);
+}
+const page5=await page(5,0),page20=await page(20,5),page25=await page(25,0);
+assert.deepEqual([...page5,...page20],page25,'Different page sizes must give the same 25 unique events');
+assert.equal(new Set(page25).size,25,'Pagination must not duplicate events');
+
 console.log('Production event filter: 12 feeds, tri-lingual merge/split, native HE, stable D1 IDs, public contract OK');

@@ -7,6 +7,14 @@ export const hebrew=s=>/[\u0590-\u05ff]/u.test(String(s||''));
 const R=[['israel',/\bisrael(?:i|is)?\b|ישראל|إسرائيل|израил/iu],['iran',/\biran(?:ian)?\b|איראן|إيران|иран/iu],
  ['gaza',/\bgaza\b|עזה|غزة|газ[аеуы]/iu],['lebanon',/\blebanon\b|לבנון|لبنان|ливан/iu],
  ['syria',/\bsyria\b|סוריה|سوريا|сири/iu],['yemen',/\byemen\b|תימן|اليمن|йемен/iu],
+ ['oman',/\boman(?:i)?\b|עומאן|عمان|оман[\p{L}]*/iu],
+ ['iraq',/\biraq(?:i)?\b|עיראק|العراق|ирак[\p{L}]*/iu],
+ ['jordan',/\bjordan(?:ian)?\b|ירד(?:ן|נ[\p{L}]*)|الأردن|иордан[\p{L}]*/iu],
+ ['saudi',/\bsaudi\b|السعودية|סעודיה|саудов[\p{L}]*/iu],
+ ['uae',/\b(?:UAE|Emirates)\b|האמירויות|الإمارات|оаэ|эмират[\p{L}]*/iu],
+ ['qatar',/\bqatar(?:i)?\b|קטאר|قطر|катар[\p{L}]*/iu],
+ ['bahrain',/\bbahrain\b|בחריין|البحرين|бахрейн[\p{L}]*/iu],
+ ['kuwait',/\bkuwait\b|כווית|الكويت|кувейт[\p{L}]*/iu],
  ['idf',/\bIDF\b|צה[״"']?ל|цахал/iu],['hamas',/\bhamas\b|חמאס|حماس|хамас/iu],
  ['hezbollah',/\bhezbollah\b|חיזבאללה|حزب الله|хезбол/iu],['us',/\b(?:US|USA|American)\b|ארה[״"']?ב|الولايات المتحدة|сша/iu],
  ['netanyahu',/\bnetanyahu\b|נתניהו|نتنياهو|нетаньяху/iu]];
@@ -41,13 +49,17 @@ export function analyze(a){
  const topic=T.find(x=>x[1].test(title))?.[0]||T.find(x=>x[1].test(all))?.[0]||'other';
  const type=/\b(?:opinion|commentary|column)\b|טור דעה|דעה|رأي/iu.test(title)?'opinion':
    /\b(?:live blog|live updates|as it happened)\b|עדכונים שוטפים|مباشر/iu.test(title)?'liveblog':
+   /\b(?:archive|archival|historical footage|from (?:19|20)\d{2})\b|ארכיון|أرشيف|архивн/iu.test(title)?'archive':
    /\b(?:sponsored|advertorial)\b|תוכן ממומן|إعلان/iu.test(title)?'sponsored':'news';
  let score=BASE[topic]+(overlap(region,new Set(['israel','iran','idf','hamas','hezbollah','netanyahu'])).length?2:region.size?1:0);
  if(overlap(detail,VENUES).length)score++;
  if(type==='opinion')score-=3;
- if(type==='sponsored'||type==='liveblog')score=0;
+ if(type==='sponsored'||type==='liveblog'||type==='archive')score=0;
  score=Math.max(0,Math.min(10,score));
- const policy=!region.size&&!detail.size?'hold_irrelevant':type!=='news'?'hold_nonnews':score<3?'hold_low_signal':score<4?'review':'candidate';
+ // A purely domestic U.S. issue is not automatically Middle East news.
+ const usOnly=region.size===1&&region.has('us')&&!detail.size&&!/\b(?:middle east|persian gulf|strait of hormuz)\b/iu.test(all);
+ const policy=(!region.size&&!detail.size)||usOnly?'hold_irrelevant':
+   type!=='news'?'hold_nonnews':score<3?'hold_low_signal':score<4?'review':'candidate';
  return {...a,title,summary,topic,type,score,policy,region,detail,sub,words:tokens(title),time:Number(a.published_ms||0),
    owner:publisher(a.source),lang:language(a.source),claimed:hasClaim(all)};
 }
@@ -88,10 +100,36 @@ export async function reconcile(db,now=Date.now()){
  const {groups,held}=group(rows);
  const previous=(await db.prepare('SELECT article_id,event_id FROM news_event_members').all()).results||[];
  const prior=new Map(previous.map(r=>[r.article_id,r.event_id]));
+ // A split can produce two groups pointing to the same old ID. Allocate
+ // previous IDs *globally* by greatest overlap before any UPSERT; each old ID
+ // can be inherited by at most one group. New IDs avoid historical ID reuse.
+ const edges=[];
+ for(const [index,g] of groups.entries()){
+  const counts=new Map();
+  for(const member of g.members){
+   const id=prior.get(member.id);if(id)counts.set(id,(counts.get(id)||0)+1);
+  }
+  for(const [id,count] of counts)edges.push({index,id,count,size:g.members.length});
+ }
+ edges.sort((a,b)=>b.count-a.count||b.size-a.size||a.index-b.index||a.id.localeCompare(b.id));
+ const assigned=new Map(),taken=new Set();
+ for(const edge of edges){
+  if(assigned.has(edge.index)||taken.has(edge.id))continue;
+  assigned.set(edge.index,edge.id);taken.add(edge.id);
+ }
+ const reserved=new Set(previous.map(x=>x.event_id)),used=new Set(taken);
  const batch=[];
- for(const g of groups){
-  const members=g.members,old=members.map(m=>prior.get(m.id)).filter(Boolean).sort();
-  const eventId=old[0]||'evt_'+await hash(members[0].id);
+ for(const [index,g] of groups.entries()){
+  const members=g.members;
+  let eventId=assigned.get(index);
+  if(!eventId){
+   let n=0;
+   do {
+    eventId='evt_'+await hash(members[0].id+(n?'|split:'+n:''));
+    n++;
+   }while(reserved.has(eventId)||used.has(eventId));
+  }
+  used.add(eventId);
   const best=[...members].sort((a,b)=>b.score-a.score||b.time-a.time)[0];
   const ownerCount=new Set(members.map(x=>x.owner)).size;
   const originCount=new Set(members.map(origin)).size;

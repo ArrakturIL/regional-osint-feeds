@@ -4,6 +4,8 @@ import {localizeNewsRow} from './localization.mjs';
 const HEADERS={'Access-Control-Allow-Origin':'*','Cache-Control':'public,max-age=60',
                'X-Content-Type-Options':'nosniff'};
 const respond=(body,status=200)=>Response.json(body,{status,headers:HEADERS});
+// Fixed across page sizes, otherwise offset pagination reorders earlier rows.
+const SOFT_PUBLISHER_CAP=7;
 const validInt=(value,max,defaultValue)=>value===null?defaultValue:
   /^\d+$/.test(value)&&Number.isSafeInteger(Number(value))&&Number(value)<=max?Number(value):null;
 export async function readNewsEvents(request,env){
@@ -59,7 +61,7 @@ export async function readNewsEvents(request,env){
  }));
  let visible=readyOnly?translated.filter(x=>x.content_language==='he'&&x.translation_status==='available'):translated;
  // Soft diversity: high-impact stories are never blocked to satisfy quotas.
- const cap=Math.max(3,Math.floor(limit*0.35)),counts=new Map(),regular=[],deferred=[];
+ const cap=SOFT_PUBLISHER_CAP,counts=new Map(),regular=[],deferred=[];
  for(const e of visible){
   const n=counts.get(e._owner)||0;
   if(e.priority>=9||n<cap){regular.push(e);counts.set(e._owner,n+1);}
