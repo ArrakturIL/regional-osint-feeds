@@ -37,6 +37,10 @@ jobs:
           node worker/test-live-editor-integrity.mjs
           node --check worker/live-editor/news-normalization.mjs
           node worker/test-live-news-normalization.mjs
+          node --check worker/live-editor/news-events.mjs
+          node --check worker/live-editor/news-api.mjs
+          node --check worker/live-editor/regional-watch-editor.js
+          node worker/test-live-news-events.mjs
       - name: Run aviation API and data-quality regression tests
         run: node worker/test-aviation.mjs
       - name: Validate OpenSky and ADS-B Exchange adapters without network calls

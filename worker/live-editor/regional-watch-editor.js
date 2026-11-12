@@ -1,15 +1,11 @@
 import {enrichNewMonitorStories} from './story-enrichment.mjs';
 import analystService from './analysts-editor.mjs';
 import localization from './localization.mjs';
+import {FEEDS as EVENT_FEEDS,analyze,reconcile} from './news-events.mjs';
+import {readNewsEvents} from './news-api.mjs';
 import {canonicalNewsUrl,normalizedHeadline,articlePriority} from './news-normalization.mjs';
 
-const FEEDS=[
- ["BBC Middle East","https://feeds.bbci.co.uk/news/world/middle_east/rss.xml",4],
- ["Times of Israel","https://www.timesofisrael.com/feed/",4],
- ["Jerusalem Post / Israel","https://www.jpost.com/rss/rssfeedsisraelnews.aspx",4],
- ["Jerusalem Post / Iran","https://www.jpost.com/rss/rssfeedsiran",4],
- ["Al Jazeera","https://www.aljazeera.com/xml/rss/all.xml",3]
-];
+const FEEDS=EVENT_FEEDS.map(x=>[x[0],x[1],x[4],x[3]]);
 const REGION=/iran|israel|israeli|hezbollah|lebanon|gaza|hamas|syria|syrian|yemen|houthi|red sea|middle east|iraq|idf|centcom|hormuz|netanyahu|tehran|jerusalem|tel aviv|persian gulf|khamenei|trump.*(iran|israel)/i;
 // High-impact headline terms are token-boundary checked in news-normalization.mjs.
 function decode(s){return (s||"").replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g,"$1").replace(/&(?:amp|lt|gt|quot|apos|nbsp|#(\d+)|#x([0-9a-f]+));/gi,(m,d,h)=>{if(d||h){const n=d?Number(d):parseInt(h,16);return n>0&&n<1114112?String.fromCodePoint(n):""}return {amp:"&",lt:"<",gt:">",quot:'"',apos:"'",nbsp:" "}[m.slice(1,-1).toLowerCase()]||m}).replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim()}
@@ -17,13 +13,17 @@ function tag(s,key){const m=s.match(new RegExp("<(?:[\\w.-]+:)?"+key+"\\b[^>]*>(
 function safeLink(u){try{const x=new URL(u);return x.protocol==="https:"?x.href.slice(0,1000):null}catch{return null}}
 async function digest(s){const h=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));return [...new Uint8Array(h)].slice(0,12).map(x=>x.toString(16).padStart(2,"0")).join("")}
 function entries(xml,feed,now){
- const items=xml.match(/<item(?:\s[^>]*)?>[\s\S]*?<\/item>/gi)||[],out=[];
- for(const it of items.slice(0,55)){
-  const title=tag(it,"title").slice(0,260),summary=tag(it,"description").slice(0,480);
-  const link=safeLink(tag(it,"link")),pub=Date.parse(tag(it,"pubDate")||tag(it,"published")||tag(it,"date"));
-  if(!title||!link||!Number.isFinite(pub)||pub>now+600000||pub<now-48*3600000||!REGION.test(title+" "+summary))continue;
-  const score=articlePriority(feed[2],title,REGION.test(title));
-  out.push({source:feed[0],title,summary,link,pub,score});
+ const nodes=xml.match(/<(?:item|entry)(?:\s[^>]*)?>[\s\S]*?<\/(?:item|entry)>/gi)||[],out=[];
+ for(const item of nodes.slice(0,75)){
+  const title=tag(item,'title').slice(0,260);
+  const summary=(tag(item,'description')||tag(item,'summary')||tag(item,'content')).slice(0,340);
+  const atom=item.match(/<link\b[^>]*\bhref\s*=\s*["']([^"']+)["'][^>]*\/?>/i);
+  const link=safeLink(tag(item,'link')||decode(atom?.[1]||''));
+  const pub=Date.parse(tag(item,'pubDate')||tag(item,'published')||tag(item,'updated')||tag(item,'date'));
+  if(!title||!link||!Number.isFinite(pub)||pub>now+600000||pub<now-72*3600000)continue;
+  const a=analyze({id:link,source:feed[0],headline:title,summary,published_ms:pub});
+  if(a.policy!=='candidate')continue;
+  out.push({source:feed[0],title,summary,link,pub,score:a.score});
  }
  return out;
 }
@@ -33,7 +33,7 @@ async function load(feed,now){
   const r=await fetch(feed[1],{redirect:"follow",headers:{Accept:"application/rss+xml,application/xml,text/xml,*/*", "User-Agent":"RegionalWatch/1.0 RSS"},signal:c.signal});
   if(!r.ok)return {name:feed[0],state:"error",http:r.status,error:"HTTP "+r.status,items:[]};
   const xml=(await r.text()).slice(0,400000);
-  if(!/<rss\b|<rdf:RDF\b/i.test(xml))return {name:feed[0],state:"error",http:r.status,error:"Not RSS",items:[]};
+  if(!/<rss\b|<rdf:RDF\b|<feed(?:\s|>)/i.test(xml))return {name:feed[0],state:"error",http:r.status,error:"Not RSS/Atom",items:[]};
   const items=entries(xml,feed,now);
   return {name:feed[0],state:items.length?"ok":"empty",http:r.status,error:null,items};
  }catch(e){return {name:feed[0],state:"error",http:null,error:String(e).slice(0,100),items:[]}}
@@ -68,7 +68,7 @@ async function translateTitles(env,now){
   const pending=rows.filter(x=>!/sponsored content|winner cup|euroleague|fashion week|maccabi wins|hapoel tel aviv set to secure/i.test(x.headline)).slice(0,5);
   if(!pending.length)return {translated:0,summaries:0};
   await env.NEWS_DB.prepare("UPDATE news_translation_budget SET batches=batches+1,estimated_neurons=estimated_neurons+125,updated_ms=? WHERE day_utc=?").bind(now,day).run();
-  const system="Ты опытный русскоязычный редактор-переводчик. Переведи каждый английский заголовок и короткую RSS-аннотацию на естественный, грамотный русский. Сохраняй все факты, числа, даты, имена, источники утверждений и вопросительные формы. Не превращай подозрения или заявления в доказанные факты, не добавляй ничего своего. Формат ответа: строго валидный JSON-массив объектов вида [{\"id\":\"исходный id\",\"title_ru\":\"русский заголовок\",\"summary_ru\":\"русская аннотация\"}]. Для каждого переданного id ровно один объект. Никаких пояснений, markdown или текста вне JSON. Rezaei — Резаи, Bessent — Бессент, Netanyahu — Нетаньяху, IRGC — КСИР, IDF — ЦАХАЛ.";
+  const system="Ты опытный русскоязычный редактор-переводчик. Переведи каждый английский или ивритский заголовок и короткую RSS-аннотацию на естественный, грамотный русский. Сохраняй все факты, числа, даты, имена, источники утверждений и вопросительные формы. Не превращай подозрения или заявления в доказанные факты, не добавляй ничего своего. Формат ответа: строго валидный JSON-массив объектов вида [{\"id\":\"исходный id\",\"title_ru\":\"русский заголовок\",\"summary_ru\":\"русская аннотация\"}]. Для каждого переданного id ровно один объект. Никаких пояснений, markdown или текста вне JSON. Rezaei — Резаи, Bessent — Бессент, Netanyahu — Нетаньяху, IRGC — КСИР, IDF — ЦАХАЛ.";
   const payload=pending.map(x=>({id:x.id,headline:x.headline,summary:x.summary||""}));
   const out=await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast",{messages:[{role:"system",content:system},{role:"user",content:JSON.stringify(payload)}],temperature:0.1,max_tokens:1900});
   const content=String(out?.choices?.[0]?.message?.content||(typeof out?.response==="string"?out.response:"")).trim();
@@ -153,7 +153,7 @@ async function scan(env){
  const known=(await env.NEWS_DB.prepare("SELECT url FROM news_items WHERE published_ms>=?").bind(now-8*86400000).all()).results||[];
  const existingUrls=new Set(known.map(row=>canonicalNewsUrl(row.url)).filter(Boolean));
  const seenUrls=new Set(),samePublisherTitles=new Set();let inserted=0;
- for(const item of all.slice(0,85)){
+ for(const item of all.slice(0,240)){
   const canonical=canonicalNewsUrl(item.link);
   if(!canonical||seenUrls.has(canonical)||existingUrls.has(canonical))continue;
   const titleKey=item.source+'\u0000'+normalizedHeadline(item.title)+'\u0000'+Math.floor(item.pub/(6*3600000));
@@ -167,6 +167,12 @@ async function scan(env){
   if(r.meta?.changes)inserted++;
  }
  await env.NEWS_DB.prepare("DELETE FROM news_items WHERE published_ms < ?").bind(now-8*86400000).run();
+ let grouped={state:'pending'};
+ try{grouped=await reconcile(env.NEWS_DB,now);}
+ catch(e){grouped={state:'error',error:String(e).slice(0,170)};
+   await env.NEWS_DB.prepare("INSERT INTO editor_state(key,value,updated_ms) VALUES('last_event_filter_error',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_ms=excluded.updated_ms")
+   .bind(grouped.error,Date.now()).run().catch(()=>{});
+ }
  const translation=await translateTitles(env,now);
 
  const day=new Date(now).toISOString().slice(0,10);
@@ -191,7 +197,7 @@ async function scan(env){
   }
  }
  const idfTranslation=await translateIDF(env,now);
- const summary={updated_at:new Date(now).toISOString(),feeds:runs.map(x=>({name:x.name,state:x.state,http:x.http,items:x.items.length,error:x.error})),found:all.length,inserted,commented,comment_errors:failures,translated:translation.translated,translated_summaries:translation.summaries||0,idf_translated:idfTranslation.translated||0};
+ const summary={updated_at:new Date(now).toISOString(),feeds:runs.map(x=>({name:x.name,state:x.state,http:x.http,items:x.items.length,error:x.error})),found:all.length,inserted,grouped,commented,comment_errors:failures,translated:translation.translated,translated_summaries:translation.summaries||0,idf_translated:idfTranslation.translated||0};
  await env.NEWS_DB.prepare("INSERT INTO editor_state(key,value,updated_ms) VALUES('last_scan',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_ms=excluded.updated_ms").bind(JSON.stringify(summary),Date.now()).run();
  return summary;
 }
@@ -222,7 +228,15 @@ export default {
   },
   async fetch(request, env) {
     const path = new URL(request.url).pathname;
-    if (['/api/news','/api/editorial-notes','/api/stories','/api/languages'].includes(path)) return safeLocalizedApi(request,env,analystService);
+    if(path==='/api/news'||path==='/api/events'){
+      try{return await readNewsEvents(request,env);}
+      catch(error){
+        await env.NEWS_DB.prepare("INSERT INTO editor_state(key,value,updated_ms) VALUES('last_event_api_error',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_ms=excluded.updated_ms")
+          .bind(String(error).slice(0,250),Date.now()).run().catch(()=>{});
+        return safeLocalizedApi(request,env,analystService);
+      }
+    }
+    if (['/api/editorial-notes','/api/stories','/api/languages'].includes(path)) return safeLocalizedApi(request,env,analystService);
     if (path === '/api/analysts' || path === '/api/analyst-posts' ||
         /^\/api\/analyst-posts\/[a-z0-9-]+$/.test(path)) {
       return safeLocalizedApi(request,env,analystService);
