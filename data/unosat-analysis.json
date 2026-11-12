@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "source": "unosat_analysis",
+  "checked_at": "2026-11-12T06:39:26.372454Z",
+  "state": "ok",
+  "products": [
+    {
+      "service_id": "FL20260111PSE/UNOSAT_Analysis:MapServer",
+      "event_folder": "FL20260111PSE",
+      "region_code": "PSE",
+      "event_date_from_folder": "20260111",
+      "map_service_url": "https://unosatgis.cern.ch/rapidmapping/rest/services/FL20260111PSE/UNOSAT_Analysis/MapServer",
+      "type": "MapServer",
+      "analysis_label": "UNOSAT Analysis",
+      "method": "Official UNOSAT ArcGIS geospatial analysis service metadata",
+      "date_caveat": "Folder code encodes event date; it is NOT a satellite acquisition date, analysis date or publication date",
+      "verification": "Publication/service existence only; inspect GIS layer methods and data before using damage figures",
+      "collected_at": "2026-11-12T06:39:26.372454Z"
+    },
+    {
+      "service_id": "FL20260111PSE/UNOSAT_Analysis:FeatureServer",
+      "event_folder": "FL20260111PSE",
+      "region_code": "PSE",
+      "event_date_from_folder": "20260111",
+      "map_service_url": "https://unosatgis.cern.ch/rapidmapping/rest/services/FL20260111PSE/UNOSAT_Analysis/FeatureServer",
+      "type": "FeatureServer",
+      "analysis_label": "UNOSAT Analysis",
+      "method": "Official UNOSAT ArcGIS geospatial analysis service metadata",
+      "date_caveat": "Folder code encodes event date; it is NOT a satellite acquisition date, analysis date or publication date",
+      "verification": "Publication/service existence only; inspect GIS layer methods and data before using damage figures",
+      "collected_at": "2026-11-12T06:39:26.372454Z"
+    },
+    {
+      "service_id": "FR20250707SYR/UNOSAT_Analysis:MapServer",
+      "event_folder": "FR20250707SYR",
+      "region_code": "SYR",
+      "event_date_from_folder": "20250707",
+      "map_service_url": "https://unosatgis.cern.ch/rapidmapping/rest/services/FR20250707SYR/UNOSAT_Analysis/MapServer",
+      "type": "MapServer",
+      "analysis_label": "UNOSAT Analysis",
+      "method": "Official UNOSAT ArcGIS geospatial analysis service metadata",
+      "date_caveat": "Folder code encodes event date; it is NOT a satellite acquisition date, analysis date or publication date",
+      "verification": "Publication/service existence only; inspect GIS layer methods and data before using damage figures",
+      "collected_at": "2026-11-12T06:39:26.372454Z"
+    },
+    {
+      "service_id": "FR20250707SYR/Copernicus_EMS_analysis:MapServer",
+      "event_folder": "FR20250707SYR",
+      "region_code": "SYR",
+      "event_date_from_folder": "20250707",
+      "map_service_url": "https://unosatgis.cern.ch/rapidmapping/rest/services/FR20250707SYR/Copernicus_EMS_analysis/MapServer",
+      "type": "MapServer",
+      "analysis_label": "Copernicus EMS analysis",
+      "method": "Official UNOSAT ArcGIS geospatial analysis service metadata",
+      "date_caveat": "Folder code encodes event date; it is NOT a satellite acquisition date, analysis date or publication date",
+      "verification": "Publication/service existence only; inspect GIS layer methods and data before using damage figures",
+      "collected_at": "2026-11-12T06:39:26.372454Z"
+    },
+    {
+      "service_id": "FL20241126PSE/UNOSAT_analysis:MapServer",
+      "event_folder": "FL20241126PSE",
+      "region_code": "PSE",
+      "event_date_from_folder": "20241126",
+      "map_service_url": "https://unosatgis.cern.ch/rapidmapping/rest/services/FL20241126PSE/UNOSAT_analysis/MapServer",
+      "type": "MapServer",
+      "analysis_label": "UNOSAT analysis",
+      "method": "Official UNOSAT ArcGIS geospatial analysis service metadata",
+      "date_caveat": "Folder code encodes event date; it is NOT a satellite acquisition date, analysis date or publication date",
+      "verification": "Publication/service existence only; inspect GIS layer methods and data before using damage figures",
+      "collected_at": "2026-11-12T06:39:26.372454Z"
+    },
+    {
+      "service_id": "FL20241126PSE/UNOSAT_Building_damage_assessment:MapServer",
+      "event_folder": "FL20241126PSE",
+      "region_code": "PSE",
+      "event_date_from_folder": "20241126",
+      "map_service_url": "https://unosatgis.cern.ch/rapidmapping/rest/services/FL20241126PSE/UNOSAT_Building_damage_assessment/MapServer",
+      "type": "MapServer",
+      "analysis_label": "UNOSAT Building damage assessment",
+      "method": "Official UNOSAT ArcGIS geospatial analysis service metadata",
+      "date_caveat": "Folder code encodes event date; it is NOT a satellite acquisition date, analysis date or publication date",
+      "verification": "Publication/service existence only; inspect GIS layer methods and data before using damage figures",
+      "collected_at": "2026-11-12T06:39:26.372454Z"
+    },
+    {
+      "service_id": "FL20240826SDN/Analysis:MapServer",
+      "event_folder": "FL20240826SDN",
+      "region_code": "SDN",
+      "event_date_from_folder": "20240826",
+      "map_service_url": "https://unosatgis.cern.ch/rapidmapping/rest/services/FL20240826SDN/Analysis/MapServer",
+      "type": "MapServer",
+      "analysis_label": "Analysis",
+      "method": "Official UNOSAT ArcGIS geospatial analysis service metadata",
+      "date_caveat": "Folder code encodes event date; it is NOT a satellite acquisition date, analysis date or publication date",
+      "verification": "Publication/service existence only; inspect GIS layer methods and data before using damage figures",
+      "collected_at": "2026-11-12T06:39:26.372454Z"
+    }
+  ],
+  "quality": {
+    "folders_scanned": 5,
+    "folders_successful": 5,
+    "folder_total_region_candidates": 5,
+    "coverage": "Sample up to 12 most recent regional folders; catalog is not exhaustive",
+    "meaning": "Official geospatial analysis layer availability; NOT new detected damage or activity"
+  }
+}
