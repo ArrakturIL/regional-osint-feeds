@@ -21,7 +21,7 @@ export async function fingerprint(t){
   return Array.from(hash,v=>v.toString(16).padStart(2,'0')).join('');
 }
 async function localized(db,kind,id,original,lang,prefilled=null){
-  if(lang==='ru')return {...original,content_language:/[\u0400-\u04ff]/u.test(original.title+original.body)?'ru':'en',translation_status:'source'};
+  if(lang==='ru')return {...original,content_language:/[\u0400-\u04ff]/u.test(original.title+original.body)?'ru':/[\u0590-\u05ff]/u.test(original.title+original.body)?'he':'en',translation_status:'source'};
   const h=await fingerprint(original);
   const t=prefilled||await db.prepare("SELECT source_hash,title,body,commentary,quality_score FROM regional_i18n WHERE kind=? AND item_id=? AND language='he'").bind(kind,id).first();
   if(t&&t.source_hash===h&&t.quality_score>=85&&/[\u0590-\u05ff]/u.test(t.title||'')
@@ -33,6 +33,17 @@ async function localized(db,kind,id,original,lang,prefilled=null){
       translation_status:'needs_review'};
   }
   return {...original,content_language:/[\u0400-\u04ff]/u.test(original.title+original.body)?'ru':'en',translation_status:'pending'};
+}
+
+/** One trusted localization contract for event and legacy news responses. */
+export async function localizeNewsRow(db,row,lang){
+  if(lang==='he'&&/[\u0590-\u05ff]/u.test(String(row.headline||''))&&
+     (!row.summary||/[\u0590-\u05ff]/u.test(String(row.summary||'')))){
+    return{title:row.headline,body:row.summary||'',comment:'',content_language:'he',translation_status:'available'};
+  }
+  const cached=row.he_hash?{source_hash:row.he_hash,title:row.he_title,body:row.he_body,
+    commentary:row.he_comment,quality_score:row.he_quality}:null;
+  return localized(db,'news',row.id,sourceText('news',row),lang,cached);
 }
 
 /** Locale-invariant provenance. Never regenerate dates or source links by AI. */
