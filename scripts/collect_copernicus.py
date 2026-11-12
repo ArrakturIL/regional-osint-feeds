@@ -1,0 +1,129 @@
+#!/usr/bin/env python3
+"""Public Copernicus EMS *analysis product metadata* mirror for Cloudflare D1.
+No imagery processing, credentials, private endpoints, or military incident inference.
+"""
+from __future__ import annotations
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+import json
+import re
+import urllib.request
+import urllib.parse
+import urllib.error
+
+ROOT=Path(__file__).resolve().parents[1]
+OUT=ROOT/"data/copernicus-analyses.json"
+HEALTH=ROOT/"data/copernicus-analyses-status.json"
+SOURCES={
+ "unified":"https://mapping.emergency.copernicus.eu/activations/api/activations/",
+ "rapid":"https://rapidmapping.emergency.copernicus.eu/backend/dashboard-api/public-activations-info/",
+ "recovery":"https://riskandrecovery.emergency.copernicus.eu/api/public-activations/",
+}
+COUNTRIES=("israel","iran","iraq","syria","lebanon","jordan","oman","yemen",
+ "saudi arabia","kuwait","qatar","bahrain","united arab emirates",
+ "palestine","palestinian","egypt","turkey","türkiye","cyprus","sudan")
+MAX_RESULT=30
+MAX_FETCH_BYTES=1_000_000
+
+def iso_now():
+ return datetime.now(timezone.utc).isoformat().replace("+00:00","Z")
+
+def get_json(url):
+ u=urllib.parse.urlsplit(url)
+ if u.scheme!="https" or u.hostname not in {
+  "mapping.emergency.copernicus.eu",
+  "rapidmapping.emergency.copernicus.eu",
+  "riskandrecovery.emergency.copernicus.eu"
+ }: raise ValueError("CEMS URL outside allowlist")
+ req=urllib.request.Request(url,headers={"User-Agent":"RegionalWatch/1.0 public noncommercial analysis metadata","Accept":"application/json"})
+ with urllib.request.urlopen(req,timeout=22) as res:
+  final=urllib.parse.urlsplit(res.url)
+  if res.status!=200 or final.scheme!="https" or final.hostname!=u.hostname:
+   raise ValueError("CEMS unexpected redirect or HTTP status")
+  raw=res.read(MAX_FETCH_BYTES+1)
+  if len(raw)>MAX_FETCH_BYTES:raise ValueError("CEMS response too large")
+ return json.loads(raw)
+
+def country_names(raw):
+ out=[]
+ for x in raw if isinstance(raw,list) else []:
+  name=x if isinstance(x,str) else x.get("short_name",x.get("name","")) if isinstance(x,dict) else ""
+  if isinstance(name,str) and name.strip():out.append(name.strip()[:80])
+ return out
+
+def relevant(names):
+ return any(any(term in name.lower() for term in COUNTRIES) for name in names)
+
+def safe_url(url):
+ if not isinstance(url,str):return None
+ p=urllib.parse.urlsplit(url)
+ return url[:500] if p.scheme=="https" and p.hostname and (p.hostname.endswith(".copernicus.eu") or p.hostname=="mapping.emergency.copernicus.eu") else None
+
+def as_product(row,origin,now,cutoff):
+ if not isinstance(row,dict):return None
+ code=row.get("code")
+ if not isinstance(code,str) or not re.fullmatch(r"EMS[RN]\d{3,5}",code):return None
+ countries=country_names(row.get("countries"))
+ if not relevant(countries):return None
+ moment=row.get("activationTime") or row.get("eventTime") or row.get("lastUpdate") or ""
+ try:
+  stamp=datetime.fromisoformat(str(moment).replace("Z","+00:00"))
+  if stamp.tzinfo is None:stamp=stamp.replace(tzinfo=timezone.utc)
+  if stamp<cutoff:return None
+ except (TypeError,ValueError):return None
+ title=row.get("name")
+ if not isinstance(title,str) or not title.strip():return None
+ category=row.get("category") or ""
+ if isinstance(category,dict):category=category.get("name","")
+ phase=row.get("drmPhase") or ("response" if code.startswith("EMSR") else "recovery")
+ return {"code":code,"title":title.strip()[:250],"countries":countries[:12],
+         "category":str(category)[:90],"phase":str(phase)[:50],
+         "activation_at":str(moment)[:40],"last_update":str(row.get("lastUpdate") or "")[:40],
+         "product_count":row.get("n_products") if isinstance(row.get("n_products"),int) else None,
+         "aoi_count":row.get("n_aois") if isinstance(row.get("n_aois"),int) else None,
+         "closed":bool(row.get("closed",False)),
+         "source_url":"https://mapping.emergency.copernicus.eu/activations/api/activations/"+code+"/",
+         "report_url":safe_url(row.get("reportLink")),
+         "source_api":origin,"evidence_type":"official_activation_metadata_not_damage_confirmation",
+         "collected_at":now}
+
+def collect(now=None,getter=get_json):
+ now=now or iso_now()
+ cutoff=datetime.fromisoformat(now.replace("Z","+00:00"))-timedelta(days=365)
+ records={};errors=[];successful=0;pages={}
+ for label,base in SOURCES.items():
+  try:
+   payload=getter(base+"?limit=100")
+   if not isinstance(payload,dict) or not isinstance(payload.get("results"),list):
+    raise ValueError("CEMS unexpected listing schema")
+   successful+=1
+   rows=payload["results"]
+   pages[label]={"returned":len(rows),"total":payload.get("count"),"truncated":bool(payload.get("next"))}
+   for row in rows:
+    item=as_product(row,label,now,cutoff)
+    if not item:continue
+    old=records.get(item["code"])
+    if old is None or (item["product_count"] or 0)>(old["product_count"] or 0):
+     records[item["code"]]=item
+  except (ValueError,KeyError,TimeoutError,urllib.error.URLError,OSError) as e:
+   errors.append({"provider":label,"type":type(e).__name__})
+ products=sorted(records.values(),key=lambda x:x["activation_at"],reverse=True)[:MAX_RESULT]
+ state="error" if successful==0 else "partial" if errors or any(v["truncated"] for v in pages.values()) else "ok"
+ return {"schema_version":1,"source":"copernicus_ems","checked_at":now,"state":state,
+         "products":products,"pages":pages,"quality":{
+           "scope":"Only first 100 activations from each public listing; not a full historical inventory",
+           "ready_made_analysis":"Product count identifies published products; metadata alone cannot establish damage",
+           "sources_successful":successful,"sources_failed":len(errors)}}, {
+           "source":"copernicus_ems","checked_at":now,"state":state,
+           "error_types":errors,"total_matching":len(records),"published":len(products)}
+
+def main():
+ data,status=collect()
+ OUT.parent.mkdir(parents=True,exist_ok=True)
+ OUT.write_text(json.dumps(data,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+ HEALTH.write_text(json.dumps(status,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+ print(json.dumps(status,ensure_ascii=False))
+ return 1 if status["state"]=="error" else 0
+
+if __name__=="__main__":
+ raise SystemExit(main())
