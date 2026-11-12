@@ -34,7 +34,7 @@ class Tests(unittest.TestCase):
  def test_youtube_500_retry_then_success(self):
   url='https://www.youtube.com/feeds/videos.xml?channel_id=UCygnHvXjsEa_gLMH-WmzeXQ'
   class FakeResponse:
-   url=url
+   url='https://www.youtube.com/feeds/videos.xml?channel_id=UCygnHvXjsEa_gLMH-WmzeXQ'
    status=200
    headers={'Content-Type':'application/atom+xml'}
    def __enter__(self):return self
