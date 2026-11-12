@@ -19,6 +19,7 @@ import re
 import sys
 import time
 import xml.etree.ElementTree as ET
+from news_event_filter import report as event_filter_report
 
 ROOT=Path(__file__).resolve().parents[1]
 REGISTRY=ROOT/"config/news-source-registry.json"
@@ -144,7 +145,7 @@ def audit_one(feed,now,fetcher=download):
             articles.append({"canonical":link,"publisher":feed["publisher"],
                              "source":feed["id"],"language":feed["language"],
                              "published":moment.isoformat(),"headline":row["title"],
-                             "rank":rank,"reason_codes":reasons,"kind":kind})
+                             "summary":row["summary"],"rank":rank,"reason_codes":reasons,"kind":kind})
         report["state"]="ok" if data else "empty"
     except Exception as exc:
         report["error"]=type(exc).__name__
@@ -168,6 +169,7 @@ def build_report(registry,now=None,fetcher=download):
         key=re.sub(r"[^\w]+"," ",a["headline"].casefold()).strip()
         key=sha256((key+"|"+a["published"][:10]).encode("utf-8")).hexdigest()[:16]
         title_group.setdefault(key,set()).add(a["publisher"])
+    event_filter=event_filter_report(list(unique.values()))
     owners={}
     for a in unique.values():owners[a["publisher"]]=owners.get(a["publisher"],0)+1
     return {
@@ -176,8 +178,9 @@ def build_report(registry,now=None,fetcher=download):
       "partial":any(r["state"]=="error" for r in results),
       "raw_candidates":len(raw),"canonical_articles":len(unique),
       "headline_groups":len(title_group),
+      "event_filter":event_filter,
       "owner_counts":owners,
-      "quality_notice":"Raw source count and matching headlines do not confirm an event; no cross-language event merging.",
+      "quality_notice":"Raw source count and matching headlines do not confirm an event; multilingual grouping is shadow-only and cannot verify claims.",
       "source_status":sorted(results,key=lambda r:r["source_id"])
     }
 
