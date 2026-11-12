@@ -25,7 +25,8 @@ COUNTRIES=("israel","iran","iraq","syria","lebanon","jordan","oman","yemen",
 MAX_RESULT=30
 MAX_FETCH_BYTES=1_000_000
 # Bounded pages; unified service covers both Rapid and Risk/Recovery sources.
-MAX_PAGES={'unified':7,'rapid':2,'recovery':2}
+MAX_PAGES={'unified':7,'rapid':2,'recovery':5}
+PAGE_SIZES={'unified':100,'rapid':100,'recovery':10}
 
 def iso_now():
  return datetime.now(timezone.utc).isoformat().replace("+00:00","Z")
@@ -98,7 +99,7 @@ def collect(now=None,getter=get_json):
   try:
    last=None;scanned=0;fully_scanned=False;recent_scanned=0
    for page in range(MAX_PAGES[label]):
-    payload=getter(base+"?limit=100&offset="+str(page*100))
+    payload=getter(base+"?limit="+str(PAGE_SIZES[label])+"&offset="+str(page*PAGE_SIZES[label]))
     if not isinstance(payload,dict) or not isinstance(payload.get("results"),list):
      raise ValueError("CEMS unexpected listing schema")
     rows=payload["results"]
@@ -130,7 +131,7 @@ def collect(now=None,getter=get_json):
  state="error" if successful==0 else "partial" if errors or any(v["truncated"] for v in pages.values()) else "ok"
  return {"schema_version":1,"source":"copernicus_ems","checked_at":now,"state":state,
          "products":products,"pages":pages,"quality":{
-           "scope":"Bounded first pages, up to seven unified plus two Rapid and Recovery pages, past 900 days; partial if not exhaustive",
+           "scope":"Bounded first pages: 7 unified, 2 Rapid, 5 smaller Recovery pages (past 900 days); partial if not exhaustive",
            "ready_made_analysis":"Product count identifies published products; metadata alone cannot establish damage",
            "sources_successful":successful,"sources_failed":len(errors)}}, {
            "source":"copernicus_ems","checked_at":now,"state":state,
