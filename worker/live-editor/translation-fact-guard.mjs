@@ -57,6 +57,10 @@ export function factualTranslationIssue(original,candidate) {
       if(rule.source.test(src)&&!rule.target.test(translated))
         return field+':'+rule.code;
     }
+    // Ballistic and tactical missiles are not interchangeable. Keep the
+    // weapon classification invariant in Hebrew as well as the number.
+    if(/\bballistic\b|баллистическ/iu.test(src)&&!/בליסט/iu.test(translated))
+      return field+':ballistic_missile_type_changed';
     // Known erroneous expansion of "RAF" to the Hebrew abbreviation for PM.
     if(/RAF\s+Fairford/iu.test(src)&&/רה[״"'׳]{1,3}ם/iu.test(translated))
       return field+':raf_expanded_to_prime_minister';

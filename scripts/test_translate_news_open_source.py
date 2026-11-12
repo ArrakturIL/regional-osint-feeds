@@ -8,6 +8,16 @@ class FreeTranslationTests(unittest.TestCase):
         self.assertTrue(valid("1,700 ballistic missiles","1 700 баллистических ракет","ru") is False)
         self.assertFalse(valid("10 November 2026","10 ноября 2025 года","ru"))
 
+    def test_domain_terms_and_malformed_output(self):
+        self.assertFalse(valid("Iran retains 50 ballistic missiles","לאיראן 50 טילים טקטיים","he"))
+        self.assertTrue(valid("Iran retains 50 ballistic missiles","לאיראן 50 טילים בליסטיים","he"))
+        self.assertFalse(valid("Iran retains 50 ballistic missiles","Иран имеет 50 тактических ракет","ru"))
+        self.assertTrue(valid("Iran retains 50 ballistic missiles","Иран имеет 50 баллистических ракет","ru"))
+        self.assertFalse(valid("UK Green councilor shared anti-Jewish posts","חבר מועצה חלק דו״ח","he"))
+        self.assertTrue(valid("UK Green councilor shared anti-Jewish posts","חבר מועצה שיתף פוסטים נגד יהודים","he"))
+        self.assertFalse(valid("Iran has 50 missiles","Иран имеет 50 ракет. . . . . . .","ru"))
+        self.assertFalse(valid("Iran says 50 missiles","Иран заявляет &quot; 50 ракет","ru"))
+
     def test_hebrew_and_actors(self):
         self.assertTrue(valid("Katz says Iran","כץ אומר על איראן","he"))
         self.assertFalse(valid("Katz says Iran","קטז אומר על איראן","he"))
