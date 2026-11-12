@@ -1,0 +1,47 @@
+name: Collect UNOSAT official geospatial analyses
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "19 */12 * * *"
+  push:
+    branches: [main]
+    paths:
+      - scripts/collect_unosat.py
+      - scripts/test_unosat.py
+      - .github/workflows/unosat-analyses.yml
+  pull_request:
+    paths:
+      - scripts/collect_unosat.py
+      - scripts/test_unosat.py
+      - .github/workflows/unosat-analyses.yml
+permissions:
+  contents: write
+concurrency:
+  group: unosat-official-mirror
+  cancel-in-progress: false
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Offline data contract tests
+        run: python -m unittest discover -s scripts -p "test_unosat.py" -v
+      - name: Read public UNOSAT ArcGIS service directory
+        run: python scripts/collect_unosat.py
+      - name: Commit public-only metadata to GitHub (main)
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/unosat-analysis.json data/unosat-analysis-status.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Refresh UNOSAT public satellite-analysis layer mirror"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
