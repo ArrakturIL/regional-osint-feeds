@@ -46,6 +46,21 @@ jobs:
           git add data/copernicus-analyses.json data/copernicus-analyses-status.json
           if ! git diff --cached --quiet; then
             git commit -m "Refresh Copernicus public analysis metadata mirror"
-            git pull --rebase origin main
-            git push origin HEAD:main
+            # Independent scheduled collectors may update main while we run.
+            # Rebase and retry without force-pushing or replacing their metadata.
+            for attempt in 1 2 3 4 5; do
+              git fetch origin main
+              if ! git rebase origin/main; then
+                git rebase --abort || true
+                echo "Mirror rebase conflict; refusing to overwrite other collector data."
+                exit 1
+              fi
+              if git push origin HEAD:main; then
+                echo "Mirror published successfully on attempt $attempt"
+                exit 0
+              fi
+              sleep $((attempt * 2))
+            done
+            echo "Unable to publish mirror after five safe retries"
+            exit 1
           fi
