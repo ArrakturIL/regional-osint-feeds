@@ -148,7 +148,10 @@ def analyze(row):
     if kind in ("sponsored","liveblog"):rank=0
     rank=max(0,min(10,rank))
     # "High" means editorial importance, not confirmed severity.
-    policy="hold_irrelevant" if not region and not details else "hold_nonnews" if kind!="news" else "review" if rank<4 else "candidate"
+    policy=("hold_irrelevant" if not region and not details else
+            "hold_nonnews" if kind!="news" else
+            "hold_low_signal" if rank<3 else
+            "review" if rank<4 else "candidate")
     reasons.append("public_review_required")
     return {**row,"headline":title,"summary":summary,"canonical":url,"timestamp":ts,
             "publisher":pub,"origin":agency_origin(row),"region":region,"detail":details,
