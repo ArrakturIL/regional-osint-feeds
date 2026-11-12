@@ -1,0 +1,61 @@
+name: Regional Watch read-only news source shadow audit
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'config/news-source-registry.json'
+      - 'scripts/collect_news_shadow.py'
+      - 'scripts/test_news_shadow.py'
+      - '.github/workflows/news-shadow-audit.yml'
+  pull_request:
+    paths:
+      - 'config/news-source-registry.json'
+      - 'scripts/collect_news_shadow.py'
+      - 'scripts/test_news_shadow.py'
+      - '.github/workflows/news-shadow-audit.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: news-shadow-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate multilingual RSS and Atom parser offline
+        run: python -m unittest discover -s scripts -p 'test_news_shadow.py' -v
+      - name: Probe candidate RSS/Atom once without publishing any headlines
+        run: python scripts/collect_news_shadow.py
+      - name: Summarize probe states and copyright-safe aggregate counts
+        run: |
+          python - <<'PY'
+          import json,os
+          d=json.load(open('data/news-shadow-audit-status.json',encoding='utf-8'))
+          lines=[
+            '### REGIONAL WATCH — shadow-only source audit',
+            f"- Feeds probed: {d['source_count']}",
+            f"- Healthy: {d['ok_sources']}",
+            f"- Fresh relevant articles by canonical URL: {d['canonical_articles']}",
+            '- This run never changes the public site, D1, or Workers.',
+            '| Provider | Status | Fresh relevant | Error |',
+            '|---|---|---:|---|',
+          ]
+          for s in d['source_status']:
+            lines.append(f"| {s['source_id']} | {s['state']} | {s['eligible']} | {s['error'] or '—'} |")
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as out:
+            out.write('\n'.join(lines)+'\n')
+          print('\n'.join(lines))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: regional-watch-shadow-source-health
+          path: data/news-shadow-audit-status.json
+          retention-days: 7
