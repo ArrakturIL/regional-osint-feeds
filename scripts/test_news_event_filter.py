@@ -141,7 +141,7 @@ class FilterTests(unittest.TestCase):
         self.assertEqual(len([e for e in ev if e["topic"]=="strike"]),3)
         kinds={a["selection_policy"] for a in held}
         self.assertIn("hold_nonnews",kinds)
-        self.assertIn("hold_irrelevant",kinds)
+        self.assertIn("hold_low_signal",kinds)
         self.assertFalse(any(a["test_label"]=="held" for e in ev for a in e["articles"]))
 
     def test_url_canonicalization_preserves_meaningful_id(self):
@@ -160,7 +160,7 @@ class FilterTests(unittest.TestCase):
     def test_no_war_keyword_in_warsaw(self):
         a=analyze(article("x","w","bbc","Warsaw opens Israel history exhibit"))
         self.assertEqual(a["topic"],"other")
-        self.assertEqual(a["selection_policy"],"hold_irrelevant")
+        self.assertEqual(a["selection_policy"],"hold_low_signal")
         self.assertEqual(a["score"],2)
 
     def test_conservative_precision_recall(self):
