@@ -3,6 +3,7 @@ import analystService from './analysts-editor.mjs';
 import localization from './localization.mjs';
 import {FEEDS as EVENT_FEEDS,analyze,reconcile} from './news-events.mjs';
 import {readNewsEvents} from './news-api.mjs';
+import {translationQueue,importTranslationMirror} from './news-translation-mirror.mjs';
 import {canonicalNewsUrl,normalizedHeadline,articlePriority} from './news-normalization.mjs';
 
 const FEEDS=EVENT_FEEDS.map(x=>[x[0],x[1],x[4],x[3]]);
@@ -219,6 +220,7 @@ export default {
     // Keep existing news editor independent from the analysts pipeline.
     ctx.waitUntil(scan(env));
     ctx.waitUntil(localization.scheduled(env,event.scheduledTime));
+    if(new Date(event.scheduledTime).getUTCMinutes()%15===0)ctx.waitUntil(importTranslationMirror(env));
     if(new Date(event.scheduledTime).getUTCMinutes()%15===5){ctx.waitUntil(enrichNewMonitorStories(env));}
     // The analyst mirror refreshes hourly at :17 UTC. Run its editor at :30 UTC.
     // An hourly D1 run ID provides additional duplicate-run protection.
@@ -228,6 +230,7 @@ export default {
   },
   async fetch(request, env) {
     const path = new URL(request.url).pathname;
+    if(path==='/api/translation-queue')return translationQueue(env,request);
     if(path==='/api/news'||path==='/api/events'){
       try{return await readNewsEvents(request,env);}
       catch(error){
