@@ -1,23 +1,23 @@
 {
-  "checked_at": "2026-11-12T03:49:42Z",
-  "state": "partial",
+  "checked_at": "2026-11-12T11:44:50Z",
+  "state": "ok",
   "sources": [
     {
       "source_id": "auslender-telegram",
       "state": "ok",
-      "count": 19,
+      "count": 20,
       "detail": null
     },
     {
       "source_id": "auslender-youtube",
-      "state": "error",
-      "count": 0,
-      "detail": "HTTPError: HTTP Error 500: Internal Server Error"
+      "state": "ok",
+      "count": 7,
+      "detail": null
     },
     {
       "source_id": "yigal-telegram",
       "state": "ok",
-      "count": 17,
+      "count": 20,
       "detail": null
     },
     {
@@ -29,13 +29,13 @@
     {
       "source_id": "abuali-telegram",
       "state": "ok",
-      "count": 16,
+      "count": 18,
       "detail": null
     },
     {
       "source_id": "stein-telegram",
       "state": "ok",
-      "count": 20,
+      "count": 18,
       "detail": null
     },
     {
