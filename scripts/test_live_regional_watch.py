@@ -70,7 +70,7 @@ def run():
         if not a.get("event_id") or not isinstance(a.get("sources"),list) or not a["sources"]:
             errors.append("missing event ID or provenance")
     # P1 editorial safety: never publish a joke on fatality/patient reporting.
-    sensitive=re.compile(r"(?:\\b(?:kill(?:s|ed|ing(?:s)?)?|dead|death|hospital|victim|patient|injured|wounded|hostage)\\b|погиб|убит|убива|жертв|госпитал|больниц|врач|пациент|נהרג|נרצח|הרוג|פצוע|בית\\s+חולים)",re.I)
+    sensitive=re.compile(r"(?:\b(?:kill(?:s|ed|ing(?:s)?)?|dead|death|hospital|victim|patient|injured|wounded|hostage)\b|погиб|убит|убива|жертв|госпитал|больниц|врач|пациент|נהרג|נרצח|הרוג|פצוע|בית\s+חולים)",re.I)
     for key in ("worker_ru_full","worker_he_full"):
         payload=(results[key].get("data") or {})
         for item in payload.get("articles",[]):
