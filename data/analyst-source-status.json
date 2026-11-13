@@ -1,6 +1,6 @@
 {
-  "checked_at": "2026-11-13T07:17:58Z",
-  "state": "partial",
+  "checked_at": "2026-11-13T15:31:09Z",
+  "state": "ok",
   "sources": [
     {
       "source_id": "auslender-telegram",
@@ -10,14 +10,14 @@
     },
     {
       "source_id": "auslender-youtube",
-      "state": "error",
-      "count": 0,
-      "detail": "HTTPError: HTTP Error 404: Not Found"
+      "state": "ok",
+      "count": 7,
+      "detail": null
     },
     {
       "source_id": "yigal-telegram",
       "state": "ok",
-      "count": 19,
+      "count": 12,
       "detail": null
     },
     {
@@ -29,7 +29,7 @@
     {
       "source_id": "abuali-telegram",
       "state": "ok",
-      "count": 14,
+      "count": 16,
       "detail": null
     },
     {
