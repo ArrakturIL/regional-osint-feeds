@@ -1,13 +1,13 @@
 {
   "source": "satellite_context",
-  "collected_at": "2026-11-13T10:58:07.648316Z",
+  "collected_at": "2026-11-14T10:25:10.197757Z",
   "providers": [
     "NASA GIBS",
     "NASA EONET"
   ],
   "layer": "VIIRS_NOAA20_CorrectedReflectance_TrueColor",
-  "latest_requested_date": "2026-11-11",
-  "earlier_requested_date": "2026-11-08",
+  "latest_requested_date": "2026-11-12",
+  "earlier_requested_date": "2026-11-09",
   "visual_overviews": [
     {
       "region": "persian_gulf",
@@ -27,8 +27,8 @@
             57.5,
             31.0
           ],
-          "image_date": "2026-11-08",
-          "image_url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/2026-11-08/GoogleMapsCompatible_Level9/7/54/82.jpeg",
+          "image_date": "2026-11-09",
+          "image_url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/2026-11-09/GoogleMapsCompatible_Level9/7/54/82.jpeg",
           "tile_bbox_wsen": [
             50.625,
             24.52713,
@@ -37,9 +37,9 @@
           ],
           "tile_zoom": 7,
           "coverage": "center_tile_only",
-          "sha256": "d7f133eed7c9069406e14fc89c3945350499abb93566a96272164b2e916101d4",
-          "bytes": 6070,
-          "pixel_variance": 2565.02
+          "sha256": "13784171d8a2b54f4c4f6bc5120860f026713d72036702bd0dfd74badb29326e",
+          "bytes": 11593,
+          "pixel_variance": 3260.97
         },
         {
           "region": "persian_gulf",
@@ -49,8 +49,8 @@
             57.5,
             31.0
           ],
-          "image_date": "2026-11-11",
-          "image_url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/2026-11-11/GoogleMapsCompatible_Level9/7/54/82.jpeg",
+          "image_date": "2026-11-12",
+          "image_url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/2026-11-12/GoogleMapsCompatible_Level9/7/54/82.jpeg",
           "tile_bbox_wsen": [
             50.625,
             24.52713,
@@ -59,14 +59,14 @@
           ],
           "tile_zoom": 7,
           "coverage": "center_tile_only",
-          "sha256": "44cd27b13dc49cae9f0353810476aee8e94820487efaa117df6de932d637aba7",
-          "bytes": 9403,
-          "pixel_variance": 1922.97
+          "sha256": "6f8b2c0ece3659be9703498eec8cc781cac941e9cfda8cecf32194718160e05f",
+          "bytes": 11128,
+          "pixel_variance": 3906.64
         }
       ],
       "imagery_coverage": "both_dates",
       "interpretation": "One center WMTS tile only, not full region. Optical imagery context; pixel differences also reflect clouds, dust, atmosphere, and processing changes.",
-      "visual_change_score": 124.06
+      "visual_change_score": 103.42
     },
     {
       "region": "strait_of_hormuz",
@@ -86,8 +86,8 @@
             59.5,
             28.2
           ],
-          "image_date": "2026-11-08",
-          "image_url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/2026-11-08/GoogleMapsCompatible_Level9/7/54/84.jpeg",
+          "image_date": "2026-11-09",
+          "image_url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/2026-11-09/GoogleMapsCompatible_Level9/7/54/84.jpeg",
           "tile_bbox_wsen": [
             56.25,
             24.52713,
@@ -96,9 +96,9 @@
           ],
           "tile_zoom": 7,
           "coverage": "center_tile_only",
-          "sha256": "8827efefa02553eb3d0a7f6d0aa86ae1280a743b282bc8fc7d0653c112352d8e",
-          "bytes": 7230,
-          "pixel_variance": 1243.04
+          "sha256": "20430d0bde67f6378f93a940127c1cc93bc1956e80fd10c31c5a03b96b09326c",
+          "bytes": 10586,
+          "pixel_variance": 2199.8
         },
         {
           "region": "strait_of_hormuz",
@@ -108,8 +108,8 @@
             59.5,
             28.2
           ],
-          "image_date": "2026-11-11",
-          "image_url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/2026-11-11/GoogleMapsCompatible_Level9/7/54/84.jpeg",
+          "image_date": "2026-11-12",
+          "image_url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/2026-11-12/GoogleMapsCompatible_Level9/7/54/84.jpeg",
           "tile_bbox_wsen": [
             56.25,
             24.52713,
@@ -118,14 +118,14 @@
           ],
           "tile_zoom": 7,
           "coverage": "center_tile_only",
-          "sha256": "9b2113bca0f988f6376da23f929f0425d29d640d72e668c1fa56d1ad6c0e753b",
-          "bytes": 13851,
-          "pixel_variance": 3041.53
+          "sha256": "75b77b89d16de19450f2dd048079e1fd3c7c3c60029200ef3235761693286d46",
+          "bytes": 15456,
+          "pixel_variance": 2440.74
         }
       ],
       "imagery_coverage": "both_dates",
       "interpretation": "One center WMTS tile only, not full region. Optical imagery context; pixel differences also reflect clouds, dust, atmosphere, and processing changes.",
-      "visual_change_score": 42.83
+      "visual_change_score": 39.01
     },
     {
       "region": "red_sea_south",
@@ -145,8 +145,8 @@
             47.0,
             19.0
           ],
-          "image_date": "2026-11-08",
-          "image_url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/2026-11-08/GoogleMapsCompatible_Level9/7/58/79.jpeg",
+          "image_date": "2026-11-09",
+          "image_url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/2026-11-09/GoogleMapsCompatible_Level9/7/58/79.jpeg",
           "tile_bbox_wsen": [
             42.1875,
             13.9234,
@@ -155,9 +155,9 @@
           ],
           "tile_zoom": 7,
           "coverage": "center_tile_only",
-          "sha256": "495a1ab036d0d0faa6b626b0fad504f0a168fd2968edb951ac92b2b2997443df",
-          "bytes": 13997,
-          "pixel_variance": 2031.68
+          "sha256": "bc72d1a5582109229bb82de12b04828b5dabc0f789f1856a35e58d2a8b1aab4d",
+          "bytes": 17474,
+          "pixel_variance": 3444.81
         },
         {
           "region": "red_sea_south",
@@ -167,8 +167,8 @@
             47.0,
             19.0
           ],
-          "image_date": "2026-11-11",
-          "image_url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/2026-11-11/GoogleMapsCompatible_Level9/7/58/79.jpeg",
+          "image_date": "2026-11-12",
+          "image_url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/2026-11-12/GoogleMapsCompatible_Level9/7/58/79.jpeg",
           "tile_bbox_wsen": [
             42.1875,
             13.9234,
@@ -177,14 +177,14 @@
           ],
           "tile_zoom": 7,
           "coverage": "center_tile_only",
-          "sha256": "2906d79e9952ad32609c017503d6f47776f78880c24108bc965da98af6a15209",
-          "bytes": 12382,
-          "pixel_variance": 2769.51
+          "sha256": "2816b6f5fd43100835d25680b73ead12702dc14d0b7a6f41fde1a4f16c155f91",
+          "bytes": 15883,
+          "pixel_variance": 1977.14
         }
       ],
       "imagery_coverage": "both_dates",
       "interpretation": "One center WMTS tile only, not full region. Optical imagery context; pixel differences also reflect clouds, dust, atmosphere, and processing changes.",
-      "visual_change_score": 69.84
+      "visual_change_score": 61.02
     }
   ],
   "natural_events": [
