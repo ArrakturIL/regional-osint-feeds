@@ -14,6 +14,6 @@ export function assembleSources(statusRows=[]){
   id:row.source,label:SOURCE_LABELS[row.source]||row.source,
   state:validStatus.has(row.state)?row.state:'unknown',
   checkedAt:ISO(row.attempted_at),attemptedAt:ISO(row.attempted_at),succeededAt:ISO(row.succeeded_at),
-  description:text(row.detail)||null
+  description:text(row.detail)
  })).sort((a,b)=>a.id.localeCompare(b.id,'en'));
 }

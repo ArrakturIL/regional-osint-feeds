@@ -15,6 +15,7 @@ test('normal response preserves all API fields and does not call empty data risk
  assert.equal(v.total,3);assert.equal(v.available,2);
  assert.equal(v.sources.find(x=>x.id==='adsb').label,'ADS-B');
  assert.equal(v.sources.find(x=>x.id==='ioda').state,'empty');
+ assert.equal(v.sources.find(x=>x.id==='ais').description,'');
  assert.equal(v.generatedAt,new Date(timestamp).toISOString());
 });
 test('alert state requires attention, not a false all-clear',()=>{
