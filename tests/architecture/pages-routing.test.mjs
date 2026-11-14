@@ -22,3 +22,14 @@ test('locally generated API remains owned by Pages, not blindly proxied',()=>{
 test('undocumented internal APIs never become publicly accessible by accident',()=>{
  for(const path of ['/api/translation-queue','/summary','/api/monitor/raw','/api/analyst-posts/../../health','/api/secret','/api/health'])assert.equal(ownership(path).kind,'not_found',path);
 });
+
+test('deep links to individual analyst posts preserve one shared page and locale',()=>{
+ for(const slug of ['mossad-iran-2026','a1','post-123']){
+  assert.deepEqual(ownership('/analysts/'+slug),{kind:'html',asset:'/analysts/index.html'});
+  assert.deepEqual(ownership('/he/analysts/'+slug),{kind:'html',asset:'/he/analysts/index.html'});
+ }
+ for(const url of ['/analysts/../../secret','/he/analysts/%2e%2e','/analysts/space in slug','/he/analysts/','/he/analysts/foo/bar']){
+  if(url.endsWith('/'))continue;
+  assert.notEqual(ownership(url).kind,'html',url);
+ }
+});

@@ -23,6 +23,8 @@ const normalize=path=>path.length>1&&path.endsWith('/')?path.slice(0,-1):path;
 export function ownership(pathname){
  const path=normalize(pathname);
  if(Object.hasOwn(PAGE_PATHS,path))return {kind:'html',asset:'/'+PAGE_PATHS[path]};
+ if(/^\/analysts\/[a-z0-9-]+$/.test(path))return {kind:'html',asset:'/analysts/index.html'};
+ if(/^\/he\/analysts\/[a-z0-9-]+$/.test(path))return {kind:'html',asset:'/he/analysts/index.html'};
  if(path.startsWith('/assets/'))return {kind:'asset'};
  if(EDITOR.has(path)||/^\/api\/analyst-posts\/[a-z0-9-]+$/.test(path))return {kind:'editor',upstream:path};
  if(Object.hasOwn(MONITOR_ENDPOINTS,path))return {kind:'monitor',...MONITOR_ENDPOINTS[path]};
