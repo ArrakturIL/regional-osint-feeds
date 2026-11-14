@@ -75,3 +75,13 @@ jobs:
         run: node frontend/scripts/build-site.mjs
       - name: Check all eight exact HTML shells and bundled assets
         run: node --test frontend/tests/site-build.test.mjs
+
+  pages-routing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify publicly exposed API ownership and local HTML routes
+        run: node --test tests/architecture/pages-routing.test.mjs
