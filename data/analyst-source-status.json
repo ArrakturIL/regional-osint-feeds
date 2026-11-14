@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-14T15:13:16Z",
+  "checked_at": "2026-11-14T19:58:47Z",
   "state": "ok",
   "sources": [
     {
@@ -17,7 +17,7 @@
     {
       "source_id": "yigal-telegram",
       "state": "ok",
-      "count": 13,
+      "count": 15,
       "detail": null
     },
     {
@@ -29,13 +29,13 @@
     {
       "source_id": "abuali-telegram",
       "state": "ok",
-      "count": 11,
+      "count": 18,
       "detail": null
     },
     {
       "source_id": "stein-telegram",
       "state": "ok",
-      "count": 20,
+      "count": 19,
       "detail": null
     },
     {
