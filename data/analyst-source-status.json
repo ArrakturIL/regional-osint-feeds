@@ -1,6 +1,6 @@
 {
-  "checked_at": "2026-11-14T01:48:45Z",
-  "state": "partial",
+  "checked_at": "2026-11-14T08:15:56Z",
+  "state": "ok",
   "sources": [
     {
       "source_id": "auslender-telegram",
@@ -10,9 +10,9 @@
     },
     {
       "source_id": "auslender-youtube",
-      "state": "error",
-      "count": 0,
-      "detail": "HTTPError: HTTP Error 404: Not Found"
+      "state": "ok",
+      "count": 7,
+      "detail": null
     },
     {
       "source_id": "yigal-telegram",
