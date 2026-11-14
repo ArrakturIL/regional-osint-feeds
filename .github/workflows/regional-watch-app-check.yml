@@ -25,9 +25,21 @@ jobs:
           node-version: '22'
       - name: Frontend module integrity and exact output comparison
         run: node --test frontend/tests/source-parity.test.mjs
-      - name: Build the immutable frontend bundle
-        run: node frontend/scripts/build.mjs
-      - name: Verify built output byte-for-byte
+      - name: Build and verify immutable frontend bundle
         run: |
+          node frontend/scripts/build.mjs
           cmp frontend/dist/assets/app.js baselines/cloudflare/2026-11-14/pages-0f39f36e/app.js
           cmp frontend/dist/assets/app.css baselines/cloudflare/2026-11-14/pages-0f39f36e/app.css
+  monitor-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Monitor module integrity and source parity
+        run: node --test backend/monitor/tests/source-parity.test.mjs
+      - name: Build and verify immutable Monitor bundle
+        run: |
+          node backend/monitor/scripts/build.mjs
+          cmp backend/monitor/dist/worker.js baselines/cloudflare/2026-11-14/monitor-v47/worker.js
