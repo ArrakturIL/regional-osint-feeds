@@ -4,6 +4,8 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "test": "node --test tests/source-parity.test.mjs"
+    "test": "node --test tests/source-parity.test.mjs",
+    "build:site": "node scripts/build-site.mjs",
+    "build:pages": "node scripts/build-site.mjs && npm exec --yes --package=esbuild@0.25.0 -- esbuild ../backend/pages/src/index.js --bundle --format=esm --target=es2022 --outfile=dist/_worker.js"
   }
 }

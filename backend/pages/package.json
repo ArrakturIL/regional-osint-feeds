@@ -1,0 +1,8 @@
+{
+  "name": "regional-watch-pages-api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test ../../tests/architecture/pages-runtime.test.mjs"
+  }
+}

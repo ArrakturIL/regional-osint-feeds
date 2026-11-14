@@ -105,3 +105,23 @@ jobs:
           node-version: '22'
       - name: Market history and source-backed public data contract
         run: node --test tests/architecture/pages-data.test.mjs
+
+  pages-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify self-contained server routing and service boundaries
+        run: node --test tests/architecture/pages-runtime.test.mjs
+      - name: Bundle advanced-mode Pages Worker and static files
+        run: |
+          node frontend/scripts/build-site.mjs
+          npm exec --yes --package=esbuild@0.25.0 -- esbuild backend/pages/src/index.js --bundle --format=esm --target=es2022 --outfile=frontend/dist/_worker.js
+          node --check frontend/dist/_worker.js
+      - name: Fail if built Pages depends on previous Pages deployments
+        run: |
+          if grep -Eq 'ee6aa366|0f39f36e\\.regional-watch\\.pages\\.dev' frontend/dist/_worker.js; then
+            echo 'Forbidden previous-deployment dependency'; exit 1
+          fi
