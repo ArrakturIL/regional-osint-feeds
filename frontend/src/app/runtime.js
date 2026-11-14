@@ -1,0 +1,12 @@
+export const R=window.React,D=window.ReactDOM;
+if(!R||!D||typeof D.createRoot!=="function")throw new Error("React 18 runtime unavailable");
+export const {useState,useEffect,useRef}=R;
+export const UI_HE=location.pathname==="/he"||location.pathname.startsWith("/he/");
+export const h=(t,p,...c)=>R.createElement(t,p,...c);
+export const t=(tag,cls,content)=>h(tag,{className:cls||undefined},content);
+export const fmtTime=x=>{if(!x)return "—";const d=new Date(x);return Number.isNaN(+d)?"—":new Intl.DateTimeFormat(UI_HE?"he-IL":"ru-RU",{timeZone:"Asia/Jerusalem",day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}).format(d)};
+export const simpleTime=x=>{if(!x)return "—";const d=new Date(x);return Number.isNaN(+d)?"—":new Intl.DateTimeFormat(UI_HE?"he-IL":"ru-RU",{timeZone:"Asia/Jerusalem",hour:"2-digit",minute:"2-digit"}).format(d)};
+export const relativeTime=x=>{if(!x)return "—";const n=Date.now()-Date.parse(x);if(!Number.isFinite(n)||n<0)return fmtTime(x);if(n<60000)return "сейчас";if(n<3600000)return Math.floor(n/60000)+" мин";if(n<86400000)return Math.floor(n/3600000)+" ч";return fmtTime(x)};
+export const safeLink=x=>typeof x==="string"&&x.startsWith("https://")?x:null;
+export const ruMoney=x=>new Intl.NumberFormat("ru-RU",{maximumFractionDigits:0}).format(Number(x)||0)+" $";
+export const ruPct=x=>Number.isFinite(Number(x))?(Number(x)*100).toLocaleString("ru-RU",{maximumFractionDigits:1})+"%":"—";
