@@ -3,7 +3,7 @@ on:
   push:
     branches: [refactor/regional-watch-modular-20261114]
   pull_request:
-    paths: ['backend/**', 'frontend/**', 'shared/**', 'tests/architecture/**', '.github/workflows/regional-watch-app-check.yml']
+    paths: ['backend/**', 'frontend/**', 'shared/**', 'tests/**', '.github/workflows/regional-watch-app-check.yml']
 permissions:
   contents: read
 jobs:
@@ -14,8 +14,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Editor module integrity, syntax and bindings
-        run: node --test tests/architecture/editor-modules.test.mjs
+      - run: node --test tests/architecture/editor-modules.test.mjs
   frontend-source:
     runs-on: ubuntu-latest
     steps:
@@ -23,10 +22,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Frontend module integrity and exact output comparison
-        run: node --test frontend/tests/source-parity.test.mjs
-      - name: Build and verify immutable frontend bundle
-        run: |
+      - run: node --test frontend/tests/source-parity.test.mjs
+      - run: |
           node frontend/scripts/build.mjs
           cmp frontend/dist/assets/app.js baselines/cloudflare/2026-11-14/pages-0f39f36e/app.js
           cmp frontend/dist/assets/app.css baselines/cloudflare/2026-11-14/pages-0f39f36e/app.css
@@ -37,9 +34,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Monitor module integrity and source parity
-        run: node --test backend/monitor/tests/source-parity.test.mjs
-      - name: Build and verify immutable Monitor bundle
-        run: |
+      - run: node --test backend/monitor/tests/source-parity.test.mjs
+      - run: |
           node backend/monitor/scripts/build.mjs
           cmp backend/monitor/dist/worker.js baselines/cloudflare/2026-11-14/monitor-v47/worker.js
+  modern-bundles:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Bundle frontend from native ES modules
+        run: npm exec --yes --package=esbuild@0.25.0 -- esbuild frontend/src/entry.js --bundle --format=iife --target=es2022 --outfile=frontend/dist/assets/app.modern.js
+      - name: Bundle Monitor from native ES modules
+        run: npm exec --yes --package=esbuild@0.25.0 -- esbuild backend/monitor/src/index.js --bundle --format=esm --target=es2022 --outfile=backend/monitor/dist/worker.modern.mjs
+      - name: Bundle Editor from native ES modules
+        run: npm exec --yes --package=esbuild@0.25.0 -- esbuild backend/editor/src/index.js --bundle --format=esm --target=es2022 --outfile=backend/editor/dist/worker.modern.mjs
+      - name: Validate loadable Worker exports and React bundle
+        run: node --test tests/architecture/modern-bundles.test.mjs
