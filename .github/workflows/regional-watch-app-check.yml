@@ -125,3 +125,10 @@ jobs:
           if grep -Eq 'ee6aa366|0f39f36e\\.regional-watch\\.pages\\.dev' frontend/dist/_worker.js; then
             echo 'Forbidden previous-deployment dependency'; exit 1
           fi
+      - name: RW Pages preview build — immutable artifact (no deploy)
+        uses: actions/upload-artifact@v4
+        with:
+          name: regional-watch-pages-preview
+          path: frontend/dist/
+          retention-days: 7
+          if-no-files-found: error
