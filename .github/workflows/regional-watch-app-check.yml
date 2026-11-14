@@ -85,3 +85,13 @@ jobs:
           node-version: '22'
       - name: Verify publicly exposed API ownership and local HTML routes
         run: node --test tests/architecture/pages-routing.test.mjs
+
+  pages-overview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify overview adapter against D1 schema fixtures
+        run: node --test tests/architecture/pages-overview.test.mjs
