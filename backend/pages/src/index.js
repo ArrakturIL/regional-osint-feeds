@@ -24,17 +24,17 @@ export async function handlePages(request,env){
  const url=new URL(request.url),path=url.pathname,route=ownership(path);
  if(request.method!=='GET'&&request.method!=='HEAD')return jsonError('method_not_allowed',405);
  try{
-  if(route.kind==='html')return assets(request,env,route.asset);
-  if(route.kind==='asset')return assets(request,env);
-  if(route.kind==='editor')return editor(request,env,route.upstream===path?null:route.upstream);
-  if(route.kind==='monitor')return monitorPublic(request,env,route);
+  if(route.kind==='html')return await assets(request,env,route.asset);
+  if(route.kind==='asset')return await assets(request,env);
+  if(route.kind==='editor')return await editor(request,env,route.upstream===path?null:route.upstream);
+  if(route.kind==='monitor')return await monitorPublic(request,env,route);
   if(route.kind==='pages'){
-   if(Object.hasOwn(alias,route.upstream))return editor(request,env,alias[route.upstream]);
+   if(Object.hasOwn(alias,route.upstream))return await editor(request,env,alias[route.upstream]);
    if(route.upstream==='/api/overview')return Response.json(await overviewFromD1(env));
    if(route.upstream==='/api/data')return Response.json(await dataFromD1(env));
   }
   if(path.startsWith('/api/')||path==='/summary')return jsonError('not_found',404);
-  return assets(request,env);
+  return await assets(request,env);
  }catch(error){
   console.error('Pages route failed',route.kind,path,String(error).slice(0,160));
   return jsonError('upstream_unavailable',503);
