@@ -18,16 +18,15 @@ export function semanticMeaningIssue(sourceText,targetText) {
   if(seaMine) {
     if(/(?:шахт[а-яё]*|рудник[а-яё]*)/iu.test(target))
       return 'naval_mine_misread';
-    if(/\b(?:strike|struck|hit|collid\w*\s+with)\s+(?:a\s+|the\s+)?(?:naval|sea)\s+mine\b/iu.test(source) &&
-       /(?:^|[^\p{L}])(?:атак[а-яё]*|напад[а-яё]*|напал[а-яё]*|напас[а-яё]*|обстрел[а-яё]*)/iu.test(target))
-      return 'mine_collision_reframed_as_attack';
     if(/[\u0590-\u05ff]/u.test(target) &&
       /מכרות|מכרה\b/u.test(target) && !/מוקש(?:ים)?/u.test(target))
       return 'naval_mine_misread';
     const collision=/(?:\b(?:strike|strikes|striking|struck|hit|hits|hitting|collid\w*\s+with)\s+(?:a\s+|the\s+)?(?:naval|sea)\s+mine\b|столкнул\w*\s+с\s+морск\w*\s+мин)/iu.test(source) || vesselMineCollision;
+    if(collision && /(?:^|[^\p{L}])(?:атак[а-яё]*|напад[а-яё]*|напал[а-яё]*|напас[а-яё]*|обстрел[а-яё]*)/iu.test(target))
+      return 'mine_collision_reframed_as_attack';
     if(collision && /(?:תקפו|תקפה|תקף|לתקוף|מתקיפ[\u0590-\u05ff]*|תוקף|תוקפת|תוקפים|תוקפות)\s+.{0,30}(?:מוקש|מכרה|מכרות)/u.test(target))
       return 'mine_collision_reframed_as_attack';
-    if(collision && /\b(?:attacked|assaulted)\b|(?:напал\w*|атаковал\w*)\s+.{0,35}(?:мин\w*|шахт\w*)/iu.test(target))
+    if(collision && /\b(?:attacked|assaulted)\b/iu.test(target))
       return 'mine_collision_reframed_as_attack';
   }
 
