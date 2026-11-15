@@ -2,9 +2,7 @@ import { AIS, HOUR, MINUTE } from '../config/constants.js';
 import { collect } from './collect.js';
 import { claimManualRun } from './manual.js';
 import { sources } from './sources.js';
-export async function runSchedule(controller, env) {
-  const slot = Math.floor(controller.scheduledTime / MINUTE) * MINUTE;
-  const minute = slot / MINUTE;
+export function scheduledSourceNames(minute) {
   // Each schedule has its own CPU budget. AIS must not delay HTTP collectors.
   const group = minute % 15 === 0 ? ["adsb"]
     : minute % 5 === 1 ? ["ais"]
@@ -17,7 +15,6 @@ export async function runSchedule(controller, env) {
     : minute % 120 === 12 ? ["idf_official"]
     : minute % 360 === 13 ? ["polymarket"]
     : [];
-  const manual = await claimManualRun(env.DB, slot);
   // Added only in a previously unused slot; existing source timing is unchanged.
   const supplemental = [
     ...(minute % 240 === 18 ? ["centcom_rss"] : []),
@@ -35,7 +32,14 @@ export async function runSchedule(controller, env) {
     ...(minute % 360 === 83 ? ["copernicus_ems"] : []),
     ...(minute % 720 === 86 ? ["unosat_analysis"] : []),
   ];
-  const selected = new Set([...group,...supplemental,...(manual?.wanted || [])]);
+  return [...new Set([...group,...supplemental])];
+}
+export async function runSchedule(controller, env) {
+  const slot = Math.floor(controller.scheduledTime / MINUTE) * MINUTE;
+  const minute = slot / MINUTE;
+  const manual = await claimManualRun(env.DB, slot);
+  const selected = new Set([...scheduledSourceNames(minute),...(manual?.wanted || [])]);
+
   // Shared adsb.lol quota: skip redundant automatic attempts during cooldown.
   // While recovering, reserve the first successful probe for the Tehran-priority collector,
   // not for the broad /mil endpoint. Explicit manual requests still report their result.
