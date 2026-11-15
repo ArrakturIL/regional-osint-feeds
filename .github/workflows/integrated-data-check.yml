@@ -21,6 +21,8 @@ on:
       - "scripts/translation_semantics.py"
       - "scripts/test_translate_news_open_source.py"
       - "backend/editor/src/translations/**"
+      - "frontend/src/**"
+      - "frontend/tests/ui-qa.test.mjs"
       - "tests/architecture/editor-modules.test.mjs"
       - ".github/workflows/integrated-data-check.yml"
   pull_request:
@@ -42,6 +44,8 @@ on:
       - "scripts/translation_semantics.py"
       - "scripts/test_translate_news_open_source.py"
       - "backend/editor/src/translations/**"
+      - "frontend/src/**"
+      - "frontend/tests/ui-qa.test.mjs"
       - "tests/architecture/editor-modules.test.mjs"
       - ".github/workflows/integrated-data-check.yml"
   workflow_dispatch:
@@ -63,5 +67,7 @@ jobs:
         run: python -m unittest scripts.test_neon_mirror scripts.test_publish_neon_mirror -v
       - name: Offline translation candidate regression checks
         run: python -m unittest discover -s scripts -p 'test_translate_news_open_source.py' -v
+      - name: Frontend bilingual layout and text tests
+        run: node --test frontend/tests/ui-qa.test.mjs
       - name: Semantic translation regression checks
         run: node --test tests/architecture/translation-semantics.test.mjs tests/architecture/editor-modules.test.mjs
