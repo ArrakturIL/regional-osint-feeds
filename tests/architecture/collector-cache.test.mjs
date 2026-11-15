@@ -77,6 +77,39 @@ test('missing row, missing DB, or D1 error falls back without presenting no acti
  assert.equal(calls.requests.length,2);
 });
 
+test('enabled cache fallback reports a sanitized reason, but disabled mirror never reports a fallback',async()=>{
+ const notes=[];
+ const capture=diagnostic=>notes.push(diagnostic);
+ const {env,calls}=fixtureEnv(null);
+ const missing=await read(env,fetcher(calls),{onFallback:capture});
+ assert.equal(missing.origin,'github');
+ assert.deepEqual(notes,[{source:'gdelt',reason:'cache_missing'}]);
+ const bad={...row(),data_sha256:'0'.repeat(64)};
+ const broken=fixtureEnv(bad);
+ await read(broken.env,fetcher(broken.calls),{onFallback:capture});
+ assert.deepEqual(notes[1],{source:'gdelt',reason:'cache_invalid'});
+ const late=fixtureEnv(row());
+ await read(late.env,fetcher(late.calls),{onFallback:capture,nowMs:at+12*3600000,maxAgeMs:4*3600000});
+ assert.deepEqual(notes[2],{source:'gdelt',reason:'cache_stale'});
+ const off=fixtureEnv(row(),'');
+ await read(off.env,fetcher(off.calls),{onFallback:capture});
+ assert.equal(notes.length,3);
+ assert.equal(JSON.stringify(notes).includes('https:'),false,'do not reveal source URLs or credentials');
+});
+
+test('production fallback warning is source-only and rate-limited within one isolate',async()=>{
+ const warnings=[],old=console.warn;
+ console.warn=message=>warnings.push(message);
+ try{
+  const {env,calls}=fixtureEnv(null,'unosat');
+  const args=[env,'unosat',dataUrl,statusUrl,{get:fetcher(calls),nowMs:at+60000}];
+  assert.equal((await readCollectorPair(...args)).origin,'github');
+  assert.equal((await readCollectorPair(...args)).origin,'github');
+  assert.deepEqual(warnings,['regional_watch reader_fallback source=unosat reason=cache_missing']);
+  assert.ok(!warnings.join('').includes('https://'));
+ }finally{console.warn=old}
+});
+
 test('stale D1 row falls back to fresh legacy, never masquerades as current',async()=>{
  const {env,calls}=fixtureEnv(row());
  const result=await read(env,fetcher(calls),{nowMs:at+7*3600000,maxAgeMs:4*3600000});
