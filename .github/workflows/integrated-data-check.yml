@@ -5,7 +5,9 @@ on:
     paths:
       - "storage/neon/**"
       - "scripts/neon_mirror.py"
+      - "scripts/publish_neon_mirror.py"
       - "scripts/test_neon_mirror.py"
+      - "scripts/test_publish_neon_mirror.py"
       - ".github/workflows/integrated-data-check.yml"
   pull_request:
     branches: [main]
@@ -30,4 +32,4 @@ jobs:
         with:
           python-version: "3.12"
       - name: Unit tests (no external API or secrets)
-        run: python -m unittest scripts.test_neon_mirror -v
+        run: python -m unittest scripts.test_neon_mirror scripts.test_publish_neon_mirror -v
