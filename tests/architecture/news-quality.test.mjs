@@ -65,7 +65,7 @@ const events=[
 
 class EventDB{
  prepare(sql){
-  return {bind:()=>this,first:async()=>({n:3}),all:async()=>({results:events})};
+  return {bind(...params){this.params=params;return this;},first:async()=>({n:3}),all:async()=>({results:events})};
  }
 }
 const collect=async(lang,sort,offset=0,limit=3)=>{
@@ -100,7 +100,12 @@ test('RU/HE stable event order and pagination for both sort modes',async()=>{
  assert.equal(invalid.status,400);
 });
 
-test('archive explicitly requests latest ordering and avoids duplicate homepage poll',()=>{
- // These are integration wiring assertions, not a substitute for the API behavior above.
- // Their results join the reader's tested chronological sort contract.
+test('archive explicitly requests latest ordering and avoids duplicate homepage poll',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const {resolve}=await import('node:path');
+ const root=resolve(import.meta.dirname,'../..');
+ const archive=readFileSync(resolve(root,'frontend/src/components/NewsArchive/NewsArchive.js'),'utf8');
+ const app=readFileSync(resolve(root,'frontend/src/app/App.js'),'utf8');
+ assert.ok(archive.includes('&sort=latest'),'Archive must request chronological order');
+ assert.ok(!app.includes('const pages=route==="/"||route==="/events"'),'Event page must not poll an unused home news feed');
 });
