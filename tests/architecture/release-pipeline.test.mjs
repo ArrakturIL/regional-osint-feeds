@@ -122,7 +122,7 @@ test('Cloudflare gate snapshots exact versions and rolls back changed components
  const posts=[];
  process.env.CLOUDFLARE_ACCOUNT_ID='a'.repeat(32);
  process.env.CLOUDFLARE_API_TOKEN='pages-topsecret';
- process.env.CLOUDFLARE_WORKERS_API_TOKEN='workers-topsecret';
+ process.env.CLOUDFLARE_D1_API_TOKEN='workers-topsecret';
  function settingsFor(w){
    return {compatibility_date:'2026-11-10',bindings:[
      ...w.d1.map(x=>({name:x.binding,type:'d1',id:x.database_id})),
@@ -178,7 +178,7 @@ test('Cloudflare gate snapshots exact versions and rolls back changed components
    assert.equal(posts.length,0);
  }finally{
    globalThis.fetch=oldFetch;
-   for(const key of ['CLOUDFLARE_ACCOUNT_ID','CLOUDFLARE_API_TOKEN','CLOUDFLARE_WORKERS_API_TOKEN']){
+   for(const key of ['CLOUDFLARE_ACCOUNT_ID','CLOUDFLARE_API_TOKEN','CLOUDFLARE_D1_API_TOKEN']){
      if(key in beforeEnv)process.env[key]=beforeEnv[key];else delete process.env[key];
    }
    rmSync(dir,{recursive:true,force:true});
@@ -208,7 +208,11 @@ test('production publish workflow cannot deploy Pages independently and requires
  assert.match(workflow,/name: Build immutable three-component release/);
  assert.match(workflow,/name: Publish coordinated Pages and Workers/);
  assert.match(workflow,/rw-unified-release-bundle/);
- assert.match(workflow,/CLOUDFLARE_WORKERS_API_TOKEN/);
+ assert.match(workflow,/CLOUDFLARE_D1_API_TOKEN/);
+ assert.doesNotMatch(workflow,/CLOUDFLARE_WORKERS_API_TOKEN/);
+ const gate=readFileSync(join(root,'scripts/release/cloudflare-gate.mjs'),'utf8');
+ assert.match(gate,/CLOUDFLARE_D1_API_TOKEN/);
+ assert.doesNotMatch(gate,/CLOUDFLARE_WORKERS_API_TOKEN/);
  assert.match(workflow,/verify\.mjs/);
  assert.match(workflow,/cloudflare-gate\.mjs/);
  assert.match(workflow,/rollback/);
