@@ -16,6 +16,8 @@ export async function readNewsEvents(request,env){
  const limit=validInt(url.searchParams.get('limit'),40,20);
  const offset=validInt(url.searchParams.get('offset'),2000,0);
  if(limit===null||limit<1||offset===null)return respond({error:'invalid_pagination'},400);
+ const sort=url.searchParams.get('sort')||'latest';
+ if(sort!=='latest'&&sort!=='priority')return respond({error:'invalid_sort'},400);
  const requestedReadyOnly=['1','true'].includes(url.searchParams.get('ready_only'));
  // Main feed is locale-invariant; never hide events because translation is pending.
  const readyOnly=false;
@@ -72,10 +74,14 @@ export async function readNewsEvents(request,env){
    sources:JSON.parse(r.sources_json||'[]'),reason_codes:JSON.parse(r.reason_codes||'[]'),
    _owner:publisher(r.source)};
  }));
- let visible=translated; // exact same event list in RU and HE
+ // The Latest feed is newest-first, without silently promoting older priority items.
+ let visible=[...translated].sort((a,b)=>sort==='latest'?
+   b.published_ms-a.published_ms||String(a.event_id).localeCompare(String(b.event_id)):
+   b.priority-a.priority||b.published_ms-a.published_ms||String(a.event_id).localeCompare(String(b.event_id)));
  // Soft diversity: high-impact stories are never blocked to satisfy quotas.
  const cap=SOFT_PUBLISHER_CAP,counts=new Map(),regular=[],deferred=[];
  for(const e of visible){
+  if(sort==='latest'){regular.push(e);continue;}
   const n=counts.get(e._owner)||0;
   if(e.priority>=9||n<cap){regular.push(e);counts.set(e._owner,n+1);}
   else deferred.push(e);
@@ -89,5 +95,5 @@ export async function readNewsEvents(request,env){
   translation_summary:{available:output.filter(x=>x.translation_available).length,pending:output.filter(x=>x.translation_state==='pending').length,
     needs_review:output.filter(x=>x.translation_state==='needs_review').length},
   limit,offset,total_events:visible.length,feed_order_hash,next_offset:visible.length>offset+limit?offset+limit:null,ready_only:readyOnly,requested_ready_only:requestedReadyOnly,
-  grouping:'event_v1',status:'published',source_policy:'attributed_reporting_not_fact_verification'});
+  sort,grouping:'event_v1',status:'published',source_policy:'attributed_reporting_not_fact_verification'});
 }

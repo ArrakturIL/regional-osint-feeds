@@ -25,8 +25,7 @@ export function App(){
  useEffect(()=>{const pop=()=>switchRoute(location.pathname+location.search+location.hash,true);window.addEventListener("popstate",pop);return()=>window.removeEventListener("popstate",pop)},[]);
  useEffect(()=>{document.title=(UI_HE?HE_TEXT[route==="/events"?"events":route==="/data"?"data":route==="/analysts"?"analysts":"home"][0]:route==="/events"?"События и контекст":route==="/data"?"Данные и источники":route==="/analysts"?"Аналитики и публикации":"Обстановка в регионе")+" — REGIONAL WATCH"},[route]);
  const overview=useFeed("/api/overview",60000,true);
- const pages=route==="/"||route==="/events";
- const news=useFeed("/api/news?lang="+(UI_HE?"he":"ru")+"&limit=40",60000,pages);
+ const news=useFeed("/api/news?lang="+(UI_HE?"he":"ru")+"&limit=40&sort=latest",60000,route==="/");
  const cases=useFeed("/api/stories?lang="+(UI_HE?"he":"ru")+"&limit=40",60000,pages);
  const digest=useFeed("/api/changes?lang="+(UI_HE?"he":"ru"),60000,route==="/");
  const editorial=useFeed("/api/editorial-notes?lang="+(UI_HE?"he":"ru")+"&limit=20",120000,route==="/");
@@ -47,7 +46,7 @@ export function App(){
   h(GlobalHeader,{active:route,overview:overview.value}),
   h("main",{id:"main-content"},
    route==="/"?h(HomeV2,{visible:true,overview:overview.value,news:normalizedNews,cases:normalizedCases,go,errors:{news:news.error,cases:cases.error}}):null,
-   route==="/events"?h(CasesPageV2,{visible:true,cases:normalizedCases,news:normalizedNews,error:cases.error}):null,
+   route==="/events"?h(CasesPageV2,{visible:true,cases:normalizedCases,error:cases.error}):null,
    route==="/data"?h(DataRoomV2,{visible:true,data:(officialPosts.value?.items&&data.value?{...data.value,home:officialPosts.value.items}:data.value),error:data.error,aviation:UI_HE?heAviation.value:ruAviation.value,satellite:UI_HE?heSatellite.value:ruSatellite.value,aviationError:UI_HE?heAviation.error:ruAviation.error,satelliteError:UI_HE?heSatellite.error:ruSatellite.error,aviationPending:UI_HE?!heAviation.value&&!heAviation.error:!ruAviation.value&&!ruAviation.error,satellitePending:UI_HE?!heSatellite.value&&!heSatellite.error:!ruSatellite.value&&!ruSatellite.error}):null,
    route==="/analysts"?h(AnalystShared,{hePosts,heProfiles}):null
   )
