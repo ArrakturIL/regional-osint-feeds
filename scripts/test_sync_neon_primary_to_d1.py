@@ -1,4 +1,5 @@
 """Tests for Neon-primary D1 replication (no stale GitHub JSON inputs)."""
+from datetime import datetime, timezone, timedelta
 import contextlib
 import io
 import os
@@ -7,7 +8,7 @@ import unittest
 from unittest import mock
 from types import SimpleNamespace
 
-from scripts.sync_neon_primary_to_d1 import execute_replica_sync, main
+from scripts.sync_neon_primary_to_d1 import execute_replica_sync, main, assess_snapshot_health, summarize_health
 from scripts.neon_mirror import SOURCE_FILES
 
 
@@ -35,7 +36,7 @@ class TestNeonPrimaryReplication(unittest.TestCase):
             return DummyConnection(trace)
         def stored_reader(conn, key):
             trace.append(('verified_neon',key))
-            return SimpleNamespace(source_key=key)
+            return SimpleNamespace(source_key=key, checked_at=datetime.now(timezone.utc), status={'state':'ok'})
         def mirror(conn, client, key):
             trace.append(('d1_verified',key))
             return {'source':key, 'result':'written'}
@@ -104,6 +105,59 @@ class TestNeonPrimaryReplication(unittest.TestCase):
         self.assertIn('23 */2 * * *',workflow)
         self.assertNotIn('git push',workflow)
 
+
+class TestStorageHealthClassification(unittest.TestCase):
+    """Health is based on source cadence and verified replication, not on a green sync job."""
+
+    NOW = datetime(2026, 11, 15, 22, 0, tzinfo=timezone.utc)
+
+    def snapshot(self, source="gdelt", *, hours_old=1, state="ok"):
+        return SimpleNamespace(source_key=source,
+                               checked_at=self.NOW - timedelta(hours=hours_old),
+                               status={"state": state})
+
+    def assess(self, snapshot, result="unchanged"):
+        return assess_snapshot_health(snapshot, {"source":snapshot.source_key,"result":result}, now=self.NOW)
+
+    def test_fresh_is_only_verified_ok_within_source_cadence(self):
+        healthy=self.assess(self.snapshot("gdelt",hours_old=1))
+        self.assertEqual(healthy["health"],"data_fresh")
+        self.assertEqual(healthy["collector_state"],"ok")
+        self.assertEqual(healthy["replica_state"],"unchanged")
+
+    def test_partial_source_is_not_reported_as_healthy_after_successful_d1_readback(self):
+        partial=self.assess(self.snapshot("copernicus",hours_old=1,state="partial"))
+        self.assertEqual(partial["health"],"collector_partial")
+        self.assertEqual(partial["collector_state"],"partial")
+
+    def test_stale_ok_snapshot_is_not_misrepresented_as_fresh(self):
+        stale=self.assess(self.snapshot("marad",hours_old=15))
+        self.assertEqual(stale["health"],"data_stale")
+        self.assertEqual(stale["collector_state"],"ok")
+        self.assertGreater(stale["age_minutes"],700)
+
+    def test_worker_cadence_allows_daily_satellite_and_12h_unosat(self):
+        self.assertEqual(self.assess(self.snapshot("satellite",hours_old=24))["health"],"data_fresh")
+        self.assertEqual(self.assess(self.snapshot("unosat",hours_old=12))["health"],"data_fresh")
+
+    def test_source_error_or_invalid_future_timestamp_is_unavailable(self):
+        self.assertEqual(self.assess(self.snapshot("gdelt",hours_old=1,state="error"))["health"],"source_unavailable")
+        self.assertEqual(self.assess(self.snapshot("gdelt",hours_old=-2))["health"],"source_unavailable")
+
+    def test_d1_ahead_is_visible_not_mistaken_for_d1_current(self):
+        row=self.assess(self.snapshot("gdelt",hours_old=1),result="stale")
+        self.assertEqual(row["health"],"replica_ahead")
+        self.assertEqual(row["replica_state"],"stale")
+
+    def test_status_report_preserves_partial_and_stale_not_blanketed_as_8_8_ok(self):
+        reports=[self.assess(self.snapshot("gdelt",hours_old=1)),
+                 self.assess(self.snapshot("copernicus",hours_old=1,state="partial")),
+                 self.assess(self.snapshot("marad",hours_old=15))]
+        summary=summarize_health(reports)
+        self.assertEqual(summary["counts"],{"data_fresh":1,"collector_partial":1,"data_stale":1})
+        self.assertEqual(summary["overall"],"degraded")
+        self.assertEqual(summary["source_count"],3)
+        self.assertFalse(any("password" in str(v).lower() for v in summary.values()))
 
 if __name__=='__main__':
     unittest.main()
