@@ -20,7 +20,7 @@ test('CSS has component and page owners; original 550-line monolith is not autho
 test('modularized baseline preserves every original CSS byte and cascade ordering',()=>{
  const baseline=source('../baselines/cloudflare/2026-11-14/pages-0f39f36e/app.css');
  assert.equal(assembleStyles({includeRefinements:false}),baseline);
- assert.equal(assembleStyles(),baseline+refined+source('src/styles/document-shell.css')+source('src/components/Header/Header.mobile.css'));
+ assert.equal(assembleStyles(),baseline+refined+source('src/styles/document-shell.css')+source('src/components/Header/Header.mobile.css')+source('src/components/NewsMasonry/NewsMasonry.layout.css')+source('src/components/Header/Header.status.css'));
 });
 test('both locales share one explicit rhythm for main sections',()=>{
  assert.match(refined,/#overview \.rw-digest \+ \.section\s*\{/);
@@ -62,7 +62,7 @@ test('eight RU/HE documents contain no duplicated inline CSS',()=>{
   assert.ok(html.includes('/assets/app.css'));
  }
  const baseline=source('../baselines/cloudflare/2026-11-14/pages-0f39f36e/app.css');
- assert.equal(assembleStyles(),baseline+refined+shared+source('src/components/Header/Header.mobile.css'));
+ assert.equal(assembleStyles(),baseline+refined+shared+source('src/components/Header/Header.mobile.css')+source('src/components/NewsMasonry/NewsMasonry.layout.css')+source('src/components/Header/Header.status.css'));
 });
 
 test('small screen navigation has two readable columns in both locales',()=>{
@@ -72,7 +72,7 @@ test('small screen navigation has two readable columns in both locales',()=>{
  assert.match(mobile,/min-height:\s*44px\s*!important/);
  assert.match(mobile,/font-size:\s*0\.875rem\s*!important/);
  const css=assembleStyles();
- assert.ok(css.endsWith(mobile),'mobile navigation must load after older inline shell cascade');
+ assert.ok(css.indexOf(mobile)>css.indexOf(source('src/styles/document-shell.css')),'mobile navigation must load after older inline shell cascade');
 });
 
 test('news order and sources count regression: stable grid and isolated LTR numbers',()=>{

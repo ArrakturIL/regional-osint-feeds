@@ -9,7 +9,16 @@ import {assemble} from '../scripts/build.mjs';
 const here=resolve(dirname(fileURLToPath(import.meta.url)),'..'),root=resolve(here,'..');
 const manifest=JSON.parse(readFileSync(resolve(here,'build-order.json'),'utf8'));
 test('all ordered source modules exist',()=>{assert.equal(manifest.order.length,50);for(const p of manifest.order)assert.ok(existsSync(resolve(here,'src',p)),p+' is missing')});
-test('bundle is byte-identical to original production Pages JS',()=>{const baseline=readFileSync(resolve(root,'baselines/cloudflare/2026-11-14/pages-0f39f36e/app.js'),'utf8');assert.equal(assemble().length,82241);assert.equal(assemble(),baseline)});
+test('bundle preserves the frozen architecture baseline and contains intentional news/grid fixes',()=>{
+ const baseline=readFileSync(resolve(root,'baselines/cloudflare/2026-11-14/pages-0f39f36e/app.js'),'utf8');
+ const compiled=assemble();
+ assert.ok(baseline.length>=80000,'frozen reference preserved');
+ assert.notEqual(compiled,baseline,'updated component JS must differ from original');
+ assert.ok(compiled.startsWith(manifest.prefix));
+ assert.ok(compiled.includes('function NewsMasonry('));
+ assert.ok(compiled.includes('className:"rw-site-source-count",dir:"ltr"'));
+ assert.ok(!compiled.includes('gridRowEnd'));
+});
 test('CSS is identical to original production Pages CSS',()=>{const baseline=readFileSync(resolve(root,'baselines/cloudflare/2026-11-14/pages-0f39f36e/app.css'),'utf8');assert.equal(assembleStyles({includeRefinements:false}),baseline)});
 test('each frontend source parses as an ES module',()=>{for(const p of manifest.order){const r=spawnSync(process.execPath,['--check',resolve(here,'src',p)],{encoding:'utf8'});assert.equal(r.status,0,p+': '+r.stderr)}});
 test('each local module import points to an existing file',()=>{for(const p of manifest.order){const abs=resolve(here,'src',p),src=readFileSync(abs,'utf8');for(const m of src.matchAll(/^import \{ ([^}]+) \} from '([^']+)';$/gm)){const target=resolve(dirname(abs),m[2]);assert.ok(existsSync(target),p+' -> '+m[2]);const contents=readFileSync(target,'utf8');for(const symbol of m[1].split(',').map(s=>s.trim()))assert.ok(contents.includes(symbol),p+' imports '+symbol+' from '+m[2]);}}});

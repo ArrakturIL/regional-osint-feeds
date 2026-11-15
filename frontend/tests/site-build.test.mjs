@@ -1,3 +1,4 @@
+import {assemble} from '../scripts/build.mjs';
 import {assembleStyles} from '../scripts/build-styles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -21,9 +22,9 @@ test('all eight locale routes retain exact document HTML',()=>{
  assert.equal(load(route),source,route+' changed');
  }
 });
-test('frontend CSS and JS remain exactly equal to deployed snapshot',()=>{
+test('frontend CSS and JS exactly match their current modular assemblers',()=>{
  const baseline=resolve(root,'../baselines/cloudflare/2026-11-14/pages-0f39f36e');
- assert.equal(load('assets/app.js'),readFileSync(resolve(baseline,'app.js'),'utf8'));
+ assert.equal(load('assets/app.js'),assemble());
  assert.equal(load('assets/app.css'),assembleStyles());
  assert.ok(load('assets/app.css').startsWith(readFileSync(resolve(baseline,'app.css'),'utf8')));
 });

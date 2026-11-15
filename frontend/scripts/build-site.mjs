@@ -20,4 +20,4 @@ for(const lang of ['ru','he'])for(const page of ['home','events','data','analyst
  const path=(lang==='he'?'he/':'')+(page==='home'?'':page+'/')+'index.html';
  write(path,html);
 }
-console.log('Built standalone static Pages payload: 8 locale routes + 4 byte-preserved frontend assets.');
+console.log('Built standalone static Pages payload: 8 locale routes + modular frontend assets.');
