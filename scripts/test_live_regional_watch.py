@@ -24,8 +24,8 @@ def get(url):
     except Exception as e:
         return {"status":0,"type":type(e).__name__,"error":str(e)[:170],"data":None,"final":url}
 
-def run():
-    urls={
+def targets():
+    return {
         "worker_ru":WORKER+"/api/news?lang=ru&limit=15",
         "worker_he":WORKER+"/api/news?lang=he&limit=15",
         "worker_he_ready":WORKER+"/api/news?lang=he&ready_only=1&limit=30",
@@ -43,17 +43,18 @@ def run():
         "site_events_noslash":PAGES+"/events",
         "site_data":PAGES+"/data/",
         "site_data_noslash":PAGES+"/data",
-        "site_he_news":PAGES+"/api/he/news",
-        "site_api_news":PAGES+"/api/news?lang=ru"
+        "site_he_news":PAGES+"/api/news?lang=he&limit=40&sort=latest",
+        "site_ru_news":PAGES+"/api/news?lang=ru&limit=40&sort=latest"
     }
+
+def run():
+    urls=targets()
     with ThreadPoolExecutor(max_workers=5) as pool:
         pending={k:pool.submit(get,url) for k,url in urls.items()}
         results={name:f.result() for name,f in pending.items()}
     errors=[]
     for name,r in results.items():
         expected=400 if name=="worker_limit_error" else 200
-        if name=="site_api_news" and r["status"]==404:
-            continue # Pages may expose only /api/he/news, not raw Worker route.
         if r["status"]!=expected:
             errors.append(name+" HTTP "+str(r["status"])+": "+r.get("error",""))
     ru=results["worker_ru"].get("data") or {}
@@ -117,7 +118,12 @@ def run():
             if comment and sensitive.search(headline+" "+str(item.get("summary") or "")):
                 errors.append("P1 sensitive editorial comment: "+key+" "+str(item.get("id")))
     # Expose (but do not conceal) remaining Pages/Worker migration gap.
-    site_news=(results["site_api_news"].get("data") or {})
+    site_news=(results["site_ru_news"].get("data") or {})
+    site_he_json=(results["site_he_news"].get("data") or {})
+    site_ru_ids=[x.get("event_id") for x in site_news.get("articles",[])]
+    site_he_ids=[x.get("event_id") for x in site_he_json.get("articles",[])]
+    if not site_ru_ids or site_ru_ids!=site_he_ids:
+        errors.append("Pages RU/HE news event IDs or order differ")
     site_news_contract=sorted(site_news.keys()) if isinstance(site_news,dict) else []
     seen_sources=sorted(set(a.get("source") for a in ru.get("articles",[])))
     # Readiness is tracked as an actual metric, not fabricated as complete.
@@ -125,7 +131,7 @@ def run():
     he_ready=sum(x.get("content_language")=="he" for x in he.get("articles",[]))
     he_approved=len((results["worker_he_ready"].get("data") or {}).get("articles",[]))
     he_site=(results["site_he_news"].get("data") or {})
-    items=he_site.get("items") if isinstance(he_site,dict) else None
+    items=he_site.get("articles") if isinstance(he_site,dict) else None
     metrics={"worker_grouping":ru.get("grouping"),"ru_items":len(ru.get("articles",[])),
              "he_items":len(he.get("articles",[])),"ru_ready":ru_ready,"he_ready":he_ready,
              "he_approved":he_approved,"queue_size":len(queue.get("items",[])),
