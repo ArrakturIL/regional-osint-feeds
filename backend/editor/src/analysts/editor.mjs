@@ -1,4 +1,5 @@
 import {translatedForEditorial} from './translation.mjs';
+import {readEditorCachedPair} from '../mirrors/collector-cache.mjs';
 /** Regional Watch independent analyst editor.
  * No shared OSINT cron changes, no user interface modifications.
  * Sources are obtained via verified public GitHub collector mirror. Unsafe/absent
@@ -224,8 +225,11 @@ async function runEditor(env, time) {
   try {
     // If GitHub's source mirror is late, keep processing the D1 pending queue.
     let health=null,mirror=null,mirrorIssue=null;
-    try { [health,mirror]=await Promise.all([
-      readMirror('analyst-source-status.json'),readMirror('analyst-source-items.json')]);
+    try {
+      const cached=await readEditorCachedPair(env,'analysts',{nowMs:now,maxAgeMs:4*HOUR});
+      if(cached){health=cached.status;mirror=cached.data;}
+      else [health,mirror]=await Promise.all([
+        readMirror('analyst-source-status.json'),readMirror('analyst-source-items.json')]);
     } catch(e){ mirrorIssue='mirror_fetch_failed: '+plain(e?.message,115); }
     if(!mirrorIssue){
       const checked=Date.parse(health?.checked_at), listed=Date.parse(mirror?.checked_at);

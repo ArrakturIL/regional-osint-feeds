@@ -4,6 +4,7 @@
 import {eventRows,hebrew,language} from '../news/events.mjs';
 import {fingerprint} from '../localization/localization.mjs';
 import {factualTranslationIssue} from './fact-guard.mjs';
+import {readEditorCachedPair} from '../mirrors/collector-cache.mjs';
 const MIRROR='https://raw.githubusercontent.com/ArrakturIL/regional-osint-feeds/main/data/news-localization-mirror.json';
 const HEADERS={'Access-Control-Allow-Origin':'*','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
 const respond=(obj,status=200)=>Response.json(obj,{status,headers:HEADERS});
@@ -92,12 +93,16 @@ function okPair(original,part,lang){
 export async function importTranslationMirror(env,now=Date.now()){
  let mirror;
  try{
-  const q=MIRROR+'?bucket='+Math.floor(now/300000);
-  const response=await fetch(q,{headers:{Accept:'application/json'},signal:AbortSignal.timeout(10000)});
-  if(!response.ok)return{state:'source_unavailable',status:response.status};
-  const body=await response.text();
-  if(body.length>450000)return{state:'oversized'};
-  mirror=JSON.parse(body);
+  const cached=await readEditorCachedPair(env,'news_translation',{nowMs:now,maxAgeMs:6*3600000});
+  if(cached&&cached.status.state==='ok')mirror=cached.data;
+  else{
+   const q=MIRROR+'?bucket='+Math.floor(now/300000);
+   const response=await fetch(q,{headers:{Accept:'application/json'},signal:AbortSignal.timeout(10000)});
+   if(!response.ok)return{state:'source_unavailable',status:response.status};
+   const body=await response.text();
+   if(body.length>450000)return{state:'oversized'};
+   mirror=JSON.parse(body);
+  }
  }catch(e){return{state:'fetch_error',error:String(e).slice(0,100)}}
  const timestamp=Date.parse(mirror?.generated_at);
  if(mirror?.schema_version!==1||!Array.isArray(mirror.items)||mirror.items.length>120||
