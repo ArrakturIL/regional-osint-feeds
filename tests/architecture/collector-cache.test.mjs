@@ -3,6 +3,11 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readCollectorPair,readD1CollectorSnapshot} from '../../backend/monitor/src/mirrors/collector-cache.js';
 import {gdeltContext} from '../../backend/monitor/src/collectors/media/gdelt.js';
+import {maradAdvisories} from '../../backend/monitor/src/collectors/maritime/marad.js';
+import {centcomDvids} from '../../backend/monitor/src/collectors/official/centcom-dvids.js';
+import {satelliteContext} from '../../backend/monitor/src/collectors/satellite/github.js';
+import {copernicusAnalysis} from '../../backend/monitor/src/collectors/satellite/copernicus.js';
+import {unosatAnalysis} from '../../backend/monitor/src/collectors/satellite/unosat.js';
 
 const at=Date.parse('2026-11-15T12:00:00Z');
 const data={source:'gdelt_context',latest_batch:'20261115120000',sample:[]};
@@ -119,4 +124,42 @@ test('actual Monitor GDELT collector reads D1 cache when source flag enables Neo
  }finally{
   globalThis.fetch=originalFetch;
  }
+});
+
+test('other mirrored Monitor collectors use validated D1 snapshots without requesting GitHub',async()=>{
+ const stamp=new Date(at).toISOString();
+ const samples=[
+  ['marad',maradAdvisories,
+   {source:'marad_advisories',items:[{url:'https://www.maritime.dot.gov/msci/2026-001',
+      title:'Official safety advisory',advisory_id:'2026-001',status:'active'}]},
+   {source:'marad_advisories',state:'ok',checked_at:stamp}],
+  ['centcom',centcomDvids,
+   {source:'centcom_dvids',source_feed:'https://www.dvidshub.net/rss/unit/72',
+     items:[{url:'https://www.dvidshub.net/news/123456',
+       title:'Public affairs release',published_at:stamp}],count:1},
+   {source:'centcom_dvids',source_feed:'https://www.dvidshub.net/rss/unit/72',
+     state:'ok',checked_at:stamp}],
+  ['satellite',satelliteContext,
+   {source:'satellite_context',visual_overviews:[],natural_events:[]},
+   {source:'satellite_context',state:'ok',checked_at:stamp}],
+  ['copernicus',copernicusAnalysis,
+   {source:'copernicus_ems',schema_version:1,checked_at:stamp,products:[]},
+   {source:'copernicus_ems',state:'ok',checked_at:stamp}],
+  ['unosat',unosatAnalysis,
+   {source:'unosat_analysis',schema_version:1,checked_at:stamp,products:[]},
+   {source:'unosat_analysis',state:'ok',checked_at:stamp}],
+ ];
+ const originalFetch=globalThis.fetch;
+ globalThis.fetch=async()=>{throw Error('cache-backed collector must not make GitHub requests')};
+ try{
+  for(const [source,collector,d,s] of samples){
+   const stored={source_key:source,checked_at_ms:at,
+     data_json:JSON.stringify(d),status_json:JSON.stringify(s),
+     data_sha256:hash(d),status_sha256:hash(s)};
+   const {env,calls}=fixtureEnv(stored,source);
+   const result=await collector(env,at+60000);
+   assert.ok(result&&Array.isArray(result.entries),source);
+   assert.equal(calls.sql.length,1,source);
+  }
+ }finally{globalThis.fetch=originalFetch}
 });
