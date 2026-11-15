@@ -1,10 +1,19 @@
 # REGIONAL WATCH — единый актуальный TODO и карта документации
 
-**Актуализация:** 15 ноября 2026, ~21:46 (Asia/Jerusalem). **Статус:** интеграции сборщиков/Neon/D1/GitHub и **DEV-01 единый релиз Pages + Editor + Monitor завершены и проверены на production**. Следующее направление — DEV-OSS-01…05, но **не начинать без отдельной команды пользователя**.
+**Актуализация:** 15 ноября 2026, ~21:57 (Asia/Jerusalem). **Статус:** DEV-01 production pipeline работает; после релиза устранён frontend-инцидент пустого экрана (React ReferenceError), хотфикс опубликован; ранее согласованные DEV-OSS-01…05 ожидают отдельной команды. Сквозной QA сайта не проводился.
 
 > **Единственная актуальная очередь работ.** Старые QA-планы, архитектурные планы, исследования и чекпоинты остаются источниками доказательств и историей, но их незакрытые чекбоксы **не считаются** текущим состоянием автоматически. При каждом новом релизе проверять действительные версии и обновлять этот файл. «Код существует» ≠ «работает в production», «CI зелёный» ≠ «полный QA пройден».
 >
 > **Исполнение:** `@superpowers` (systematic-debugging → TDD → execution plan → verification-before-completion). Только точечные изменения с тестами, минимальным количеством агентов и проверяемыми артефактами. Документация здесь — не разрешение на релиз.
+
+## ПРОИЗВОДСТВЕННЫЙ HOTFIX — ПУСТОЙ ЭКРАН (15.11.2026, ~21:57 IL)
+
+- [x] **HOTFIX-01.** После DEV-01 на production загрузились CSS и JS postlude, но React App показывал пустую страницу. Исходный `frontend/src/app/App.js` использовал необъявленный идентификатор `pages` в `useFeed('/api/stories?...',60000,pages)`. Runtime падал с `ReferenceError: pages is not defined` на RU/HE и на всех маршрутах.
+- [x] **HOTFIX-02.** Сделана функциональная регрессия `frontend/tests/app-render-runtime.test.mjs`: первоначальный [RED #43755009698](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43755009698) — 8/8 проверок React App упали с исходной ошибкой. Исправлен только флаг активности запроса досье на `route === '/' || route === '/events'`. [GREEN #43755060910](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43755060910) — 8/8 и 15/15 тестов frontend source/run успешно. Проверки подключены к обязательному CI.
+- [x] **HOTFIX-03.** [PR #33](https://github.com/ArrakturIL/regional-osint-feeds/pull/33) merged в `main`, commit `2678227f161ff0b674e637171942a94449402371`. Исправленная текущая версия опубликована **без отката**, через основной coordinated release [Actions #43755170573](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43755170573), SUCCESS: all release checks, D1 schema, preserved bindings, `/`, `/he/`, `/api/overview` HTTP 200, release receipt. Cloudflare canonical Pages deployment `f37b01e3-6513-4762-9afa-555041ebb926`, success.
+- [ ] **HOTFIX-04.** Независимое подтверждение фактического DOM/отрисовки пользователем после перезагрузки вкладки. Автоматические App runtime tests доказывают отсутствие исходного ReferenceError, но не заменяют браузерный end-to-end тест. Не приписывать это глобальному QA сайта.
+
+**Важный урок:** одни HTTP 200 + статическая проверка JS не гарантируют монтирование React. Runtime-фикстура теперь обязательна в `frontend-source` и проверяет все 8 RU/HE маршрутов. Следующий блок не начинать автоматически.
 
 ## ЗАВЕРШЁННЫЙ БЛОК — ИНТЕГРАЦИЯ СБОРЩИКОВ / NEON / D1 / GITHUB (15.11.2026)
 
