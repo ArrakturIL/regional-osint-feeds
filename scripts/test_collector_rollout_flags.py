@@ -10,12 +10,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class TestCanaryPromotion(unittest.TestCase):
-    def test_config_enables_only_explicitly_approved_source(self):
+    def test_config_promotes_all_eight_after_live_reader_acceptance(self):
         selected = selected_sources(ROOT / 'config/collector-rollout.json')
-        self.assertEqual(selected, {'gdelt'})
-        self.assertTrue(source_enabled('gdelt', selected))
-        self.assertFalse(source_enabled('centcom', selected))
-        self.assertFalse(source_enabled('news_translation', selected))
+        self.assertEqual(selected, {
+            'analysts', 'centcom', 'copernicus', 'gdelt',
+            'marad', 'news_translation', 'satellite', 'unosat',
+        })
+        for source in selected:
+            self.assertTrue(source_enabled(source, selected))
 
     def test_rejects_unrecognized_source_and_duplicate_entries(self):
         with TemporaryDirectory() as directory:
