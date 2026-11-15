@@ -55,7 +55,7 @@ export function semanticMeaningIssue(sourceText,targetText) {
       return 'barring_condition_inverted';
     if(!hasCondition)return 'barring_condition_missing';
   }
-  const mayPostpone=/\bmay\s+(?:postpone|delay|defer)\b/iu.test(source);
+  const mayPostpone=/\b(?:may|might|could)\s+(?:postpone|delay|defer|hold\s+off)\b/iu.test(source);
   if(mayPostpone && /[\u0400-\u04ff]/u.test(target) &&
     !/(?:может|могут|возможно|вероятно|не исключает|допускает|предположительно)/iu.test(target))
     return 'conditional_modality_missing';
