@@ -50,6 +50,9 @@ export function packageRelease(root,sha){
  write(join(out,'config/monitor.json'),expectedWorkerConfig(root,'monitor'));
  mkdirSync(join(out,'metadata'),{recursive:true});
  copyFileSync(join(root,'deploy/release-contract.json'),join(out,'metadata/contract.json'));
+ copyFileSync(join(root,'config/collector-rollout.json'),join(out,'metadata/collector-rollout.json'));
+ copyFileSync(join(root,'.github/workflows/regional-watch-app-check.yml'),join(out,'metadata/release-workflow.yml'));
+
  write(join(out,'metadata/migrations.json'),migrationMap(root));
  const manifest=buildManifest(out,sha);
  write(join(out,'manifest.json'),manifest);
