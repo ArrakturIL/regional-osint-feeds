@@ -13,6 +13,14 @@ export function verifyRelease(root,sha){
  const snap=JSON.parse(readFileSync(join(releaseDir,'metadata/contract.json'),'utf8'));
  if(JSON.stringify(source)!==JSON.stringify(snap))throw Error('Release contract differs from checked-out source');
  if(source.schema_version!==1||source.workers?.length!==2)throw Error('Release contract schema mismatch');
+ for(const [sourceName,releaseName] of [
+   ['config/collector-rollout.json','metadata/collector-rollout.json'],
+   ['.github/workflows/regional-watch-app-check.yml','metadata/release-workflow.yml']
+ ]){
+   if(!readFileSync(join(root,sourceName)).equals(readFileSync(join(releaseDir,releaseName))))
+     throw Error('Release workflow flags or CI contract differ from checked-out source: '+sourceName);
+ }
+
  for(const w of source.workers){
    const config=JSON.parse(readFileSync(join(releaseDir,'config',w.key+'.json'),'utf8'));
    const expected=expectedWorkerConfig(root,w.key);
