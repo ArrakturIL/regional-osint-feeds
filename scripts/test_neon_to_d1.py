@@ -52,6 +52,7 @@ class FakeD1:
                 self.row={"source_key":key,"checked_at_ms":checked,"data_json":body,
                           "status_json":state,"data_sha256":data_sha,
                           "status_sha256":status_sha}
+                return [{"source_key":key}]
             return []
         if sql.lstrip().startswith("SELECT"):
             return [self.row] if self.row else []
@@ -80,7 +81,11 @@ class TestD1Mirror(unittest.TestCase):
         d1=FakeD1()
         mirror_source(FakeNeon(),d1,SOURCE)
         original=d1.row.copy()
-        newer={**original,"checked_at_ms":original["checked_at_ms"]+60000}
+        later=NOW+timedelta(minutes=1)
+        changed_status={**STATUS,"checked_at":later.isoformat().replace("+00:00","Z")}
+        newer={**original,"checked_at_ms":int(later.timestamp()*1000),
+               "status_json":json.dumps(changed_status),
+               "status_sha256":canonical_hash(changed_status)}
         d1.row=newer
         result=mirror_source(FakeNeon(),d1,SOURCE)
         self.assertEqual(result["result"],"stale")
@@ -89,7 +94,8 @@ class TestD1Mirror(unittest.TestCase):
     def test_conflicting_equal_timestamp_is_not_a_success(self):
         d1=FakeD1()
         mirror_source(FakeNeon(),d1,SOURCE)
-        d1.row={**d1.row,"data_sha256":"0"*64}
+        other={**DATA,"items":[{"id":"other"}]}
+        d1.row={**d1.row,"data_json":json.dumps(other),"data_sha256":canonical_hash(other)}
         with self.assertRaisesRegex(RuntimeError,"conflict"):
             mirror_source(FakeNeon(),d1,SOURCE)
 

@@ -38,6 +38,7 @@ ON CONFLICT(source_key) DO UPDATE SET
  status_sha256=excluded.status_sha256,
  synced_at_ms=excluded.synced_at_ms
 WHERE excluded.checked_at_ms > regional_collector_cache.checked_at_ms
+RETURNING source_key
 """
 READ_D1_SQL = """
 SELECT source_key,checked_at_ms,data_json,status_json,data_sha256,status_sha256
@@ -166,7 +167,7 @@ def mirror_source(neon_connection, d1_client, source_key: str, *,
     synced_ms = int(time.time()*1000) if now_ms is None else int(now_ms)
     # One atomic SQL statement writes the entire source/status pair and both
     # digests. A delayed Action cannot replace a newer D1 snapshot.
-    d1_client.query(UPSERT_D1_SQL,(source_key,str(checked_ms),payload,state,
+    changed = d1_client.query(UPSERT_D1_SQL,(source_key,str(checked_ms),payload,state,
                                   snapshot.data_sha256,snapshot.status_sha256,str(synced_ms)))
     rows = d1_client.query(READ_D1_SQL,(source_key,))
     if len(rows)!=1:
@@ -179,10 +180,7 @@ def mirror_source(neon_connection, d1_client, source_key: str, *,
         if canonical_hash(stored["data"]) != snapshot.data_sha256 or \
            canonical_hash(stored["status"]) != snapshot.status_sha256:
             raise RuntimeError("D1 equal-time conflict")
-        decision = "unchanged" if now_ms is None and False else "written"
-        # The SQL UPSERT is idempotent for identical time/hash; there is no
-        # need to expose a fake 'updated' status when nothing was modified.
-        # We compute the previous state before the write below in follow-up.
+        decision = "written" if changed else "unchanged"
     else:
         raise RuntimeError("D1 returned older snapshot after replication")
     return {"source":source_key,"result":decision,
