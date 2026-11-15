@@ -61,3 +61,29 @@ test('actual QA Russian present-tense naval mine inversion is flagged for review
  assert.equal(result.source_language,'en');
  assert.equal(result.title,bad.headline);
 });
+
+test('source-verified P1 correction candidates preserve actor, condition and maritime mine semantics',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const {semanticMeaningIssue}=await import('../../backend/editor/src/translations/semantic-meaning.mjs');
+ const manifest=JSON.parse(readFileSync(new URL('../../data/qa/p1-translation-remediation-20261115.json',import.meta.url),'utf8'));
+ assert.equal(manifest.schema_version,1);
+ assert.equal(manifest.status,'review_only_not_deployed');
+ assert.equal(manifest.items.length,3);
+ assert.equal(new Set(manifest.items.map(x=>x.id)).size,3);
+ for(const item of manifest.items){
+   assert.ok(/^https:\/\//.test(item.source_url),item.id);
+   assert.ok(item.original.title.length>20&&item.original.body.length>50,item.id);
+   for(const lang of ['ru','he']){
+     const c=item.candidate[lang];
+     assert.ok(c.title&&c.body,item.id+'/'+lang);
+     assert.equal(semanticMeaningIssue(item.original.title,c.title),null,item.id+'/'+lang+'/title');
+     assert.equal(semanticMeaningIssue(item.original.body,c.body),null,item.id+'/'+lang+'/body');
+   }
+   for(const [locale,field] of [['ru','title'],['ru','body'],['he','title'],['he','body']]){
+     const prior=item.bad_cache?.[locale]?.[field];
+     if(prior){
+       assert.ok(semanticMeaningIssue(item.original[field],prior),item.id+'/'+locale+'/'+field+' should reject known wrong cache');
+     }
+   }
+ }
+});
