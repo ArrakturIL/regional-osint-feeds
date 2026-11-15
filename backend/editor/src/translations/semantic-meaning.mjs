@@ -19,7 +19,8 @@ export function semanticMeaningIssue(sourceText,targetText) {
     if(/(?:шахт[а-яё]*|рудник[а-яё]*)/iu.test(target))
       return 'naval_mine_misread';
     if(/[\u0590-\u05ff]/u.test(target) &&
-      /מכרות|מכרה\b/u.test(target) && !/מוקש(?:ים)?/u.test(target))
+      // JavaScript \\b uses ASCII word characters; it does not anchor Hebrew words.
+      /מכרות|מכרה/u.test(target) && !/מוקש(?:ים)?/u.test(target))
       return 'naval_mine_misread';
     const collision=/(?:\b(?:strike|strikes|striking|struck|hit|hits|hitting|collid\w*\s+with)\s+(?:a\s+|the\s+)?(?:naval|sea)\s+mine\b|столкнул\w*\s+с\s+морск\w*\s+мин)/iu.test(source) || vesselMineCollision;
     if(collision && /(?:^|[^\p{L}])(?:атак[а-яё]*|напад[а-яё]*|напал[а-яё]*|напас[а-яё]*|обстрел[а-яё]*)/iu.test(target))
