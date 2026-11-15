@@ -32,7 +32,7 @@ export function relatedSeniorTarget(a,b,hours){
 }
 export function reportingClaim(x){
  const text=sourceText(x);
- const unconfirmed=/\b(?:IDF|military)\b.{0,60}\b(?:had not yet|has not|did not|not yet|not)\s+(?:officially\s+)?confirm\b.{0,35}\b(?:death|killing|dead)\b|צה.ל.{0,45}לא\s+אישר/iu.test(text);
+ const unconfirmed=/\b(?:IDF|military)\b.{0,60}\b(?:had not yet|has not|did not|not yet|not)\s+(?:officially\s+)?confirm(?:ed)?\b.{0,45}\b(?:death|killing|dead)\b|צה.ל.{0,45}לא\s+אישר/iu.test(text);
  const death=/\b(?:killed|death|slain|died|fatality)\b|חוסל|נהרג|מותו|убит|погиб|ликвидир/iu.test(text);
  return {claimed_by:String(x.source||''),claim_about_death:unconfirmed?'death_not_confirmed_by_idf':death?'reported_death':'not_reported'};
 }
