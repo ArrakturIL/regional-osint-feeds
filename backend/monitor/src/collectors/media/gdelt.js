@@ -2,7 +2,6 @@ import { json } from '../../api/json.js';
 import { HOUR, MINUTE } from '../../config/constants.js';
 import { readCollectorPair } from '../../mirrors/collector-cache.js';
 import { item } from '../../observations/item.js';
-import { sources } from '../../schedule/sources.js';
 export const GDELT_GH_DATA = "https://raw.githubusercontent.com/ArrakturIL/regional-osint-feeds/main/data/gdelt-context.json";
 export const GDELT_GH_STATUS = "https://raw.githubusercontent.com/ArrakturIL/regional-osint-feeds/main/data/gdelt-status.json";
 export async function gdeltContext(env, slot) {

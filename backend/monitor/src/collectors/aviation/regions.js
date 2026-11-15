@@ -1,4 +1,3 @@
-import { aviation } from './adsb.js';
 import { settings } from '../../config/settings.js';
 export function airSamplingRegions(env) {
   const config = settings(env);

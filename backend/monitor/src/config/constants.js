@@ -1,4 +1,3 @@
-import { outages } from '../collectors/network/ioda.js';
 export const EASA = "https://www.easa.europa.eu/en/taxonomy/term/2518/all/feed.xml";
 export const MSCIO = "https://mscio.eu/folder/documents/UKMTO%20Advisories/";
 export const IODA = "https://api.ioda.inetintel.cc.gatech.edu/v2/outages/events";
