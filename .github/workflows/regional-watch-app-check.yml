@@ -3,9 +3,9 @@ on:
   push:
     branches: [refactor/regional-watch-modular-20261114, feature/integrated-data-quality-neon-20261115, main]
     # Data collectors commit JSON to main frequently. Never rebuild/redeploy for data-only commits.
-    paths: ['backend/**', 'frontend/**', 'shared/**', 'tests/**', '.github/workflows/regional-watch-app-check.yml']
+    paths: ['backend/**', 'frontend/**', 'shared/**', 'tests/**', 'scripts/audit_collector_cache.py', 'scripts/test_audit_collector_cache.py', '.github/workflows/regional-watch-app-check.yml']
   pull_request:
-    paths: ['backend/**', 'frontend/**', 'shared/**', 'tests/**', '.github/workflows/regional-watch-app-check.yml']
+    paths: ['backend/**', 'frontend/**', 'shared/**', 'tests/**', 'scripts/audit_collector_cache.py', 'scripts/test_audit_collector_cache.py', '.github/workflows/regional-watch-app-check.yml']
 permissions:
   contents: read
 jobs:
