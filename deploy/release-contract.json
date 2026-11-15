@@ -115,7 +115,10 @@
           "hebrew_json"
         ],
         "regional_i18n": [
-          "id"
+          "kind",
+          "item_id",
+          "language",
+          "source_hash"
         ]
       }
     }
