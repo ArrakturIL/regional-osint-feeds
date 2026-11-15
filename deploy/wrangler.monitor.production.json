@@ -23,5 +23,6 @@
       "database_name": "regional-osint",
       "database_id": "c052acf3-b821-444a-92e4-ffd472a131f0"
     }
-  ]
+  ],
+  "preview_urls": false
 }
