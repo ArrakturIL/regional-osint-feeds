@@ -205,6 +205,39 @@ class TestStoredSnapshotIntegrity(unittest.TestCase):
             verify_snapshot(db,self.snapshot)
         self.assertIn("data_payload",db.sql)
 
+
+    def test_read_stored_snapshot_rejects_invalid_key_before_db_and_reads_full_pair(self):
+        from scripts.neon_mirror import read_stored_snapshot
+        outer=self
+        class FakeDB:
+            called=False
+            def execute(self,sql,args):
+                self.called=True
+                self.sql=sql
+                self.args=args
+                class Cur:
+                    def fetchone(self):
+                        return outer.stored_row()
+                return Cur()
+        db=FakeDB()
+        with self.assertRaisesRegex(ValueError,"unknown collector"):
+            read_stored_snapshot(db,"../../secret")
+        self.assertFalse(db.called)
+        row=read_stored_snapshot(db,"gdelt")
+        self.assertTrue(db.called)
+        self.assertIn("data_payload",db.sql)
+        self.assertEqual(db.args,("gdelt",))
+        self.assertEqual(row.data,self.snapshot.data)
+
+    def test_read_stored_snapshot_missing_returns_none_not_empty_data(self):
+        from scripts.neon_mirror import read_stored_snapshot
+        class FakeDB:
+            def execute(self,sql,args):
+                class Cur:
+                    def fetchone(self):return None
+                return Cur()
+        self.assertIsNone(read_stored_snapshot(FakeDB(),"gdelt"))
+
     def test_readback_rejects_oversized_json_after_db_decode(self):
         from scripts.neon_mirror import validate_stored_row
         row=list(self.stored_row())
