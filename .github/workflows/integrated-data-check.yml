@@ -17,6 +17,9 @@ on:
       - "scripts/test_neon_mirror.py"
       - "scripts/test_publish_neon_mirror.py"
       - "tests/architecture/translation-semantics.test.mjs"
+      - "scripts/translate_news_open_source.py"
+      - "scripts/translation_semantics.py"
+      - "scripts/test_translate_news_open_source.py"
       - "backend/editor/src/translations/**"
       - "tests/architecture/editor-modules.test.mjs"
       - ".github/workflows/integrated-data-check.yml"
@@ -35,6 +38,9 @@ on:
       - "scripts/neon_mirror.py"
       - "scripts/test_neon_mirror.py"
       - "tests/architecture/translation-semantics.test.mjs"
+      - "scripts/translate_news_open_source.py"
+      - "scripts/translation_semantics.py"
+      - "scripts/test_translate_news_open_source.py"
       - "backend/editor/src/translations/**"
       - "tests/architecture/editor-modules.test.mjs"
       - ".github/workflows/integrated-data-check.yml"
@@ -55,5 +61,7 @@ jobs:
           python-version: "3.12"
       - name: Unit tests (no external API or secrets)
         run: python -m unittest scripts.test_neon_mirror scripts.test_publish_neon_mirror -v
+      - name: Offline translation candidate regression checks
+        run: python -m unittest discover -s scripts -p 'test_translate_news_open_source.py' -v
       - name: Semantic translation regression checks
         run: node --test tests/architecture/translation-semantics.test.mjs tests/architecture/editor-modules.test.mjs
