@@ -1,10 +1,28 @@
 # REGIONAL WATCH — единый актуальный TODO и карта документации
 
-**Актуализация:** 15 ноября 2026 (Asia/Jerusalem). **Редакция:** 1.0. **Статус:** рабочий реестр; только документация, без изменения production и планировщиков.
+**Актуализация:** 15 ноября 2026, вечер (Asia/Jerusalem). **Статус:** рабочий реестр. Актуальная архитектура частично опубликована; основная очередь GLOBAL-01…09 ниже.
 
 > **Единственная актуальная очередь работ.** Старые QA-планы, архитектурные планы, исследования и чекпоинты остаются источниками доказательств и историей, но их незакрытые чекбоксы **не считаются** текущим состоянием автоматически. При каждом новом релизе проверять действительные версии и обновлять этот файл. «Код существует» ≠ «работает в production», «CI зелёный» ≠ «полный QA пройден».
 >
 > **Исполнение:** `@superpowers` (systematic-debugging → TDD → execution plan → verification-before-completion). Только точечные изменения с тестами, минимальным количеством агентов и проверяемыми артефактами. Документация здесь — не разрешение на релиз.
+
+## ТЕКУЩИЙ ПРИОРИТЕТ — ГЛОБАЛЬНЫЙ ПЕРЕНОС АРХИТЕКТУРЫ (15.11.2026, позже прежнего baseline)
+
+**Это самая свежая секция и авторитетный статус.** Старые разделы ниже сохраняются для истории, но их сведения «в feature / не в main» уже устарели. По прямому указанию пользователя сначала вводим в строй всю архитектуру (GitHub/Neon/D1/Pages/Editor/Monitor/cron), и **только потом** возвращаемся к отдельным новостям и переводам.
+
+- [x] **GLOBAL-01. Код интегрирован в `main`:** [PR #26](https://github.com/ArrakturIL/regional-osint-feeds/pull/26) объединён merge-коммитом `b820ce9792d8dac73395e5ea425ec4050bcf87ef`. Все новейшие data-only изменения старого `main` сохранены без force push. PR #25 закрыт как заменённый.
+- [x] **GLOBAL-02. Pages production и preview:** Cloudflare подтвердил production Pages `e3b5fa72-085d-4a98-973c-4248892b773b` (15 Nov 17:39:31 UTC) и отдельный preview `rw-architecture-preview` (`af96759b-b944-401e-b6a4-4f274a6b4edb`). В [CI 43741996274](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43741996274) прошли 10/10 проверок, preview GET страниц и live RU/HE API. **Preview пока обращается к прежним production Editor/Monitor.** Cloudflare не передал git SHA в deployment metadata, поэтому не приписывать production конкретный SHA без workflow evidence.
+- [x] **GLOBAL-03. Shadow pipeline в main:** `scripts/sync_collector_shadows.py` + `.github/workflows/collector-shadow-sync.yml` — проверяет и переносит все 8 GitHub JSON снимков в Neon одной транзакцией, затем в private D1 с SHA/readback; cron `23 */2 * * *` UTC, без коммитов и без выключения старых источников. [Тесты](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43741222491) зелёные. **Наличие расписания ≠ подтверждённый успешный регулярный запуск.**
+- [~] **GLOBAL-04. Реальная Neon/D1 паритетность:** 15 Nov read-only Neon SELECT подтвердил 8 новейших snapshots (почти все `17:39Z`, `news_translation 17:41Z`), но read-only Cloudflare D1 SELECT показал 8 старых кешей (6 отстали, GDELT ранее был впереди GitHub, satellite остался со старым checked_at). **До первого реально завершённого shadow sync D1 read cutover запрещён**. Проверить ≥2 разных scheduled run и полное совпадение каждого SHA/timestamp, отдельно ошибки `partial` и `stale`, Free квоты Neon.
+- [~] **GLOBAL-05. Modular Editor/Monitor staging:** отдельная [черновая PR #27](https://github.com/ArrakturIL/regional-osint-feeds/pull/27) создаёт 2 **закрытых** Workers без `workers.dev`, маршрутов и cron, с ограниченными D1/AI/REGION bindings; JS-тесты/сборка зелёные. **БЛОКЕР доступа:** существующий GitHub `CLOUDFLARE_API_TOKEN` может деплоить Pages, но Cloudflare отклонил Worker `/scripts/.../secrets` (No access). Новый staging workflow теперь требует отдельный репозиторный GitHub Actions secret `CLOUDFLARE_WORKERS_API_TOKEN` с Workers Scripts Edit для аккаунта. [Проверка 43743277284](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43743277284) безопасно завершилась на missing credential до API. Нельзя повторять прежний ключ и нельзя сливать PR #27 как «завершённый» до получения токена и успешного QA-развёртывания.
+- [ ] **GLOBAL-06. Выпуск modular production Workers:** после QA поставить новый Editor (сохранить `AI`, `CORE_DB`, `NEWS_DB`, cron `*/5 * * * *`) и Monitor (сохранить `DB`, `REGION`, 4 secret_text bindings, cron `*/1 * * * *`), с pinned Worker versions, no-downtime rollback и smoke. Новые версии **пока не загружены**.
+- [ ] **GLOBAL-07. Per-source переключение чтения:** только после D1 parity и нового Worker QA включать `COLLECTOR_CACHE_SOURCES` (Monitor) и `REGIONAL_EDITOR_CACHE_SOURCES` (Editor) по одному источнику; подтверждать fallback и политику stale/error. Старые GitHub JSON commits продолжать.
+- [ ] **GLOBAL-08. Перевод сборщиков на Neon-primary:** после принятого D1 reader/сквозного QA вводить `REGIONAL_NEON_D1_SOURCES` / `REGIONAL_NEON_PRIMARY_SOURCES` постепенно и лишь при успешной проверке данных. Не останавливать все 8 старых GitHub источников сразу.
+- [ ] **GLOBAL-09. Сквозной production QA:** сравнить фактические релизные Worker/PAGES версии и 8 источников RU/HE+OSINT, убедиться, что обновления выходят сами, нет потери API, ошибок и роста квот. **Потом** вернуться к детальной редактуре и OSS-библиотекам.
+
+**Точка восстановления после обрыва:** [главный чекпоинт в main](https://github.com/ArrakturIL/regional-osint-feeds/blob/main/docs/REGIONAL_WATCH_EXECUTION_CHECKPOINT_2026-11-15.md), [PR #27](https://github.com/ArrakturIL/regional-osint-feeds/pull/27), actual GitHub Actions/Cloudflare deployment state. Не создавать заново уже готовые backup/PR/merge. Три прежних P1 статьи не изменялись; backup исходников остался в private D1. Работа с переводами намеренно отложена.
+
+---
 
 ## 0. Главные решения и оговорки
 
