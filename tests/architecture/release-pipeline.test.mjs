@@ -190,7 +190,7 @@ test('migration gate reads real expected D1 table names but never sends writes',
  const count=await checkD1(contract,async(db,sql)=>{
    queries.push({db,sql});
    const key=db===required[0].database_id?required[0]:required[1];
-   const table=sql.match(/^PRAGMA table_info\(([a-z_]+)\)$/)?.[1];
+   const table=sql.match(/^PRAGMA table_info\(([a-z0-9_]+)\)$/)?.[1];
    assert.ok(table&&key.tables[table]);
    return key.tables[table].map(name=>({name}));
  });
