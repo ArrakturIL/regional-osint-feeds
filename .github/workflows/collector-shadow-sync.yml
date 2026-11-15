@@ -1,0 +1,55 @@
+name: Regional Watch collector snapshot shadow synchronization
+
+# Runs ONLY on main after staged release. All source JSON is still written by
+# the existing workflows; this job never commits to GitHub or flips read flags.
+on:
+  schedule:
+    - cron: '23 */2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: regional-watch-collector-shadow-sync
+  cancel-in-progress: false
+
+jobs:
+  sync-shadow:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify eight-source shadow pipeline offline
+        run: |
+          python -m unittest scripts.test_collector_shadow_pipeline scripts.test_neon_mirror scripts.test_neon_to_d1 scripts.test_publish_neon_mirror -v
+      - name: Require isolated Neon and D1 service credentials
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          CLOUDFLARE_D1_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${NEON_DATABASE_URL:-}" || -z "${CLOUDFLARE_D1_API_TOKEN:-}" || -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
+            echo "::error::Required private storage credentials are missing; legacy GitHub data remains active"
+            exit 1
+          fi
+      - name: Install bounded PostgreSQL client (no inference/model dependencies)
+        run: python -m pip install --disable-pip-version-check "psycopg[binary]>=3.2,<4"
+      - name: Mirror eight existing snapshots through Neon into private D1 only
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          CLOUDFLARE_D1_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: python -m scripts.sync_collector_shadows --root .
+      - name: Confirm no production read/cutover flag was changed by this job
+        run: |
+          echo 'SHADOW ONLY: legacy JSON publication remains active'
+          echo 'Next gate is several verified cycles and read-only Monitor/Editor adapter QA'
