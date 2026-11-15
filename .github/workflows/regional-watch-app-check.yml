@@ -288,6 +288,12 @@ jobs:
         run: |
           node scripts/release/build.mjs "$SOURCE_SHA"
           node scripts/release/verify.mjs "$SOURCE_SHA"
+      - name: Wrangler dry-run both Worker release configs (never deploy)
+        env:
+          WRANGLER_SEND_METRICS: 'false'
+        run: |
+          npm exec --yes --package=wrangler@4 -- wrangler deploy --config release/config/editor.json --no-bundle --dry-run --outdir "$RUNNER_TEMP/rw-editor-dry-run"
+          npm exec --yes --package=wrangler@4 -- wrangler deploy --config release/config/monitor.json --no-bundle --dry-run --outdir "$RUNNER_TEMP/rw-monitor-dry-run"
       - name: Upload single immutable verified release artifact
         uses: actions/upload-artifact@v4
         with:
