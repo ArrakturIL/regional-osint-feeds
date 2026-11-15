@@ -2,14 +2,16 @@
 from datetime import datetime, timezone, timedelta
 import contextlib
 import io
+import json
+import tempfile
 import os
 from pathlib import Path
 import unittest
 from unittest import mock
 from types import SimpleNamespace
 
-from scripts.sync_neon_primary_to_d1 import execute_replica_sync, main, assess_snapshot_health, summarize_health
-from scripts.neon_mirror import SOURCE_FILES
+from scripts.sync_neon_primary_to_d1 import execute_replica_sync, main, assess_snapshot_health, summarize_health, verify_d1_last_good, emit_health_report
+from scripts.neon_mirror import SOURCE_FILES, canonical_hash
 
 
 class DummyConnection:
@@ -176,6 +178,44 @@ class TestStorageHealthClassification(unittest.TestCase):
     def test_worker_cadence_allows_daily_satellite_and_12h_unosat(self):
         self.assertEqual(self.assess(self.snapshot("satellite",hours_old=24))["health"],"data_fresh")
         self.assertEqual(self.assess(self.snapshot("unosat",hours_old=12))["health"],"data_fresh")
+
+    def test_real_last_good_verifier_rejects_missing_corrupt_or_unhealthy_rows(self):
+        stamp=self.NOW.isoformat()
+        data={"items":[{"id":"one"}]}
+        status={"state":"ok","checked_at":stamp}
+        def row(dat=data,state=status):
+            return {"source_key":"gdelt","checked_at_ms":int(self.NOW.timestamp()*1000),
+                    "data_json":json.dumps(dat),"status_json":json.dumps(state),
+                    "data_sha256":canonical_hash(data),
+                    "status_sha256":canonical_hash(status)}
+        class Client:
+            def __init__(self,rows): self.rows=rows
+            def query(self,sql,params):
+                self.seen=(sql,params)
+                return self.rows
+        c=Client([row()])
+        self.assertTrue(verify_d1_last_good(c,"gdelt"))
+        self.assertIn("SELECT",c.seen[0])
+        self.assertEqual(c.seen[1],("gdelt",))
+        self.assertFalse(verify_d1_last_good(Client([]),"gdelt"))
+        self.assertFalse(verify_d1_last_good(Client([row(dat={"items":["tampered"]})]),"gdelt"))
+        invalid={"state":"error","checked_at":stamp}
+        self.assertFalse(verify_d1_last_good(Client([row(state=invalid)]),"gdelt"))
+        with self.assertRaisesRegex(ValueError,"unknown"):
+            verify_d1_last_good(Client([]),"../secret")
+
+    def test_health_step_summary_uses_real_newlines_and_no_payload_values(self):
+        observation=self.assess(self.snapshot("gdelt",hours_old=8))
+        summary=summarize_health([observation])
+        with tempfile.TemporaryDirectory() as tmp:
+            dest=Path(tmp)/"health.md"
+            with contextlib.redirect_stdout(io.StringIO()) as stdout:
+                emit_health_report([observation],summary,summary_path=str(dest))
+            text=dest.read_text(encoding="utf8")
+            self.assertIn("\\n| Source | Health |",text)
+            self.assertIn("| gdelt | data_stale |",text)
+            self.assertNotIn("NEON_DATABASE_URL",text)
+            self.assertIn("::warning",stdout.getvalue())
 
     def test_source_error_or_invalid_future_timestamp_is_unavailable(self):
         self.assertEqual(self.assess(self.snapshot("gdelt",hours_old=1,state="error"))["health"],"source_unavailable")
