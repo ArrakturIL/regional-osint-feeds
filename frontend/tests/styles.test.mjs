@@ -44,3 +44,10 @@ test('legibility rules favor longer text and smaller metadata without compacting
  assert.match(refined,/\.rw-fineprint\s*\{\s*font-size:\s*0\.8125rem\s*!important/);
  assert.match(refined,/html\[lang="he"\]/);
 });
+
+test('critical content metadata has minimum 12px-equivalent type without enlarging navigation',()=>{
+ for(const selector of ['.rw-digest-item small','.rw-story-footer','.rw-technical-row small','.rw-s43-provider small','.stamp small','.rw-status-tag','.news-card .rw-importance-badge','.rw-news-translation-state']){
+  assert.ok(refined.includes(selector),'readability rule missing '+selector);
+ }
+ assert.ok(refined.includes('font-size: 0.75rem;'),'content metadata should be at least 12px at default zoom');
+});
