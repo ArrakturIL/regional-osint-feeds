@@ -126,6 +126,7 @@ test('Cloudflare gate snapshots exact versions and rolls back changed components
  const oldPages='33333333-3333-4333-8333-333333333333';
  const currentPages='44444444-4444-4444-8444-444444444444';
  let released=false;
+ let previewsEnabled=false;
  const posts=[];
  process.env.CLOUDFLARE_ACCOUNT_ID='a'.repeat(32);
  process.env.CLOUDFLARE_API_TOKEN='pages-topsecret';
@@ -143,12 +144,13 @@ test('Cloudflare gate snapshots exact versions and rolls back changed components
    let result;
    if(opts?.method==='POST'){
      posts.push({path,body:JSON.parse(opts.body)});
+     if(path.endsWith('/subdomain'))previewsEnabled=false;
      result={};
    }else if(path.endsWith('/settings')){
      const w=contract.workers.find(w=>path.includes('/'+w.name+'/'));
      result=settingsFor(w);
    }else if(path.endsWith('/subdomain')){
-     result={enabled:true,previews_enabled:false};
+     result={enabled:true,previews_enabled:previewsEnabled};
    }else if(path.endsWith('/schedules')){
      const w=contract.workers.find(w=>path.includes('/'+w.name+'/'));
      result={schedules:[{cron:w.cron}]};
@@ -175,10 +177,15 @@ test('Cloudflare gate snapshots exact versions and rolls back changed components
    assert.equal(baseline.pages.deployment_id,oldPages);
    assert.ok(!readFileSync(filename,'utf8').includes('topsecret'));
    released=true;
+   previewsEnabled=true; // Emulate Wrangler unexpectedly enabling preview URLs.
    await cloudflareGate(['rollback',goodSha,filename]);
-   const workerPosts=posts.filter(x=>x.path.includes('/workers/scripts/'));
+   const workerPosts=posts.filter(x=>x.path.includes('/workers/scripts/')&&x.path.endsWith('/deployments'));
+   const previewPosts=posts.filter(x=>x.path.endsWith('/subdomain'));
    const pagesPosts=posts.filter(x=>x.path.includes('/pages/projects/'));
    assert.equal(workerPosts.length,2);
+   assert.equal(previewPosts.length,2);
+   assert.ok(previewPosts.every(x=>x.body.enabled===true&&x.body.previews_enabled===false));
+   assert.equal(previewsEnabled,false);
    assert.equal(pagesPosts.length,1);
    assert.ok(workerPosts.every(x=>x.body.versions[0].version_id===old&&x.body.versions[0].percentage===100));
    assert.match(pagesPosts[0].path,/33333333-3333-4333-8333-333333333333\/rollback/);
