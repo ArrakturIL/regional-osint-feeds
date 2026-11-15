@@ -1,4 +1,3 @@
-import { read } from '../api/router.js';
 import { aviation } from '../collectors/aviation/adsb.js';
 import { airbridgeContext } from '../collectors/aviation/airbridge.js';
 import { aviationAlternative } from '../collectors/aviation/alternatives.js';

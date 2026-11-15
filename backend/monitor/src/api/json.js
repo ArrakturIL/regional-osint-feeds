@@ -1,4 +1,3 @@
-import { read } from './router.js';
 export function json(body, status = 200) {
   return Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 }
