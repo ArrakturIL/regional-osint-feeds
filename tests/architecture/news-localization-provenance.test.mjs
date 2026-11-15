@@ -53,3 +53,11 @@ test('an accurate cached Hebrew translation keeps available status',async()=>{
  assert.equal(result.translation_status,'available');
  assert.equal(result.content_language,'he');
 });
+
+test('actual QA Russian present-tense naval mine inversion is flagged for review, not available',async()=>{
+ const bad=row('Two tankers strike a naval mine and catch fire, Iran says','Два танкера нападают на мины и горят');
+ const result=await localizeNewsRow(null,bad,'ru');
+ assert.equal(result.translation_status,'needs_review');
+ assert.equal(result.source_language,'en');
+ assert.equal(result.title,bad.headline);
+});
