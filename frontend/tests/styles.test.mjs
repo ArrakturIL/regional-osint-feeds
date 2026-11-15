@@ -79,11 +79,12 @@ test('news order and sources count regression: stable grid and isolated LTR numb
  const masonry=source('src/components/NewsMasonry/NewsMasonry.js');
  assert.doesNotMatch(masonry,/gridRowEnd|ResizeObserver|requestAnimationFrame|useEffect/, 'no JS masonry measurement or dynamic reordering');
  const layout=source('src/components/NewsMasonry/NewsMasonry.layout.css');
- assert.match(layout,/grid-auto-flow:\s*row\s*;/);
- assert.match(layout,/grid-auto-rows:\s*auto\s*;/);
- assert.match(layout,/align-items:\s*stretch\s*;/);
+ assert.match(layout,/column-count:\s*2/);
+ assert.match(layout,/break-inside:\s*avoid/);
+ assert.match(layout,/display:\s*inline-block/);
  assert.match(layout,/@media\s*\(max-width:\s*640px\)/);
- assert.match(layout,/grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+ assert.match(layout,/column-count:\s*1/);
+ assert.doesNotMatch(layout,/grid-auto-rows:\s*auto/);
  const count=source('src/components/Header/Header.js');
  assert.match(count,/h\("bdi",\{className:"rw-site-source-count",dir:"ltr"\},status\)/);
  assert.match(count,/h\("bdi",\{className:"rw-dlg-counter",dir:"ltr"\},status\)/);
