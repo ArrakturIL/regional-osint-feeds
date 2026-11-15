@@ -1,23 +1,23 @@
 {
-  "checked_at": "2026-11-15T12:19:49Z",
+  "checked_at": "2026-11-15T17:39:05Z",
   "state": "ok",
   "sources": [
     {
       "source_id": "auslender-telegram",
       "state": "ok",
-      "count": 19,
+      "count": 20,
       "detail": null
     },
     {
       "source_id": "auslender-youtube",
       "state": "ok",
-      "count": 7,
+      "count": 8,
       "detail": null
     },
     {
       "source_id": "yigal-telegram",
       "state": "ok",
-      "count": 15,
+      "count": 16,
       "detail": null
     },
     {
@@ -29,13 +29,13 @@
     {
       "source_id": "abuali-telegram",
       "state": "ok",
-      "count": 17,
+      "count": 20,
       "detail": null
     },
     {
       "source_id": "stein-telegram",
       "state": "ok",
-      "count": 18,
+      "count": 19,
       "detail": null
     },
     {
