@@ -166,6 +166,25 @@ class TestNeonPrimaryReplication(unittest.TestCase):
         self.assertNotIn("SENSITIVE_DSN",err.getvalue())
         self.assertNotIn("TOKEN",err.getvalue())
 
+    def test_retained_d1_age_is_reported_separately_from_new_failed_collector_time(self):
+        hooks=self.hooks()
+        now=datetime.now(timezone.utc)
+        older=now-timedelta(hours=48)
+        hooks["stored_reader"]=lambda db,key:SimpleNamespace(
+            source_key=key,checked_at=now,
+            status={"state":"error" if key=="gdelt" else "ok"})
+        hooks["last_good_checker"]=lambda client,key: {
+            "checked_at_ms":int(older.timestamp()*1000),"state":"ok"
+        }
+        out=execute_replica_sync("neon","acct","token",**hooks)
+        gdelt=next(row for row in out["health"] if row["source"]=="gdelt")
+        self.assertEqual(gdelt["health"],"source_unavailable")
+        self.assertGreaterEqual(gdelt["retained_age_minutes"],2879)
+        self.assertLess(gdelt["age_minutes"],2)
+        with contextlib.redirect_stdout(io.StringIO()) as output:
+            emit_health_report(out["health"],out["health_summary"])
+        self.assertIn("retained_age_minutes=",output.getvalue())
+
     def test_missing_credentials_never_contact_neon_or_cloudflare(self):
         with self.assertRaises(ValueError):
             execute_replica_sync('','account','token',**self.hooks())
