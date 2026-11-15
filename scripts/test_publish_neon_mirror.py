@@ -31,7 +31,11 @@ class FakeConnection:
         self.statements.append((statement, parameters))
         if "INSERT" in statement and self.stored is None:
             self.stored = (parameters[0], parameters[-1], parameters[3], parameters[4])
+            self.data_payload = json.loads(parameters[1])
+            self.status_payload = json.loads(parameters[2])
             return FakeCursor(self.stored)
+        if "data_payload" in statement and "SELECT" in statement and self.stored:
+            return FakeCursor((*self.stored,self.data_payload,self.status_payload))
         return FakeCursor(self.stored)
 
 
