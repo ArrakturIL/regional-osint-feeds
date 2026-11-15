@@ -24,6 +24,8 @@ jobs:
           python-version: '3.12'
       - name: Verify Python mirror translations preserve conditionality
         run: python -m unittest discover -s scripts -p 'test_translate_news_open_source.py' -v
+      - name: Validate read-only D1 parity reporter offline
+        run: python -m unittest scripts.test_audit_collector_cache -v
   frontend-source:
     runs-on: ubuntu-latest
     steps:
