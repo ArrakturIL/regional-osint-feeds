@@ -86,4 +86,11 @@ class FreeTranslationTests(unittest.TestCase):
         self.assertFalse(valid(src,"ישראל חוששת להפתיע את ארה״ב במכה באיראן","he"))
         self.assertTrue(valid(src,"ישראל חוששת מתקיפה פתאומית של ארה״ב באיראן","he"))
 
+    def test_actual_reuters_may_hold_off_remains_uncertain_in_both_languages(self):
+        src = "Trump tells advisers he may hold off on Iran attacks barring new provocations"
+        self.assertFalse(valid(src, "Трамп отложил удары по Ирану, если не будет новых провокаций", "ru"))
+        self.assertFalse(valid(src, "טראמפ דחה תקיפות באיראן אם לא יהיו פרובוקציות חדשות", "he"))
+        self.assertTrue(valid(src, "Трамп может отложить удары по Ирану, если не будет новых провокаций", "ru"))
+        self.assertTrue(valid(src, "טראמפ עשוי לדחות תקיפות באיראן אם לא יהיו פרובוקציות חדשות", "he"))
+
 if __name__=="__main__":unittest.main()
