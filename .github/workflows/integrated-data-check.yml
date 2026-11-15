@@ -16,6 +16,8 @@ on:
       - "scripts/publish_neon_mirror.py"
       - "scripts/test_neon_mirror.py"
       - "scripts/test_publish_neon_mirror.py"
+      - "tests/architecture/translation-semantics.test.mjs"
+      - "backend/editor/src/translations/**"
       - ".github/workflows/integrated-data-check.yml"
   pull_request:
     branches: [main]
@@ -31,6 +33,8 @@ on:
       - ".github/workflows/gdelt.yml"
       - "scripts/neon_mirror.py"
       - "scripts/test_neon_mirror.py"
+      - "tests/architecture/translation-semantics.test.mjs"
+      - "backend/editor/src/translations/**"
       - ".github/workflows/integrated-data-check.yml"
   workflow_dispatch:
 
@@ -49,3 +53,5 @@ jobs:
           python-version: "3.12"
       - name: Unit tests (no external API or secrets)
         run: python -m unittest scripts.test_neon_mirror scripts.test_publish_neon_mirror -v
+      - name: Semantic translation regression checks
+        run: node --test tests/architecture/translation-semantics.test.mjs
