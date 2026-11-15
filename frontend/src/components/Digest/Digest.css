@@ -1,0 +1,7 @@
+.rw-digest-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rw-digest-item{display:flex;gap:14px;padding:18px;border:1px solid #3a5847;background:#172921;border-radius:13px;min-width:0}
+.rw-digest-icon{color:#9cedbb;background:#254b32;border-radius:10px;display:grid;place-items:center;min-width:32px;height:32px;font-weight:800}
+.rw-digest-item strong{font-size:14px;display:block;color:#e7f3e9;line-height:1.5}
+.rw-digest-item p{font-size:12px;color:#bdcfbf;line-height:1.7;margin:7px 0}
+.rw-digest-item small{font-size:10px;color:#91b39d}
+.rw-digest-foot{grid-column:1/-1;margin:2px 2px 0;color:#92b6a0;font-size:11px}

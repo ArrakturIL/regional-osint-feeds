@@ -1,3 +1,4 @@
+import {assembleStyles} from './build-styles.mjs';
 import {readFileSync,mkdirSync,writeFileSync,copyFileSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -15,6 +16,6 @@ export function assemble(){
 if(process.argv[1]===fileURLToPath(import.meta.url)){
  const dest=resolve(root,'dist/assets');mkdirSync(dest,{recursive:true});
  writeFileSync(resolve(dest,'app.js'),assemble());
- copyFileSync(resolve(root,'src/styles/app.css'),resolve(dest,'app.css'));
+ writeFileSync(resolve(dest,'app.css'),assembleStyles());
  console.log('Built exact-output frontend from '+JSON.parse(readFileSync(resolve(root,'build-order.json'))).order.length+' source modules');
 }

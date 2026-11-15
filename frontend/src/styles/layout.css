@@ -1,0 +1,27 @@
+.rw-page{padding-top:4px;min-height:700px;animation:pageEnter .37s cubic-bezier(.2,.8,.25,1) both}
+@keyframes pageEnter{from{opacity:.55}to{opacity:1}}
+.rw-page[hidden]{display:none!important}
+.kicker{color:#8febbb;text-transform:uppercase;font-size:10px;letter-spacing:1.7px;font-weight:700}
+.page-title{font-size:clamp(37px,5.5vw,62px);letter-spacing:-2.1px;line-height:1.1;margin:14px 0}
+.page-title em{font-style:normal;color:var(--green)}
+.page-intro{display:flex;justify-content:space-between;gap:25px;align-items:end;padding:43px 0 24px}
+.page-intro p{color:#b5c9b8;max-width:700px;font-size:14px;margin:4px 0 0;line-height:1.75}
+.stamp{display:flex;flex-direction:column;align-items:flex-start;min-width:150px;padding:13px 16px;background:#17251f;border:1px solid #314d3c;border-radius:14px}
+.stamp span{font-size:9px;color:#8caf96;letter-spacing:1.1px;text-transform:uppercase;font-weight:700}.stamp b{font-size:25px;margin:2px 0;color:#e4f7ea}.stamp small{color:#a9c4b1;font-size:10px}
+.panel{background:linear-gradient(145deg,#182b23,#111f1c);border:1px solid var(--line);border-radius:17px;padding:20px}
+.panel + .panel{margin-top:15px}
+.panel-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
+.panel-title{font-size:13px;font-weight:700;color:#d5e9db}.hint{font-size:10px;color:#91b29d}
+.section{margin-top:26px}
+.section-head{display:flex;justify-content:space-between;align-items:center;gap:20px;margin:0 0 13px}
+.section-head h2{font-size:23px;margin:0;letter-spacing:-.55px}
+.section-head p{margin:3px 0 0;color:#98b9a2;font-size:12px}
+.badge{padding:6px 10px;border-radius:999px;font-size:10px;font-weight:700;border:1px solid #487b55;color:#a7edbf;background:#27573a70;text-transform:uppercase;letter-spacing:.4px}
+.badge.alert{background:#64403b;color:#ffcabf;border-color:#ae766f}
+.status-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}
+.status-chip{min-width:137px;padding:11px 12px;display:flex;align-items:center;gap:10px;background:#1b3429;border:1px solid #3c604a;border-radius:11px;transition:background .2s,border-color .2s}
+.status-chip:hover{background:#284736;border-color:#6ba681}
+.status-chip strong{font-size:11px;display:block;font-weight:700;color:#e1f3e7}.status-chip small{display:block;color:#a2bdaa;font-size:10px;margin-top:2px}
+.signal-panel{position:relative;overflow:hidden}.signal-panel:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 30%,#a8efc90b 50%,transparent 70%);transform:translateX(-110%);animation:scan 11s linear infinite;pointer-events:none}
+@keyframes scan{to{transform:translateX(115%)}}
+.signal-panel>*{position:relative}

@@ -1,3 +1,4 @@
+import {assembleStyles} from '../scripts/build-styles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync,existsSync } from 'node:fs';
@@ -23,5 +24,6 @@ test('all eight locale routes retain exact document HTML',()=>{
 test('frontend CSS and JS remain exactly equal to deployed snapshot',()=>{
  const baseline=resolve(root,'../baselines/cloudflare/2026-11-14/pages-0f39f36e');
  assert.equal(load('assets/app.js'),readFileSync(resolve(baseline,'app.js'),'utf8'));
- assert.equal(load('assets/app.css'),readFileSync(resolve(baseline,'app.css'),'utf8'));
+ assert.equal(load('assets/app.css'),assembleStyles());
+ assert.ok(load('assets/app.css').startsWith(readFileSync(resolve(baseline,'app.css'),'utf8')));
 });

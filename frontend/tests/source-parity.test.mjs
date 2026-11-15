@@ -1,3 +1,4 @@
+import {assembleStyles} from '../scripts/build-styles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
@@ -9,7 +10,7 @@ const here=resolve(dirname(fileURLToPath(import.meta.url)),'..'),root=resolve(he
 const manifest=JSON.parse(readFileSync(resolve(here,'build-order.json'),'utf8'));
 test('all ordered source modules exist',()=>{assert.equal(manifest.order.length,50);for(const p of manifest.order)assert.ok(existsSync(resolve(here,'src',p)),p+' is missing')});
 test('bundle is byte-identical to original production Pages JS',()=>{const baseline=readFileSync(resolve(root,'baselines/cloudflare/2026-11-14/pages-0f39f36e/app.js'),'utf8');assert.equal(assemble().length,82241);assert.equal(assemble(),baseline)});
-test('CSS is identical to original production Pages CSS',()=>{const baseline=readFileSync(resolve(root,'baselines/cloudflare/2026-11-14/pages-0f39f36e/app.css'),'utf8');assert.equal(readFileSync(resolve(here,'src/styles/app.css'),'utf8'),baseline)});
+test('CSS is identical to original production Pages CSS',()=>{const baseline=readFileSync(resolve(root,'baselines/cloudflare/2026-11-14/pages-0f39f36e/app.css'),'utf8');assert.equal(assembleStyles({includeRefinements:false}),baseline)});
 test('each frontend source parses as an ES module',()=>{for(const p of manifest.order){const r=spawnSync(process.execPath,['--check',resolve(here,'src',p)],{encoding:'utf8'});assert.equal(r.status,0,p+': '+r.stderr)}});
 test('each local module import points to an existing file',()=>{for(const p of manifest.order){const abs=resolve(here,'src',p),src=readFileSync(abs,'utf8');for(const m of src.matchAll(/^import \{ ([^}]+) \} from '([^']+)';$/gm)){const target=resolve(dirname(abs),m[2]);assert.ok(existsSync(target),p+' -> '+m[2]);const contents=readFileSync(target,'utf8');for(const symbol of m[1].split(',').map(s=>s.trim()))assert.ok(contents.includes(symbol),p+' imports '+symbol+' from '+m[2]);}}});
 test('single App tree serves both Russian and Hebrew',()=>{const app=readFileSync(resolve(here,'src/app/App.js'),'utf8');assert.ok(app.includes('function App()'));for(const path of ['/events','/data','/analysts'])assert.ok(app.includes('route==="'+path+'"'),path+' route missing');const runtime=readFileSync(resolve(here,'src/app/runtime.js'),'utf8');assert.ok(runtime.includes('const UI_HE='));assert.ok(existsSync(resolve(here,'src/i18n/meta.js')))});

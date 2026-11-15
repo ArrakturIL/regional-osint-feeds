@@ -1,3 +1,4 @@
+import {assembleStyles} from './build-styles.mjs';
 import { readFileSync,writeFileSync,copyFileSync,mkdirSync } from 'node:fs';
 import { dirname,resolve } from 'node:path';
 import { gunzipSync } from 'node:zlib';
@@ -13,7 +14,7 @@ if(dom.length!==131835 || !dom.includes('18.3.1-next-f1338f8080-20240426'))throw
 write('assets/react.js',vendor);
 write('assets/react-dom.js',dom);
 write('assets/app.js',assemble());
-copyFileSync(resolve(root,'src/styles/app.css'),resolve(dest,'assets/app.css'));
+write('assets/app.css',assembleStyles());
 for(const lang of ['ru','he'])for(const page of ['home','events','data','analysts']){
  const html=readFileSync(resolve(root,'documents',lang,page+'.html'),'utf8');
  const path=(lang==='he'?'he/':'')+(page==='home'?'':page+'/')+'index.html';

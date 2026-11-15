@@ -26,7 +26,7 @@ jobs:
       - run: |
           node frontend/scripts/build.mjs
           cmp frontend/dist/assets/app.js baselines/cloudflare/2026-11-14/pages-0f39f36e/app.js
-          cmp frontend/dist/assets/app.css baselines/cloudflare/2026-11-14/pages-0f39f36e/app.css
+          node --test frontend/tests/styles.test.mjs
   monitor-source:
     runs-on: ubuntu-latest
     steps:

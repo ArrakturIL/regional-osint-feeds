@@ -1,0 +1,71 @@
+/* REGIONAL WATCH — intentional design refinements.
+   Single output bundle, modular authored CSS. Preserve the dark evergreen identity.
+   Audit: WCAG 2.2 AA 4.5:1 text / 3:1 large text; USWDS readable body measure.
+   QA: consistent RU/HE rhythm on #overview, especially Digest -> Stories -> On Air. */
+:root {
+  --rw-reading-measure: 72ch;
+  --rw-section-space: clamp(32px, 3.2vw, 40px);
+  --rw-body-muted: #bcd4c3;
+  --rw-ui-muted: #bcd4c3;
+  --rw-ui-border: #466b54;
+  --muted2: #a6c5b0;
+}
+body {
+  font-family: system-ui, "Segoe UI", "Noto Sans Hebrew", Arial, sans-serif;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+:where(.rw-page p, .news-card p, .rw-dossier p) { text-wrap: pretty; }
+:where(.page-intro p, .rw-situation > p, .rw-dossier-detail > p, .rw-contextual-summary p, .rw-editorial-section p) {
+  max-inline-size: var(--rw-reading-measure);
+  overflow-wrap: break-word;
+}
+.page-title { text-wrap: balance; }
+.section-head h2 {
+  font-size: clamp(1.375rem, 2.1vw, 1.65rem);
+  line-height: 1.3;
+  text-wrap: balance;
+}
+.section-head p {
+  color: var(--rw-body-muted);
+  font-size: 0.875rem;
+  line-height: 1.65;
+  max-inline-size: 68ch;
+}
+.kicker { font-size: 0.75rem; line-height: 1.55; }
+.panel-title { font-size: 0.9375rem; }
+.hint { font-size: 0.8125rem; line-height: 1.65; color: var(--rw-body-muted); }
+.rw-fineprint { font-size: 0.8125rem !important; line-height: 1.7; color: var(--rw-body-muted); }
+.rw-situation-bottom, .rw-digest-foot, .rw-digest-range, .rw-digest-sources {
+  color: var(--rw-body-muted);
+  font-size: 0.8125rem;
+  line-height: 1.65;
+}
+.rw-story-meta { color: var(--rw-body-muted); line-height: 1.6; }
+.rw-digest-item p, .rw-story-teaser > p { line-height: 1.75; }
+.news-head time { font-size: 0.75rem; color: var(--rw-body-muted); }
+.rw-news-page-error, .rw-osint-panel-error { line-height: 1.65; }
+html[lang="he"] :where(.kicker, .rw-s43-period-label) { letter-spacing: normal; }
+@media (max-width: 640px) {
+  .section-head { align-items: flex-start; flex-wrap: wrap; gap: 12px; }
+  .page-intro p { line-height: 1.7; }
+}
+/* A single spacing system for both locales; do not mirror physical header slots. */
+#overview .section { margin-block-end: 0; }
+#overview .rw-editorial-lead { margin-block: var(--rw-section-space) 0; }
+#overview .rw-digest { margin-block-start: var(--rw-section-space); }
+#overview .rw-digest + .section {
+  margin-block-start: var(--rw-section-space);
+  padding-block-start: 22px;
+  border-block-start: 1px solid var(--rw-ui-border);
+}
+#overview .rw-home-news-editorial {
+  margin-block-start: var(--rw-section-space);
+}
+#overview .rw-home-news-editorial > .rw-home-feed {
+  margin-block-start: 0 !important;
+  margin-block-end: 0;
+  padding-block-start: 22px;
+  border-block-start: 1px solid var(--rw-ui-border);
+}
+#overview .rw-service-line { margin-block-start: var(--rw-section-space); }
