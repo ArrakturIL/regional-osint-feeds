@@ -78,14 +78,14 @@ async function workerState(w,check=true){
 }
 async function pagesState(pages,check=true){
  const p='/pages/projects/'+encodeURIComponent(pages.project);
- const [project,deployments]=await Promise.all([
-   api('CLOUDFLARE_API_TOKEN',p),
-   api('CLOUDFLARE_API_TOKEN',p+'/deployments?env=production&per_page=10')
- ]);
+ const project=await api('CLOUDFLARE_API_TOKEN',p);
  if(check)validatePages(pages,project);
- const latest=deployments.find(d=>d.environment==='production'&&d.latest_stage?.status==='success');
- need(latest?.id&&/^[0-9a-f-]{36}$/.test(latest.id),'Pages has no successful production deployment');
- return {project:pages.project,deployment_id:latest.id};
+ // Cloudflare retains rolled-back deployments as the most recently CREATED
+ // release. The active production target is canonical_deployment, not latest.
+ const active=project?.canonical_deployment;
+ need(active?.environment==='production' && active?.latest_stage?.status==='success' &&
+      /^[0-9a-f-]{36}$/.test(active.id||''),'Pages has no active canonical production deployment');
+ return {project:pages.project,deployment_id:active.id};
 }
 async function capture(contract,sourceSha,filename){
  need(/^[a-f0-9]{40}$/.test(sourceSha),'missing exact release source SHA');
