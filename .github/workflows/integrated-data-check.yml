@@ -143,4 +143,13 @@ jobs:
               # Client exceptions can include connection strings. Never print them.
               raise SystemExit('Private Neon check failed: ' + type(exc).__name__) from None
           PY
-
+      - name: Mirror all registered sources in strict shadow mode and validate readback
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for source in analysts centcom copernicus gdelt marad satellite unosat news_translation; do
+            python -m scripts.publish_neon_mirror --source "$source" --mode required
+          done
+          echo 'Neon shadow check: 8 collector snapshots verified'
