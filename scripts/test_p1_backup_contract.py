@@ -34,7 +34,7 @@ class TestP1Backup(unittest.TestCase):
     def test_backup_captures_all_original_fields_before_changes(self):
         db=self.create_db()
         sql=(ROOT/"storage/cloudflare/003_p1_translation_backup_capture.sql").read_text("utf8")
-        db.execute(sql,('batch_test','sample',1794700000400,'sample'))
+        db.execute(sql,('batch_test',1794700000400,'sample'))
         row=db.execute("SELECT news_json,hebrew_json FROM regional_translation_repair_backups").fetchone()
         old_news=json.loads(row[0]);old_he=json.loads(row[1])
         self.assertEqual(old_news['headline_ru'],'corrupt RU')
@@ -50,13 +50,13 @@ class TestP1Backup(unittest.TestCase):
     def test_backup_is_immutable_and_repeated_capture_does_not_replace(self):
         db=self.create_db()
         sql=(ROOT/"storage/cloudflare/003_p1_translation_backup_capture.sql").read_text("utf8")
-        db.execute(sql,('batch_test','sample',1794700000400,'sample'))
+        db.execute(sql,('batch_test',1794700000400,'sample'))
         with self.assertRaises(sqlite3.IntegrityError):
             db.execute("UPDATE regional_translation_repair_backups SET news_json='{}'")
         with self.assertRaises(sqlite3.IntegrityError):
             db.execute("DELETE FROM regional_translation_repair_backups")
         with self.assertRaises(sqlite3.IntegrityError):
-            db.execute(sql,('batch_test','sample',1794700000401,'sample'))
+            db.execute(sql,('batch_test',1794700000401,'sample'))
         count=db.execute("SELECT COUNT(*) FROM regional_translation_repair_backups").fetchone()[0]
         self.assertEqual(count,1)
         db.close()
@@ -65,7 +65,7 @@ class TestP1Backup(unittest.TestCase):
         db=self.create_db()
         db.execute("DELETE FROM regional_i18n")
         sql=(ROOT/"storage/cloudflare/003_p1_translation_backup_capture.sql").read_text("utf8")
-        db.execute(sql,('batch_test','sample',1794700000400,'sample'))
+        db.execute(sql,('batch_test',1794700000400,'sample'))
         self.assertEqual(db.execute("SELECT COUNT(*) FROM regional_translation_repair_backups").fetchone()[0],0)
         db.close()
 
