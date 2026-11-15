@@ -212,7 +212,7 @@ class TestStorageHealthClassification(unittest.TestCase):
             with contextlib.redirect_stdout(io.StringIO()) as stdout:
                 emit_health_report([observation],summary,summary_path=str(dest))
             text=dest.read_text(encoding="utf8")
-            self.assertIn("\\n| Source | Health |",text)
+            self.assertIn("\n| Source | Health |",text)
             self.assertIn("| gdelt | data_stale |",text)
             self.assertNotIn("NEON_DATABASE_URL",text)
             self.assertIn("::warning",stdout.getvalue())
