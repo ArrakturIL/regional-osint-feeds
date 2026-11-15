@@ -23,6 +23,8 @@ on:
       - "backend/editor/src/translations/**"
       - "backend/editor/src/news/**"
       - "tests/architecture/news-quality.test.mjs"
+      - "tests/architecture/news-localization-provenance.test.mjs"
+      - "backend/editor/src/localization/**"
       - "frontend/src/**"
       - "frontend/tests/ui-qa.test.mjs"
       - "tests/architecture/editor-modules.test.mjs"
@@ -48,6 +50,8 @@ on:
       - "backend/editor/src/translations/**"
       - "backend/editor/src/news/**"
       - "tests/architecture/news-quality.test.mjs"
+      - "tests/architecture/news-localization-provenance.test.mjs"
+      - "backend/editor/src/localization/**"
       - "frontend/src/**"
       - "frontend/tests/ui-qa.test.mjs"
       - "tests/architecture/editor-modules.test.mjs"
@@ -74,6 +78,6 @@ jobs:
       - name: Frontend bilingual layout and text tests
         run: node --test frontend/tests/ui-qa.test.mjs
       - name: News grouping, attribution and chronology regression checks
-        run: node --test tests/architecture/news-quality.test.mjs
+        run: node --test tests/architecture/news-quality.test.mjs tests/architecture/news-localization-provenance.test.mjs
       - name: Semantic translation regression checks
         run: node --test tests/architecture/translation-semantics.test.mjs tests/architecture/editor-modules.test.mjs
