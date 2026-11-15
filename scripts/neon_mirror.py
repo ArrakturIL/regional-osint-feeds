@@ -268,11 +268,21 @@ def publish_snapshot(connection, snapshot: Snapshot) -> str:
     return result
 
 
+def read_stored_snapshot(connection, source_key: str) -> Snapshot | None:
+    """Read a complete trusted Neon snapshot, or None when not yet mirrored.
+
+    Never treat a missing row as an empty but successfully checked source.
+    """
+    if source_key not in SOURCE_FILES:
+        raise ValueError("unknown collector source_key")
+    row = connection.execute(READBACK_SQL, (source_key,)).fetchone()
+    return None if row is None else validate_stored_row(row)
+
+
 def verify_snapshot(connection, snapshot: Snapshot) -> dict:
-    raw = connection.execute(READBACK_SQL, (snapshot.source_key,)).fetchone()
-    if raw is None:
+    stored = read_stored_snapshot(connection, snapshot.source_key)
+    if stored is None:
         return inspect_snapshot(snapshot, None)
-    stored = validate_stored_row(raw)
     return inspect_snapshot(snapshot, {
         "source_key": stored.source_key,
         "checked_at": stored.checked_at,
