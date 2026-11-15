@@ -29,14 +29,26 @@ class TestCanaryPromotion(unittest.TestCase):
         with self.assertRaises(ValueError):
             source_enabled('../other', {'gdelt'})
 
-    def test_gdelt_workflow_keeps_fallback_but_skips_git_commit_after_d1_success(self):
-        body = (ROOT / '.github/workflows/gdelt.yml').read_text(encoding='utf8')
-        self.assertIn('id: rollout', body)
-        self.assertIn('python -m scripts.collector_rollout_flags --source gdelt', body)
-        self.assertIn("steps.rollout.outputs.enabled == 'true'", body)
-        self.assertIn("steps.neon_d1.outcome == 'success'", body)
-        self.assertIn('git push', body, 'Old GitHub fallback must remain while cutover is reversible')
-        self.assertLess(body.index('id: rollout'), body.index('id: neon_d1'))
+    def test_all_eight_workflows_can_accept_per_source_policy_with_safe_git_fallback(self):
+        names = {
+            'gdelt': 'gdelt.yml',
+            'analysts': 'analysts.yml',
+            'centcom': 'centcom-test.yml',
+            'copernicus': 'copernicus-analytics.yml',
+            'marad': 'marad.yml',
+            'satellite': 'satellite.yml',
+            'unosat': 'unosat-analyses.yml',
+            'news_translation': 'news-open-source-translation.yml',
+        }
+        for source, filename in names.items():
+            with self.subTest(source=source):
+                body = (ROOT / '.github/workflows' / filename).read_text(encoding='utf8')
+                self.assertIn('id: rollout', body)
+                self.assertIn('python -m scripts.collector_rollout_flags --source ' + source, body)
+                self.assertIn("steps.rollout.outputs.enabled == 'true'", body)
+                self.assertIn("steps.neon_d1.outcome == 'success'", body)
+                self.assertIn('git ', body, 'Legacy GitHub fallback remains while cutover is reversible')
+                self.assertLess(body.index('id: rollout'), body.index('id: neon_d1'))
 
 
 if __name__ == '__main__':
