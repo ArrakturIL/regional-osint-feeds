@@ -69,3 +69,45 @@ html[lang="he"] :where(.kicker, .rw-s43-period-label) { letter-spacing: normal; 
   border-block-start: 1px solid var(--rw-ui-border);
 }
 #overview .rw-service-line { margin-block-start: var(--rw-section-space); }
+
+/* Readable content metadata — never apply this group to nav controls.
+   Most original labels were 9–11 px; 0.75rem is 12 px at standard zoom. */
+.rw-digest-item small,
+.rw-story-footer,
+.rw-story-footer a,
+.rw-technical-row small,
+.rw-s43-provider small,
+.stamp small,
+.stamp span,
+.event time,
+.market-meta,
+.data-item small,
+.rw-sat-facts small,
+.rw-sat-small-foot small,
+.rw-sat-freshnote,
+.rw-s43-reference small,
+.rw-s43-reference-source,
+.rw-date-steps span,
+.rw-related-line small,
+.rw-analyst-dates,
+.rw-situation-bottom {
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+.rw-status-tag,
+.news-card .rw-importance-badge,
+.rw-news-translation-state,
+.rw-translation-state,
+.rw-sat-state,
+.rw-s43-led,
+.rw-s43-pill,
+.rw-s43-source-state,
+.rw-s43-period-label,
+.rw-editorial-tag {
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+.rw-dossier-detail > p + p,
+.rw-editorial-section p + p {
+  margin-block-start: 0.8em;
+}
