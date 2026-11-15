@@ -1,13 +1,12 @@
 import { json } from '../../api/json.js';
 import { HOUR, MINUTE } from '../../config/constants.js';
 import { get } from '../../network/http.js';
+import { readCollectorPair } from '../../mirrors/collector-cache.js';
 import { item } from '../../observations/item.js';
 export const MARAD_GH_DATA = "https://raw.githubusercontent.com/ArrakturIL/regional-osint-feeds/main/data/marad-advisories.json";
 export const MARAD_GH_STATUS = "https://raw.githubusercontent.com/ArrakturIL/regional-osint-feeds/main/data/marad-status.json";
 export async function maradAdvisories(env, slot) {
-  const [snapshot,status] = await Promise.all([
-    get(MARAD_GH_DATA,"json"), get(MARAD_GH_STATUS,"json"),
-  ]);
+  const {data:snapshot,status}=await readCollectorPair(env,'marad',MARAD_GH_DATA,MARAD_GH_STATUS,{nowMs:slot,maxAgeMs:36*HOUR});
   if (!snapshot || snapshot.source !== "marad_advisories" ||
       !Array.isArray(snapshot.items) || snapshot.items.length > 80 ||
       !status || status.source !== "marad_advisories") {

@@ -1,11 +1,11 @@
 import { json } from '../../api/json.js';
 import { get } from '../../network/http.js';
+import { readCollectorPair } from '../../mirrors/collector-cache.js';
 import { item } from '../../observations/item.js';
 export async function copernicusAnalysis(env,slot) {
   const base='https://raw.githubusercontent.com/ArrakturIL/regional-osint-feeds/main/data/';
   let snapshot,status;
-  try {[snapshot,status]=await Promise.all([get(base+'copernicus-analyses.json','json'),
-    get(base+'copernicus-analyses-status.json','json')]);}
+  try {({data:snapshot,status}=await readCollectorPair(env,'copernicus',base+'copernicus-analyses.json',base+'copernicus-analyses-status.json',{nowMs:slot,maxAgeMs:36*3600000}));}
   catch {throw Error('CEMS_public_mirror_unavailable')}
   if(snapshot?.schema_version!==1||snapshot?.source!=='copernicus_ems'||
      !Array.isArray(snapshot.products)||snapshot.products.length>30||
