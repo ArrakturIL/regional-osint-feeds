@@ -69,9 +69,25 @@ class Snapshot:
     status_bytes: int
 
 
+def _normalize_integral_json_floats(value: object) -> object:
+    """Align integer-valued JSON numbers with JS JSON.stringify canonical form.
+
+    Our existing JavaScript-based backfill represented 47.0 as 47, while
+    Python's json.dumps writes 47.0. Both are the same JSON number.
+    """
+    if isinstance(value, float) and value.is_integer():
+        return int(value)
+    if isinstance(value, list):
+        return [_normalize_integral_json_floats(x) for x in value]
+    if isinstance(value, dict):
+        return {k: _normalize_integral_json_floats(v) for k, v in value.items()}
+    return value
+
+
 def canonical_bytes(obj: object) -> bytes:
     return json.dumps(
-        obj, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False
+        _normalize_integral_json_floats(obj),
+        ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False
     ).encode("utf-8")
 
 
