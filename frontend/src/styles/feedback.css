@@ -1,0 +1,7 @@
+.error{color:#f4b7ab;font-size:12px}
+.skeleton{opacity:.7;animation:blink 1.6s ease-in-out infinite}
+@keyframes blink{50%{opacity:.35}}
+.return{margin-bottom:16px;padding:15px 18px;border:1px solid #517a58;border-radius:12px;background:#1a3427}
+.return h3{font-size:15px;margin:0 0 8px}
+.return-items{display:flex;gap:15px;flex-wrap:wrap;color:#c7dfcc;font-size:12px}
+.return-items b{color:#94ecb6;font-size:20px;margin-right:4px}

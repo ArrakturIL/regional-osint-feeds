@@ -1,0 +1,10 @@
+/* Colored newsroom priority; not a security alert. */
+.news-card[data-rw-importance]{border-left:3px solid var(--rw-important)}
+.news-card[data-rw-importance="critical"]{--rw-important:#ff8585}
+.news-card[data-rw-importance="high"]{--rw-important:#f0c174}
+.news-card[data-rw-importance="medium"]{--rw-important:#8acde3}
+.news-card[data-rw-importance="normal"]{--rw-important:#91bba0}
+.news-card .rw-importance-badge{display:inline-flex;align-self:flex-start;max-width:max-content;align-items:center;gap:6px;margin:2px 0 8px 0;padding:1px 8px;border:1px solid var(--rw-important,#91bba0);border-radius:999px;color:var(--rw-important,#91bba0);font-size:11px;font-weight:700;line-height:1.8}
+.news-card .rw-importance-badge:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+@media(max-width:900px){.rw-nav a{padding:8px 8px;font-size:11.5px;min-width:0}.rw-nav{width:100%}}
+@media(max-width:390px){.rw-nav a{padding:8px 4px;font-size:10.5px;letter-spacing:-.2px}}

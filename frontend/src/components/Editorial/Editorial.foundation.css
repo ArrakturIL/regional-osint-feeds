@@ -1,0 +1,5 @@
+.editorial{border-color:#56765a;background:radial-gradient(circle at 96% 0%,#42694433,transparent 55%),linear-gradient(140deg,#1c2f25,#16231f)}
+.editorial .kicker{display:flex;justify-content:space-between;gap:12px}
+.editorial h2{font-size:23px;line-height:1.35;margin:11px 0}
+.editorial p{color:#d4e7d8;font-size:14px;line-height:1.85;margin:0 0 11px}
+.editorial a{font-size:12px;font-weight:700;text-decoration:none}

@@ -1,0 +1,9 @@
+{
+  "name": "regional-watch-editor",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test ../../tests/architecture/editor-modules.test.mjs",
+    "check": "node --check src/index.js"
+  }
+}

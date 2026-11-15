@@ -1,0 +1,8 @@
+
+:root{color-scheme:dark;--bg:#0b1412;--surface:#13221c;--surface2:#1a3026;--line:#345443;--ink:#eaf5ee;--muted:#abc9b5;--muted2:#86aa94;--green:#83e7ad;--warm:#e7c287;--red:#ef948c}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font:14px/1.65 system-ui,"Segoe UI",Arial,sans-serif;margin:0}
+body:before{z-index:-1;content:"";position:fixed;inset:0;background:radial-gradient(ellipse 65vw 55vh at 96% -6%,#244e3726,transparent),linear-gradient(#9ae4ab08 1px,transparent 1px),linear-gradient(90deg,#9ae4ab08 1px,transparent 1px);background-size:auto,48px 48px,48px 48px;pointer-events:none}
+a{color:#a2e8bb}a:hover{color:#d1ffdf}button{font:inherit}a:focus-visible,button:focus-visible{outline:2px solid var(--green);outline-offset:3px}
+.app-container{max-width:1120px;margin:auto;padding:0 28px 48px}

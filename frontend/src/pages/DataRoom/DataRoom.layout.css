@@ -1,0 +1,4 @@
+
+/* Align MARAD and CENTCOM cards in CSS grid. */
+.data-grid-2{align-items:stretch}.data-grid-2>.panel{height:100%;box-sizing:border-box}.data-grid-2>.panel+.panel{margin-top:0!important}
+

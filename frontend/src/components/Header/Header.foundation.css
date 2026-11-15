@@ -1,0 +1,12 @@
+.rw-header{view-transition-name:site-header;min-height:89px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;border-bottom:1px solid #33513e}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--ink)}
+.logo{width:42px;height:42px;flex:none;display:grid;place-items:center;border-radius:13px;background:linear-gradient(130deg,#22563b,#173226);border:1px solid #457b59;color:#9df2c0;font-size:23px}
+.brand strong{display:block;letter-spacing:2px;font-size:12px;font-weight:700;line-height:1.2}.brand small{color:#8cae99;display:block;letter-spacing:1.35px;font-size:9px;margin-top:4px}
+.rw-nav{display:flex;gap:3px;background:#162b20;border:1px solid #3b604b;padding:4px;border-radius:12px}
+.rw-nav a{color:#b0d2be;font-size:12px;font-weight:700;padding:8px 16px;border-radius:9px;text-decoration:none;white-space:nowrap;transition:background .2s,color .2s}
+.rw-nav a:hover{background:#294d37;color:#edfcf1}.rw-nav a.active{background:#305d40;color:#f0fff4}
+.rw-live-link{justify-self:end;display:flex;align-items:center;gap:8px;border:1px solid #427256;border-radius:999px;padding:7px 12px;font-size:11px;text-decoration:none;color:#d4efdb;font-weight:700;white-space:nowrap}
+.rw-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex:none;box-shadow:0 0 0 2px #8ee6ac24}
+.rw-dot.bad{background:var(--red)}.rw-dot.partial{background:var(--warm)}
+.rw-live-link .rw-dot{animation:statusPulse 3s ease-in-out infinite}
+@keyframes statusPulse{0%,100%{box-shadow:0 0 0 0 #8ae8b575}50%{box-shadow:0 0 0 7px #8ae8b500}}

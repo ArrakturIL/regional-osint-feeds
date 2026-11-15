@@ -1,0 +1,68 @@
+import { AIS, HOUR, MINUTE } from '../config/constants.js';
+import { collect } from './collect.js';
+import { claimManualRun } from './manual.js';
+import { sources } from './sources.js';
+export async function runSchedule(controller, env) {
+  const slot = Math.floor(controller.scheduledTime / MINUTE) * MINUTE;
+  const minute = slot / MINUTE;
+  // Each schedule has its own CPU budget. AIS must not delay HTTP collectors.
+  const group = minute % 15 === 0 ? ["adsb"]
+    : minute % 5 === 1 ? ["ais"]
+    : minute % 15 === 2 ? ["easa", "mscio", "ioda"]
+    : minute % 60 === 3 ? ["firms"]
+    : minute % 60 === 4 ? ["mil_lol"]
+    : minute % 480 === 128 ? ["state_dept"]
+    : minute % 480 === 7 ? ["fcdo"]
+    : minute % 240 === 8 ? ["us_dod_rss"]
+    : minute % 120 === 12 ? ["idf_official"]
+    : minute % 360 === 13 ? ["polymarket"]
+    : [];
+  const manual = await claimManualRun(env.DB, slot);
+  // Added only in a previously unused slot; existing source timing is unchanged.
+  const supplemental = [
+    ...(minute % 240 === 18 ? ["centcom_rss"] : []),
+    ...(minute % 30 === 9 ? ["centcom_dvids"] : []),
+    ...(minute % 360 === 61 ? ["marad_official"] : []),
+    ...(minute % 720 === 53 ? ["satellite_context"] : []),
+    ...(minute % 60 === 55 ? ["gdelt_context"] : []),
+    ...(minute % 180 === 44 ? ["sentinel_catalog"] : []),
+    ...(minute % 1440 === 49 ? ["aerial_archive"] : []),
+    ...(minute % 30 === 22 ? ["adsb_alt"] : []),
+    ...(minute % 60 === 37 ? ["airbridge_context"] : []),
+    ...(minute % 1440 === 51 ? ["gfw_token"] : []),
+    ...(minute % 1440 === 54 ? ["gfw_sar"] : []),
+    ...(minute % 1440 === 57 ? ["gfw_sar_baseline"] : []),
+    ...(minute % 360 === 83 ? ["copernicus_ems"] : []),
+    ...(minute % 720 === 86 ? ["unosat_analysis"] : []),
+  ];
+  const selected = new Set([...group,...supplemental,...(manual?.wanted || [])]);
+  // Shared adsb.lol quota: skip redundant automatic attempts during cooldown.
+  // While recovering, reserve the first successful probe for the Tehran-priority collector,
+  // not for the broad /mil endpoint. Explicit manual requests still report their result.
+  const autoAdsb = ["adsb", "mil_lol"].filter(name =>
+    selected.has(name) && !(manual?.wanted || []).includes(name));
+  if (autoAdsb.length) {
+    const health = await env.DB.prepare(
+      "SELECT failures,next_allowed_at,lease_until FROM worker_provider_state WHERE provider=?"
+    ).bind("adsb.lol").first();
+    const now = Date.now();
+    if ((health?.next_allowed_at || 0) > now || (health?.lease_until || 0) > now) {
+      for (const name of autoAdsb) selected.delete(name);
+    } else if ((health?.failures || 0) > 0 && autoAdsb.includes("mil_lol")) {
+      selected.delete("mil_lol");
+    }
+  }
+  const due = sources.filter(s => selected.has(s.name) && (!s.secret || env[s.secret]));
+  const results = await Promise.allSettled(due.map(source => collect(env.DB, env, source, slot)));
+  if (manual) {
+    const states = await env.DB.prepare("SELECT source,state,detail,attempted_at FROM source_status").all();
+    const names=new Set(manual.wanted);
+    const report={requested:manual.wanted, observed:(states.results||[]).filter(x=>names.has(x.source)), rejected:results.map((x,i)=>x.status==="rejected"?due[i].name:null).filter(Boolean), missing_secrets:manual.wanted.filter(name=>!due.some(x=>x.name===name))};
+    await env.DB.prepare("UPDATE worker_manual_runs SET status=?, finished_ms=?, result_json=? WHERE id=? AND status='running'").bind(report.rejected.length?"partial":"done",Date.now(),JSON.stringify(report),manual.id).run();
+  }
+  if (minute % 1440 === 3) {
+    await env.DB.prepare("DELETE FROM observations WHERE observed_at < ?").bind(slot - 90 * 24 * HOUR).run();
+  }
+  if (results.some(result => result.status === "rejected")) throw new Error("D1 write failed");
+}
+

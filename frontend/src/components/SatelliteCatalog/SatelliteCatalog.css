@@ -1,0 +1,49 @@
+/* REGIONAL WATCH satellite analytical panel — old photo gallery elsewhere remains untouched */
+.rw-sat-panel{--sat-edge:#3b644d;--sat-glow:#8ed7ae}
+.rw-sat-caption{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 0 16px}
+.rw-sat-freshnote{color:#9cb8a5;font-size:11px}
+.rw-sat-lead{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,0.85fr);gap:22px;padding:23px;background:linear-gradient(140deg,#1b3529,#111f1e);border:1px solid var(--sat-edge);border-radius:17px}
+.rw-sat-intro{min-width:0}.rw-sat-intro h3{font-size:23px;line-height:1.28;margin:12px 0 18px;max-width:540px;letter-spacing:-.3px}
+.rw-sat-big{font-size:clamp(46px,7vw,70px);line-height:1.05;color:#91e9b6;letter-spacing:-2px;font-weight:780;font-variant-numeric:tabular-nums}
+.rw-sat-primary-label{color:#d7e9dc;font-size:15px;margin:9px 0 19px;line-height:1.6}
+.rw-sat-facts{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:17px}
+.rw-sat-facts>span{padding:10px 13px;border:1px solid #446850;border-radius:10px;background:#173026;display:flex;flex-direction:column;gap:3px}
+.rw-sat-facts b{color:#e4f7eb;font-size:15px;line-height:1.4}
+.rw-sat-facts small{color:#95b5a0;font-size:11px}
+.rw-sat-caveat{max-width:530px;line-height:1.75;font-size:12px;color:#a6c6b2;margin-bottom:16px}
+.rw-sat-intro a{color:#9de8b4;font-size:12px;font-weight:700;text-decoration:none}
+.rw-sat-intro a:hover{text-decoration:underline}
+.rw-sat-distribution{padding:17px;background:#10231b;border:1px solid #345341;border-radius:12px;min-width:0}
+.rw-sat-chart-title{color:#ecf8ef;font-weight:750;font-size:15px;line-height:1.4}
+.rw-sat-mini-note{font-size:11px;color:#9ebca8;line-height:1.5;margin:7px 0 13px}
+.rw-sat-bars{display:grid;gap:12px;margin:15px 0}
+.rw-sat-row{display:grid;grid-template-columns:129px minmax(0,1fr) 34px;align-items:center;gap:10px}
+.rw-sat-coord{color:#b2cfbc;font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.rw-sat-track{height:9px;border-radius:10px;background:#233c2d;overflow:hidden}
+.rw-sat-track i{display:block;height:100%;border-radius:10px;background:linear-gradient(90deg,#4b9b6f,#a2ecc0)}
+.rw-sat-bar-value{font-size:11px;color:#d9f0df;text-align:right;font-variant-numeric:tabular-nums}
+.rw-sat-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-top:14px}
+.rw-sat-small{display:flex;flex-direction:column;min-width:0;gap:11px;padding:17px 18px;border-radius:13px;background:#152c23;border:1px solid #375747}
+.rw-sat-small-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.rw-sat-small-top .kicker{font-size:10px}
+.rw-sat-state{font-size:10px;color:#99d3af;border:1px solid #407551;padding:2px 7px;border-radius:999px}
+.rw-sat-state.partial{color:#e6ca91;border-color:#816e44}
+.rw-sat-small-number{color:#e9f9ec;font-size:38px;font-weight:760;line-height:1.08}
+.rw-sat-small-description{color:#b9d2be;font-size:12px;line-height:1.7;flex:1}
+.rw-sat-small-foot{border-top:1px solid #355442;padding-top:12px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center}
+.rw-sat-small-foot small{color:#94b5a3;font-size:10px}
+.rw-sat-small-foot a{color:#9bdfb4;text-decoration:none;font-size:11px;font-weight:700}
+.rw-sat-unavailable{background:#192d25;border:1px solid #47634f;padding:18px;border-radius:14px;color:#d7ebdd}
+.rw-sat-unavailable p{font-size:12px;line-height:1.7;margin:7px 0 0;color:#a7c3b0}
+.rw-sat-warning{background:#442b24;border:1px solid #996352;border-radius:10px;padding:11px;font-size:12px;color:#f1cbbe}
+.rw-sat-details{margin-top:13px;background:#11251d;border:1px solid #385843;border-radius:12px;padding:14px 18px;color:#b8d1c0}
+.rw-sat-details summary{cursor:pointer;color:#9ee3b6;font-size:12px;font-weight:700}
+.rw-sat-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:15px}
+.rw-sat-detail-grid strong,.rw-sat-layers strong{color:#dbf0df;font-size:13px}
+.rw-sat-detail-grid p{font-size:12px;line-height:1.65;margin:8px 0}
+.rw-sat-layers{margin-top:14px;border-top:1px solid #36503d;padding-top:13px}
+.rw-sat-layer{padding:7px 0;display:flex;justify-content:space-between;gap:12px;font-size:11px;border-bottom:1px solid #294332}
+.rw-sat-layer a{color:#9ee3b6;text-decoration:none;white-space:nowrap}
+@media(max-width:880px){.rw-sat-lead{grid-template-columns:1fr}.rw-sat-cards{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.rw-sat-lead{padding:17px;gap:14px}.rw-sat-intro h3{font-size:21px}.rw-sat-cards{grid-template-columns:1fr}.rw-sat-small{padding:16px}.rw-sat-detail-grid{grid-template-columns:1fr}.rw-sat-row{grid-template-columns:122px minmax(0,1fr) 30px;gap:7px}.rw-sat-coord{font-size:10px}.rw-sat-facts b{font-size:13px}}
+\n

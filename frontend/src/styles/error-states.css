@@ -1,0 +1,3 @@
+.rw-dossier .rw-translation-state{grid-column:1/-1;width:max-content;max-width:100%}
+.rw-news-page-error{padding:16px;border:1px solid #b47462;border-radius:10px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}.rw-news-page-error button{cursor:pointer;border-radius:8px;padding:8px 14px;border:1px solid currentColor;background:transparent;color:inherit}
+.rw-analyst-error button{cursor:pointer;border:1px solid currentColor;padding:6px 12px;border-radius:8px;margin-inline-start:12px;background:transparent;color:inherit}.rw-analyst-error{display:flex;align-items:center;flex-wrap:wrap;gap:8px}

@@ -1,0 +1,27 @@
+/* Readability-first editorial typography. */
+body{font-size:16px;line-height:1.7}
+.news-card{gap:13px;padding:22px}
+.news-card h3{font-size:19px;line-height:1.48}
+.news-comment b{font-size:12px}
+.news-comment p{font-size:15px;line-height:1.78}
+.news-comment{padding:14px 15px}
+.news-actions a,.news-actions button{font-size:13px}
+.news-head{font-size:12px}
+.news-head time{font-size:11px}
+.news-detail{font-size:14px}
+.rw-story-teaser h3{font-size:19px}
+.rw-story-teaser>p,.rw-dossier>p{font-size:15px;line-height:1.73}
+.rw-story-relevance{font-size:13px;line-height:1.7;margin-top:auto}
+.rw-dossier h3{font-size:22px}
+.rw-dossier-insight p,.rw-dossier-detail>p{font-size:14px;line-height:1.75}
+.rw-dossier-detail>strong{font-size:14px}
+.rw-story-meta{font-size:12px}
+.rw-digest-item p{font-size:14px}
+.rw-digest-item strong{font-size:16px}
+.page-intro p,.rw-situation>p{font-size:16px}
+.rw-contextual-summary p{font-size:15px}
+.rw-satellite-summary h3{font-size:19px;margin:9px 0}
+.rw-satellite-summary>p{font-size:15px;line-height:1.7;color:#cadacf}
+.rw-satellite-summary .rw-technical-row{flex-wrap:wrap}
+.rw-satellite-summary .rw-technical-row a{font-size:12px}
+@media(max-width:670px){.news-card{padding:17px}.news-card h3{font-size:18px}.news-comment p{font-size:14px}.rw-dossier h3{font-size:19px}.rw-story-teaser h3{font-size:18px}}

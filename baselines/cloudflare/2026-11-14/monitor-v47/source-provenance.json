@@ -1,0 +1,9 @@
+{
+  "script": "regional-osint-monitor",
+  "live_version": "d68c6b6a-137d-4f8b-af41-a1849bdd52c6",
+  "source_endpoint": "Cloudflare /workers/scripts/regional-osint-monitor/content/v2",
+  "filename": "worker.js",
+  "git_blob_sha": "c420378653ca7f93183566d839622cca9ed57010",
+  "utf16_length": 103561,
+  "purpose": "Read-only historical snapshot; not a deployable new entrypoint"
+}

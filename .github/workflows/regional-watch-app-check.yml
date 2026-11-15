@@ -1,0 +1,297 @@
+name: Regional Watch application source checks
+on:
+  push:
+    branches: [refactor/regional-watch-modular-20261114, main]
+    # Data collectors commit JSON to main frequently. Never rebuild/redeploy for data-only commits.
+    paths: ['backend/**', 'frontend/**', 'shared/**', 'tests/**', '.github/workflows/regional-watch-app-check.yml']
+  pull_request:
+    paths: ['backend/**', 'frontend/**', 'shared/**', 'tests/**', '.github/workflows/regional-watch-app-check.yml']
+permissions:
+  contents: read
+jobs:
+  editor-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/architecture/editor-modules.test.mjs
+  frontend-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test frontend/tests/source-parity.test.mjs
+      - run: |
+          node frontend/scripts/build.mjs
+          node --check frontend/dist/assets/app.js
+          node --test frontend/tests/styles.test.mjs
+  monitor-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test backend/monitor/tests/source-parity.test.mjs
+      - run: |
+          node backend/monitor/scripts/build.mjs
+          cmp backend/monitor/dist/worker.js baselines/cloudflare/2026-11-14/monitor-v47/worker.js
+  modern-bundles:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Bundle frontend from native ES modules
+        run: npm exec --yes --package=esbuild@0.25.0 -- esbuild frontend/src/entry.js --bundle --format=iife --target=es2022 --outfile=frontend/dist/assets/app.modern.js
+      - name: Bundle Monitor from native ES modules
+        run: npm exec --yes --package=esbuild@0.25.0 -- esbuild backend/monitor/src/index.js --bundle --format=esm --target=es2022 --outfile=backend/monitor/dist/worker.modern.mjs
+      - name: Bundle Editor from native ES modules
+        run: npm exec --yes --package=esbuild@0.25.0 -- esbuild backend/editor/src/index.js --bundle --format=esm --target=es2022 --outfile=backend/editor/dist/worker.modern.mjs
+      - name: Validate loadable Worker exports and React bundle
+        run: node --test tests/architecture/modern-bundles.test.mjs
+
+  pages-documents:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve RU/HE HTML skeletons and script dependencies
+        run: node --test frontend/tests/documents.test.mjs
+
+  pages-static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Produce static routes and vendor scripts from frozen source
+        run: node frontend/scripts/build-site.mjs
+      - name: Check all eight exact HTML shells and bundled assets
+        run: node --test frontend/tests/site-build.test.mjs
+
+  pages-routing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify publicly exposed API ownership and local HTML routes
+        run: node --test tests/architecture/pages-routing.test.mjs
+
+  pages-overview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify overview adapter against D1 schema fixtures
+        run: node --test tests/architecture/pages-overview.test.mjs
+
+  pages-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Market history and source-backed public data contract
+        run: node --test tests/architecture/pages-data.test.mjs
+
+  pages-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify self-contained server routing and service boundaries
+        run: node --test tests/architecture/pages-runtime.test.mjs
+      - name: Bundle advanced-mode Pages Worker and static files
+        run: |
+          node frontend/scripts/build-site.mjs
+          npm exec --yes --package=esbuild@0.25.0 -- esbuild backend/pages/src/index.js --bundle --format=esm --target=es2022 --outfile=frontend/dist/_worker.js
+          node --check frontend/dist/_worker.js
+      - name: Fail if built Pages depends on previous Pages deployments
+        run: |
+          if grep -Eq 'ee6aa366|0f39f36e\\.regional-watch\\.pages\\.dev' frontend/dist/_worker.js; then
+            echo 'Forbidden previous-deployment dependency'; exit 1
+          fi
+      - name: RW Pages preview build — immutable artifact (no deploy)
+        uses: actions/upload-artifact@v4
+        with:
+          name: regional-watch-pages-preview
+          path: frontend/dist/
+          retention-days: 7
+          if-no-files-found: error
+
+  pages-preview:
+    name: Publish isolated Cloudflare Pages preview after all checks
+    if: github.event_name == 'push' && github.ref == 'refs/heads/refactor/regional-watch-modular-20261114'
+    needs: [editor-source, frontend-source, monitor-source, modern-bundles, pages-documents, pages-static, pages-routing, pages-overview, pages-data, pages-runtime]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    concurrency:
+      group: regional-watch-pages-preview
+      cancel-in-progress: true
+    steps:
+      - name: Download the already-verified Pages build
+        uses: actions/download-artifact@v4
+        with:
+          name: regional-watch-pages-preview
+          path: dist
+      - name: Check credentials without printing secrets
+        id: cloudflare
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [[ -n "$CF_TOKEN" && -n "$CF_ACCOUNT" ]]; then
+            echo 'ready=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+            echo 'Preview upload skipped: CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID not configured in GitHub Actions secrets.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload preview to a non-production branch only
+        id: pages-upload
+        if: steps.cloudflare.outputs.ready == 'true'
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=regional-watch --branch=rw-modular-preview
+      - name: Verify deployed preview HTTP routes (no redirect loops)
+        if: steps.cloudflare.outputs.ready == 'true'
+        env:
+          DEPLOYMENT_URL: ${{ steps.pages-upload.outputs.deployment-url }}
+          PAGES_ENVIRONMENT: ${{ steps.pages-upload.outputs.pages-environment }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$PAGES_ENVIRONMENT" != "preview" ]]; then
+            echo "Refusing smoke test: deployment was not preview ($PAGES_ENVIRONMENT)"; exit 1
+          fi
+          if [[ ! "$DEPLOYMENT_URL" =~ ^https://[a-z0-9-]+\.regional-watch\.pages\.dev/?$ ]]; then
+            echo "Unexpected deployment URL; refusing to test an unverified host"; exit 1
+          fi
+          base="${DEPLOYMENT_URL%/}"
+          for path in / '/?utm_source=chatgpt.com' /he/ /events/ /he/events/ /data/ /he/data/ /analysts/ /he/analysts/ /analysts/smoke-post /he/analysts/smoke-post /assets/app.js /assets/app.css; do
+            # Retry transient 404/503 during Cloudflare edge propagation, but never follow redirects.
+            status=000
+            for attempt in 1 2 3 4 5 6; do
+              status=$(curl --silent --show-error --max-time 20 --max-redirs 0 --output /tmp/rw-preview-body --dump-header /tmp/rw-preview-headers --write-out '%{http_code}' "$base$path") || status=000
+              echo "$path attempt $attempt => HTTP $status"
+              if [[ "$status" == "200" ]]; then break; fi
+              if [[ "$status" != "404" && "$status" != "503" && "$status" != "000" ]]; then break; fi
+              if [[ "$attempt" != "6" ]]; then sleep 3; fi
+            done
+            if [[ "$status" != "200" ]]; then
+              echo "Preview route returned non-200, including possible redirect loop: $path"; exit 1
+            fi
+            if [[ "$path" == /assets/*.js ]]; then
+              grep -qi '^content-type:.*javascript' /tmp/rw-preview-headers
+            elif [[ "$path" == /assets/*.css ]]; then
+              grep -qi '^content-type:.*text/css' /tmp/rw-preview-headers
+            else
+              grep -qi '^content-type:.*text/html' /tmp/rw-preview-headers
+              if [[ "$path" == /he* ]]; then
+                grep -Fq 'lang="he"' /tmp/rw-preview-body
+              else
+                grep -Fq 'lang="ru"' /tmp/rw-preview-body
+              fi
+            fi
+          done
+      - name: Record the exact tested source commit
+        if: steps.cloudflare.outputs.ready == 'true'
+        run: |
+          echo "Preview release source: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          echo 'Preview branch: rw-modular-preview (production branch is main)' >> "$GITHUB_STEP_SUMMARY"
+
+  pages-production:
+    name: Publish Cloudflare Pages production only after main checks
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [editor-source, frontend-source, monitor-source, modern-bundles, pages-documents, pages-static, pages-routing, pages-overview, pages-data, pages-runtime]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    concurrency:
+      group: regional-watch-pages-production
+      cancel-in-progress: false
+    steps:
+      - name: Download the verified immutable Pages artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: regional-watch-pages-preview
+          path: dist
+      - name: Require Cloudflare deployment credentials
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [[ -z "$CF_TOKEN" || -z "$CF_ACCOUNT" ]]; then
+            echo 'Missing CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID; production deployment blocked.'
+            exit 1
+          fi
+      - name: Deploy exactly the checked artifact to production
+        id: pages-upload
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=regional-watch --branch=main
+      - name: Verify immutable production deployment routes
+        env:
+          DEPLOYMENT_URL: ${{ steps.pages-upload.outputs.deployment-url }}
+          PAGES_ENVIRONMENT: ${{ steps.pages-upload.outputs.pages-environment }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$PAGES_ENVIRONMENT" != "production" ]]; then
+            echo "Refusing invalid production result: environment=$PAGES_ENVIRONMENT"; exit 1
+          fi
+          if [[ ! "$DEPLOYMENT_URL" =~ ^https://[a-z0-9-]+\.regional-watch\.pages\.dev/?$ ]]; then
+            echo "Unrecognized deployment host; not checking untrusted URL"; exit 1
+          fi
+          base="${DEPLOYMENT_URL%/}"
+          for path in / '/?utm_source=chatgpt.com' /he/ /events/ /he/events/ /data/ /he/data/ /analysts/ /he/analysts/ /analysts/smoke-post /he/analysts/smoke-post /assets/app.js /assets/app.css; do
+            status=000
+            for attempt in 1 2 3 4 5 6; do
+              status=$(curl --silent --show-error --max-time 20 --max-redirs 0 --output /tmp/rw-prod-body --dump-header /tmp/rw-prod-headers --write-out '%{http_code}' "$base$path") || status=000
+              echo "$path attempt $attempt => HTTP $status"
+              if [[ "$status" == "200" ]]; then break; fi
+              if [[ "$status" != "404" && "$status" != "503" && "$status" != "000" ]]; then break; fi
+              if [[ "$attempt" != "6" ]]; then sleep 3; fi
+            done
+            if [[ "$status" != "200" ]]; then
+              echo "Production route failed: $path HTTP $status"; exit 1
+            fi
+            if [[ "$path" == /assets/*.js ]]; then
+              grep -qi '^content-type:.*javascript' /tmp/rw-prod-headers
+            elif [[ "$path" == /assets/*.css ]]; then
+              grep -qi '^content-type:.*text/css' /tmp/rw-prod-headers
+            else
+              grep -qi '^content-type:.*text/html' /tmp/rw-prod-headers
+              if [[ "$path" == /he* ]]; then
+                grep -Fq 'lang="he"' /tmp/rw-prod-body
+              else
+                grep -Fq 'lang="ru"' /tmp/rw-prod-body
+              fi
+            fi
+          done
+      - name: Record release source
+        run: |
+          echo "Production source: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          echo 'Cloudflare Pages branch: main' >> "$GITHUB_STEP_SUMMARY"

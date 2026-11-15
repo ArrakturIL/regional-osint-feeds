@@ -1,0 +1,3 @@
+@media(max-width:900px){.rw-feature-grid{grid-template-columns:1fr 1fr}.rw-digest-grid{grid-template-columns:1fr}.rw-digest-foot{grid-column:auto}}
+@media(max-width:670px){.rw-situation{padding:18px}.rw-situation-top{align-items:flex-start}.rw-situation h2{font-size:24px}.rw-feature-grid{grid-template-columns:1fr}.rw-story-teaser h3{font-size:16px}.rw-dossier{padding:17px}.rw-dossier-top{align-items:flex-start;flex-wrap:wrap}.rw-dossier h3{font-size:18px}.rw-date-steps{grid-template-columns:1fr}.rw-service-line{align-items:flex-start;flex-direction:column;gap:8px}.rw-tech-meta{text-align:right}}
+@media(prefers-reduced-motion:reduce){.rw-dossier-detail{animation:none}}
