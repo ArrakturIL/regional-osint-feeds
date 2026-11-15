@@ -44,7 +44,10 @@ jobs:
             echo "Neon shadow skipped: NEON_DATABASE_URL not configured; GitHub JSON remains the reader"
             exit 0
           fi
-          python -m pip install --disable-pip-version-check "psycopg[binary]>=3.2,<4"
+          if ! python -m pip install --disable-pip-version-check "psycopg[binary]>=3.2,<4"; then
+            echo "Neon shadow dependency unavailable; GitHub JSON remains active"
+            exit 0
+          fi
           python -m scripts.publish_neon_mirror --source gdelt --mode shadow
       - name: Commit only small bounded news-context metadata
         if: always()
