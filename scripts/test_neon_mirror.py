@@ -91,6 +91,15 @@ class TestCollectorSnapshotContract(unittest.TestCase):
         self.assertEqual(canonical_hash({"a": 1, "b": 2}), canonical_hash({"b": 2, "a": 1}))
         self.assertNotEqual(canonical_hash({"a": 1}), canonical_hash({"a": 2}))
 
+
+    def test_canonical_hash_normalizes_integral_json_floats_from_satellite_data(self):
+        # GitHub backfill was serialized by JavaScript, where 47.0 becomes 47.
+        # Python preserves 47.0 unless explicitly normalized. Both represent
+        # the same JSON number; hash parity must be language independent here.
+        left = {"bbox": [47.0, 22.0, 57.5, -0.0], "valid": True}
+        right = {"bbox": [47, 22, 57.5, 0], "valid": True}
+        self.assertEqual(canonical_hash(left), canonical_hash(right))
+
     def test_monotonic_writer_rejects_older_and_equal_conflicting_data(self):
         same = NOW
         newer = NOW + timedelta(seconds=10)
