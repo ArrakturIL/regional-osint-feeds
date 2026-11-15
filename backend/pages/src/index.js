@@ -11,7 +11,10 @@ const alias=Object.freeze({
 async function assets(request,env,assetPath){
  if(!env.ASSETS?.fetch)throw Error('Missing Pages ASSETS binding');
  if(!assetPath)return env.ASSETS.fetch(request);
- const target=new URL(request.url);target.pathname=assetPath;
+ // Pages redirects /index.html and /section/index.html to canonical directory URLs.
+ // Fetch the canonical route to prevent redirect loops in advanced-mode _worker.js.
+ const target=new URL(request.url);
+ target.pathname=assetPath.endsWith('/index.html')?assetPath.slice(0,-'index.html'.length):assetPath;
  return env.ASSETS.fetch(new Request(target,request));
 }
 async function editor(request,env,upstream){
