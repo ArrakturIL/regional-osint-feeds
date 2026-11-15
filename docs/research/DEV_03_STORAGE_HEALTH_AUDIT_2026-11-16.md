@@ -59,3 +59,29 @@
 - DEV-03/[D-07] оставлять **[~]** до этих ворот. Разработка другой очереди не начинается без команды.
 
 **Статус:** аудит и тестовая реализация готовы; production защищён прежним кодом до согласованного выпуска новой ветки. 
+
+---
+
+## 5. Повторная проверка после восстановления соединения — более свежие факты (16.11.2026)
+
+Предыдущие цифры в разделах 1–4 — **исторический read-only snapshot первой проверки**. Продолжение работы после кратковременного сетевого обрыва выполнялось по текущему состоянию GitHub, без повторного развёртывания или изменения Neon/D1.
+
+**Свежие live read-only метрики:**
+
+| Показатель | Повторная фактическая величина |
+| --- | --- |
+| Neon Free v3, Frankfurt | 8 источников: **5 `ok`, 3 `partial`**; partial = `copernicus`, `gdelt`, `satellite`; `marad` всё ещё `ok` со старым `checked_at=2026-11-15T08:09:29.228Z` |
+| Neon API counters | `compute_time_seconds=2280`, `active_time_seconds=9040`, `data_transfer_bytes=5299277`; эти значения **не** счёт за CU-hours; retention 21600 секунд и проектный лимит 1GiB не изменились |
+| Neon relation storage | `pg_total_relation_size('public.regional_collector_snapshots')=253952` байт, включая индекс |
+| Core Cloudflare D1 | `regional-osint` **11677696 B**, 25 таблиц |
+| News Cloudflare D1 | `regional-watch-news` **6258688 B**, 15 таблиц |
+| GitHub Actions | **456 total workflow runs за 15.11 UTC** по read-only GitHub API, включая многочисленные тесты разработки; нельзя выдавать за месячные биллинговые минуты |
+| Плановый Workers cron | 1440 Monitor + 288 Editor срабатываний в сутки по `*/1` и `*/5`; реальная CPU/requests статистика по-прежнему не измерена |
+
+**Дополнительное воспроизведение дефекта и исправление.** Тест `test_future_dated_ok_snapshot_must_not_overwrite_verified_last_good` показал, что прошлая реализация копировала в D1 целостный по SHA `ok` snapshot с `checked_at` на 2 часа в будущем, хотя downstream классификация считала его `source_unavailable`. [RED run #43769512553](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43769512553) воспроизвёл нежелательную запись. В [code PR #40](https://github.com/ArrakturIL/regional-osint-feeds/pull/40) добавлено условие проверки **до write**, при отклонении более 20 минут сохраняется только действительно проверенный по SHA прошлый D1 snapshot; если его нет, синхронизация падает, а не выставляет ложный `ok`.
+
+**Подтверждение текущего исходного кода:** PR #40 HEAD `b0fcaf9716da8aca0bb24e08216cbf82a2d2ad69`, **готов к ревью, не объединён**. [Полная проверка #43769577079](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43769577079): **11/11 checks successful, 0 failed**, immutable three-component release dry run успешен; Preview и production release jobs **skipped**. [Storage workflow #43769577085](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43769577085): проверка успешна, live Neon access job skipped. В production код DEV-03 не внедрён; реальный recovery и Reader fallback logs пока не подтверждены.
+
+**Лимиты и методология:** официальные актуальные тарифные страницы [Neon Free (октябрь 2026)](https://neon.com/blog/neon-free-plan-1-gb-per-project), [Cloudflare D1 Pricing (октябрь 2026)](https://developers.cloudflare.com/d1/platform/pricing/), [GitHub Actions billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions). Free Neon: 100 CU-hours/project/month, 1 GB/project, 5 GB public transfer/month, instant restore 6h; Cloudflare D1 Free: 5GB total, 5M rows read/day, 100K rows write/day; публичные репозитории не тратят billable minutes на стандартные GitHub hosted runners, но расходы artifacts/cache требуют отдельного контроля. Эти значения — **общие тарифные лимиты**, не доказательство конкретного дневного фактического CPU или read/write расхода аккаунта.
+
+**Незакрытая существенная граница:** две таблицы Neon/D1 содержат по одной версии на источник, и Neon instant history = 6 часов. Объективное восстановление ранее здорового пакета после полной потери D1 или надёжное историческое хранение на 7–30 дней пока **не реализовано**, поэтому DEV-03/D-07 остаются `[~]`. Сначала отдельная безопасная стратегия версионированного архива и восстановительный тест; никаких сюрпризных миграций, платного R2 или новых cron в данном PR.
