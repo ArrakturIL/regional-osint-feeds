@@ -46,3 +46,13 @@ test('Hebrew present-tense tanker attack is also not a naval mine collision',()=
  const good=translated('שתי מכליות פגעו במוקש ימי ועלו באש, כך מסרה איראן');
  assert.equal(factualTranslationIssue(source,good),null);
 });
+
+test('exact live 15 Nov Hormuz headline: tankers hitting mines is not an attack or a mining operation',()=>{
+ const src=original('Two tankers strike mines in Strait of Hormuz');
+ assert.equal(factualTranslationIssue(src,translated('Два танкера нападают на мины в Хормузском проливе')),
+    'title:mine_collision_reframed_as_attack');
+ assert.equal(factualTranslationIssue(src,translated('שתי מכליות פוגעות במכרות במצר הורמוז')),
+    'title:naval_mine_misread');
+ assert.equal(factualTranslationIssue(src,translated('Два танкера столкнулись с минами в Хормузском проливе')),null);
+ assert.equal(factualTranslationIssue(src,translated('שתי מכליות פגעו במוקשים במצר הורמוז')),null);
+});
