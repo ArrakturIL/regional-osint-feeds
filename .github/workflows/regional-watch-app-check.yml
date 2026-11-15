@@ -181,7 +181,7 @@ jobs:
           if [[ "$PAGES_ENVIRONMENT" != "preview" ]]; then
             echo "Refusing smoke test: deployment was not preview ($PAGES_ENVIRONMENT)"; exit 1
           fi
-          if [[ ! "$DEPLOYMENT_URL" =~ ^https://[a-z0-9-]+\\.regional-watch\\.pages\\.dev/?$ ]]; then
+          if [[ ! "$DEPLOYMENT_URL" =~ ^https://[a-z0-9-]+\.regional-watch\.pages\.dev/?$ ]]; then
             echo "Unexpected deployment URL; refusing to test an unverified host"; exit 1
           fi
           base="${DEPLOYMENT_URL%/}"
