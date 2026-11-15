@@ -11,10 +11,10 @@ On 15 November 2026 the existing GitHub Actions secret `CLOUDFLARE_D1_API_TOKEN`
 
 The separate existing `CLOUDFLARE_API_TOKEN` continues to publish Pages. `CLOUDFLARE_ACCOUNT_ID` selects the account. Keep all secret values in GitHub Actions only — never commit or print them.
 
-A read-only trusted-branch preflight first verifies that the GitHub-stored infrastructure token can access both production Worker settings/deployments and D1 schema information. Production release is blocked if either check fails.
+Verified in [GitHub Actions #43752596321](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43752596321) on 15 Nov 2026: the existing infrastructure secret successfully read all six required D1 table schemas, both production Worker bindings, cron and deployed versions, and Pages service bindings. The one-time probe was removed from the release branch after confirmation. Production deployment independently repeats those read-only checks on every run and blocks on failure.
 
 ## Before enabling production
-1. Confirm the existing `CLOUDFLARE_D1_API_TOKEN` works for Workers Admin and D1 using the trusted-branch read-only GitHub Actions preflight. Keep PR #30 in draft until all build/contract jobs and the Wrangler offline dry-run are green. No manual Cloudflare changes should be needed for deployment after this.
+1. Existing `CLOUDFLARE_D1_API_TOKEN` **already passed** read-only Workers + D1 checks in GitHub Actions #43752596321. Review the latest PR #30 full checks and Wrangler dry-run. No manual Cloudflare credential changes are needed.
 2. Confirm production Pages binds `EDITOR` and `MONITOR` to the existing two Workers and has correct `DB`/`NEWS_DB`; live Worker configs retain their established cron, D1 IDs, vars and secret names. The CI preflight enforces this without emitting secret values.
 3. Merge PR #30 after checks, which switches production publishing from Pages-only to the coordinated three-component release. The `release-production` GitHub job must succeed; retain `rw-coordinated-release-receipt` and `rw-coordinated-rollback-baseline` artifacts. Verify all three actual Cloudflare deployment IDs and source SHA before completing DEV-01 in MASTER TODO.
 
