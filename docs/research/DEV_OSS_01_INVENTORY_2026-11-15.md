@@ -1,6 +1,6 @@
 # REGIONAL WATCH — DEV-OSS-01: инвентаризация бесплатных инструментов (15.11.2026)
 
-**Статус:** практическая инвентаризация и выбор первых A/B-проб, НЕ завершённая интеграция в production.  
+**Статус:** инвентаризация исходников и проверка реестра npm завершены для указанных в таблице пакетов; A/B совместимости и качества пока не проведены, интеграции в production нет.  
 **Основной TODO:** [REGIONAL_WATCH_MASTER_TODO.md](../REGIONAL_WATCH_MASTER_TODO.md).  
 **Предел полномочий этого документа:** read-only аудит исходников + проверка каталога кандидатов; никаких новых API-ключей, хостинга, миграций, npm installs, правок Workers или источников в production.
 
@@ -21,6 +21,38 @@
 | Контроль перевода и атрибуции | backend/editor/src/analysts/translation.mjs (Cloudflare AI, hash/cache и числа); translations/fact-guard.mjs, semantic-meaning.mjs; scripts/translation_semantics.py | Есть; текущие проверки не равны достоверности; кейсы P1 остаются на независимый QA |
 | Source status, hash, freshness и fallback | backend/monitor/src/mirrors/collector-cache.js; scripts/sync_neon_primary_to_d1.py | Уже в production; не запускать повторную миграцию |
 | Aviation/AIS/спутники/GDELT | backend/monitor/src/collectors/ и scripts/collect_*.py | Есть первичные адаптеры; расширение только по gap и с provenance |
+
+## Проверка версий и лицензий по первоисточнику (15.11.2026)
+
+В момент первого черновика сведения о версиях npm не были подтверждены. Теперь проверена страница **npm package registry** для следующих кандидатов; версии ниже — снимок, а не автоматическое обещание совместимости с Workers.
+
+| Пакет | Зарегистрированная версия | Лицензия npm | Актуальность публикации / ограничение | Источник |
+|---|---:|---|---|---|
+| `fast-xml-parser` | 5.12.1 | MIT | свежий релиз; JS ESM/browser по README. В v5 есть обработка entities/DOCTYPE: **проверить безопасность untrusted XML и лимиты парсинга до использования** | [npm](https://www.npmjs.com/package/fast-xml-parser) |
+| `cheerio` | 1.2.0 | MIT | последняя опубликованная версия около 10 месяцев назад, зависимостей больше чем у узкого XML-парсера | [npm](https://www.npmjs.com/package/cheerio) |
+| `@mozilla/readability` | 0.6.0 | Apache-2.0 | последний npm релиз около 2 лет назад; upstream **не очищает небезопасный HTML**, для вывода нужна отдельная санитизация | [npm](https://www.npmjs.com/package/@mozilla/readability), [Mozilla upstream](https://github.com/mozilla/readability) |
+| `franc-min` | 6.2.0 | MIT | последний npm релиз около 3 лет назад. Поддержка mixed/коротких HE/AR **не доказана** | [npm](https://www.npmjs.com/package/franc-min) |
+| `transliteration` | 2.7.0 | MIT | свежий релиз; 1:1 Unicode mapping, не надёжное восстановление имён | [npm](https://www.npmjs.com/package/transliteration) |
+| `papaparse` | 5.7.1 | MIT | свежий релиз; CSV/TSV без сетевого API | [npm](https://www.npmjs.com/package/papaparse) |
+| `pdfjs-dist` | 6.5.438 | Apache-2.0 | свежий релиз; большой PDF в Worker не проверен, резерв — offline Actions | [npm](https://www.npmjs.com/package/pdfjs-dist) |
+| `mammoth` | 1.12.2 | BSD-2-Clause | свежий релиз; DOCX → HTML, не гарантия точного преобразования | [npm](https://www.npmjs.com/package/mammoth) |
+| `@turf/turf` | 7.4.0 | MIT | недавний релиз; полная сборка имеет десятки зависимостей — выбирать точечные модули | [npm](https://www.npmjs.com/package/@turf/turf) |
+| `maplibre-gl` | 6.18.0 | BSD-3-Clause | свежий релиз; картографические tile API и hosting имеют **отдельные условия** | [npm](https://www.npmjs.com/package/maplibre-gl) |
+
+**Что ещё не подтверждено экспериментом:** размер dependency tree в нашей сборке, CPU на настоящем Cloudflare Worker, точность HE/AR, сравнительная полнота RSS/HTML, законность реального извлечения содержимого по каждому источнику, актуальный расход квот конкретного аккаунта. Лицензия npm не отменяет ToS источника.
+
+### Бесплатность запуска — проверена документация провайдеров
+
+- [Cloudflare Workers Free limits](https://developers.cloudflare.com/workers/platform/limits/): 10 мс CPU на HTTP/cron invocation, 128 MB RAM, 100 000 вызовов/сутки. Это **лимит**, не доступный остаток конкретного аккаунта.
+- [Workers AI pricing](https://developers.cloudflare.com/workers-ai/platform/pricing/): 10 000 neurons/сутки бесплатно; превышение на Free блокируется, а не автоматически расширяет бесплатную квоту.
+- [GitHub Actions — standard runner для public repo](https://docs.github.com/en/actions/how-tos/write-workflows/choose-where-workflows-run/choose-the-runner-for-a-job): стандартные hosted runners для публичных репозиториев бесплатны, с техническими лимитами и отдельной квотой на хранение артефактов. Это подходит для **ограниченных offline обработок**, не требует VPS.
+- Пользовательские аккаунтные остатки Workers/D1/AI/Neon в этом блоке не запрашивались и не подтверждались.
+
+### Практический приоритет
+
+1. Для CENTCOM RSS в Worker сейчас применяется regexp-извлечение, поэтому **первый A/B кандидат** — `fast-xml-parser` с фиксированными реальными входами и fail-closed. Тест сначала подтверждает конкретный дефект regex; затем кандидат должен устранить его без изменения публичных типов/дат/source attribution.
+2. После реальной проверки — собственная нормализация/segmenter (без дополнительного npm), `franc-min` на RU/HE/EN/AR только с abstain/unknown, затем HTML и гео по выявленным проблемам.
+3. На следующем DEV-OSS-02 **не устанавливать пакеты массово и не деплоить на production до RED→GREEN, bundle/CPU checks и согласованного release**.
 
 ## Оценка кандидатов (статусы: KEEP / TRIAL / BACKLOG / REJECT)
 
