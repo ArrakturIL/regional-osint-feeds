@@ -3,9 +3,9 @@ on:
   push:
     branches: [refactor/regional-watch-modular-20261114, feature/integrated-data-quality-neon-20261115, release/regional-watch-architecture-20261115, main]
     # Data collectors commit JSON to main frequently. Never rebuild/redeploy for data-only commits.
-    paths: ['backend/**', 'frontend/**', 'shared/**', 'tests/**', 'scripts/audit_collector_cache.py', 'scripts/test_audit_collector_cache.py', 'scripts/test_p1_backup_contract.py', 'scripts/sync_collector_shadows.py', 'scripts/test_collector_shadow_pipeline.py', '.github/workflows/collector-shadow-sync.yml', 'storage/cloudflare/002_p1_translation_repair_backups.sql', 'storage/cloudflare/003_p1_translation_backup_capture.sql', '.github/workflows/regional-watch-app-check.yml']
+    paths: ['backend/**', 'frontend/**', 'shared/**', 'tests/**', 'scripts/audit_collector_cache.py', 'scripts/test_audit_collector_cache.py', 'scripts/test_p1_backup_contract.py', 'scripts/sync_collector_shadows.py', 'scripts/collector_rollout_flags.py', 'scripts/test_collector_rollout_flags.py', 'config/collector-rollout.json', '.github/workflows/gdelt.yml', 'scripts/test_collector_shadow_pipeline.py', '.github/workflows/collector-shadow-sync.yml', 'storage/cloudflare/002_p1_translation_repair_backups.sql', 'storage/cloudflare/003_p1_translation_backup_capture.sql', '.github/workflows/regional-watch-app-check.yml']
   pull_request:
-    paths: ['backend/**', 'frontend/**', 'shared/**', 'tests/**', 'scripts/audit_collector_cache.py', 'scripts/test_audit_collector_cache.py', 'scripts/test_p1_backup_contract.py', 'scripts/sync_collector_shadows.py', 'scripts/test_collector_shadow_pipeline.py', '.github/workflows/collector-shadow-sync.yml', 'storage/cloudflare/002_p1_translation_repair_backups.sql', 'storage/cloudflare/003_p1_translation_backup_capture.sql', '.github/workflows/regional-watch-app-check.yml']
+    paths: ['backend/**', 'frontend/**', 'shared/**', 'tests/**', 'scripts/audit_collector_cache.py', 'scripts/test_audit_collector_cache.py', 'scripts/test_p1_backup_contract.py', 'scripts/sync_collector_shadows.py', 'scripts/collector_rollout_flags.py', 'scripts/test_collector_rollout_flags.py', 'config/collector-rollout.json', '.github/workflows/gdelt.yml', 'scripts/test_collector_shadow_pipeline.py', '.github/workflows/collector-shadow-sync.yml', 'storage/cloudflare/002_p1_translation_repair_backups.sql', 'storage/cloudflare/003_p1_translation_backup_capture.sql', '.github/workflows/regional-watch-app-check.yml']
 permissions:
   contents: read
 jobs:
@@ -26,6 +26,8 @@ jobs:
         run: python -m unittest discover -s scripts -p 'test_translate_news_open_source.py' -v
       - name: Validate read-only D1 parity reporter offline
         run: python -m unittest scripts.test_audit_collector_cache -v
+      - name: Verify source-by-source cutover approval contract
+        run: python -m unittest scripts.test_collector_rollout_flags -v
       - name: Verify integrated eight-source shadow sync contract offline
         run: python -m unittest scripts.test_collector_shadow_pipeline -v
       - name: Test immutable production translation backup offline

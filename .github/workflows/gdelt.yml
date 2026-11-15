@@ -6,6 +6,8 @@ on:
     paths:
       - "scripts/collect_gdelt.py"
       - "scripts/test_gdelt.py"
+      - "scripts/collector_rollout_flags.py"
+      - "config/collector-rollout.json"
       - ".github/workflows/gdelt.yml"
   workflow_dispatch:
   schedule:
@@ -29,6 +31,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Read per-source approved cutover policy
+        id: rollout
+        run: python -m scripts.collector_rollout_flags --source gdelt
       - name: Syntax and offline parser checks
         run: |
           python -m py_compile scripts/collect_gdelt.py
@@ -53,7 +58,7 @@ jobs:
         id: neon_d1
         continue-on-error: true
         # Source-by-source cutover; empty repo variable means NO production D1 write.
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && contains(format(',{0},', vars.REGIONAL_NEON_D1_SOURCES), ',gdelt,')
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && (contains(format(',{0},', vars.REGIONAL_NEON_D1_SOURCES), ',gdelt,') || steps.rollout.outputs.enabled == 'true')
         env:
           NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
           CLOUDFLARE_D1_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
@@ -68,7 +73,7 @@ jobs:
           python -m scripts.publish_neon_mirror --source gdelt --mode required
           python -m scripts.neon_to_d1 --source gdelt --init-table
       - name: Commit only small bounded news-context metadata
-        if: always() && !(contains(format(',{0},', vars.REGIONAL_NEON_PRIMARY_SOURCES), ',gdelt,') && steps.neon_d1.outcome == 'success')
+        if: always() && !((contains(format(',{0},', vars.REGIONAL_NEON_PRIMARY_SOURCES), ',gdelt,') || steps.rollout.outputs.enabled == 'true') && steps.neon_d1.outcome == 'success')
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -79,7 +84,7 @@ jobs:
             git push
           fi
       - name: Signal Neon primary failure after attempting Legacy GitHub fallback
-        if: always() && contains(format(',{0},', vars.REGIONAL_NEON_PRIMARY_SOURCES), ',gdelt,') && steps.neon_d1.outcome == 'failure'
+        if: always() && (contains(format(',{0},', vars.REGIONAL_NEON_PRIMARY_SOURCES), ',gdelt,') || steps.rollout.outputs.enabled == 'true') && steps.neon_d1.outcome == 'failure'
         run: |
           echo "::error::Neon D1 primary sync failed for gdelt; Legacy GitHub data writeback was attempted"
           exit 1

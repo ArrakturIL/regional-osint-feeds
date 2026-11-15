@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "stage": "graduated",
+  "sources": [
+    "analysts",
+    "centcom",
+    "copernicus",
+    "gdelt",
+    "marad",
+    "news_translation",
+    "satellite",
+    "unosat"
+  ],
+  "reason": "Private Neon+D1 hash parity verified for all eight; modular Editor and Monitor deployed with per-source SHA checked D1 fallback; Monitor manual canaries GDELT/CENTCOM/MARAD/Copernicus/Satellite/UNOSAT passed; legacy commit preserved on each failed D1 projection."
+}

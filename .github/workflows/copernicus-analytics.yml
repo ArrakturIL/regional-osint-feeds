@@ -52,11 +52,14 @@ jobs:
             exit 0
           fi
           python -m scripts.publish_neon_mirror --source copernicus --mode shadow
+      - name: Read per-source approved cutover policy
+        id: rollout
+        run: python -m scripts.collector_rollout_flags --source copernicus
       - name: Sync verified copernicus cache from Neon to private D1
         id: neon_d1
         continue-on-error: true
         # Source-by-source cutover; empty repo variable means NO production D1 write.
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && contains(format(',{0},', vars.REGIONAL_NEON_D1_SOURCES), ',copernicus,')
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && (contains(format(',{0},', vars.REGIONAL_NEON_D1_SOURCES), ',copernicus,') || steps.rollout.outputs.enabled == 'true')
         env:
           NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
           CLOUDFLARE_D1_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
@@ -71,7 +74,7 @@ jobs:
           python -m scripts.publish_neon_mirror --source copernicus --mode required
           python -m scripts.neon_to_d1 --source copernicus --init-table
       - name: Commit public metadata mirror (main only)
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && !(contains(format(',{0},', vars.REGIONAL_NEON_PRIMARY_SOURCES), ',copernicus,') && steps.neon_d1.outcome == 'success')
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && !((contains(format(',{0},', vars.REGIONAL_NEON_PRIMARY_SOURCES), ',copernicus,') || steps.rollout.outputs.enabled == 'true') && steps.neon_d1.outcome == 'success')
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -97,7 +100,7 @@ jobs:
             exit 1
           fi
       - name: Signal Neon primary failure after attempting Legacy GitHub fallback
-        if: always() && contains(format(',{0},', vars.REGIONAL_NEON_PRIMARY_SOURCES), ',copernicus,') && steps.neon_d1.outcome == 'failure'
+        if: always() && (contains(format(',{0},', vars.REGIONAL_NEON_PRIMARY_SOURCES), ',copernicus,') || steps.rollout.outputs.enabled == 'true') && steps.neon_d1.outcome == 'failure'
         run: |
           echo "::error::Neon D1 primary sync failed for copernicus; Legacy GitHub data writeback was attempted"
           exit 1
