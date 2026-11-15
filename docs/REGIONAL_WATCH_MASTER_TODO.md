@@ -39,6 +39,9 @@
 - **Проверки:** сначала RED на реальных фразах; затем [основной CI 43724245898](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43724245898) — 10/10 проверок прошли, deployment jobs пропущены; [Python translation CI 43724245865](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43724245865) — successful, production side effects на PR пропущены.
 - **Восстановление после разрыва:** [чекпоинт текущей сессии](https://github.com/ArrakturIL/regional-osint-feeds/blob/work/regional-watch-execution-20261115/docs/REGIONAL_WATCH_EXECUTION_CHECKPOINT_2026-11-15.md). После ошибки сначала читать коммиты и этот документ, не повторять уже выполненный код и не заявлять о публикации.
 
+- **D-03/D-04 (read-only аудит):** все восемь записей D1 проверены полным SHA-256 содержимого и timestamp, 8/8 успешно; при сравнении с текущими GitHub main snapshots **6 D1 источников отстают на 8–16 часов, GDELT в D1 на 3,87 ч новее (разовый подтверждённый прогон), satellite совпадает, но старше 72 ч**. Критерий регулярной синхронизации НЕ выполнен. [Подробный аудит](https://github.com/ArrakturIL/regional-osint-feeds/blob/work/regional-watch-execution-20261115/docs/qa/REGIONAL_WATCH_D1_SHADOW_AUDIT_2026-11-15.md).
+- **D-04 инструмент контроля:** добавлены `scripts/audit_collector_cache.py` (только SELECT, без секретов в выводе) и восемь регрессионных тестов `scripts/test_audit_collector_cache.py`; [общий GitHub CI 43724933138](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43724933138): editor + все 10 проверочных jobs зелёные, релизные jobs SKIPPED. Результат `parity` нельзя объявлять, пока подтверждён дрейф шести источников.
+
 Следующие незакрытые блокеры: проверенные корректировки существующих P1 записей с возможностью отката; D-04/D-05 реальные теневые циклы и read parity; RU/HE preview QA; согласование веток перед любым релизом.
 
 ## 2. Очередь работ: одна матрица, с приоритетами и зависимостями
