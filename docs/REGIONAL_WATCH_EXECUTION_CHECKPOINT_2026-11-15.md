@@ -102,3 +102,13 @@
 - Tested with offline SQLite `scripts/test_p1_backup_contract.py` in [GitHub app CI 43740253872](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43740253872), Editor job passed, all source-build validators nearly completed; check final CI. Test covers exact backup data, immutable triggers, no HE source.
 - **Critical resumption invariant:** Original bad RU and HE fields are STILL LIVE at this checkpoint; no production translations changed yet. On interruption do not reinsert backup batch (duplicate triggers are intentionally strict). First verify existing 3 immutable copies by SELECT, then decide if target rows have already been patched or not.
 - Source cross-check via original INN/Reuters/JPost online publications independently confirmed attribution and uncertainty, not just cached headlines.
+
+## 2026-11-15 — GLOBAL ARCHITECTURE PRIORITY OVERRIDE (user instruction)
+
+**Binding user decision:** stop spending time on individual site content/translation defects; prioritize complete integrated architecture and end-to-end operation first: modular GitHub architecture, Cloudflare Pages+Editor+Monitor+D1, Neon shadow snapshots, collector schedules, connectors, safe staged release. Existing P1 translation cases remain in the master TODO for later; do NOT do any new per-article D1 edits.
+
+**State on interruption:** D1 `regional-watch-news` contains a verified immutable three-row backup batch `rw_p1_20261115_userapproved_1909`; actual news/HE rows were not changed by this work (verify with SELECT if uncertain). Do not create further backup or apply correction from the paused per-article work. `PR #25` remains draft and unmerged.
+
+**Architectural gap confirmed:** `scripts/publish_neon_mirror.py` and `scripts/neon_to_d1.py` implement validated source snapshots; Monitor and Editor have gated D1 fallback readers, but all eight-source sync remains opt-in/not regularly scheduled on main, and the feature branch diverges from data-updated main. No cutover flags to disable legacy commits yet. Safest next path: a bounded single scheduled **shadow-only Neon→D1 maintenance workflow** which reads eight existing GitHub JSON pairs, handles missing credentials/errors fail-closed, and leaves old main JSON writers operational; validate on isolated branch; then preview and progressive release with explicit checks. Do not make Neon Free compute wake per-minute.
+
+**Global execution gates:** 1) full topology/versions/bindings audit, 2) shadow sync CI TDD, 3) preview Pages+read-only API/Worker cross-check, 4) reconcile main safely, 5) production deployment of modules, 6) verify repeated scheduled shadow and per-source D1 read fallback, 7) only then retire old JSON writebacks. Pin exact commits; checkpoint before any external mutation.
