@@ -48,3 +48,12 @@ Two bugs were reproduced RED in GitHub CI and fixed GREEN:
 **Important next gate:** all eight source workflows include shadow mirroring **only in the feature branch**. Existing live `main` JSON commits are unchanged. Next build a secure server-side reader/synchronizer with an explicit fallback, do not expose the Neon secret to public JavaScript or deploy a public open SQL endpoint, run real scheduled cycles and compare fresh values. Disable source-by-source GitHub commits only after the read path and freshness safeguards pass. No production merge/deploy has occurred.
 
 Neon Free cost is bounded; do not query the database separately for each public website view. Prefer Cloudflare Worker server-side access with caching/ingest into D1, after Worker credential management and quota checks.
+
+## Further checkpoint — private D1 cache implementation (15 Nov 2026)
+- Staged add-on in the feature branch: storage/cloudflare/001_regional_collector_cache.sql, scripts/neon_to_d1.py with offline regression suite and eight source-specific, opt-in D1 sync workflow steps.
+- New scoped secret CLOUDFLARE_D1_API_TOKEN is not configured yet. Existing Pages token returned HTTP 401 on D1 API. Do not broaden Pages token permissions. CI now skips this read-only diagnostic until a separate token is provided.
+- GitHub Actions variable REGIONAL_NEON_D1_SOURCES remains unset. Zero live D1 writes from collector workflows. Existing GitHub JSON commits continue.
+- Monitor's gated D1 reader has six adapters: gdelt, marad, centcom, satellite, copernicus and unosat. It validates JSON, SHA256 and checked_at, then retains GitHub fallback. Production COLLECTOR_CACHE_SOURCES is unset. No Monitor Worker production deployment.
+- Editor CORE_DB shares the Monitor D1 binding; Editor analysts/news_translation D1 reader still needs implementation.
+- Rollout and rollback guide: docs/architecture/neon-d1-sync-runbook.md.
+- The only authorized next live step is adding the dedicated restricted D1 token and verifying access; no main merge or writeback cutover without end-to-end QA.
