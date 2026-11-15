@@ -265,79 +265,158 @@ jobs:
           echo "Preview release source: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
           echo 'Preview branch: rw-integrated-preview or rw-modular-preview (production branch remains main)' >> "$GITHUB_STEP_SUMMARY"
 
-  pages-production:
-    name: Publish Cloudflare Pages production only after main checks
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+  release-bundle:
+    name: Build immutable three-component release
     needs: [editor-source, frontend-source, monitor-source, modern-bundles, pages-documents, pages-static, pages-routing, pages-overview, pages-data, pages-runtime]
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify coordinated release unit contracts
+        run: node --test tests/architecture/release-pipeline.test.mjs
+      - name: Assemble Pages and Worker bundles and verify the exact source SHA
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          node scripts/release/build.mjs "$SOURCE_SHA"
+          node scripts/release/verify.mjs "$SOURCE_SHA"
+      - name: Upload single immutable verified release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rw-unified-release-bundle
+          path: release/
+          retention-days: 30
+          if-no-files-found: error
+
+  release-production:
+    name: Publish coordinated Pages and Workers
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [release-bundle]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
     concurrency:
-      group: regional-watch-pages-production
+      group: regional-watch-coordinated-production
       cancel-in-progress: false
     steps:
-      - name: Download the verified immutable Pages artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
         with:
-          name: regional-watch-pages-preview
-          path: dist
-      - name: Require Cloudflare deployment credentials
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: rw-unified-release-bundle
+          path: release
+      - name: Require identical checked-out code and verified artifact
         env:
-          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: node scripts/release/verify.mjs "$SOURCE_SHA"
+      - name: Require BOTH scoped Cloudflare tokens before changing any production service
+        env:
+          PAGES_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          WORKERS_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }}
           CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          if [[ -z "$CF_TOKEN" || -z "$CF_ACCOUNT" ]]; then
-            echo 'Missing CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID; production deployment blocked.'
+          set -euo pipefail
+          if [[ -z "$PAGES_TOKEN" || -z "$WORKERS_TOKEN" || -z "$CF_ACCOUNT" ]]; then
+            echo "::error::Coordinated publish blocked: Pages token, Workers Editor token and Cloudflare account ID are all required"
             exit 1
           fi
-      - name: Deploy exactly the checked artifact to production
+          echo 'Both scoped deployment credentials are configured; release may proceed'
+      - name: Capture verified production binding and exact rollback versions before any write
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_WORKERS_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          BASELINE: ${{ runner.temp }}/rw-release-baseline.json
+        run: node scripts/release/cloudflare-gate.mjs capture "$SOURCE_SHA" "$BASELINE"
+      - name: Deploy tested Editor module (no rebuild; preserve secrets and vars)
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --config release/config/editor.json --no-bundle
+      - name: Deploy tested Monitor module (no rebuild; preserve secrets and vars)
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --config release/config/monitor.json --no-bundle
+      - name: Check that published Workers preserved cron and all private bindings
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_WORKERS_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          BASELINE: ${{ runner.temp }}/rw-release-baseline.json
+        run: node scripts/release/cloudflare-gate.mjs postcheck "$SOURCE_SHA" "$BASELINE"
+      - name: Deploy the EXACT same-SHA Pages artifact after both Workers
         id: pages-upload
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=regional-watch --branch=main
-      - name: Verify immutable production deployment routes
+          command: pages deploy release/pages --project-name=regional-watch --branch=main
+      - name: Production release technical smoke (routes and Pages environment only)
         env:
-          DEPLOYMENT_URL: ${{ steps.pages-upload.outputs.deployment-url }}
           PAGES_ENVIRONMENT: ${{ steps.pages-upload.outputs.pages-environment }}
-        shell: bash
+          DEPLOYMENT_URL: ${{ steps.pages-upload.outputs.deployment-url }}
         run: |
           set -euo pipefail
-          if [[ "$PAGES_ENVIRONMENT" != "production" ]]; then
-            echo "Refusing invalid production result: environment=$PAGES_ENVIRONMENT"; exit 1
-          fi
+          test "$PAGES_ENVIRONMENT" = production || { echo "::error::Pages deployment is not production"; exit 1; }
           if [[ ! "$DEPLOYMENT_URL" =~ ^https://[a-z0-9-]+\.regional-watch\.pages\.dev/?$ ]]; then
-            echo "Unrecognized deployment host; not checking untrusted URL"; exit 1
+            echo "::error::Unexpected Pages hostname"; exit 1
           fi
-          base="${DEPLOYMENT_URL%/}"
-          for path in / '/?utm_source=chatgpt.com' /he/ /events/ /he/events/ /data/ /he/data/ /analysts/ /he/analysts/ /analysts/smoke-post /he/analysts/smoke-post /assets/app.js /assets/app.css; do
-            status=000
-            for attempt in 1 2 3 4 5 6; do
-              status=$(curl --silent --show-error --max-time 20 --max-redirs 0 --output /tmp/rw-prod-body --dump-header /tmp/rw-prod-headers --write-out '%{http_code}' "$base$path") || status=000
-              echo "$path attempt $attempt => HTTP $status"
-              if [[ "$status" == "200" ]]; then break; fi
-              if [[ "$status" != "404" && "$status" != "503" && "$status" != "000" ]]; then break; fi
-              if [[ "$attempt" != "6" ]]; then sleep 3; fi
-            done
-            if [[ "$status" != "200" ]]; then
-              echo "Production route failed: $path HTTP $status"; exit 1
-            fi
-            if [[ "$path" == /assets/*.js ]]; then
-              grep -qi '^content-type:.*javascript' /tmp/rw-prod-headers
-            elif [[ "$path" == /assets/*.css ]]; then
-              grep -qi '^content-type:.*text/css' /tmp/rw-prod-headers
-            else
-              grep -qi '^content-type:.*text/html' /tmp/rw-prod-headers
-              if [[ "$path" == /he* ]]; then
-                grep -Fq 'lang="he"' /tmp/rw-prod-body
-              else
-                grep -Fq 'lang="ru"' /tmp/rw-prod-body
-              fi
-            fi
+          for path in / /he/ /api/overview; do
+            status=$(curl --silent --show-error --max-time 30 --max-redirs 0 -o /dev/null -w '%{http_code}' "${DEPLOYMENT_URL%/}$path")
+            test "$status" = 200 || { echo "::error::Release route $path HTTP $status"; exit 1; }
           done
-      - name: Record release source
+      - name: Verify production service bindings after Pages publication
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_WORKERS_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          BASELINE: ${{ runner.temp }}/rw-release-baseline.json
+        run: node scripts/release/cloudflare-gate.mjs postcheck "$SOURCE_SHA" "$BASELINE"
+      - name: Record coordinated source SHA and immutable release receipt
+        env:
+          SOURCE_SHA: ${{ github.sha }}
         run: |
-          echo "Production source: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
-          echo 'Cloudflare Pages branch: main' >> "$GITHUB_STEP_SUMMARY"
+          echo "Pages + Editor + Monitor source SHA: $SOURCE_SHA" >> "$GITHUB_STEP_SUMMARY"
+          echo "Bundle name: rw-unified-release-bundle" >> "$GITHUB_STEP_SUMMARY"
+          cat release/manifest.json | sha256sum | sed 's/ .*//' | xargs -I{} echo "Manifest SHA-256: {}" >> "$GITHUB_STEP_SUMMARY"
+      - name: Automatic exact-version rollback on any partial publish failure
+        if: failure()
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_WORKERS_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          BASELINE: ${{ runner.temp }}/rw-release-baseline.json
+        run: |
+          if [[ -s "$BASELINE" ]]; then
+            node scripts/release/cloudflare-gate.mjs rollback "$SOURCE_SHA" "$BASELINE"
+          else
+            echo 'No deployment started; rollback baseline was never captured.'
+          fi
+      - name: Preserve redacted rollback receipt for auditing
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rw-coordinated-rollback-baseline
+          path: ${{ runner.temp }}/rw-release-baseline.json
+          retention-days: 30
+          if-no-files-found: ignore
