@@ -12,6 +12,21 @@ const MAX_JSON_BYTES=1048576;
 const ENCODER=new TextEncoder();
 const HASH=/^[0-9a-f]{64}$/;
 const allowedStates=new Set(['ok','partial','error','stale']);
+// Per-isolate, bounded diagnostic. No raw URLs, payloads, SQL or error messages.
+const lastFallbackWarning=new Map();
+function reportReaderFallback(source,reason,opts){
+ const event={source,reason};
+ if(typeof opts.onFallback==='function'){
+  try{opts.onFallback(event)}catch{ /* diagnostic callback must not break fallback */ }
+  return;
+ }
+ const key=source+':'+reason, now=Date.now();
+ if(now-(lastFallbackWarning.get(key)??-Infinity)<60*60_000)return;
+ lastFallbackWarning.set(key,now);
+ console.warn('regional_watch reader_fallback source='+source+' reason='+reason);
+}
+const invalidCacheError=err=>/digest|invalid.*(JSON|shape|source status)|inconsistent|wrong D1 collector row|snapshot exceeds cap/.test(String(err?.message||''));
+
 
 const sortJson=value=>Array.isArray(value)?value.map(sortJson):
  value&&typeof value==='object'?
@@ -70,16 +85,20 @@ export async function readCollectorPair(env,sourceKey,dataUrl,statusUrl,opts={})
  const enabled=String(env?.COLLECTOR_CACHE_SOURCES||'').split(',')
   .map(x=>x.trim()).includes(sourceKey);
  if(enabled){
+  let reason='cache_missing';
   try{
    const cached=await readD1CollectorSnapshot(env,sourceKey);
    const now=Number.isFinite(opts.nowMs)?opts.nowMs:Date.now();
    const age=now-(cached?.checkedAtMs??0);
    const maxAge=Number.isFinite(opts.maxAgeMs)?opts.maxAgeMs:Infinity;
    if(cached&&age>=-20*60000&&age<=maxAge)return cached;
-  }catch{
-   // The old collector's GitHub path remains a validated fallback.
-   // Do not mistake a failed mirror read for a verified empty result.
+   reason=cached?'cache_stale':'cache_missing';
+  }catch(err){
+   reason=invalidCacheError(err)?'cache_invalid':'cache_unavailable';
   }
+  // Preserve legacy DTOs and return source fallback normally, with a
+  // metadata-only diagnostic emitted once per hour per isolate.
+  reportReaderFallback(sourceKey,reason,opts);
  }
  const fetcher=opts.get||get;
  const [data,status]=await Promise.all([fetcher(dataUrl,'json'),fetcher(statusUrl,'json')]);
