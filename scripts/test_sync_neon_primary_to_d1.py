@@ -89,6 +89,24 @@ class TestNeonPrimaryReplication(unittest.TestCase):
             execute_replica_sync('neon-secret','account','d1-secret',**hooks)
         self.assertIn('d1_discover',self.trace)
 
+    def test_error_snapshot_holds_last_valid_d1_instead_of_replacing_it(self):
+        hooks=self.hooks()
+        seen=[]
+        def reader(conn,key):
+            return SimpleNamespace(source_key=key, checked_at=datetime.now(timezone.utc),
+                 status={'state':'error' if key=='gdelt' else 'ok'})
+        def mirror(conn,client,key):
+            seen.append(key)
+            return {'source':key,'result':'unchanged'}
+        hooks['stored_reader']=reader
+        hooks['mirror']=mirror
+        out=execute_replica_sync('neon-secret','account','d1-secret',**hooks)
+        self.assertNotIn('gdelt',seen,'invalid source state must not overwrite D1 last valid pair')
+        self.assertEqual(out['d1_verified'],7)
+        health={row['source']:row['health'] for row in out['health']}
+        self.assertEqual(health['gdelt'],'source_unavailable')
+        self.assertEqual(health['analysts'],'data_fresh')
+
     def test_missing_credentials_never_contact_neon_or_cloudflare(self):
         with self.assertRaises(ValueError):
             execute_replica_sync('','account','token',**self.hooks())
