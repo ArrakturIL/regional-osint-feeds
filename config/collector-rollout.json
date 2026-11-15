@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "stage": "canary",
+  "sources": [
+    "gdelt"
+  ],
+  "reason": "First source D1 read and Neon/D1 readback before stopping the corresponding GitHub JSON commits."
+}
