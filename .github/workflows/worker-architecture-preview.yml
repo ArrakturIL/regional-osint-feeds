@@ -1,0 +1,74 @@
+name: Regional Watch modular Worker QA staging
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/editor/**'
+      - 'backend/monitor/**'
+      - 'deploy/wrangler.editor.qa.json'
+      - 'deploy/wrangler.monitor.qa.json'
+      - 'tests/architecture/worker-staging-config.test.mjs'
+      - '.github/workflows/worker-architecture-preview.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: regional-watch-worker-qa-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  stage-workers:
+    # Only this same-repository, user-approved PR may access Cloudflare credentials.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'infra/regional-watch-workers-20261115' && github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test modular Worker and QA deployment constraints
+        run: |
+          node --test tests/architecture/worker-staging-config.test.mjs tests/architecture/editor-modules.test.mjs
+          node --test backend/monitor/tests/source-parity.test.mjs
+      - name: Produce the exact module bundles
+        run: |
+          npm exec --yes --package=esbuild@0.25.0 -- esbuild backend/editor/src/index.js --bundle --format=esm --target=es2022 --outfile=backend/editor/dist/worker.modern.mjs
+          npm exec --yes --package=esbuild@0.25.0 -- esbuild backend/monitor/src/index.js --bundle --format=esm --target=es2022 --outfile=backend/monitor/dist/worker.modern.mjs
+          node --check backend/editor/dist/worker.modern.mjs
+          node --check backend/monitor/dist/worker.modern.mjs
+      - name: Validate staging remains private and has zero scheduled triggers
+        run: |
+          set -euo pipefail
+          for f in deploy/wrangler.editor.qa.json deploy/wrangler.monitor.qa.json; do
+            jq -e '.workers_dev == false and ((.triggers.crons // []) | length == 0) and ((.routes // []) | length == 0)' "$f" >/dev/null
+          done
+          echo 'workers_dev: false, no routes or cron in both QA configs'
+      - name: Require Cloudflare credentials (no logging of values)
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [[ -z "${CF_TOKEN:-}" || -z "${CF_ACCOUNT:-}" ]]; then
+            echo "::error::Cloudflare staging credentials missing"; exit 1
+          fi
+      - name: Deploy private Editor QA Worker only
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --config deploy/wrangler.editor.qa.json
+      - name: Deploy private Monitor QA Worker only
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --config deploy/wrangler.monitor.qa.json
+      - name: Preserve production services and their schedules
+        run: |
+          echo 'Staged two private, non-public QA Workers. Production scripts and cron triggers unchanged.'
+          echo "Source SHA: $GITHUB_SHA"
