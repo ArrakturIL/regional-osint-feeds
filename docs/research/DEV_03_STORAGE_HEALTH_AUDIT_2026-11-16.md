@@ -40,6 +40,8 @@
 
 **TDD:** [RED при отсутствии функции](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43766428166) → [GREEN после базового решения](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43766870782) (**11/11 checks**) → тесты фактической D1 checksum-last-good, ошибок/аннотаций и retained age; финальная проверка [CI #43767398292](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43767398292): **11 successful jobs, 0 failed; production и preview jobs skipped**.
 
+**Дополнительное TDD для читательского fallback:** [RED #43767931791](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43767931791) (раньше не выдавался диагностический event), [GREEN #43768142036](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43768142036) — **11/11 successful jobs**, 0 failures, immutable three-component bundle build success, production и preview skipped; отдельная [offline architecture check #43768142022](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43768142022) также зелёная. Фактический live Worker log после релиза ещё **не** наблюдался.
+
 ## 3. Что ещё нельзя считать решённым
 
 1. Долговременная **история здоровых снимков** и автоматическое восстановление на произвольную дату (более 6 часов в Neon) не организованы; в обеих текущих таблицах по одной версии на источник. Историческая GitHub JSON-копия заморожена, но не гарантирует текущий last-good после перевода на Neon.
