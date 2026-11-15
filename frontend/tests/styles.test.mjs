@@ -64,3 +64,13 @@ test('eight RU/HE documents contain no duplicated inline CSS',()=>{
  const baseline=source('../baselines/cloudflare/2026-11-14/pages-0f39f36e/app.css');
  assert.equal(assembleStyles(),baseline+refined+shared);
 });
+
+test('small screen navigation has two readable columns in both locales',()=>{
+ const mobile=source('src/components/Header/Header.mobile.css');
+ assert.match(mobile,/@media\s*\(max-width:\s*430px\)/);
+ assert.match(mobile,/grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)\s*!important/);
+ assert.match(mobile,/min-height:\s*44px\s*!important/);
+ assert.match(mobile,/font-size:\s*0\.875rem\s*!important/);
+ const css=assembleStyles();
+ assert.ok(css.endsWith(mobile),'mobile navigation must load after older inline shell cascade');
+});
