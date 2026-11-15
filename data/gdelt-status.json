@@ -1,9 +1,9 @@
 {
   "source": "gdelt_context",
-  "checked_at": "2026-11-15T17:21:09Z",
-  "state": "partial",
-  "last_batch": "20261115173000",
-  "detail": "Partial export coverage: 2 unavailable batches; max 8 files per run",
+  "checked_at": "2026-11-15T17:39:05Z",
+  "state": "ok",
+  "last_batch": "20261115174500",
+  "detail": null,
   "provider": "GDELT Project",
   "source_url": "https://www.gdeltproject.org/"
 }
