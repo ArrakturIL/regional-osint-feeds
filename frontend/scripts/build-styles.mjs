@@ -13,6 +13,10 @@ export function assembleStyles({includeRefinements=true}={}){
   seen.add(path);
   css+=readFileSync(resolve(frontendRoot,'src',path),'utf8');
  }
- if(includeRefinements)css+=readFileSync(resolve(frontendRoot,'src/styles/refinements.css'),'utf8');
+ if(includeRefinements){
+  css+=readFileSync(resolve(frontendRoot,'src/styles/refinements.css'),'utf8');
+  // Formerly duplicated in each RU/HE document; loaded after the original CSS.
+  css+=readFileSync(resolve(frontendRoot,'src/styles/document-shell.css'),'utf8');
+ }
  return css;
 }

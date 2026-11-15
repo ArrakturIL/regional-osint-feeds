@@ -14,3 +14,6 @@ Existing dark-green background `#0b1412`, primary `#eaf5ee`, and green accent `#
 
 ## Guardrails and release
 No production promotion. Changes deploy only through `rw-modular-preview`. The QA suite checks original CSS source-byte parity before deliberate additions, the concatenated final bundle, source-file topology, color contrast, and new spacing selectors. Preview shares underlying databases with production: only read-only UI/API smoke.
+
+## HTML shell CSS de-duplication
+The eight frozen RU/HE HTML templates all contained precisely the same 3,365-character `<style id="rw-editor-bottom-v16">` block. Those rules have been moved exactly to `frontend/src/styles/document-shell.css` and appended to the generated `/assets/app.css` **after** design refinements to retain their original cascade priority (original load order: `app.css`, then inline style). All eight templates now reference only the common stylesheet; document structural markup and scripts remain unchanged. `frontend/tests/styles.test.mjs` checks this property and source-byte equality of the extracted block.
