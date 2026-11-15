@@ -18,6 +18,7 @@ const samples=[
 function scriptDetect(text){
   const counts={ru:(text.match(/[а-яё]/giu)||[]).length,he:(text.match(/[\u0590-\u05ff]/gu)||[]).length,ar:(text.match(/[\u0600-\u06ff]/gu)||[]).length,en:(text.match(/[a-z]/giu)||[]).length};
   const ranked=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  if(ranked.filter(([,count])=>count>=4).length>1)return 'unknown';
   return ranked[0][1]>=12 && ranked[0][1]>ranked[1][1]*2?ranked[0][0]:'unknown';
 }
 function microbench(fn,N=1000){
@@ -25,6 +26,7 @@ function microbench(fn,N=1000){
 }
 const segments=Object.fromEntries(samples.slice(0,4).map(s=>[s.language,[...new Intl.Segmenter(s.language,{granularity:'sentence'}).segment(s.text)].length]));
 const detected=samples.map(s=>({expected:s.expected,script:scriptDetect(s.text),franc:franc(s.text,{minLength:20})}));
+assert.equal(detected.find(x=>x.expected==='unknown').script,'unknown','mixed scripts must abstain instead of falsely asserting EN');
 const canonical=canonicalNewsUrl('https://example.org/article/77?utm_source=feed&ref=direct#video');
 const newsHtml='<html lang="en"><head><title>Official long article</title></head><body><header>HEADER NAV</header><article><h1>Official long article</h1>'+Array(5).fill('<p>Officials said that their statement remained preliminary and did not confirm any military strike. The full public statement is available separately for verification.</p>').join('')+'</article><footer>FOOTER</footer></body></html>';
 const $=load(newsHtml);
