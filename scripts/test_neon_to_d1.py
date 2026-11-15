@@ -152,5 +152,27 @@ class TestD1Mirror(unittest.TestCase):
         self.assertNotIn(secret,str(ctx.exception))
 
 
+
+class TestSourceWorkflowRollout(unittest.TestCase):
+    def test_per_source_D1_cache_is_opt_in_with_dedicated_least_privilege_secret(self):
+        from pathlib import Path
+        workflows=Path(__file__).resolve().parents[1]/".github/workflows"
+        names={
+            "gdelt":"gdelt.yml","analysts":"analysts.yml",
+            "centcom":"centcom-test.yml","copernicus":"copernicus-analytics.yml",
+            "marad":"marad.yml","satellite":"satellite.yml",
+            "unosat":"unosat-analyses.yml",
+            "news_translation":"news-open-source-translation.yml",
+        }
+        for source,file in names.items():
+            with self.subTest(source=source):
+                workflow=(workflows/file).read_text(encoding="utf8")
+                self.assertIn("vars.REGIONAL_NEON_D1_SOURCES",workflow)
+                self.assertIn("secrets.CLOUDFLARE_D1_API_TOKEN",workflow)
+                self.assertIn("secrets.NEON_DATABASE_URL",workflow)
+                self.assertIn("python -m scripts.publish_neon_mirror --source "+source+" --mode required",workflow)
+                self.assertIn("python -m scripts.neon_to_d1 --source "+source+" --init-table",workflow)
+                self.assertIn("git ",workflow,"GitHub fallback remains until reader cutover")
+
 if __name__=="__main__":
     unittest.main()
