@@ -62,3 +62,13 @@ test('live naval mine summary: "after striking" cannot become a tanker shelling'
  assert.equal(factualTranslationIssue(src,translated('Нефтяные танкеры обстреляли морские мины')),'title:mine_collision_reframed_as_attack');
  assert.equal(factualTranslationIssue(src,translated('Нефтяные танкеры загорелись после столкновения с морской миной')),null);
 });
+
+test('exact Reuters "may hold off" remains tentative even when barring condition is correctly translated',()=>{
+ const src=original('Trump tells advisers he may hold off on Iran attacks barring new provocations');
+ assert.equal(factualTranslationIssue(src,translated('Трамп отложил удары по Ирану, если не будет новых провокаций')),
+   'title:conditional_modality_missing');
+ assert.equal(factualTranslationIssue(src,translated('טראמפ דחה תקיפות באיראן אם לא יהיו פרובוקציות חדשות')),
+   'title:conditional_modality_missing');
+ assert.equal(factualTranslationIssue(src,translated('Трамп может отложить удары по Ирану, если не будет новых провокаций')),null);
+ assert.equal(factualTranslationIssue(src,translated('טראמפ עשוי לדחות תקיפות באיראן אם לא יהיו פרובוקציות חדשות')),null);
+});
