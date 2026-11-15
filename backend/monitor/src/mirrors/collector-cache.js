@@ -1,4 +1,4 @@
-import { get as httpGet } from '../network/http.js';
+import { get } from '../network/http.js';
 
 // Private D1 snapshot cache populated by controlled GitHub Actions after a
 // successful Neon transaction. Never query Neon from a public page view or
@@ -81,7 +81,7 @@ export async function readCollectorPair(env,sourceKey,dataUrl,statusUrl,opts={})
    // Do not mistake a failed mirror read for a verified empty result.
   }
  }
- const fetcher=opts.get||httpGet;
+ const fetcher=opts.get||get;
  const [data,status]=await Promise.all([fetcher(dataUrl,'json'),fetcher(statusUrl,'json')]);
  return{data,status,origin:'github'};
 }
