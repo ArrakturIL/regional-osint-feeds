@@ -1,5 +1,6 @@
 // Release preflight and emergency rollback. Prints no tokens, secrets or payloads.
 import {readFileSync,writeFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
 const readJson=p=>JSON.parse(readFileSync(p,'utf8'));
 const need=(ok,what)=>{if(!ok)throw Error('Release contract violation: '+what);};
 const matchName=(items,name,type)=>items.find(b=>b.name===name&&b.type===type);
@@ -124,13 +125,33 @@ async function rollback(contract,sourceSha,file){
  if(errors)throw Error('rollback incomplete, inspect the recorded baseline and Cloudflare deployments');
  console.log('rollback check complete');
 }
+async function receipt(contract,sourceSha,baselineFile,outputFile){
+ const baseline=readJson(baselineFile);
+ const bytes=readFileSync('release/manifest.json');
+ const manifest=JSON.parse(bytes.toString('utf8'));
+ need(baseline.source_sha===sourceSha&&manifest.source_sha===sourceSha,'release receipt source SHA');
+ const [workers,pages]=await Promise.all([
+   Promise.all(contract.workers.map(w=>workerState(w))),
+   pagesState(contract.pages)
+ ]);
+ const record={
+   schema_version:1,source_sha:sourceSha,
+   workflow_run:process.env.GITHUB_RUN_ID||null,
+   manifest_sha256:createHash('sha256').update(bytes).digest('hex'),
+   migration_hashes:readJson('release/metadata/migrations.json'),
+   before:baseline,after:{workers,pages}
+ };
+ writeFileSync(outputFile,JSON.stringify(record,null,2)+'\n',{mode:0o600});
+ console.log('Release receipt saved: verified Pages + '+workers.length+' Workers on source '+sourceSha.slice(0,12));
+}
 export async function main(argv=process.argv.slice(2)){
- const [verb,sourceSha,file]=argv;
+ const [verb,sourceSha,file,output]=argv;
  const contract=readJson('deploy/release-contract.json');
  if(verb==='capture')await capture(contract,sourceSha,file);
  else if(verb==='postcheck')await postcheck(contract,sourceSha,file);
  else if(verb==='rollback')await rollback(contract,sourceSha,file);
- else throw Error('usage: cloudflare-gate.mjs capture|postcheck|rollback <sha> <baseline-file>');
+ else if(verb==='receipt')await receipt(contract,sourceSha,file,output);
+ else throw Error('usage: cloudflare-gate.mjs capture|postcheck|rollback|receipt <sha> <baseline-file> [receipt-file]');
 }
 if(import.meta.url===new URL('file://'+process.argv[1]).href){
  main().catch(e=>{console.error('Release gate:',e?.message?.split('\n')[0]);process.exitCode=1});
