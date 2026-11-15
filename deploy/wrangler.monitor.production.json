@@ -1,0 +1,27 @@
+{
+  "name": "regional-osint-monitor",
+  "main": "../backend/monitor/dist/worker.modern.mjs",
+  "compatibility_date": "2026-11-10",
+  "keep_vars": true,
+  "workers_dev": true,
+  "triggers": {
+    "crons": [
+      "*/1 * * * *"
+    ]
+  },
+  "secrets": {
+    "required": [
+      "AIS_KEY",
+      "FIRMS_KEY",
+      "GFW_API_TOKEN",
+      "SUMMARY_TOKEN"
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "regional-osint",
+      "database_id": "c052acf3-b821-444a-92e4-ffd472a131f0"
+    }
+  ]
+}

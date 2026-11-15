@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "project": "regional-watch",
+  "pages": {
+    "project": "regional-watch",
+    "production_branch": "main",
+    "services": [
+      {
+        "binding": "EDITOR",
+        "service": "regional-watch-editor"
+      },
+      {
+        "binding": "MONITOR",
+        "service": "regional-osint-monitor"
+      }
+    ],
+    "d1": [
+      {
+        "binding": "DB",
+        "database_id": "c052acf3-b821-444a-92e4-ffd472a131f0"
+      },
+      {
+        "binding": "NEWS_DB",
+        "database_id": "d9ba2c51-d551-4615-bbe2-37e76e2d668a"
+      }
+    ]
+  },
+  "workers": [
+    {
+      "key": "editor",
+      "name": "regional-watch-editor",
+      "config": "deploy/wrangler.editor.production.json",
+      "cron": "*/5 * * * *",
+      "ai": "AI",
+      "d1": [
+        {
+          "binding": "CORE_DB",
+          "database_id": "c052acf3-b821-444a-92e4-ffd472a131f0"
+        },
+        {
+          "binding": "NEWS_DB",
+          "database_id": "d9ba2c51-d551-4615-bbe2-37e76e2d668a"
+        }
+      ],
+      "secrets": [],
+      "vars": [
+        "REGIONAL_EDITOR_CACHE_SOURCES"
+      ]
+    },
+    {
+      "key": "monitor",
+      "name": "regional-osint-monitor",
+      "config": "deploy/wrangler.monitor.production.json",
+      "cron": "*/1 * * * *",
+      "d1": [
+        {
+          "binding": "DB",
+          "database_id": "c052acf3-b821-444a-92e4-ffd472a131f0"
+        }
+      ],
+      "secrets": [
+        "AIS_KEY",
+        "FIRMS_KEY",
+        "GFW_API_TOKEN",
+        "SUMMARY_TOKEN"
+      ],
+      "vars": [
+        "COLLECTOR_CACHE_SOURCES",
+        "REGION"
+      ]
+    }
+  ],
+  "schemas": [
+    {
+      "key": "core",
+      "database_id": "c052acf3-b821-444a-92e4-ffd472a131f0",
+      "tables": {
+        "regional_collector_cache": [
+          "source_key",
+          "checked_at_ms",
+          "data_json",
+          "status_json",
+          "data_sha256",
+          "status_sha256",
+          "synced_at_ms"
+        ],
+        "observations": [
+          "source",
+          "id",
+          "observed_at",
+          "payload"
+        ],
+        "analyst_items": [
+          "id",
+          "analyst_id",
+          "canonical_url",
+          "content_hash"
+        ]
+      }
+    },
+    {
+      "key": "news",
+      "database_id": "d9ba2c51-d551-4615-bbe2-37e76e2d668a",
+      "tables": {
+        "news_items": [
+          "id",
+          "headline",
+          "source",
+          "published_ms"
+        ],
+        "regional_translation_repair_backups": [
+          "batch_id",
+          "item_id",
+          "news_json",
+          "hebrew_json"
+        ],
+        "regional_i18n": [
+          "kind",
+          "item_id",
+          "language",
+          "source_hash"
+        ]
+      }
+    }
+  ]
+}
