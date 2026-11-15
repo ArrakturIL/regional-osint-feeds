@@ -47,3 +47,26 @@
 - **Реальный выпуск:** [Actions #43775413609](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43775413609) **completed success (12 successful jobs / 0 failures), rollback skipped**. Независимый read-only Cloudflare postcheck: Pages production `6191ada0-c6cd-4b71-a450-945c6f7348e9` success, Editor version `344d76e5-274e-49f5-a2e4-853b09f914f4` 100%, Monitor version `d37dde7b-9ba7-4a2f-9763-fe3392eb59cb` 100%; все ожидаемые AI/D1/secret/vars bindings и cron Editor `*/5`, Monitor `*/1` сохранены. Не выполнялся искусственный отказ production; RU/HE/API technical smoke не равен глобальному браузерному QA.
 
 **ARCH-02 закрыт [x]; DEV-05 остаётся [~]**. Следующий безопасный шаг по ARCH-04 — отдельно измерить фактическое распределение расписаний относительно деклараций `every` и failure contract, не меняя source clocks вслепую.
+
+
+---
+
+## 5. ARCH-04 — суточный контракт расписания и live source health (16.11.2026)
+
+**Scope:** проверялся действующий `backend/monitor/src/schedule/{sources,runner,collect,manual}.js` и private D1 read-only `source_status`. Не создавались новые источники, запросы, квоты или Cron. Расписания проверены как **eligible slots до manual/secret/provider cooldown**; фактические provider HTTP вызовы могут быть пропущены.
+
+### Кодовый суточный аудит
+
+- Зарегистрировано **26 источников**, из них каждый присутствует в 24 modulo rules (`primary` group и supplemental group содержат несколько общих имен в одной строке).
+- Для **всех 26** при моделировании **1 440 минут UTC** фактическое число автоматических доступных слотов совпало с `1440/every`; период от запуска до запуска (в том числе на переходе через UTC полночь) равен `every`. Пропущенных/неизвестных registry names нет. Примеры: `adsb` 96/сут, `ais` 288/сут, `easa/mscio/ioda` по 96, `centcom_dvids` 48, `gdelt_context` 24, `marad_official` 4, `unosat_analysis` 2.
+- Соседство scheduled slots само по себе не авария: `marad_official` (UTC minute 61+360n), `gfw_token` (51), `unosat_analysis` (86+720n) могут приходиться на минуту AIS. Scheduler использует `Promise.allSettled`, а фактические расходы/ошибки провайдера надо проверять отдельно.
+- Live D1 `source_status` read-only показал разные состояния `ok`, `partial`, `empty` и ранее `retired`; приведённый статус **не приравнивается к общему успеху scheduled handler**. В `collect.js` upstream exception записывает `state='error'` в D1 и возвращает fulfilled результат; `runSchedule` выбрасывает ошибку только при rejected (например, D1 write failed). Такая политика *может* скрыть upstream error из Cloudflare Cron success, хотя D1 хранит состояние. Не менять её до отдельного теста внешней наблюдаемости и alerting, иначе могут появиться ложные аварии Cron из-за ожидаемых 429/partial.
+
+### RED → GREEN регрессия и выпуск
+
+- [TDD RED #43776291502](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43776291502): контракт чистой `scheduledSourceNames(minute)` ещё отсутствует, ASSERT `undefined !== function`. Не синтаксическая ошибка.
+- [GREEN #43776399045](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43776399045): **11 successful / 0 failed**; test охватывает registered 26 sources без hardcoded count, 24h slot coverage, exact intervals/UTC boundary, high-priority slots и отсутствие дублирования; mandatory monitor-source tests/bundles и immutable Wrangler dry-run успешны; Preview/prod на feature branch не публиковались.
+- [PR #49](https://github.com/ArrakturIL/regional-osint-feeds/pull/49) merged в `main`, commit `089e890e657f1543558601b7050216b7c245a1c7`. Только `backend/monitor/src/schedule/runner.js` (без изменения условий) и тест/workflow/план; все 26 расписаний остались прежними. `scheduledSourceNames` вызывается из real `runSchedule`, поэтому тестирует реальное планирование, а не скопированные условия.
+- [Production release #43776494155](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43776494155) completed success, **12 successful jobs, 0 failed, no rollback**; независимый Cloudflare API: Pages canonical deployment `e5344d67-e317-4cbe-9e23-9276371459f4` success, Editor version `cdfb2691-96c0-41f6-a2e5-6f691c9fdbcb` 100%, Monitor version `3df81d16-f497-407f-9f9a-faeb0a9ccf11` 100%. Bindings, secret names, cron Editor `*/5`, Monitor `*/1` сохранены.
+
+**Status ARCH-04 = [~]:** конкретная часть 'не изменять/не сломать cadence' закончена; ещё открыто проверить реальными/controlled тестами provider cooldown/lease, частичные ошибки, D1 `state='error'` и мануальный запрос, а также отсутствие ложного health из Cloudflare Cron. Этим не заниматься в одном массовом refactor PR. DEV-05 в целом остаётся открытым.
