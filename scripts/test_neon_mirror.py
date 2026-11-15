@@ -132,5 +132,26 @@ class TestWorkflowShadowSafety(unittest.TestCase):
         self.assertIn("git push", workflow)
         self.assertIn("github.ref == 'refs/heads/main'", workflow)
 
+
+    def test_all_scheduled_collector_workflows_shadow_without_removing_git_fallback(self):
+        cases = {
+            "analysts": ("analysts.yml", "Commit bounded mirror and source heartbeat"),
+            "centcom": ("centcom-test.yml", "Commit updated news or status heartbeat"),
+            "copernicus": ("copernicus-analytics.yml", "Commit public metadata mirror"),
+            "marad": ("marad.yml", "Publish changed official advisories"),
+            "satellite": ("satellite.yml", "Commit only metadata"),
+            "unosat": ("unosat-analyses.yml", "Commit public-only metadata"),
+            "news_translation": ("news-open-source-translation.yml", "Publish bounded validated translation mirror"),
+        }
+        workflows = Path(__file__).resolve().parents[1] / ".github/workflows"
+        for source, (file_name, fallback) in cases.items():
+            with self.subTest(source=source):
+                content = (workflows / file_name).read_text(encoding="utf8")
+                self.assertIn("python -m scripts.publish_neon_mirror --source " + source + " --mode shadow", content)
+                self.assertIn("secrets.NEON_DATABASE_URL", content)
+                self.assertIn("github.ref == 'refs/heads/main'", content)
+                self.assertIn(fallback, content)
+                self.assertIn("git ", content)
+
 if __name__ == "__main__":
     unittest.main()
