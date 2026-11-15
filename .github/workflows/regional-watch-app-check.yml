@@ -1,7 +1,7 @@
 name: Regional Watch application source checks
 on:
   push:
-    branches: [refactor/regional-watch-modular-20261114, feature/integrated-data-quality-neon-20261115, main]
+    branches: [refactor/regional-watch-modular-20261114, feature/integrated-data-quality-neon-20261115, release/regional-watch-architecture-20261115, main]
     # Data collectors commit JSON to main frequently. Never rebuild/redeploy for data-only commits.
     paths: ['backend/**', 'frontend/**', 'shared/**', 'tests/**', 'scripts/audit_collector_cache.py', 'scripts/test_audit_collector_cache.py', 'scripts/test_p1_backup_contract.py', 'scripts/sync_collector_shadows.py', 'scripts/test_collector_shadow_pipeline.py', '.github/workflows/collector-shadow-sync.yml', 'storage/cloudflare/002_p1_translation_repair_backups.sql', 'storage/cloudflare/003_p1_translation_backup_capture.sql', '.github/workflows/regional-watch-app-check.yml']
   pull_request:
@@ -151,14 +151,14 @@ jobs:
 
   pages-preview:
     name: Publish isolated Cloudflare Pages preview after all checks
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/refactor/regional-watch-modular-20261114' || github.ref == 'refs/heads/feature/integrated-data-quality-neon-20261115')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/refactor/regional-watch-modular-20261114' || github.ref == 'refs/heads/feature/integrated-data-quality-neon-20261115' || github.ref == 'refs/heads/release/regional-watch-architecture-20261115')
     needs: [editor-source, frontend-source, monitor-source, modern-bundles, pages-documents, pages-static, pages-routing, pages-overview, pages-data, pages-runtime]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: read
     concurrency:
-      group: regional-watch-pages-preview
+      group: regional-watch-pages-preview-${{ github.ref_name }}
       cancel-in-progress: true
     steps:
       - name: Download the already-verified Pages build
@@ -185,7 +185,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=regional-watch --branch=${{ github.ref == 'refs/heads/feature/integrated-data-quality-neon-20261115' && 'rw-integrated-preview' || 'rw-modular-preview' }}
+          command: pages deploy dist --project-name=regional-watch --branch=${{ github.ref == 'refs/heads/release/regional-watch-architecture-20261115' && 'rw-architecture-preview' || (github.ref == 'refs/heads/feature/integrated-data-quality-neon-20261115' && 'rw-integrated-preview' || 'rw-modular-preview') }}
       - name: Verify deployed preview HTTP routes (no redirect loops)
         if: steps.cloudflare.outputs.ready == 'true'
         env:
@@ -226,6 +226,23 @@ jobs:
                 grep -Fq 'lang="ru"' /tmp/rw-preview-body
               fi
             fi
+          done
+      - name: Cloudflare Pages preview API wiring smoke
+        if: steps.cloudflare.outputs.ready == 'true'
+        env:
+          DEPLOYMENT_URL: ${{ steps.pages-upload.outputs.deployment-url }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="${DEPLOYMENT_URL%/}"
+          for path in '/api/overview' '/api/data' '/api/news?lang=ru&limit=5' '/api/news?lang=he&limit=5'; do
+            status=$(curl --silent --show-error --max-time 20 --max-redirs 0 \
+              --output /tmp/rw-api-body --dump-header /tmp/rw-api-headers \
+              --write-out '%{http_code}' "$base$path") || status=000
+            echo "$path => HTTP $status"
+            test "$status" = "200" || { echo "::error::Preview API wiring failure: $path"; exit 1; }
+            grep -qi '^content-type:.*application/json' /tmp/rw-api-headers
+            jq -e 'type == "object"' /tmp/rw-api-body >/dev/null
           done
       - name: Record the exact tested source commit
         if: steps.cloudflare.outputs.ready == 'true'
