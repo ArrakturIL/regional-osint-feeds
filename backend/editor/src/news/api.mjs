@@ -32,6 +32,8 @@ export async function readNewsEvents(request,env){
    rows=await eventRows(env.NEWS_DB,null);
   }
  }
+ // Sort the complete raw event pool before doing any per-row i18n D1 reads.
+ // Feed order and publisher diversity must remain independent of language/page size.
  // The Latest feed is newest-first, without silently promoting older priority items.
  let visible=rows.map(row=>({row,event_id:row.event_id,published_ms:row.last_seen_ms,priority:row.event_priority,_owner:publisher(row.source)})).sort((a,b)=>sort==='latest'?
    b.published_ms-a.published_ms||String(a.event_id).localeCompare(String(b.event_id)):
