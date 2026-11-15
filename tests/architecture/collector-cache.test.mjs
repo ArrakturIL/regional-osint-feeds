@@ -97,6 +97,19 @@ test('enabled cache fallback reports a sanitized reason, but disabled mirror nev
  assert.equal(JSON.stringify(notes).includes('https:'),false,'do not reveal source URLs or credentials');
 });
 
+test('production fallback warning is source-only and rate-limited within one isolate',async()=>{
+ const warnings=[],old=console.warn;
+ console.warn=message=>warnings.push(message);
+ try{
+  const {env,calls}=fixtureEnv(null,'unosat');
+  const args=[env,'unosat',dataUrl,statusUrl,{get:fetcher(calls),nowMs:at+60000}];
+  assert.equal((await readCollectorPair(...args)).origin,'github');
+  assert.equal((await readCollectorPair(...args)).origin,'github');
+  assert.deepEqual(warnings,['regional_watch reader_fallback source=unosat reason=cache_missing']);
+  assert.ok(!warnings.join('').includes('https://'));
+ }finally{console.warn=old}
+});
+
 test('stale D1 row falls back to fresh legacy, never masquerades as current',async()=>{
  const {env,calls}=fixtureEnv(row());
  const result=await read(env,fetcher(calls),{nowMs:at+7*3600000,maxAgeMs:4*3600000});
