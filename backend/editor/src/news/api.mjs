@@ -32,12 +32,29 @@ export async function readNewsEvents(request,env){
    rows=await eventRows(env.NEWS_DB,null);
   }
  }
+ // The Latest feed is newest-first, without silently promoting older priority items.
+ let visible=rows.map(row=>({row,event_id:row.event_id,published_ms:row.last_seen_ms,priority:row.event_priority,_owner:publisher(row.source)})).sort((a,b)=>sort==='latest'?
+   b.published_ms-a.published_ms||String(a.event_id).localeCompare(String(b.event_id)):
+   b.priority-a.priority||b.published_ms-a.published_ms||String(a.event_id).localeCompare(String(b.event_id)));
+ // Soft diversity: high-impact stories are never blocked to satisfy quotas.
+ const cap=SOFT_PUBLISHER_CAP,counts=new Map(),regular=[],deferred=[];
+ for(const e of visible){
+  if(sort==='latest'){regular.push(e);continue;}
+  const n=counts.get(e._owner)||0;
+  if(e.priority>=9||n<cap){regular.push(e);counts.set(e._owner,n+1);}
+  else deferred.push(e);
+ }
+ visible=[...regular,...deferred];
+ const orderData=new TextEncoder().encode(visible.map(x=>x.event_id).join('|'));
+ const digest=await crypto.subtle.digest('SHA-256',orderData);
+ const feed_order_hash=Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join('');
+ const pageRows=visible.slice(offset,offset+limit).map(x=>x.row);
  // A native Hebrew source is already translated; do not require Workers AI
  // translation for its appearance in the Hebrew edition.
  const substitutions=new Map();
  if(lang==='he'){
   const hebrewChoices=[];
-  for(const r of rows){
+  for(const r of pageRows){
    if(hebrew(r.headline))continue;
    if(r.he_hash&&r.he_title)continue;
    const choices=JSON.parse(r.sources_json||'[]').filter(x=>x.language==='he');
@@ -51,7 +68,7 @@ export async function readNewsEvents(request,env){
    for(const x of hebrewChoices)if(byId.has(x.article_id))substitutions.set(x.event_id,byId.get(x.article_id));
   }
  }
- const translated=await Promise.all(rows.map(async r=>{
+ const translated=await Promise.all(pageRows.map(async r=>{
   const alternative=substitutions.get(r.event_id);
   const row=alternative?{...r,...alternative,he_hash:null,he_title:null,he_body:null,he_comment:null,he_quality:null}:r;
   const t=await localizeNewsRow(env.NEWS_DB,row,lang);
@@ -74,23 +91,7 @@ export async function readNewsEvents(request,env){
    sources:JSON.parse(r.sources_json||'[]'),reason_codes:JSON.parse(r.reason_codes||'[]'),
    _owner:publisher(r.source)};
  }));
- // The Latest feed is newest-first, without silently promoting older priority items.
- let visible=[...translated].sort((a,b)=>sort==='latest'?
-   b.published_ms-a.published_ms||String(a.event_id).localeCompare(String(b.event_id)):
-   b.priority-a.priority||b.published_ms-a.published_ms||String(a.event_id).localeCompare(String(b.event_id)));
- // Soft diversity: high-impact stories are never blocked to satisfy quotas.
- const cap=SOFT_PUBLISHER_CAP,counts=new Map(),regular=[],deferred=[];
- for(const e of visible){
-  if(sort==='latest'){regular.push(e);continue;}
-  const n=counts.get(e._owner)||0;
-  if(e.priority>=9||n<cap){regular.push(e);counts.set(e._owner,n+1);}
-  else deferred.push(e);
- }
- visible=[...regular,...deferred];
- const orderData=new TextEncoder().encode(visible.map(x=>x.event_id).join('|'));
- const digest=await crypto.subtle.digest('SHA-256',orderData);
- const feed_order_hash=Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join('');
- const output=visible.slice(offset,offset+limit).map(({_owner,...rest},i)=>({...rest,feed_rank:offset+i}));
+ const output=translated.map(({_owner,...rest},i)=>({...rest,feed_rank:offset+i}));
  return respond({requested_language:lang,articles:output,events:output,localized_count:output.filter(x=>x.content_language===lang).length,
   translation_summary:{available:output.filter(x=>x.translation_available).length,pending:output.filter(x=>x.translation_state==='pending').length,
     needs_review:output.filter(x=>x.translation_state==='needs_review').length},
