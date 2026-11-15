@@ -67,11 +67,15 @@ def assess_snapshot_health(snapshot, replica_result: dict, *, now=None) -> dict:
         health = "collector_partial"
     else:
         health = "data_fresh"
-    return {
+    report = {
         "source": key, "health": health, "collector_state": raw_state,
         "replica_state": replica, "age_minutes": round(age, 1),
         "max_age_minutes": SOURCE_MAX_AGE_HOURS[key] * 60,
     }
+    retained_ms = replica_result.get("retained_checked_at_ms")
+    if replica == "held_last_valid" and isinstance(retained_ms, (int, float)):
+        report["retained_age_minutes"] = round((now.timestamp() * 1000 - retained_ms) / 60_000, 1)
+    return report
 
 
 def summarize_health(rows: list[dict]) -> dict:
@@ -93,8 +97,8 @@ def emit_health_report(rows: list[dict], summary: dict, *, summary_path: str | N
           " ".join("{}={}".format(k, v) for k, v in sorted(summary["counts"].items())))
     for row in rows:
         code = row["health"]
-        print("replica_source source={} health={} collector={} replica={} age_minutes={}".format(
-            row["source"], code, row["collector_state"], row["replica_state"], row["age_minutes"]))
+        print("replica_source source={} health={} collector={} replica={} age_minutes={} retained_age_minutes={}".format(
+            row["source"], code, row["collector_state"], row["replica_state"], row["age_minutes"], row.get("retained_age_minutes", "n/a")))
         if code != "data_fresh":
             print("::warning title=Collector health::source={} state={} (source_state={})".format(
                 row["source"], code, row["collector_state"]))
@@ -102,12 +106,12 @@ def emit_health_report(rows: list[dict], summary: dict, *, summary_path: str | N
         table = ["### Regional Watch storage/source health",
                  "Overall: **{}**; {} sources. Verified sync does not imply a healthy collector.".format(
                      summary["overall"], summary["source_count"]),
-                 "| Source | Health | Source state | Replica | Age (min) |",
-                 "| --- | --- | --- | --- | ---: |"]
+                 "| Source | Health | Source state | Replica | Age (min) | Retained age (min) |",
+                 "| --- | --- | --- | --- | ---: | ---: |"]
         for row in rows:
-            table.append("| {} | {} | {} | {} | {} |".format(
+            table.append("| {} | {} | {} | {} | {} | {} |".format(
                 row["source"], row["health"], row["collector_state"],
-                row["replica_state"], row["age_minutes"]))
+                row["replica_state"], row["age_minutes"], row.get("retained_age_minutes", "—")))
         with Path(summary_path).open("a", encoding="utf8") as stream:
             stream.write("\n".join(table) + "\n")
 
@@ -121,7 +125,9 @@ def verify_d1_last_good(client, source_key: str) -> bool:
         return False
     try:
         retained = _validate_d1_row(rows[0], source_key)
-        return retained["status"].get("state") in ("ok", "partial")
+        if retained["status"].get("state") not in ("ok", "partial"):
+            return False
+        return {"checked_at_ms": retained["checked_at_ms"], "state": retained["status"]["state"]}
     except (RuntimeError, ValueError, KeyError, TypeError):
         return False
 
@@ -171,6 +177,8 @@ def execute_replica_sync(
                 if not last_good_exists:
                     raise ReplicaSourceFailure(source, "last_good_missing")
                 result = {"source": source, "result": "held_last_valid"}
+                if isinstance(last_good_exists, dict):
+                    result["retained_checked_at_ms"] = last_good_exists["checked_at_ms"]
             else:
                 try:
                     result = mirror(db, client, source)
