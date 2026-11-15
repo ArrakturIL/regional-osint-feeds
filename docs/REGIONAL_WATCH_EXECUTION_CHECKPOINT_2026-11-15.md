@@ -49,3 +49,15 @@
 4. Keep the unified TODO updated with evidence; if transport fails, this checkpoint is the durable resumption location.
 
 **Important:** User specifically asked that any transport interruption lead to checkpointing and safe termination, not endless retry loops or a claim that the session will automatically resume.
+
+## Follow-on milestone — Python/JS parity, docs and clean CI (15 Nov 2026)
+
+- Found a second exact P1 hole: Reuters `may hold off` did not match `may (postpone|delay|defer)` in either JavaScript or Python semantic gates, so an erroneous *completed decision* with a correctly translated `barring` clause could pass.
+- RED: isolated GitHub Actions `43724206408` Python translation job **failed as expected** after adding the regression, and the `editor-source` Python step in `43724206435` also failed. Test failure was from the new actual-source fixture; the model-download/production-publishing steps were skipped on PR.
+- GREEN: updated `backend/editor/src/translations/semantic-meaning.mjs` and `scripts/translation_semantics.py` to recognize `may|might|could + postpone|delay|defer|hold off`. The four RU/HE new variants (bad/good) pass; the naval-mine and non-mine cases still pass.
+- CI confirmed: [full application 43724245898](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43724245898) **all 10 validation jobs successful**, both deploy jobs SKIPPED. [Open-source translation 43724245865](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43724245865) SUCCESS, with PR-only safe tests and no model install/data publish.
+- The temporary `.github/workflows/regional-watch-safe-check.yml` was intentionally **removed**, to avoid duplicating GitHub Actions cost. The normal app workflow now executes both JS and Python high-impact translation tests on PRs.
+- Prepared `docs/REGIONAL_WATCH_RELEASE_MANIFEST_2026-11-15.md`, status BLOCKED, with pinned live Pages/Editor/Monitor versions, source flags and rollback.
+- Updated the **single** `docs/REGIONAL_WATCH_MASTER_TODO.md` on the isolated branch with actual progress; also updated the same TODO in personal Library `Regional Watch / 00_CURRENT`. No second plan was created.
+
+**Safe resumption:** read PR #25 HEAD, this final milestone and master TODO. Production D1 still has corrupted examples and has not been changed. The next uncompleted gate is source-backed correction/quarantine with reversible D1 snapshot, plus read-only preview/Neon shadow parity. Never skip QA or mark B-01, D-04, D-05 completed on CI-only evidence.
