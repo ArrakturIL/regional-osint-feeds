@@ -15,6 +15,9 @@ on:
       - ".github/workflows/analysts.yml"
       - ".github/workflows/gdelt.yml"
       - "scripts/neon_mirror.py"
+      - "scripts/neon_to_d1.py"
+      - "scripts/test_neon_to_d1.py"
+      - "storage/cloudflare/**"
       - "scripts/publish_neon_mirror.py"
       - "scripts/test_neon_mirror.py"
       - "scripts/test_live_smoke_contract.py"
@@ -48,6 +51,9 @@ on:
       - ".github/workflows/analysts.yml"
       - ".github/workflows/gdelt.yml"
       - "scripts/neon_mirror.py"
+      - "scripts/neon_to_d1.py"
+      - "scripts/test_neon_to_d1.py"
+      - "storage/cloudflare/**"
       - "scripts/test_neon_mirror.py"
       - "scripts/test_live_smoke_contract.py"
       - "scripts/test_live_regional_watch.py"
@@ -81,6 +87,8 @@ jobs:
           python-version: "3.12"
       - name: Canonical external-smoke contract (offline)
         run: python -m unittest scripts.test_live_smoke_contract -v
+      - name: Neon-to-D1 private cache unit tests (offline)
+        run: python -m unittest scripts.test_neon_to_d1 -v
       - name: Unit tests (no external API or secrets)
         run: python -m unittest scripts.test_neon_mirror scripts.test_publish_neon_mirror -v
       - name: Offline translation candidate regression checks
