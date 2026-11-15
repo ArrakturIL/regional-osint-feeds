@@ -41,3 +41,18 @@ Main `docs/REGIONAL_WATCH_MASTER_TODO.md`, block DEV-03 / D-07 remains **[~]** w
 - DEV-03/D-07 remains **[~]**, because full versioned recovery archive and restore exercise, real Worker fallback logs, per-day D1 rows and Worker CPU usage remain unverified. Existing validated single-row D1 last-good is **not equivalent** to an archived version history.
 - **No code merge, no production writes, no new services or pricing plan.** Before merge, owner must authorize production deployment AND the scheduled Neon→D1 source reconciliation triggered by push to main.
 - Next action on an explicit owner command: code review/fresh compare, merge PR #40, watch complete coordinated release and replica-sync, confirm source statuses and non-sensitive logs. Separate follow-up is to design/test versioned retention before claiming D-07 fully closed. DEV-04/OSS stay untouched.
+
+---
+
+## Final accepted DEV-03 checkpoint — 16 November 2026
+
+Earlier "not merged" checkpoints above are historical. Owner deferred versioned long-term backups / whole-storage restore indefinitely; these do not exist and are not part of current DEV-03.
+
+- [PR #40 merged](https://github.com/ArrakturIL/regional-osint-feeds/pull/40) into main source SHA f4347ff936bf04ec0c90d3e273db8826d370feec.
+- [Coordinated production release #43770540419](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43770540419): 12 successes, 0 failures, rollback skipped.
+- Cloudflare independently reports Pages production 4c163629-8aec-4332-8471-a4527f857bda successful; Editor 7cd1bace-0647-4e67-a6fd-515a81756efc 100%, Monitor aecc946a-b28b-4578-a1bd-d028de51a86b 100%. Existing D1/AI/secret/cron bindings preserved.
+- [First real scheduled-source reconciliation triggered by main push, run #43770540423](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43770540423): 8/8 SHA-integrity verified; 2 fresh, 3 partial, 3 stale. A technically successful sync no longer conceals source incompleteness and age.
+- Reader fallback warning mechanism deployed, but no live failure induced or observed; real Worker CPU/D1 daily rows usage remains unmeasured. Do not equate these with a visual or full content QA pass.
+- No new backup, paid service, billing requirement or data migration.
+
+**Status: DEV-03 [x] in narrowed owner-accepted scope.** DEV-04 may now be done as the next distinct block; OSS is deferred.
