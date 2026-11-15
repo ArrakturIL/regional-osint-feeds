@@ -55,7 +55,7 @@ def semantic_issue(source: str, target: str, language: str) -> str | None:
             if not conditional:
                 return "barring_condition_missing"
 
-    may_postpone = re.search(r"\bmay\s+(?:postpone|delay|defer)\b", src, re.I)
+    may_postpone = re.search(r"\b(?:may|might|could)\s+(?:postpone|delay|defer|hold\s+off)\b", src, re.I)
     if may_postpone:
         if language == "ru" and not re.search(r"может|могут|возможно|вероятно|допускает|не исключает|предположительно", dst, re.I):
             return "uncertain_modality_lost"
