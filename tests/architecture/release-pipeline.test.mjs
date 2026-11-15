@@ -4,6 +4,7 @@ import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {buildManifest,verifyManifest} from '../../scripts/release/manifest.mjs';
+import {expectedWorkerConfig} from '../../scripts/release/build.mjs';
 import {validateWorker,validatePages,validateSubdomain,main as cloudflareGate} from '../../scripts/release/cloudflare-gate.mjs';
 import {checkD1,verifyColumns} from '../../scripts/release/d1-preflight.mjs';
 
@@ -76,6 +77,34 @@ test('release has source-controlled Worker identities, DB and cron, preserving a
  assert.equal(editor.ai,'AI');
  assert.deepEqual(monitor.secrets.sort(),['AIS_KEY','FIRMS_KEY','GFW_API_TOKEN','SUMMARY_TOKEN']);
  assert.ok(editor.name!==monitor.name);
+});
+
+test('static Worker release files must match every declared deployment contract before bundling',()=>{
+ assert.equal(expectedWorkerConfig(root,'editor',contract).main,'../workers/editor.mjs');
+ assert.equal(expectedWorkerConfig(root,'monitor',contract).main,'../workers/monitor.mjs');
+ const wrongs=[
+  ['worker name',x=>x.workers[0].name='some-other-service'],
+  ['worker cron',x=>x.workers[1].cron='*/2 * * * *'],
+  ['worker D1',x=>x.workers[0].d1[0].database_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'],
+  ['worker secret',x=>x.workers[1].secrets[0]='MISSING_KEY'],
+  ['worker AI',x=>x.workers[0].ai='DIFFERENT_AI'],
+  ['Pages service',x=>x.pages.services[0].service='wrong-editor'],
+  ['Pages D1',x=>x.pages.d1[0].database_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb']
+ ];
+ for(const [label,change] of wrongs){
+  const drift=structuredClone(contract);change(drift);
+  assert.throws(()=>expectedWorkerConfig(root,label.startsWith('worker secret')||label.startsWith('worker cron')?'monitor':'editor',drift),
+    /contract|mismatch|binding|cron|service/i,label);
+ }
+ const dir=mkdtempSync(join(tmpdir(),'rw-release-static-'));
+ try{
+  mkdirSync(join(dir,'deploy'),{recursive:true});
+  writeFileSync(join(dir,'deploy/release-contract.json'),JSON.stringify(contract));
+  const editor=JSON.parse(readFileSync(join(root,'deploy/wrangler.editor.production.json'),'utf8'));
+  editor.triggers.crons=['* * * * *'];
+  writeFileSync(join(dir,'deploy/wrangler.editor.production.json'),JSON.stringify(editor));
+  assert.throws(()=>expectedWorkerConfig(dir,'editor'),/contract|cron|mismatch/i);
+ }finally{rmSync(dir,{recursive:true,force:true});}
 });
 
 test('Workers preview URL gate rejects public previews and refuses missing subdomain config',()=>{
