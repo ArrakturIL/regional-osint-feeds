@@ -205,3 +205,18 @@ User workflow: full architecture/dev block → updated MASTER TODO → brief rep
 - [MASTER TODO](./REGIONAL_WATCH_MASTER_TODO.md): DEV-01 and A-03 marked complete, A-02/A-04/H-01 partially open for other broader work. Next recommended DEV-OSS-01…05 (free OSS tool integrations) only after user's instruction. No site-wide QA performed.
 
 **Recovery:** This final checkpoint supersedes all earlier sections suggesting Workers deployment credentials missing, PR #30 not merged, or Pages release still separate. Follow the latest main MASTER TODO, not old historical branch snapshots.
+
+
+## 2026-11-15 ~21:57 IL — PRODUCTION BLANK-SCREEN HOTFIX (NO ROLLBACK)
+
+User screenshot at `https://regional-watch.pages.dev/` showed rendered background CSS with no main React content. User explicitly directed to **not rollback** and instead repair the current code in place.
+
+**Root cause:** `frontend/src/app/App.js` called `useFeed('/api/stories?...',60000,pages)`, but `pages` is not defined in any scope. React's `App()` crashes with `ReferenceError: pages is not defined` before rendering, so background CSS and standalone postlude button remain but content disappears.
+
+**TDD evidence:** added `frontend/tests/app-render-runtime.test.mjs` to mandatory `frontend-source` GitHub CI to execute actual `App()` against stubbed hooks across eight locale/page paths. [RED #43755009698](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43755009698): 8 failures all `pages is not defined`. Changed one line to `route==="/"||route==="/events"`, as stories data required on Home and Events only. [GREEN #43755060910](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43755060910): 8/8 app tests and 15/15 frontend source tests pass; other architecture suites pass.
+
+**Deployed:** [PR #33](https://github.com/ArrakturIL/regional-osint-feeds/pull/33) squash merged into main commit `2678227f161ff0b674e637171942a94449402371`. [Production release #43755170573](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43755170573) SUCCESS: source gates, unified immutable build, Workers Editor/Monitor, Cloudflare Pages, real `/`, `/he/`, `/api/overview` HTTP 200 checks, binding postcheck, and receipt artifacts. Cloudflare Pages production canonical `f37b01e3-6513-4762-9afa-555041ebb926` confirmed success. **No rollback used**.
+
+**Caveat:** An open browser tab will still execute the previously loaded broken JS until refreshed. Need user to refresh/hard-refresh and report whether page visibly displays; no claim of independent live browser DOM proof. The new runtime regression catches this specific render crash before future release.
+
+[MASTER TODO](./REGIONAL_WATCH_MASTER_TODO.md) updated (HOTFIX-01..04). Do not begin separate broad UI/news/content QA or DEV-OSS until requested.
