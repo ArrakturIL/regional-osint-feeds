@@ -34,6 +34,20 @@ jobs:
         run: python -m unittest discover -s scripts -p "test_unosat.py" -v
       - name: Read public UNOSAT ArcGIS service directory
         run: python scripts/collect_unosat.py
+      - name: Shadow-write validated unosat mirror to Neon
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          if [ -z "$NEON_DATABASE_URL" ]; then
+            echo "Neon shadow skipped: no configured secret; GitHub remains active"
+            exit 0
+          fi
+          if ! python -m pip install --disable-pip-version-check "psycopg[binary]>=3.2,<4"; then
+            echo "Neon shadow dependency unavailable; GitHub remains active"
+            exit 0
+          fi
+          python -m scripts.publish_neon_mirror --source unosat --mode shadow
       - name: Commit public-only metadata to GitHub (main)
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: |

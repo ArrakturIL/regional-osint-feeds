@@ -2,6 +2,7 @@ name: NASA satellite context and natural events
 
 on:
   push:
+    branches: [main]
     paths:
       - "scripts/collect_satellite.py"
       - ".github/workflows/satellite.yml"
@@ -33,6 +34,20 @@ jobs:
         run: python -m py_compile scripts/collect_satellite.py
       - name: Gather public NASA GIBS and EONET context
         run: python scripts/collect_satellite.py
+      - name: Shadow-write validated satellite mirror to Neon
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          if [ -z "$NEON_DATABASE_URL" ]; then
+            echo "Neon shadow skipped: no configured secret; GitHub remains active"
+            exit 0
+          fi
+          if ! python -m pip install --disable-pip-version-check "psycopg[binary]>=3.2,<4"; then
+            echo "Neon shadow dependency unavailable; GitHub remains active"
+            exit 0
+          fi
+          python -m scripts.publish_neon_mirror --source satellite --mode shadow
       - name: Commit only metadata, never satellite image files
         run: |
           git config user.name "github-actions[bot]"

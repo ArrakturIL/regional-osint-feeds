@@ -4,6 +4,13 @@ on:
     branches: [feature/integrated-data-quality-neon-20261115]
     paths:
       - "storage/neon/**"
+      - ".github/workflows/news-open-source-translation.yml"
+      - ".github/workflows/unosat-analyses.yml"
+      - ".github/workflows/satellite.yml"
+      - ".github/workflows/marad.yml"
+      - ".github/workflows/copernicus-analytics.yml"
+      - ".github/workflows/centcom-test.yml"
+      - ".github/workflows/analysts.yml"
       - ".github/workflows/gdelt.yml"
       - "scripts/neon_mirror.py"
       - "scripts/publish_neon_mirror.py"
@@ -14,6 +21,13 @@ on:
     branches: [main]
     paths:
       - "storage/neon/**"
+      - ".github/workflows/news-open-source-translation.yml"
+      - ".github/workflows/unosat-analyses.yml"
+      - ".github/workflows/satellite.yml"
+      - ".github/workflows/marad.yml"
+      - ".github/workflows/copernicus-analytics.yml"
+      - ".github/workflows/centcom-test.yml"
+      - ".github/workflows/analysts.yml"
       - ".github/workflows/gdelt.yml"
       - "scripts/neon_mirror.py"
       - "scripts/test_neon_mirror.py"

@@ -60,6 +60,20 @@ jobs:
         run: python scripts/collect_analysts.py
       - name: Validate the two fresh mirror files
         run: python scripts/verify_analyst_mirror.py --max-age-minutes 15
+      - name: Shadow-write validated analysts mirror to Neon
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          if [ -z "$NEON_DATABASE_URL" ]; then
+            echo "Neon shadow skipped: no configured secret; GitHub remains active"
+            exit 0
+          fi
+          if ! python -m pip install --disable-pip-version-check "psycopg[binary]>=3.2,<4"; then
+            echo "Neon shadow dependency unavailable; GitHub remains active"
+            exit 0
+          fi
+          python -m scripts.publish_neon_mirror --source analysts --mode shadow
       - name: Commit bounded mirror and source heartbeat
         # Only collector JSON lives in GitHub; no backend files are deployed here.
         if: success() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'

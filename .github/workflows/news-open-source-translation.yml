@@ -4,6 +4,7 @@ on:
   schedule:
     - cron: '17 */2 * * *'
   push:
+    branches: [main]
     paths:
       - 'scripts/translate_news_open_source.py'
       - 'scripts/test_translate_news_open_source.py'
@@ -52,6 +53,20 @@ jobs:
           HF_HUB_DISABLE_TELEMETRY: '1'
           TOKENIZERS_PARALLELISM: 'false'
         run: python scripts/translate_news_open_source.py
+      - name: Shadow-write validated news_translation mirror to Neon
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          if [ -z "$NEON_DATABASE_URL" ]; then
+            echo "Neon shadow skipped: no configured secret; GitHub remains active"
+            exit 0
+          fi
+          if ! python -m pip install --disable-pip-version-check "psycopg[binary]>=3.2,<4"; then
+            echo "Neon shadow dependency unavailable; GitHub remains active"
+            exit 0
+          fi
+          python -m scripts.publish_neon_mirror --source news_translation --mode shadow
       - name: Publish bounded validated translation mirror
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         run: |

@@ -2,6 +2,7 @@ name: Refresh official CENTCOM DVIDS news
 
 on:
   push:
+    branches: [main]
     paths:
       - "scripts/collect_centcom.py"
       - "scripts/centcom_writeback.py"
@@ -31,6 +32,20 @@ jobs:
       - name: Fetch and validate official DVIDS CENTCOM news
         id: collect
         run: python3 scripts/collect_centcom.py
+      - name: Shadow-write validated centcom mirror to Neon
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          if [ -z "$NEON_DATABASE_URL" ]; then
+            echo "Neon shadow skipped: no configured secret; GitHub remains active"
+            exit 0
+          fi
+          if ! python -m pip install --disable-pip-version-check "psycopg[binary]>=3.2,<4"; then
+            echo "Neon shadow dependency unavailable; GitHub remains active"
+            exit 0
+          fi
+          python -m scripts.publish_neon_mirror --source centcom --mode shadow
       - name: Commit updated news or status heartbeat
         if: always() && github.ref == 'refs/heads/main' && steps.collect.outcome != 'skipped'
         run: |
