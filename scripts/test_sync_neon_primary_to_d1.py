@@ -49,7 +49,7 @@ class TestNeonPrimaryReplication(unittest.TestCase):
                     raise AssertionError('wrong D1 database name')
                 return 'verified-db'
         return dict(connector=connector,stored_reader=stored_reader,
-                    mirror=mirror,client_factory=Client)
+                    mirror=mirror,client_factory=Client, last_good_checker=lambda *_: True)
 
     def test_neon_is_authoritative_and_all_eight_are_verified_before_first_d1_write(self):
         out=execute_replica_sync('neon-secret','account','d1-secret',**self.hooks())
@@ -106,6 +106,25 @@ class TestNeonPrimaryReplication(unittest.TestCase):
         health={row['source']:row['health'] for row in out['health']}
         self.assertEqual(health['gdelt'],'source_unavailable')
         self.assertEqual(health['analysts'],'data_fresh')
+
+    def test_error_source_requires_verified_existing_d1_last_good_not_just_a_skip(self):
+        hooks=self.hooks()
+        observed=[]
+        def reader(conn,key):
+            return SimpleNamespace(source_key=key,checked_at=datetime.now(timezone.utc),
+                                   status={"state":"error" if key=="gdelt" else "ok"})
+        def check(client,key):
+            observed.append(key)
+            return True
+        hooks["stored_reader"]=reader
+        hooks["last_good_checker"]=check
+        out=execute_replica_sync("neon","account","token",**hooks)
+        self.assertIn("gdelt",observed)
+        self.assertEqual(out["d1_verified"],7)
+        self.assertEqual(next(x for x in out["health"] if x["source"]=="gdelt")["replica_state"],"held_last_valid")
+        hooks["last_good_checker"]=lambda *_: False
+        with self.assertRaisesRegex(RuntimeError,"last|cache|fallback|source"):
+            execute_replica_sync("neon","account","token",**hooks)
 
     def test_missing_credentials_never_contact_neon_or_cloudflare(self):
         with self.assertRaises(ValueError):
