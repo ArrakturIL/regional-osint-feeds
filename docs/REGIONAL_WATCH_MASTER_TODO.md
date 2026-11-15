@@ -29,6 +29,18 @@
 
 **Последний QA, 15.11:** найдено несколько P1 смысловых ошибок перевода и P2 проблем группировки, свежести, локализации и UI. Часть прежних замечаний закрыта в опубликованной модульной базе (в частности, верхнее положение редакционной реплики и графическая полоска Polymarket); повторно их не переделывать без новой регрессии.
 
+### Последняя проверенная реализация — 15 ноября 2026 (текущая сессия)
+
+**Рабочая ветка:** `work/regional-watch-execution-20261115` и [черновой PR #25](https://github.com/ArrakturIL/regional-osint-feeds/pull/25) в `feature/integrated-data-quality-neon-20261115`. Дальше `main` ничего не сливалось; production, D1 и Neon не изменялись.
+
+- **A-02 частично:** через GitHub подтверждено расхождение интеграционной ветки с `main`; read-only Cloudflare подтверждает production Pages `86cd2f80`, Editor `ee79d24d`, Monitor `d68c6b6a`. Полная API/cron/bindings-инвентаризация и пересчёт перед merge ещё предстоят.
+- **A-03 частично:** подготовлен [release manifest](https://github.com/ArrakturIL/regional-osint-feeds/blob/work/regional-watch-execution-20261115/docs/REGIONAL_WATCH_RELEASE_MANIFEST_2026-11-15.md) с версиями, нерешёнными release-блокерами, флагами и откатом. Финальный release SHA не установлен — выпуск не разрешён.
+- **B-01/B-02 частично:** source-backed D1 SELECT подтвердил, что в production остаются три P1 ошибки: танкеры/мины, Reuters `may hold off`, и подмена участника в JPost HE. В feature-коде усилена защита на точных RU/HE и Python формах. *Это не исправление опубликованных cached translations*. 
+- **Проверки:** сначала RED на реальных фразах; затем [основной CI 43724245898](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43724245898) — 10/10 проверок прошли, deployment jobs пропущены; [Python translation CI 43724245865](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43724245865) — successful, production side effects на PR пропущены.
+- **Восстановление после разрыва:** [чекпоинт текущей сессии](https://github.com/ArrakturIL/regional-osint-feeds/blob/work/regional-watch-execution-20261115/docs/REGIONAL_WATCH_EXECUTION_CHECKPOINT_2026-11-15.md). После ошибки сначала читать коммиты и этот документ, не повторять уже выполненный код и не заявлять о публикации.
+
+Следующие незакрытые блокеры: проверенные корректировки существующих P1 записей с возможностью отката; D-04/D-05 реальные теневые циклы и read parity; RU/HE preview QA; согласование веток перед любым релизом.
+
 ## 2. Очередь работ: одна матрица, с приоритетами и зависимостями
 
 Легенда: `[x]` подтверждён отдельным результатом/коммитом/CI; `[~]` реализовано или проверено частично, но ещё не принято; `[ ]` не выполнено/нет достаточного подтверждения. **Это не список поручений на немедленное изменение production.**
