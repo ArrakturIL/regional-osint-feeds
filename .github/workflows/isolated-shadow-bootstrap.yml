@@ -20,6 +20,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Prove canary rollout policy before any D1 writes
+        run: python -m unittest scripts.test_collector_rollout_flags -v
       - name: Validate all shadow synchronization contracts offline
         run: python -m unittest scripts.test_collector_shadow_pipeline scripts.test_neon_mirror scripts.test_neon_to_d1 scripts.test_publish_neon_mirror -v
       - name: Require existing private Neon and scoped D1 credentials
