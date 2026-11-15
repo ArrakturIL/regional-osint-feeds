@@ -1,54 +1,93 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-14T22:24:33.320426+00:00",
+  "generated_at": "2026-11-15T06:29:35.364550+00:00",
   "source": "Helsinki-NLP/Opus-MT via GitHub Actions CPU (Apache-2.0)",
   "items": [
     {
-      "id": "9fc41a45cd3dde0e911c3773",
-      "original_title": "Israel fears surprise US strike on Iran as nuclear talks fuel concerns of escalation - analysis",
+      "id": "bf0354919e892807020aa393",
+      "original_title": "Three Iran-backed suspects plotted attacks including RAF Fairford incident, US says",
+      "source_language": "en",
+      "source": "BBC Middle East",
+      "he": {
+        "title": "שלושה חשודים איראן-גב זממו התקפות כולל תקרית Fairford חיל האוויר המלכותי, ארה\"ב אומרת",
+        "summary": "משרד המשפטים האמריקאי אומר שהאנשים היו מעורבים בשרשרת של חלקות, כולל תקרית גדולה ליד בסיס חיל האוויר הבריטי המשמש על ידי כוחות צבא ארה\"ב.",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      }
+    },
+    {
+      "id": "35973dc552a6d49e2dc39987",
+      "original_title": "Iran's IRGC launches drone attack on US base in Bahrain, triggering hostile escalation",
       "source_language": "en",
       "source": "Jerusalem Post / Iran",
       "he": {
-        "title": "ישראל חוששת להפתיע את ארה\"ב מכה באיראן כשיחות גרעיניות בנוגע להסלמה - ניתוח",
-        "summary": "כדי למזער את הסיכון להיתפס לא מוכן, צה\"ל מחזק את הקואורדינציה עם צבא ארה\"ב ומעלה את רמת הכוננות שלו על פני ניטור מודיעין, אזהרה מוקדמת והגנות אוויריות.",
+        "title": "IRGC של איראן משגר התקפת מזל\"ט על בסיס ארה\"ב בבחריין, מפעיל הסלמה עוינת",
+        "summary": "בחריין, ביתם של הצי החמישי של הצי האמריקני, האיץ באזרחים ובתושבים להישאר רגועים ולהמשיך למקום הבטוח הקרוב ביותר, אמר משרד הפנים שלה.",
         "model": "Helsinki-NLP/opus-mt-en-he"
       }
     },
     {
-      "id": "67d535234b8e4179f9401a71",
-      "original_title": "Two tankers strike mines in Strait of Hormuz",
+      "id": "e431113b219fdddf7767ee75",
+      "original_title": "Former bodyguard of Hamas’s Ismail Haniyeh convicted in Britain",
+      "source_language": "en",
+      "source": "JNS",
+      "ru": {
+        "title": "Бывший телохранитель «Хамас» Исмаил Ханийе, осужденный в Великобритании",
+        "summary": "Мохаммед Альфатих, 40 лет, предположительно также участвовал в реализации плана нападения на еврейские цели в Германии.",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
+      }
+    },
+    {
+      "id": "43a1dd8988fdc449568a7e84",
+      "original_title": "לא רק מצור ורעב ברחובות: \"4000 משאיות תקועות בגבול איראן-טורקיה\"",
+      "source_language": "he",
+      "source": "Maariv",
+      "ru": {
+        "title": "Не только осада и голод на улицах: 4000 грузовиков застряли на границе Ирана и Турции.",
+        "summary": "Расходы на отправку Ирана возросли в 14 тысяч раз, тысячи грузовиков застряли на границе, а грузоперевозки задерживаются на месяцы, и кризис в цепи снабжения угрожает снизить цены на еду, и в стране уже предупреждают о вреде потреблению курицы.",
+        "model": "Helsinki-NLP/opus-mt-he-ru"
+      }
+    },
+    {
+      "id": "d695f815e604aab12313df3c",
+      "original_title": "Violence flares in West Bank as Palestinians stone Israeli car, masked rioters attack olive harvest",
+      "source_language": "en",
+      "source": "Jerusalem Post / Israel",
+      "ru": {
+        "title": "Вспышки насилия на Западном берегу, когда палестинцы забрасывают камнями израильский автомобиль, маскирующиеся бунтовщики нападают на оливковый урожай",
+        "summary": "Один израильский водитель был легко ранен, когда в субботу палестинцы бросали камни в автомобиль вблизи Хеврона, а пятеро палестинцев получили ранения, когда в масках напали на оливковый урожай неподалеку.",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
+      }
+    },
+    {
+      "id": "2d77b05af1aa0ac3b20caa01",
+      "original_title": "Report: Trump may hold off on Iran strikes if Tehran avoids new provocations",
       "source_language": "en",
       "source": "Arutz Sheva",
       "ru": {
-        "title": "Два танкера нападают на мины в Хормузском проливе",
-        "summary": "По словам иранских военно-морских сил, в восточной части Хормузского пролива были обстреляны два нефтеналивных танкера, которые нанесли удар по военно-морской шахте.",
+        "title": "Доклад: Трамп может отложить удары по Ирану, если Тегеран избежит новых провокаций",
+        "summary": "Трамп рассматривает вопрос о том, чтобы отложить новые удары по Ирану, если Тегеран и Хаутис избегут дальнейших нападений, поскольку региональные союзники призывают к сдержанности, а силы США остаются начеку.",
         "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
+      }
+    },
+    {
+      "id": "0e8167791d9be9f1df20b85f",
+      "original_title": "Trump threatens to renew military strikes against Iran 'without hesitation'",
+      "source_language": "en",
+      "source": "Jerusalem Post / Iran",
       "he": {
-        "title": "שתי מכליות פוגעות במכרות במצר הורמוז",
-        "summary": "שתי מיכליות נפט עלו באש במצר המזרחי של הורמוז לאחר שפגעו במכרה ימי, הצי האיראני אמר שבת.",
+        "title": "טראמפ מאיים לחדש את המתקפה הצבאית נגד איראן ללא היסוס.",
+        "summary": "הנשיא טען שארה\"ב שולטת במפרץ הפרסי ובמצר הורמוז, ושהסגר שנכפה על איראן פוגע קשות בכלכלתה.",
         "model": "Helsinki-NLP/opus-mt-en-he"
       }
     },
     {
-      "id": "6cba7f36ae21599c0aba8483",
-      "original_title": "One killed, three wounded in grenade explosion in northern Israel's Kafr Manda",
+      "id": "5d20573a3b4ddcf00dee3aa9",
+      "original_title": "Saudi Arabia urges EU to designate Houthis as terrorists amid renewed attacks",
       "source_language": "en",
-      "source": "Jerusalem Post / Israel",
+      "source": "Arutz Sheva",
       "he": {
-        "title": "אחד נהרג, שלושה פצועים בפיצוץ רימון בצפון מדינת קפר-מנדה.",
-        "summary": "רופאי MDA ביצעו החייאה על אישה 51 בן לפני פינוי אותה לבית החולים, יחד עם גבר ואישה בשנות ה -50 שלהם במצב מתון.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "2402b30469bfd587d74a02c2",
-      "original_title": "Qatar and Turkiye sign a mutual defence pact: What do we know?",
-      "source_language": "en",
-      "source": "Al Jazeera",
-      "he": {
-        "title": "קטאר וטורקייה חותמים על הסכם הגנה הדדי, מה אנחנו יודעים?",
-        "summary": "אנליסטים אומרים הברית, הסכים בין מלחמת ארה\"ב-איראן, שואף להרתיע התקפות במקום לבנות ברית התקפה.",
+        "title": "ערב הסעודית דוחקת באיחוד האירופי למנות את אוטוהיס כטרוריסטים במהלך התקפות מחודשות.",
+        "summary": "ערב הסעודית מלחיצה את האיחוד האירופי למנות את ההאוטים האיראניים כטרוריסטים, אבל פקידי אירופה חוששים שהמעבר עלול לערער את מאמצי השלום העתידיים.",
         "model": "Helsinki-NLP/opus-mt-en-he"
       }
     },
@@ -64,50 +103,89 @@
       }
     },
     {
-      "id": "1dc8e21934b4226aba548352",
-      "original_title": "Iran warns modified ballistic missiles could reach Britain",
+      "id": "067ab25d3f5fe4084b9d50a3",
+      "original_title": "US intelligence: Iran still has up to 2,500 missiles",
       "source_language": "en",
       "source": "Arutz Sheva",
       "ru": {
-        "title": "Иран предупреждает, что модифицированные баллистические ракеты могут попасть в Британию.",
-        "summary": "Иранское государственное телевидение предупредило, что модифицированные версии баллистической ракеты Хоррамшахра могут попасть на американские военные объекты в Европе.",
+        "title": "Разведывательная служба США: Иран все еще имеет до 2500 ракет",
+        "summary": "В «Уолл-стрит джорнэл» сообщается, что, по оценкам разведки США, Иран сохраняет до 2500 ракет и восстанавливает свой арсенал.",
         "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
-      "he": {
-        "title": "איראן מזהירה שטילים בליסטיים מהונדסים יכולים להגיע לבריטניה.",
-        "summary": "הטלוויזיה האיראנית הודיעה כי גרסאות שונות של טיל הבליסטיקה של קהורמשהר יכולות להגיע להתקנה צבאית אמריקאית באירופה.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
       }
     },
     {
-      "id": "fcf293a9505a7ef7ce4d7be8",
-      "original_title": "Netanyahu calls for Israeli unity government, Eisenkot dismisses 'tricks'",
+      "id": "11e7f4e62ce6ccf01f33abd6",
+      "original_title": "בצה\"ל מבינים: אם איראן תעשה את הצעד הזה - ישראל תידרש לחשוב אחרת | אבי אשכנזי",
+      "source_language": "he",
+      "source": "Maariv",
+      "ru": {
+        "title": "В Израиле понимают: если Иран сделает этот шаг - Израиль должен будет думать иначе i i и Achchenzi",
+        "summary": "В Израиле за ядерными устройствами и восстановлением ракет в Иране, и ВМФ считает, что потребуется еще один раунд, но армия США не спешит на атаку, а Трамп пытается изменить свою позицию.",
+        "model": "Helsinki-NLP/opus-mt-he-ru"
+      }
+    },
+    {
+      "id": "b9f17645a9854785cdd06535",
+      "original_title": "Saudi-led coalition intercepts missiles towards Riyadh, drones in Eastern Province",
       "source_language": "en",
       "source": "Al-Monitor",
-      "ru": {
-        "title": "Нетаньяху призывает израильское правительство единства, Эйзенкот отвергает \"трики\"",
-        "summary": "Премьер-министр Израиля Бенджамин Нетаньяху в субботу повторил свои призывы к созданию правительства национального единства со своим противником Гади Эйзенкотом, который, в свою очередь, отклонил апелляцию как уловку.",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
       "he": {
-        "title": "נתניהו קורא לממשלת האיחוד הישראלית, אייזנקוט מבטל את \"טריקס\"",
-        "summary": "ראש ממשלת ישראל, בנג'מין נתניהו, בשבת, חזר על קריאתו לממשלת אחדות לאומית עם יריבו, גדי אייזנקוט, אשר דחה את הערעור כתחבולה.",
+        "title": "הקואליציה הסעודית מיירטת טילים לכיוון ריאד, מזל\"טים במחוז המזרחי.",
+        "summary": "נוב 15 (רוטרס) - הקואליציה הסעודית שנלחמת באיראן אוטהיס אמר ביום ראשון שהיא יירטה שני טילים בליסטיים של אוטוהי ששוגרו לעבר הבירה הסעודית ריאד ושלושה בורגים במחוז המזרחי העשיר בנפט של הממלכה.",
         "model": "Helsinki-NLP/opus-mt-en-he"
       }
     },
     {
-      "id": "4293027fe641f3d9c370c2c4",
-      "original_title": "Netanyahu to Eisenkot: We will reach agreements",
+      "id": "6e9d5aad8aab594c2baca46a",
+      "original_title": "Saudi-led coalition intercepts two missiles, two drones in Riyadh",
+      "source_language": "en",
+      "source": "Al Jazeera",
+      "he": {
+        "title": "הקואליציה הסעודית מיירטת שני טילים, שני מזל\"טים בריאד.",
+        "summary": "הלחימה מחריפה במריב של תימן ואל-ג'אף, כפי שסוכנות האו\"ם אומרת יותר מ-340,000 תימנים שנעקרו מאז אוגוסט.",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      }
+    },
+    {
+      "id": "75633b1d26b5c8eeee081308",
+      "original_title": "Eisenkot to offer Netanyahu unity government without rotation agreement",
       "source_language": "en",
       "source": "Arutz Sheva",
-      "ru": {
-        "title": "Нетаньяху-Эйзенкот: мы достигнем договоренности",
-        "summary": "Премьер-министр Бенджамин Нетаньяху призвал лидера партии Яшар присоединиться к нему на закрытых переговорах без каких-либо предварительных условий для достижения соглашений о формировании правительства единства.",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
       "he": {
-        "title": "נתניהו לאייזנקוט: נגיע להסכמים",
-        "summary": "ראש הממשלה בנג'מין נתניהו קרא למנהיג המפלגה של ישאר להצטרף אליו לשיחות בדלתיים סגורות, ללא תנאים מוקדמים, כדי להגיע להסכמים על הקמת ממשלה מאוחדת.",
+        "title": "Eisenkot להציע ממשלת אחדות נתניהו ללא הסכם סיבוב",
+        "summary": "יו\"ר ישאר גדי אייזנקוט מתכנן להזמין את ליקוט לממשלת אחדות תחת הנהגתו, שעלולה להציע לנתניהו תפקיד דיפלומטי מיוחד.",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      },
+      "ru": {
+        "title": "Айзенко предложить правительству единства Нетаньяху без соглашения о ротации",
+        "summary": "Председатель Яшар Гади Эйсенкот планирует пригласить Ликуда в правительство единства под его руководством, потенциально предлагая Нетаньяху особую дипломатическую роль.",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
+      }
+    },
+    {
+      "id": "66a3b4e7d73f2c1943b19a66",
+      "original_title": "Podcast: We simply cannot afford another election",
+      "source_language": "en",
+      "source": "Arutz Sheva",
+      "he": {
+        "title": "פודקאסט: אנחנו פשוט לא יכולים להרשות לעצמנו בחירות נוספות",
+        "summary": "ג'יי שפירו מעודד את נתניהו, בנט, אייזנקוט וליברמן להקים ממשלה מאוחדת, בטענה כי יריבויות אישיות עולות על הבדלים אידיאולוגיים.",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      },
+      "ru": {
+        "title": "Подкаст: мы просто не можем позволить себе новые выборы.",
+        "summary": "Джей Шапиро призывает Нетаньяху, Беннетта, Эйзенкота и Либермана сформировать правительство единства, утверждая, что личное соперничество перевешивает идеологические разногласия.",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
+      }
+    },
+    {
+      "id": "03b61123ac02200be60e0d22",
+      "original_title": "Netanyahu again urges unity talks ‘without preconditions’; Eisenkot rejects PM’s ‘spin’",
+      "source_language": "en",
+      "source": "Times of Israel",
+      "he": {
+        "title": "נתניהו שוב מאיץ בשיחות אחדות ללא תנאים מוקדמים; אייזנקוט דוחה את פמאס ספין",
+        "summary": "ראש הממשלה קורא להקים קואליציה של מפלגות יהודיות, הערות יריבות שנפגשות בין הצדדים כבר מתוכננות, מתעקש נתניהו לא יכול להמשיך כמנהיג ישראל",
         "model": "Helsinki-NLP/opus-mt-en-he"
       }
     },
@@ -123,62 +201,99 @@
       }
     },
     {
-      "id": "9a1bde9b7354696b462e69ef",
-      "original_title": "Likud MK Medan camps outside Knesset calling for national unity to help Israel remain 'one people'",
+      "id": "d94d68c642ee701bc8573d3e",
+      "original_title": "Mossad chief in US for talks on Iran, Netanyahu didn’t update Eisenkot on visit – report",
       "source_language": "en",
-      "source": "Jerusalem Post / Israel",
-      "he": {
-        "title": "מחנות MK מדאן ליקוד מחוץ Knesset קוראים לאחדות לאומית כדי לעזור לישראל להישאר 'עם אחד'",
-        "summary": "\"אני מתכוון להישאר באוהל יום ולילה, בקור ובגשם, לתת קול לחלקים גדולים של האנשים שממשיכים להגיע אליי עם כמיהתם לאחדות,\" כתב מאדן.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
+      "source": "Times of Israel",
+      "ru": {
+        "title": "Вождь Моссада в США на переговорах по Ирану, Нетаньяху не проинформировал об этом Эйзенкота во время визита – доклад",
+        "summary": "Гофман сказал, что встречается с вождем ЦРУ и Виткоффом; как сообщается, Замир все еще один среди руководителей израильских сил безопасности, чтобы противостоять немедленному удару по Ирану, который может сорвать переговоры с коалицией",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
       }
     },
     {
-      "id": "af76ca07d875e6c033142a35",
-      "original_title": "נתניהו \"מככב\" בקמפיין הבחירות של ראש הממשלה האנטי-ישראלי: \"הם שולטים\"",
+      "id": "0a73c54f509edecc3cb252be",
+      "original_title": "בזמן שישראל מעכלת את תוצאות הבחירות, ארדואן קובע עובדות בשטח | ד\"ר איתן לסרי",
       "source_language": "he",
       "source": "Maariv",
       "ru": {
-        "title": "Натаниэло - звезда предвыборной кампании премьер-министра Израиля: \"Они рулят\".",
-        "summary": "Нафанахо выступает рядом с Трампом, Путином и другими лидерами кампании премьер-министра Испании Педро Санчеса на выборах в этом месяце.",
+        "title": "В то время как Израиль переваривает результаты выборов, Эрдоган выдвигает факты на территории. Доктор Итан Лесри.",
+        "summary": "Посещение Билала Эрдогана в Бейруте открывает широкий турецкий план использования политического вакуума и ослабления Хезболлы: поглощение инфраструктурой, создание торговых коридоров Израиля и предложение установить войска на юге Ливана.",
         "model": "Helsinki-NLP/opus-mt-he-ru"
       }
     },
     {
-      "id": "0b4a5b211d4e2f2c50212750",
-      "original_title": "Somerville city council votes to divest from Israel",
+      "id": "fc4b8a5fbb7545aa25895518",
+      "original_title": "Fetterman threatens to leave Democrats if anti-Israel senator becomes Majority Leader",
       "source_language": "en",
       "source": "Arutz Sheva",
-      "ru": {
-        "title": "Городской совет Сомервиля проголосовал за освобождение от Израиля",
-        "summary": "Сомервилльс Городской совет голосует 10-1 за то, чтобы запретить контракты с компаниями, которые, по его мнению, причастны к нарушениям гуманитарного права, оппоненты утверждают, что это постановление выделяет «Израиль и Палестину».",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
       "he": {
-        "title": "מועצת העיר סומרוויל מצביעה בעד צניחה מישראל.",
-        "summary": "מועצת העיר סומרוויל מצביעה 10-1 ללשכת עורכי הדין עם חברות שהיא מחשיבה כשותפות להפרות חוק הומניטריות, יריבים אומרים שהתקנה מסמנת את ישראל ופלסטין.",
+        "title": "פטרמן מאיים לעזוב את הדמוקרטים אם הסנטור האנטי ישראלי יהפוך למנהיג הרוב.",
+        "summary": "סאן ג'ון פטרמן מזהיר שהוא יכול לעזוב את המפלגה הדמוקרטית אם כריס ואן הולן יהפוך למנהיג הרוב בסנאט,",
         "model": "Helsinki-NLP/opus-mt-en-he"
+      },
+      "ru": {
+        "title": "Феттерман угрожает покинуть демократов, если антиизраильский сенатор станет лидером большинства",
+        "summary": "Сеньор Джон Феттерман предупреждает, что он может покинуть Демократическую партию, если Крис Ван Холлен станет лидером большинства сената, ссылаясь на свою враждебность по отношению к Израилю.",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
       }
     },
     {
-      "id": "f838907eb96034db88508f4e",
-      "original_title": "Tibi exposes messages said to show Netanyahu camp sought Arab help while attacking parties publicly",
+      "id": "eb3a12e5bf6aa56211dab6e7",
+      "original_title": "EU voices grave concern over Gaza flooding, calls on Israel to reopen all border crossings",
       "source_language": "en",
-      "source": "Times of Israel",
+      "source": "Jerusalem Post / Israel",
       "he": {
-        "title": "טיבי חושף מסרים שנאמר להם להראות לנטניהו שמחנה חיפש עזרה ערבית בזמן שתקף מפלגות בפומבי.",
-        "summary": "רשימה משותפת MK מגלה מסרים מנתניהו איש סודו הוותיק נתאן אשל ואומר שר Likud גם הושיט את ידו והאיץ בו להתנגד ממשלת Eisenkot-Led",
+        "title": "קולות האיחוד האירופי דואגים מאוד להצפה בעזה, קוראים לישראל לפתוח מחדש את כל מעברי הגבול.",
+        "summary": "הצפות החמורות ותנאי החורף שפגעו בעזה מחמירים עוד יותר את תנאי המחיה של אוכלוסייה תשושה כבר, □ המועצה אמרה בהצהרה.",
         "model": "Helsinki-NLP/opus-mt-en-he"
+      },
+      "ru": {
+        "title": "ЕС выражает серьезную озабоченность в связи с наводнениями в Газе и призывает Израиль вновь открыть все пограничные контрольно-пропускные пункты",
+        "summary": "▪ Серьезные наводнения и зимние условия, которые обрушились на Газу, еще больше ухудшают условия жизни и без того истощенного населения, как заявил в своем заявлении совет.",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
+      }
+    },
+    {
+      "id": "8b1ac11e4f2a83b4ee1685ba",
+      "original_title": "Iran's navy says three tankers on fire after hitting mines in Hormuz",
+      "source_language": "en",
+      "source": "Al-Monitor",
+      "he": {
+        "title": "הצי של איראן אומר ששלוש מכליות עולות באש לאחר שפגעו במכרות בהורמוז.",
+        "summary": "נוב 14 (Reuters) - הצי של איראן אמר שלוש מכליות נפט עלו באש ביום שבת לאחר שפגעו במכרות ימיים במצר הורמוז, דיווחה מדיה איראנית.",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      },
+      "ru": {
+        "title": "В военно-морском флоте Ирана говорится, что три танкера были подожжены после попадания мин в Хормуз.",
+        "summary": "14 ноября (Рейтер) - Иранский военно-морский флот заявил, что три нефтяных танкера загорелись в субботу после попадания на военно-морские мины в Хормузском проливе, как сообщили иранские государственные средства массовой информации.",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
+      }
+    },
+    {
+      "id": "5399bdb0adac23a1fe856773",
+      "original_title": "Netanyahu says only a unity government can guarantee Israel’s security",
+      "source_language": "en",
+      "source": "Al Jazeera",
+      "he": {
+        "title": "נתניהו אומר שרק ממשלה מאוחדת יכולה להבטיח לישראל ביטחון",
+        "summary": "אייזנקוט, האחראי על הקמת ממשלה, מבטל את הערעור כ\"טריקס\" כנאומים ו\"נול\" של דוברת קנסט.",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      },
+      "ru": {
+        "title": "Нетаньяху говорит, что только правительство единства может гарантировать безопасность Израиля",
+        "summary": "Айзенкот, ответственный за формирование правительства, отклоняет апелляцию как «трикскис», так и переговоры и голосование в кнессете.",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
       }
     }
   ],
   "quality": {
-    "accepted": 18,
-    "rejected": 44,
+    "accepted": 29,
+    "rejected": 32,
     "model_tasks": {
-      "Helsinki-NLP/opus-mt-en-ru": 32,
-      "Helsinki-NLP/opus-mt-en-he": 27,
-      "Helsinki-NLP/opus-mt-he-ru": 3
+      "Helsinki-NLP/opus-mt-en-he": 26,
+      "Helsinki-NLP/opus-mt-en-ru": 29,
+      "Helsinki-NLP/opus-mt-he-ru": 6
     }
   }
 }
