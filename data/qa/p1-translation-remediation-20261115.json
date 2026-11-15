@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "status": "review_only_not_deployed",
+  "provenance": "English titles and summaries confirmed against original publishers 2026-11-15; candidates require controlled QA/rollback and are not automatically published",
+  "items": [
+    {
+      "id": "67d535234b8e4179f9401a71",
+      "source_url": "https://www.israelnationalnews.com/news/436187",
+      "original": {
+        "title": "Two tankers strike mines in Strait of Hormuz",
+        "body": "Two oil tankers caught fire in the eastern Strait of Hormuz after striking a naval mine, the Iranian Navy said Saturday."
+      },
+      "bad_cache": {
+        "ru": {
+          "title": "Два танкера нападают на мины в Хормузском проливе",
+          "body": "По словам иранских военно-морских сил, в восточной части Хормузского пролива были обстреляны два нефтеналивных танкера, которые нанесли удар по военно-морской шахте."
+        },
+        "he": {
+          "title": "שתי מכליות פוגעות במכרות במצר הורמוז",
+          "body": "שתי מיכליות נפט עלו באש במצר המזרחי של הורמוז לאחר שפגעו במכרה ימי, הצי האיראני אמר שבת."
+        }
+      },
+      "candidate": {
+        "ru": {
+          "title": "ВМС Ирана заявили о пожаре на двух танкерах после столкновения с морской миной в Ормузском проливе",
+          "body": "По заявлению ВМС Ирана, два нефтяных танкера загорелись в восточной части Ормузского пролива после столкновения с морской миной."
+        },
+        "he": {
+          "title": "לפי חיל הים האיראני, שתי מכליות עלו באש לאחר שפגעו במוקש ימי במצר הורמוז",
+          "body": "לפי הודעת חיל הים האיראני, שתי מכליות נפט עלו באש במזרח מצר הורמוז לאחר שפגעו במוקש ימי."
+        }
+      }
+    },
+    {
+      "id": "da4c4535478a60f9b3975e40",
+      "source_url": "https://www.jpost.com/middle-east/iran-news/article-914862",
+      "original": {
+        "title": "Trump tells advisers he may hold off on Iran attacks barring new provocations",
+        "body": "Trump has alternated between threats of escalating the war with new strikes and winding down hostilities, and current and former officials say he does not appear to have made up his mind."
+      },
+      "bad_cache": {
+        "ru": {
+          "title": "Трамп говорит советникам, что он может удержаться от нападений Ирана, запрещающих новые провокации."
+        },
+        "he": {
+          "title": "טראמפ אומר ליועציו שהוא עשוי להימנע מתקיפות על איראן, וזה אוסר על פעולות פרובוקטיביות חדשות"
+        }
+      },
+      "candidate": {
+        "ru": {
+          "title": "Reuters: Трамп может воздержаться от ударов по Ирану, если не будет новых провокаций",
+          "body": "Трамп то угрожал эскалацией с новыми ударами, то говорил о сокращении боевых действий. По словам действующих и бывших чиновников, он, по-видимому, ещё не принял решения."
+        },
+        "he": {
+          "title": "לפי רויטרס, טראמפ עשוי להימנע מתקיפות באיראן אם לא יהיו פרובוקציות חדשות",
+          "body": "טראמפ נע בין איומים בהסלמת הלחימה באמצעות תקיפות נוספות לבין צמצום פעולות האיבה, וגורמים בהווה ובעבר אומרים כי נראה שטרם קיבל החלטה."
+        }
+      }
+    },
+    {
+      "id": "9fc41a45cd3dde0e911c3773",
+      "source_url": "https://www.jpost.com/middle-east/iran-news/article-914880",
+      "original": {
+        "title": "Israel fears surprise US strike on Iran as nuclear talks fuel concerns of escalation - analysis",
+        "body": "To minimize risk of being caught off guard, the IDF is strengthening coordination with the US military and raising its level of alert across intelligence monitoring, early warning, and air defenses."
+      },
+      "bad_cache": {
+        "he": {
+          "title": "ישראל חוששת להפתיע את ארה\"ב מכה באיראן כשיחות גרעיניות בנוגע להסלמה - ניתוח"
+        }
+      },
+      "candidate": {
+        "ru": {
+          "title": "Израиль опасается неожиданного удара США по Ирану на фоне переговоров по ядерной программе — анализ",
+          "body": "Чтобы не оказаться застигнутым врасплох, ЦАХАЛ усиливает координацию с армией США и повышает готовность разведки, систем раннего предупреждения и противовоздушной обороны."
+        },
+        "he": {
+          "title": "בישראל חוששים מתקיפה אמריקאית מפתיעה באיראן על רקע שיחות הגרעין — ניתוח",
+          "body": "כדי לצמצם את הסיכון להיתפס לא מוכנים, צה״ל מחזק את התיאום עם צבא ארה״ב ומגביר את הכוננות במעקב המודיעיני, בהתרעה המוקדמת ובהגנה האווירית."
+        }
+      }
+    }
+  ]
+}
