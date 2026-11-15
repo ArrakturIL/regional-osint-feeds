@@ -23,7 +23,7 @@
 - [x] **Protection before production writes.** `scripts/release/cloudflare-gate.mjs capture` checks live Worker bindings, cron, Pages service/D1 binding targets and saves redacted rollback IDs. `scripts/release/d1-preflight.mjs` compares live table/column presence read-only without automatic migrations.
 - [x] **Coordinated release job.** `.github/workflows/regional-watch-app-check.yml` runs the existing 10 source test jobs before immutable build, Wrangler dry-run for both Workers, and release job with required credentials, exact verified artifact download, Editor→Monitor→Pages deploy, technical route smoke, live postcheck and rollback on failure.
 - [x] **Rollback/receipt code.** Named previous Worker version 100% deployments and Cloudflare Pages rollback API are invoked on partial failure. Record version IDs, source SHA, checksums and CI run in non-secret receipt artifacts after successful release.
-- [ ] **Production acceptance: MUST NOT MARK COMPLETE UNTIL CONFIRMED.** A scoped `CLOUDFLARE_WORKERS_API_TOKEN` must be configured in GitHub Actions secrets (existing Pages/D1 tokens are insufficient). Then run the merged main workflow and verify `release-production` succeeded, live versions match one release SHA, no bindings/cron regressions, release receipt exists and all previous state is recoverable. Update MASTER TODO and stop before DEV-OSS.
+- [ ] **Production acceptance: MUST NOT MARK COMPLETE UNTIL CONFIRMED.** The existing `CLOUDFLARE_D1_API_TOKEN` has been expanded by the owner to include `Workers → Admin`; validate its actual access in trusted GitHub Actions before release. No new token is needed. Then run the merged main workflow and verify `release-production` succeeded, live versions match one release SHA, no bindings/cron regressions, release receipt exists and all previous state is recoverable. Update MASTER TODO and stop before DEV-OSS.
 
 ## Review focus
 - Missing worker deployment token → **no** Pages-only publishing.
@@ -35,4 +35,4 @@
 - Continuous collectors → no changes to the eight Neon-primary collector workflows or production data.
 
 ## Release decision
-Implementation branch `feat/dev01-coordinated-releases-20261115` PR #30. **No merge or production deployment while the Workers token is missing**; legacy Pages path remains active on main. Approving a merge will replace the old Pages-only production job with coordinated release, so the secret precondition is binding, not cosmetic.
+Implementation branch `feat/dev01-coordinated-releases-20261115` PR #30. **No production deployment unless the existing D1+Workers Admin token passes Cloudflare preflight**; legacy Pages path remains active on main. Approving a merge will replace the old Pages-only production job with coordinated release, so the secret precondition is binding, not cosmetic.
