@@ -17,6 +17,8 @@ jobs:
         with:
           node-version: '22'
       - run: node --test tests/architecture/editor-modules.test.mjs
+      - name: Verify high-impact translation fidelity and article provenance
+        run: node --test tests/architecture/translation-semantics.test.mjs tests/architecture/news-localization-provenance.test.mjs
   frontend-source:
     runs-on: ubuntu-latest
     steps:
