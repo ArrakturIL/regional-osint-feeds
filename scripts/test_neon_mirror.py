@@ -190,6 +190,21 @@ class TestStoredSnapshotIntegrity(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"timestamp"):
             validate_stored_row(tuple(row))
 
+    def test_actual_parity_check_reads_and_verifies_jsonb_not_only_stored_digests(self):
+        from scripts.neon_mirror import verify_snapshot
+        row=list(self.stored_row())
+        row[4]={"source":"gdelt_context","sample":["corrupted"]}
+        class Conn:
+            def execute(self,sql,args):
+                self.sql=sql
+                class Cursor:
+                    def fetchone(self): return tuple(row)
+                return Cursor()
+        db=Conn()
+        with self.assertRaisesRegex(ValueError,"digest"):
+            verify_snapshot(db,self.snapshot)
+        self.assertIn("data_payload",db.sql)
+
     def test_readback_rejects_oversized_json_after_db_decode(self):
         from scripts.neon_mirror import validate_stored_row
         row=list(self.stored_row())
