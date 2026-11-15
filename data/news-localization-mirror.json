@@ -1,108 +1,54 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-15T15:42:05.125812+00:00",
+  "generated_at": "2026-11-15T17:41:10.098508+00:00",
   "source": "Helsinki-NLP/Opus-MT via GitHub Actions CPU (Apache-2.0)",
   "items": [
     {
-      "id": "f851a46df3dcf23ba0c29270",
-      "original_title": "Iran claims drone attack on US military base in Bahrain",
-      "source_language": "en",
-      "source": "France 24",
-      "ru": {
-        "title": "Иран заявляет о нападении беспилотных летательных аппаратов на военную базу США в Бахрейне",
-        "summary": "",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
-      "he": {
-        "title": "איראן טוענת שמתקפת מזל\"ט על בסיס צבא ארה\"ב בבחריין.",
-        "summary": "",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "01c05f66564c0b1c1de4eaa7",
-      "original_title": "'Hypocrisy, not unity': Hostage's brother attacks wounded IDF veteran",
-      "source_language": "en",
-      "source": "Arutz Sheva",
-      "ru": {
-        "title": "\"Гипокризис, а не единство\": брат заложника атакует раненого ветерана ЦАХАЛ",
-        "summary": "Дэни Элгарат обвиняет Ликуда МК Элиша Медана, который потерял обе ноги, сражаясь в Газе, в лицемерии по поводу его плана создания палатки единства вблизи кнессета.",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
-      "he": {
-        "title": "צביעות, לא אחדות, אחיו של בן הערובה תוקף ותיקי צה\"ל פצועים.",
-        "summary": "דני אלגאראט מאשים את ליקוד MK אלישע מדאן, שאיבד את שתי הרגליים לחימה בעזה, צביעות על תכניתו להקים אוהל אחדות ליד Knesset.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "624d37b4e58ec30abe37ab8f",
-      "original_title": "IDF prepares for Iranian attacks, tests communications systems in multi-front war drills",
-      "source_language": "en",
-      "source": "Jerusalem Post / Israel",
-      "he": {
-        "title": "צה\"ל מתכונן למתקפות האיראניות, בודק מערכות תקשורת בתרגילי מלחמה רב חזיתיים",
-        "summary": "\"התרגיל הוא חלק מתהליך מתמשך כדי לחזק את המוכנות המבצעית של יחידות תקשורת בכל המגזרים, ▪ אמר בריג-ג'ן עומר כהן, קצין התקשורת הראשי של צה\"ל.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "e6baab6a4228eff7d7b0e689",
-      "original_title": "בצה\"ל חשבו שכבר ראו הכול באיו\"ש - ואז הגיע התיעוד הזה",
+      "id": "10cf4fccf2a4ca0442fb2453",
+      "original_title": "אפי נוה מגיב לראשונה לגיוס התרומות של הדס שטייף: \"איזה אידיוט עושה את זה?\"",
       "source_language": "he",
       "source": "Maariv",
       "ru": {
-        "title": "В США думали, что уже видели все в США, а потом пришли эти документы.",
-        "summary": "В отчете, что палестинцы, казалось, поселенцы разбирают часть бетонной фабрики в Самарии и загружают ее в грузовик, а в оффшорных войсках проверяют отчет, и настраивают заявления о повторных нападениях в регионе.",
+        "title": "Эффи Ноа впервые отреагировала на сбор пожертвований Хаддас Саиф: \"Какой идиот это делает?\"",
+        "summary": "Эффи Ноа напал на Хадса Штифа из-за кампании по сбору 800 тысяч долларов после того, как получил компенсацию за нарушение частной жизни.",
         "model": "Helsinki-NLP/opus-mt-he-ru"
       }
     },
     {
-      "id": "12277055f2df85cc08eaf50f",
-      "original_title": "Bahrain accuses Iran of attacking its territory to ‘settle’ score with US",
+      "id": "15a5b4049d0d0fb6f0ff12cc",
+      "original_title": "UN ambassadors enter Gaza for first time, tour Hamas tunnel with Israeli envoy Danny Danon",
       "source_language": "en",
-      "source": "Al Jazeera",
-      "he": {
-        "title": "בחריין מאשים את איראן בתקיפת שטחה כדי להבקיע עם ארה\"ב",
-        "summary": "טהרן אומר שמתקפות האוויר שלה על מדינות המשתף פעולה עם ארה\"ב מוצדקות תחת החוק הבינלאומי.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "7d1d7c4334750effb72367f2",
-      "original_title": "Iran targets US military radar in Bahrain in ‘retaliatory’ drone strikes",
-      "source_language": "en",
-      "source": "Al Jazeera",
-      "he": {
-        "title": "איראן מאתרת את המכ\"ם הצבאי האמריקאי בבחריין במכת מזל\"ט.",
-        "summary": "איראן IRGC אומר שישה מזל\"טים שוגרו במתקן מכ\"ם בארה\"ב בבסיס אוויר בבחריין.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "03d8964b94784ab9ccb08764",
-      "original_title": "Iran targets Bahrain airbase as strikes resume in Gulf - Middle East crisis live",
-      "source_language": "en",
-      "source": "The Guardian",
-      "he": {
-        "title": "איראן מכוונת לבסיס האווירי של בחריין כשביתה חוזרת למפרץ - משבר המזרח התיכון בשידור חי",
-        "summary": "בחריין שוכן ישירות מעבר למפרץ הפרסי מאיראן, והוא ביתם של הצי החמישי של הצי האמריקאי, איראן, המשמרות המהפכניות, אמרו שהם שיגרו שישה מזל\"טים שמכוונים לרדאר אווירי של ארה\"ב בבסיס המסוקים אל-ריפאה ביום ראשון בבוקר, דיווחו על תקשורת איראנית.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "23e345aee6b4af2162b9dd03",
-      "original_title": "Iran claims attack on US military airbase in Bahrain",
-      "source_language": "en",
-      "source": "France 24",
+      "source": "Jerusalem Post / Israel",
       "ru": {
-        "title": "Иран заявляет о нападении на военную авиабазу США в Бахрейне",
-        "summary": "Иранские военные подтвердили в воскресенье нападение на американскую военную базу в Бахрейне, во время второго нападения на страну Ближнего Востока в течение трех дней.",
+        "title": "Послы ООН впервые въезжают в Газу, путешествуют по туннелю ХАМАС с израильским посланником Дэнни Даноном",
+        "summary": "Визит начался в Киббуц-Кфар-Аза, одна из общин, опустошенных во время нападения ХАМАС 7 октября, и послам было показано, какие разрушения остались после резни, прежде чем пересечь границу в Газу.",
         "model": "Helsinki-NLP/opus-mt-en-ru"
       },
       "he": {
-        "title": "איראן טוענת שהיא תקפה את הבסיס הצבאי האמריקאי בבחריין.",
-        "summary": "הצבא האיראני אישר ביום ראשון התקפה על בסיס צבאי בארה\"ב בבחריין, במוקדה השני של המדינה המזרח תיכונית במרחב של שלושה ימים.",
+        "title": "שגרירי האו\"ם נכנסו לעזה בפעם הראשונה, סיירו במנהרת חמאס עם השליח הישראלי דני דנון",
+        "summary": "הביקור החל בקיבוץ כפר עזה, אחת הקהילות נהרסה במהלך התקפת חמאס ב-7 באוקטובר.",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      }
+    },
+    {
+      "id": "6c37d0194322ef4a31b97765",
+      "original_title": "Anti-Houthi forces retreat in Yemen as Iran strikes Bahrain",
+      "source_language": "en",
+      "source": "Al-Monitor",
+      "he": {
+        "title": "כוחות אנטי-הוטיים נסוגים בתימן בעוד איראן תוקפת בחריין.",
+        "summary": "על ידי מוחמד גובארי נוב 15 (Reuters) - איראן ובעלי בריתה הגבירו לחץ על ארצות הברית ועל מדינות המפרץ בעלות הברית בשתי חזיתות ביום ראשון, עם כוחות סעודיים נסוגים במאבקם נגד ההוטאים איראן שהוקמו בתימן ואיראן עצמה יורה מזל\"טים בבסיסים בארה\"ב בבחריין.",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      }
+    },
+    {
+      "id": "b280762ad201930f85e809f9",
+      "original_title": "Israel kills senior member of Hamas's military wing in Gaza strike",
+      "source_language": "en",
+      "source": "France 24",
+      "he": {
+        "title": "ישראל הורגת חבר בכיר באגף הצבאי של חמאס בעזה.",
+        "summary": "הצבא הישראלי אמר שביום ראשון הרגו כוחותיו חבר בכיר באגף הצבאי של חמאס בעזה, והקבוצה הלוחמנית אישרה את מותו של סמיר אבו יונס, מפקד חטיבת הראפה, והוסיף שהוא מילא תפקיד חשוב בתכנון התקפות ה-7 באוקטובר 2023.",
         "model": "Helsinki-NLP/opus-mt-en-he"
       }
     },
@@ -111,11 +57,6 @@
       "original_title": "Will Israel's repeated strikes on Hamas's replacement commanders lead to lasting change? - analysis",
       "source_language": "en",
       "source": "Jerusalem Post / Israel",
-      "ru": {
-        "title": "Будут ли неоднократные удары Израиля по замещающим Хамас командирам вести к долгосрочным переменам?",
-        "summary": "Нападая на замещающих командиров вскоре после их назначения, Израиль может попытаться помешать ХАМАС восстановить свое командование и контроль.",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
       "he": {
         "title": "האם שביתות חוזרות ונשנות של בני ישראל על מפקדיו המחליפים של חמאס יובילו לשינוי מתמשך? (אנליזה)",
         "summary": "על ידי מיקוד מפקדים חלופיים זמן קצר לאחר מינוים, ישראל עשויה לבקש למנוע את יכולתו של חמאס לבסס מחדש את פיקודה ואת שליטתה.",
@@ -123,111 +64,13 @@
       }
     },
     {
-      "id": "9f26e9b1c2e73d8e63a29dcc",
-      "original_title": "Transportation Ministry delegation heads to Dubai for briefing on flydubai attack probe",
-      "source_language": "en",
-      "source": "Times of Israel",
-      "he": {
-        "title": "משלחת משרד התחבורה בראשות לדובאי לתדרוך על חללית התקפה Flydubai",
-        "summary": "נציגים להיפגש עם אנשי ביטחון מקומיים ונציגי נמל תעופה על חקירת אירועי ספטמבר וסידורים לאתחל טיסות על ידי נושאות מטוסים זרות וישראליות",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "8a84847942c995b51fd56a6c",
-      "original_title": "ריגל עבור טהרן מיוזמתו: תושב מזרעה נחשד בפגיעה בביטחון המדינה",
-      "source_language": "he",
-      "source": "Maariv",
-      "ru": {
-        "title": "Регулировал Тегеран по своей собственной инициативе: житель семян подозревается в нарушении национальной безопасности.",
-        "summary": "И полиция обнаружила еще одно дело о шпионаже: подозрительный гражданин Израиля, предлагавший свои услуги Ирану с целью мести, делал фотографии военных баз и полицейских станций и передавал координаты своим кураторам.",
-        "model": "Helsinki-NLP/opus-mt-he-ru"
-      }
-    },
-    {
-      "id": "b9dc0cecde414118b09644d6",
-      "original_title": "Israel's defense establishment sees no urgent need to strike Iran until new gov't formed - report",
-      "source_language": "en",
-      "source": "Jerusalem Post / Israel",
-      "ru": {
-        "title": "Защитное учреждение Израиля не видит срочной необходимости наносить удар по Ирану до тех пор, пока не будет сформировано новое правительство - доклад",
-        "summary": "Управление военной разведки (Аман) не согласно с оценкой, согласно сообщению N12, и поддерживает принятие мер против Ирана.",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
-      "he": {
-        "title": "ממסד ההגנה של ישראל לא רואה צורך דחוף להכות את איראן עד שיוקם חדש. דו\"ח.",
-        "summary": "מנהל המודיעין הצבאי (Aman) לא מסכים עם ההערכה, דיווח N12 ותומך בפעולה נגד איראן.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "022203c2340c5344c9afdd90",
-      "original_title": "העימות עם ארה\"ב מתרחב: איראן שיגרה כטב\"מים לעבר בחריין",
-      "source_language": "he",
-      "source": "Maariv",
-      "ru": {
-        "title": "Конфликт с США расширяется: Иран запустил беспилотники в Бахрейн.",
-        "summary": "Бахрейн заявила, что перехватили иранские беспилотники, в то время как Стражи революции утверждают, что они запустили шесть беспилотников в американские радары, сработала тревога, и жители сообщили о взрывах, но нет разрешения на атаку цели.",
-        "model": "Helsinki-NLP/opus-mt-he-ru"
-      }
-    },
-    {
       "id": "2c2b597b05d337cb01488a76",
       "original_title": "Iran still has up to 2,500 missiles, capable of major assault even after rounds of strikes - report",
       "source_language": "en",
       "source": "Jerusalem Post / Iran",
-      "ru": {
-        "title": "Иран по-прежнему имеет до 2500 ракет, способных нанести серьезные удары даже после ударов.",
-        "summary": "Должностные лица заявили, что трудно отследить точное количество имеющихся у Ирана ракет, включая и ракеты, находящиеся на складе, и ракеты, готовые к немедленному запуску.",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
       "he": {
         "title": "לאיראן עדיין יש עד 2,500 טילים, המסוגלים לתקוף אפילו אחרי סיבובי שביתות.",
         "summary": "הפקידים אמרו שזה היה קשה לעקוב אחר המספר המדויק של בעלי טילים איראן, כולל אלה באחסון ואלה מוכנים לשיגור מיידי.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "375a8dbbd74db46535a36253",
-      "original_title": "Military Intelligence: Hezbollah highly likely to join if war with Iran resumes",
-      "source_language": "en",
-      "source": "Arutz Sheva",
-      "he": {
-        "title": "המודיעין הצבאי: חיזבאללה צפוי מאוד להצטרף אם המלחמה עם איראן תתחדש.",
-        "summary": "צה\"ל מעריך שאם המלחמה עם איראן תתחדש, חיזבאללה צפוי להצטרף ללחימה ולחדש את ההתקפות על קהילות בצפון ישראל.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "e431113b219fdddf7767ee75",
-      "original_title": "Former bodyguard of Hamas’s Ismail Haniyeh convicted in Britain",
-      "source_language": "en",
-      "source": "JNS",
-      "he": {
-        "title": "שומר ראש לשעבר של חמאס איסמעיל האניה שהורשע בבריטניה",
-        "summary": "מוחמד אלפאטי, בן 40, גם היה מעורב לכאורה במזימה לתקוף מטרות יהודיות בגרמניה.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "d695f815e604aab12313df3c",
-      "original_title": "Violence flares in West Bank as Palestinians stone Israeli car, masked rioters attack olive harvest",
-      "source_language": "en",
-      "source": "Jerusalem Post / Israel",
-      "he": {
-        "title": "אלימות משתוללת בגדה המערבית כפלסטינים אבן מכונית ישראלית, מהומות רעול פנים לתקוף קציר זיתים",
-        "summary": "נהג ישראלי נפגע קלות כאשר פלסטינים זרקו אבנים על מכונית ליד חברון בשבת, וחמישה פלסטינים נפצעו כאשר מהומות רעולי פנים תקפו קציר זית בקרבת מקום.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "2d77b05af1aa0ac3b20caa01",
-      "original_title": "Report: Trump may hold off on Iran strikes if Tehran avoids new provocations",
-      "source_language": "en",
-      "source": "Arutz Sheva",
-      "he": {
-        "title": "דו\"ח: טראמפ עלול לדחות את שביתות איראן אם טהראן נמנע פרובוקציה חדשה",
-        "summary": "טראמפ שוקל לדחות שביתות חדשות על איראן אם טהראן והוטאים יימנעו מהתקפות נוספות, כשבעלי ברית אזוריים מאיפוק וכוחות ארה\"ב יישארו בכוננות.",
         "model": "Helsinki-NLP/opus-mt-en-he"
       }
     },
@@ -243,66 +86,6 @@
       }
     },
     {
-      "id": "e8fd9186a7813ee4e09c2384",
-      "original_title": "Bahrain says air defences destroyed several Iranian drones attacking US base",
-      "source_language": "en",
-      "source": "France 24",
-      "he": {
-        "title": "בחריין אומר שההגנות האוויריות השמידו כמה מזל\"טים איראניים שתקפו את בסיס ארה\"ב.",
-        "summary": "בהריין פרסם שתי התראות על איומים פוטנציאליים ביום ראשון, האזהרות הראשונות שלו מאז ספטמבר. מתקפת המזל\"ט האיראנית השנייה בשלושה ימים, שהסתיימה בהתקפות ארוכות במהלך המלחמה במזרח התיכון. מאמצים דיפלומטיים לסיים את העימות הכמעט תשעה חודשים עדיין לא יצרו פריצת דרך, עם התקפות ספורדיות נמשכות. פרטים.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "adfd036dad29267570de6153",
-      "original_title": "Jordan sentences three to death over deadly church attack",
-      "source_language": "en",
-      "source": "JNS",
-      "ru": {
-        "title": "Иордания приговаривает троих к смертной казни из-за смертельного нападения церкви",
-        "summary": "",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
-      "he": {
-        "title": "ירדן דן שלושה למוות על התקפת כנסייה קטלנית",
-        "summary": "",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "c393bb1fe34e7051de499fde",
-      "original_title": "US intelligence believes Iran could still have up to 2,500 missiles – report",
-      "source_language": "en",
-      "source": "Times of Israel",
-      "he": {
-        "title": "המודיעין האמריקאי מאמין איראן עדיין יכול להיות עד 2,500 טילים דו\"ח",
-        "summary": "רשמי אומר WSJ כי דמות היא \"הערכה של ביטחון נמוך,\" אבל זה ברור איראן עדיין מחזיק אלפי טילים; פיצוצים שמעו בבחריין כמו איראן טוען התקפה על בסיס ארה\"ב",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "4ccba67949d21828b0db4b5c",
-      "original_title": "11 ימים בלבד: המשפט שהסתיים בגזר דין מוות לשלושה מחבלים בירדן",
-      "source_language": "he",
-      "source": "Maariv",
-      "ru": {
-        "title": "Всего 11 дней: суд завершился смертным приговором трех террористов в Иордании.",
-        "summary": "Менее чем через месяц после резни в церкви в южной Иордании, где было убито девять человек, три террориста были осуждены в конце быстрого судебного разбирательства, взрыв также привел к нападениям в Сирии и дипломатическом кризисе.",
-        "model": "Helsinki-NLP/opus-mt-he-ru"
-      }
-    },
-    {
-      "id": "067ab25d3f5fe4084b9d50a3",
-      "original_title": "US intelligence: Iran still has up to 2,500 missiles",
-      "source_language": "en",
-      "source": "Arutz Sheva",
-      "he": {
-        "title": "המודיעין האמריקאי: לאיראן עדיין יש עד 2,500 טילים",
-        "summary": "וול סטריט ג'ורנל מדווח שהמודיעין האמריקאי מעריך שאיראן מחזיקה עד 2,500 טילים והוא בונה מחדש את מחסן הנשק שלה.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
       "id": "b9f17645a9854785cdd06535",
       "original_title": "Saudi-led coalition intercepts missiles towards Riyadh, drones in Eastern Province",
       "source_language": "en",
@@ -314,160 +97,46 @@
       }
     },
     {
+      "id": "add2104d56b9c4fed52b7e7d",
+      "original_title": "U.S. and Israeli defense chiefs to keynote MirYam Institute briefings in New York and Florida",
+      "source_language": "en",
+      "source": "JNS",
+      "ru": {
+        "title": "Вожди обороны США и Израиля на основных брифингах Института Мириам в Нью-Йорке и Флориде",
+        "summary": "Бывший министр обороны Израиля Йоав Галлант, отставной генерал США Эрик Курилья и бывший израильский посол Майкл Орен обсудят проблемы, стоящие перед Израилем, и будущее отношений между США и Израилем",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
+      },
+      "he": {
+        "title": "ראשי ההגנה של ארצות הברית וישראל לתדריכים המרכזיים של מכון מיראם בניו יורק ובפלורידה",
+        "summary": "שר ההגנה הישראלי לשעבר, יואב גאלנט, גנרל לשעבר, אריק קורילה, ושגריר ישראל לשעבר, מייקל אורן, ישוחחו על האתגרים הניצבים בפני ישראל ועל עתיד היחסים בין ארצות הברית לישראל.",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      }
+    },
+    {
+      "id": "12cf3d3ebc4edf080e720501",
+      "original_title": "Yashar, Likud meet for unity talks as Eisenkot bloc moves to assert control over Knesset",
+      "source_language": "en",
+      "source": "Times of Israel",
+      "ru": {
+        "title": "Яшар, Ликуд встречаются для переговоров о единстве, когда блок Айсенкот пытается установить контроль над кнессетом",
+        "summary": "Антинетаньяхуский блок готовится заменить оратора в кнессете и приступить к пересмотру законодательства о судебной реформе, несмотря на то, что коалиционные переговоры по-прежнему зашли в тупик.",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
+      },
+      "he": {
+        "title": "ישאר, ליקוד נפגש לשיחות אחדות כמו Eisenkot גוש נע כדי להשתלט על Knesset",
+        "summary": "אנטי-נטניהו בלוק מתכונן להחליף את רמקול Knesset ולהתחיל להפוך חקיקה שיפוץ שיפוטית, אפילו כמו שיחות קואליציה להישאר מבוי סתום",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      }
+    },
+    {
       "id": "1f1503fb989dcab7153343f5",
       "original_title": "Iran Foreign Minister Araghchi to visit Oman for talks with counterpart",
       "source_language": "en",
       "source": "Jerusalem Post / Iran",
-      "he": {
-        "title": "שר החוץ איראן Araghchi לבקר עומן לשיחות עם עמית",
-        "summary": "סוכנות החדשות האיראנית IRNA דיווחה על ביקורו הקרוב של אראגצ'י, וציטטה את דובר משרד החוץ איסמעיל באגהיי",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "683f64956c88ff2685ba13da",
-      "original_title": "לאחר המתקפות החריפות נגד ישראל - בשורה משמחת לפרנצ'סקה אלבנזה",
-      "source_language": "he",
-      "source": "Maariv",
       "ru": {
-        "title": "После жестоких атак на Израиль - радостная новость для Франчески Альбанзы.",
-        "summary": "Отправка ООН, Франческа Албанза, получит премию \"Посол совести\" на закрытой церемонии в Париже, вместе с киноактёром Хавьером Бредамом, решение, которое вызовет возмущение из-за резни 7 октября.",
-        "model": "Helsinki-NLP/opus-mt-he-ru"
-      }
-    },
-    {
-      "id": "f8fb100ba977c134c5aecfa2",
-      "original_title": "Daily Briefing Nov. 15: New week, new Knesset: Can Eisenkot find a path to power?",
-      "source_language": "en",
-      "source": "Times of Israel",
-      "ru": {
-        "title": "15 ноября: Новая неделя нового кнессета: может ли Эйзенкот найти путь к власти?",
-        "summary": "Политический корреспондент Ариэлья Кармель обсуждает предложение антинетаньяху о назначении нового оратора кнессета, его законодательную стратегию и его чрезвычайно сложные варианты создания коалиции",
+        "title": "Министр иностранных дел Ирана Арахти посетить Оман для проведения переговоров с контрагентом",
+        "summary": "Иранское государственное агентство новостей IRNA сообщило о предстоящем визите Арахти, сославшись на пресс-секретаря министерства иностранных дел Эсмаила Багаеи",
         "model": "Helsinki-NLP/opus-mt-en-ru"
-      }
-    },
-    {
-      "id": "60c2ec8fb19bf93ff89b6d5c",
-      "original_title": "Israel coalition talks put Arab party leader under pressure over Hamas",
-      "source_language": "en",
-      "source": "Al Jazeera",
-      "ru": {
-        "title": "В результате переговоров с израильской коалицией лидер арабской партии оказался под давлением со стороны ХАМАС",
-        "summary": "Мансур Аббас сталкивается с растущим давлением со стороны Израиля, который меняет блок, чтобы осудить Хамас в качестве предварительного условия для выполнения коалиционной роли.",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
-      "he": {
-        "title": "שיחות קואליציה ישראליות לשים מנהיג המפלגה הערבית תחת לחץ על חמאס",
-        "summary": "מנצור עבאס ניצב בפני לחץ גובר מצד ישראל, ומשנה את האזור כדי להוקיע את חמאס כתנאי מוקדם לתפקיד הקואליציה.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "d55de874a347132b8ee9cde6",
-      "original_title": "בזמן שהוא שומר על שתיקה - בנט רקח מהלך מפתיע מאחורי הקלעים: \"ביקש לנסות\"",
-      "source_language": "he",
-      "source": "Maariv",
-      "ru": {
-        "title": "В то время как он молчал, Беннет сделал неожиданный шаг за кулисами: \"Попробуй\"",
-        "summary": "Пока Беннет хранит молчание по поводу контакта с тревожными, Барак Сари сообщает, что он просил о том, чтобы попытаться вести переговоры с классификатором.",
-        "model": "Helsinki-NLP/opus-mt-he-ru"
-      }
-    },
-    {
-      "id": "1a7fd136e6811121052ea94c",
-      "original_title": "אוקראינה זועמת על ישראל: המכתב החריג על משחק ההוקי באשדוד",
-      "source_language": "he",
-      "source": "Maariv",
-      "ru": {
-        "title": "Украина в ярости от Израиля: необычное письмо о хоккейной игре в Ашдоде",
-        "summary": "Посольство Украины обратилсяо к министру Мики Зохару с просьбой провести торжественное мероприятие в Ашдоде, опасаясь, что его используют для пропаганды.",
-        "model": "Helsinki-NLP/opus-mt-he-ru"
-      }
-    },
-    {
-      "id": "21db8999267151d69b87ac41",
-      "original_title": "בלב ישראל: ארדואן ממשיך להפעיל את \"שגרירות טורקיה לפלסטין\" באין מפריע",
-      "source_language": "he",
-      "source": "Maariv",
-      "ru": {
-        "title": "В самом сердце Израиля Эрдоган продолжает активировать Палестину Турции.",
-        "summary": "Турецкая делегация в Иерусалиме объявила о годовщине Декларации Палестинской Независимости.",
-        "model": "Helsinki-NLP/opus-mt-he-ru"
-      }
-    },
-    {
-      "id": "209d0a4554dd6f855ef0a24c",
-      "original_title": "Rep.-elect Chris Rabb criticizes anti-Israel rally tactics, reiterates arms embargo call",
-      "source_language": "en",
-      "source": "JNS",
-      "ru": {
-        "title": "Избранный Крис Рабб критикует антиизраильскую тактику ралли, повторяет призыв к эмбарго на поставки оружия",
-        "summary": "",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
-      "he": {
-        "title": "נציג נבחר כריס ראב מבקר טקטיקות עצרת אנטי ישראליות, reiterates אמברגו נשק קורא",
-        "summary": "",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "214fe6c10fd2d302244cf128",
-      "original_title": "Coalition talks at a crossroads as Eisenkot, Netanyahu battle for haredi parties",
-      "source_language": "en",
-      "source": "Jerusalem Post / Israel",
-      "ru": {
-        "title": "Коалиция ведет переговоры на перепутье как Эйзенкот, битва Нетаньяху за хареди",
-        "summary": "Одной из главных проблем, которую занимают партии хареди, являются гарантии, которые они получат, что взятые перед ними обязательства будут выполнены после того, как правительство будет приведено к присяге.",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
-      "he": {
-        "title": "קואליציה מדברת בצומת דרכים בשם אייזנקוט, נתניהו נלחם על מסיבות הרדי.",
-        "summary": "אחת הבעיות המרכזיות בהשתלטות על מפלגות הארדי היא ההבטחה שהם יקבלו שהתחייבויות שהועלו להם יכובדו לאחר שהממשלה תושבע.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "cddca71dde96ec3426501007",
-      "original_title": "Israeli ministry recommends entry ban on activists of anti-Israel British group",
-      "source_language": "en",
-      "source": "JNS",
-      "ru": {
-        "title": "Израильское министерство рекомендует запретить въезд активистам антиизраильской британской группы",
-        "summary": "базирующаяся в Лондоне неправительственная организация «Амос траст», которая систематически поощряет бойкоты» (по словам министерства по делам диаспоры Израиля), пропагандирует санкции и эмбарго на поставки оружия Израилю.",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
-      "he": {
-        "title": "משרד החוץ ממליץ על איסור כניסה לפעילים של קבוצה בריטית נגד ישראל",
-        "summary": "על פי משרד התפוצות של ישראל, חברת איימוס טראסט מבוססת לונדון מקדמת באופן שיטתי את החרמים של המדינה היהודית, בעודה תומכת בסנקציות ובחרמנות נשק על ישראל.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "289b4113804f9d1e29ac939a",
-      "original_title": "ASEAN summit: Who’s attending and what’s at stake?",
-      "source_language": "en",
-      "source": "Al Jazeera",
-      "ru": {
-        "title": "Саммит АСЕАН: Кто присутствует и что поставлено на карту?",
-        "summary": "Энергетические сбои в результате американской и израильской войны с Ираном являются ключевым вопросом для импортно-зависимого блока.",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
-      "he": {
-        "title": "פסגה אסיאתית: מי נוכח ומה עומד על כף המאזניים?",
-        "summary": "שיבושי אנרגיה כתוצאה ממלחמת ארצות הברית-ישראל באיראן הם נושא מפתח לגוש תלוי יבוא.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "de4f00c4f70a29bcb7ce4c7a",
-      "original_title": "Inside Lebanon: IDF intelligence officer reveals challenges of fighting Hezbollah",
-      "source_language": "en",
-      "source": "Arutz Sheva",
-      "he": {
-        "title": "בתוך לבנון מגלה קצין מודיעין צה\"ל אתגרים של לחימה בחיזבאללה",
-        "summary": "סגן אס, 21, מדבר עם ארוץ שבע ומתאר כיצד השטח הצפופה של לבנון עוזר לחיזבאללה להסתיר נשק ותשתית, ומסביר את התפקיד הקריטי של מודיעין שדה הקרב בהגנה על קהילות ישראל.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
       }
     },
     {
@@ -482,72 +151,18 @@
       }
     },
     {
-      "id": "d94d68c642ee701bc8573d3e",
-      "original_title": "Mossad chief in US for talks on Iran, Netanyahu didn’t update Eisenkot on visit – report",
-      "source_language": "en",
-      "source": "Times of Israel",
-      "he": {
-        "title": "ראש המוסד בארה\"ב לשיחות על איראן, נתניהו לא עדכן את אייזנקוט בביקור.",
-        "summary": "גופמן אמר לפגוש את ראש הסי-איי-איי ואת וויטקוף, זמיר עדיין לבד בקרב ראשי האבטחה של ישראל כדי להתנגד לתקיפה מיידית באיראן שיכולה לשבש שיחות קואליציה",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "4964fdc4a5940a7a4de6bcf2",
-      "original_title": "המגעים לממשלת אחדות: בנט שלח את איש אמונו לסגור את הדיל - נתניהו הציב דרישה משלו",
-      "source_language": "he",
-      "source": "Maariv",
-      "ru": {
-        "title": "Бенетт послал своего доверенного человека, чтобы закрыть сделку, Натанио подал свое требование.",
-        "summary": "Беннет направляет правительство в Изенкот, но Блихад считает, что компромисс с Нафанайо будет перемещен. На фоне: выборы в США, контакты с жуткими и вероятность того, что религиозные сионисты останутся в оппозиции.",
-        "model": "Helsinki-NLP/opus-mt-he-ru"
-      }
-    },
-    {
-      "id": "0bb9d9a6345521e4ed078b87",
-      "original_title": "Former ICC Prosecutor to Pay 25 Million NIS to Families of Israeli Hostage Families",
+      "id": "849f6bcfae3f010eff88f561",
+      "original_title": "Golan rules out unity government with Netanyahu, warns of new Iran war by caretaker government",
       "source_language": "en",
       "source": "Jerusalem Post / Israel",
       "ru": {
-        "title": "Бывший обвинитель МУС по выплате 25 млн. новых израильских шекелей семьям израильских заложников",
-        "summary": "Иерусалимский суд приказал бывшему прокурору МУС Кариму Хану выплатить семьям 7 октября заложников 25 млн. новых израильских шекелей в соответствии с прецедентным решением, вынесенным Шуратом Хадином.",
+        "title": "Голаны исключают правительство единства с Нетаньяху, предупреждают о новой войне в Иране, которую ведет правительство-хранитель",
+        "summary": "Председатель демократов сказал, что оппозиция должна быстро сформировать правительство, предупредив, что история будет судить нас, если она не сможет предотвратить новую войну.",
         "model": "Helsinki-NLP/opus-mt-en-ru"
       },
       "he": {
-        "title": "תובע לשעבר של הוועדה הבינלאומית לפיקוח על בני ערובה ישראלי משלם 25 מיליון דולר ל\"משפחות בני ערובה\"",
-        "summary": "בית משפט בירושלים הורה לתובע לשעבר של איי-סי-סי קארים חאן לשלם 25 מיליון דולר למשפחות בני ערובה ב-7 באוקטובר, בפסק דין שנקבע על-ידי שוראט האדין.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "31235e499fb94e113e81a68c",
-      "original_title": "After getting pass in run-up to election, Israel back in hot seat over winter aid for Gaza",
-      "source_language": "en",
-      "source": "Times of Israel",
-      "ru": {
-        "title": "После того как Израиль прошел подготовку к выборам, он вновь оказался на горячем месте из-за зимней помощи сектору Газа",
-        "summary": "Совет мира требует, чтобы Нетаньяху продвигал послевоенный план, проявлял гибкость в отношении материалов двойного назначения, которые могут защитить гражданских лиц от сильного дождя и холода, поскольку Трамп стремится к победе во внешней политике после среднесрочного поражения",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
-      "he": {
-        "title": "לאחר שהועבר בבחירות, ישראל חזרה למושב חם מעל סיוע חורף לעזה.",
-        "summary": "מועצת השלום לוחצת על נתניהו כדי לקדם את התוכנית לאחר המלחמה, להראות גמישות על חומרים לשימוש כפול שיכולים להגן על אזרחים מפני גשם כבד וקר, בעוד טראמפ מבקש שמדיניות החוץ תנצח לאחר הכאת אמצע סמסטר.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "e54b0f65435a01832b61f586",
-      "original_title": "Yair Golan's Democrats push to repeal Netanyahu's judicial reform attempts in new Knesset committee",
-      "source_language": "en",
-      "source": "Jerusalem Post / Israel",
-      "ru": {
-        "title": "Демократы Голанских высот Яир стремятся отменить попытки Нетаньяху провести судебную реформу в новом комитете кнессета",
-        "summary": "Этот комитет будет создан на этой неделе и приступит к осуществлению усилий по отмене принятого законопроекта, который значительно ослабит роль генерального прокурора.",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
-      "he": {
-        "title": "הדמוקרטים של יאיר גולן לוחצים לבטל את ניסיונות הרפורמה השיפוטיים של נתניהו בוועדה החדשה.",
-        "summary": "הוועדה נקבעה להתבסס השבוע ולהתחיל במאמצים מובילים לביטול הצעת החוק שהועברה להחליש באופן משמעותי את התפקיד של עורך הדין-גנראל.",
+        "title": "גולן פוסל את ממשלת האחדות עם נתניהו, מזהיר ממלחמת איראן חדשה על ידי הממשלה המטפלת",
+        "summary": "היו\"ר הדמוקרטי אמר שההתנגדות חייבת ליצור ממשלה במהירות, ולהזהיר שההיסטוריה תשפוט אותנו אם היא לא תצליח למנוע מלחמה נוספת.",
         "model": "Helsinki-NLP/opus-mt-en-he"
       }
     },
@@ -561,75 +176,15 @@
         "summary": "יו\"ר הפלג הציוני הדתי הצטרף לאוהל האחדות בקנסט וקרא לנטניהו ואייזנקוט להתחיל במשא ומתן,",
         "model": "Helsinki-NLP/opus-mt-en-he"
       }
-    },
-    {
-      "id": "ca5e39f2a88a6f12152211b3",
-      "original_title": "ממשלה כן, רוטציה לא: ההצעה של איזנקוט ו\"פרס הניחומים\" לנתניהו",
-      "source_language": "he",
-      "source": "Maariv",
-      "ru": {
-        "title": "Правительство Да, ротация нет: предложение Изенкота и утешительный приз для его правителей.",
-        "summary": "Коалиции продолжаются, и сегодня вечером мы должны встретиться с представителями профсоюза, чтобы рассмотреть возможность его создания.",
-        "model": "Helsinki-NLP/opus-mt-he-ru"
-      }
-    },
-    {
-      "id": "b5f47b22aa913ac8358db1f9",
-      "original_title": "אחדות ציונית: צו השעה, לא סיסמת בחירות | משה פוזיילוב",
-      "source_language": "he",
-      "source": "Maariv",
-      "ru": {
-        "title": "Единство сионистов: время, не пароля выборов Моисей Позилев",
-        "summary": "Сколько еще кризисов нужно сделать Израилю, чтобы его лидеры поняли, что пришло время отложить личные запреты в сторону?",
-        "model": "Helsinki-NLP/opus-mt-he-ru"
-      }
-    },
-    {
-      "id": "85cc7fc58304fa22a541505e",
-      "original_title": "אחרי הניצחון בבחירות: התוכנית להדחת שני הבכירים הפרו־ישראלים",
-      "source_language": "he",
-      "source": "Maariv",
-      "ru": {
-        "title": "После победы на выборах, план сместить двух про-израильских лидеров.",
-        "summary": "Внутренние дебаты в \"Нью-Йорк Пост\" открывают план по замене демократов на социалистов в 2028 году, а на заднем плане: серьезные обвинения в поддержке Израиля и борьбе за контроль над партиями.",
-        "model": "Helsinki-NLP/opus-mt-he-ru"
-      }
-    },
-    {
-      "id": "605b980330d71249cf6f7291",
-      "original_title": "Israel's post-election battle raises the stakes for national security",
-      "source_language": "en",
-      "source": "JNS",
-      "ru": {
-        "title": "Послевыборная битва Израиля повышает ставки на национальную безопасность",
-        "summary": "",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
-      "he": {
-        "title": "הקרב שלאחר הבחירות של ישראל מעלה את ההימור לביטחון לאומי.",
-        "summary": "",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "3e8247ffca523649028ec49c",
-      "original_title": "\"לא לילד הזה פיללנו\": הח\"כית מישראל ביתנו מסבירה את המפנה מול החרדים",
-      "source_language": "he",
-      "source": "Maariv",
-      "ru": {
-        "title": "\"Не этому ребенку мы молились: Б-И-Р-И-Р-И-Р-А-Н-А-Н-А-Н-А-Р-А-Н-А-Н-А-Р-А-Н-А-Н-А-Н-А-Н-А-Н-А-А-Т-А-Т-А-Н-А-Н-А-Н-А-А-Н-А-Н-А-А-Н-А-А-Н-А-А-Н-А-А-А-Н-Н-А-А-Н-А-А-А-Н-А-А-Н-А-А-А-А-А-А-А-А-А-А-А-А-А-А-А-А-А-А-А-А-",
-        "summary": "В интервью Гидеона Оукко и Атели в 103Fм Талия ссылалась на связь с избирателями и обещаниями нашего дома Израиля, и объяснила, почему ее партия должна сейчас пересчитать маршруты, которые мы должны были бы использовать для проведения выборов.",
-        "model": "Helsinki-NLP/opus-mt-he-ru"
-      }
     }
   ],
   "quality": {
-    "accepted": 65,
-    "rejected": 50,
+    "accepted": 18,
+    "rejected": 53,
     "model_tasks": {
-      "Helsinki-NLP/opus-mt-en-ru": 47,
-      "Helsinki-NLP/opus-mt-en-he": 51,
-      "Helsinki-NLP/opus-mt-he-ru": 17
+      "Helsinki-NLP/opus-mt-he-ru": 5,
+      "Helsinki-NLP/opus-mt-en-ru": 37,
+      "Helsinki-NLP/opus-mt-en-he": 29
     }
   }
 }
