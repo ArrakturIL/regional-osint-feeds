@@ -14,7 +14,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 from scripts.neon_mirror import SOURCE_FILES, read_stored_snapshot
-from scripts.neon_to_d1 import D1Client, mirror_source
+from scripts.neon_to_d1 import D1Client, mirror_source, READ_D1_SQL, _validate_d1_row
 from scripts.publish_neon_mirror import _open_connection
 
 
@@ -109,7 +109,21 @@ def emit_health_report(rows: list[dict], summary: dict, *, summary_path: str | N
                 row["source"], row["health"], row["collector_state"],
                 row["replica_state"], row["age_minutes"]))
         with Path(summary_path).open("a", encoding="utf8") as stream:
-            stream.write("\\n".join(table) + "\\n")
+            stream.write("\n".join(table) + "\n")
+
+
+def verify_d1_last_good(client, source_key: str) -> bool:
+    """Read-only checksum/status verification; never call a retained row 'good' blindly."""
+    if source_key not in SOURCE_FILES:
+        raise ValueError("unknown collector source")
+    rows = client.query(READ_D1_SQL, (source_key,))
+    if len(rows) != 1:
+        return False
+    try:
+        retained = _validate_d1_row(rows[0], source_key)
+        return retained["status"].get("state") in ("ok", "partial")
+    except (RuntimeError, ValueError, KeyError, TypeError):
+        return False
 
 
 def execute_replica_sync(
@@ -121,6 +135,7 @@ def execute_replica_sync(
     stored_reader=read_stored_snapshot,
     mirror=mirror_source,
     client_factory=D1Client,
+    last_good_checker=verify_d1_last_good,
 ) -> dict:
     if not all((neon_url, account_id, token)):
         raise ValueError("required private Neon/D1 credentials missing")
@@ -149,6 +164,12 @@ def execute_replica_sync(
             # snapshot in D1. An older D1 row is retained for explicit fallback;
             # the source remains unhealthy in the report.
             if stored.status.get("state") in ("error", "stale"):
+                try:
+                    last_good_exists = last_good_checker(client, source)
+                except Exception:
+                    raise ReplicaSourceFailure(source, "last_good_read") from None
+                if not last_good_exists:
+                    raise ReplicaSourceFailure(source, "last_good_missing")
                 result = {"source": source, "result": "held_last_valid"}
             else:
                 try:
