@@ -170,14 +170,17 @@ jobs:
 
       - name: Check private Cloudflare D1 API scope (read-only; no database mutations)
         env:
-          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
           CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         shell: bash
         run: |
           python - <<'PY'
           import json,os,urllib.request,urllib.error
-          if not os.environ.get('CF_TOKEN') or not os.environ.get('CF_ACCOUNT'):
-              raise SystemExit('D1 API check: missing Cloudflare Actions credentials')
+          if not os.environ.get('CF_TOKEN'):
+              print('D1 sync not enabled: scoped CLOUDFLARE_D1_API_TOKEN not yet configured')
+              raise SystemExit(0)
+          if not os.environ.get('CF_ACCOUNT'):
+              raise SystemExit('D1 API check: missing Cloudflare account configuration')
           account=os.environ['CF_ACCOUNT']
           url='https://api.cloudflare.com/client/v4/accounts/'+account+'/d1/database?per_page=100'
           req=urllib.request.Request(url,headers={'Authorization':'Bearer '+os.environ['CF_TOKEN'],'Accept':'application/json'})

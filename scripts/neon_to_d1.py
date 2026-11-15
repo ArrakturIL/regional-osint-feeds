@@ -194,7 +194,7 @@ def main(argv=None) -> int:
     parser.add_argument("--init-table",action="store_true")
     args=parser.parse_args(argv)
     connection_url=os.environ.get("NEON_DATABASE_URL","").strip()
-    cloudflare_token=os.environ.get("CLOUDFLARE_API_TOKEN","").strip()
+    cloudflare_token=os.environ.get("CLOUDFLARE_D1_API_TOKEN","").strip()
     account_id=os.environ.get("CLOUDFLARE_ACCOUNT_ID","").strip()
     if not all((connection_url,cloudflare_token,account_id)):
         print("Neon-to-D1 missing required GitHub Actions secret",file=sys.stderr)
