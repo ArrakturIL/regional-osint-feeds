@@ -30,3 +30,19 @@ test('ordinary mining, labor strikes and unqualified events are not overblocked'
  assert.equal(factualTranslationIssue(original('Two miners strike near a gold mine'),translated('שני כורים שובתים ליד מכרה זהב')),null);
  assert.equal(factualTranslationIssue(original('Trump postponed strikes yesterday'),translated('טראמפ דחה את התקיפות אתמול')),null);
 });
+
+test('QA 15 Nov: Russian present-tense tanker attack is not a naval mine collision',()=>{
+ const source=original('Two tankers strike a naval mine and catch fire, Iran says');
+ const bad=translated('Два танкера нападают на мины и горят');
+ assert.equal(factualTranslationIssue(source,bad),'title:mine_collision_reframed_as_attack');
+ const good=translated('Два танкера столкнулись с морской миной и загорелись, заявляет Иран');
+ assert.equal(factualTranslationIssue(source,good),null);
+});
+
+test('Hebrew present-tense tanker attack is also not a naval mine collision',()=>{
+ const source=original('Two tankers strike a naval mine and catch fire, Iran says');
+ const bad=translated('שתי מכליות תוקפות מוקש ימי ועולות באש');
+ assert.equal(factualTranslationIssue(source,bad),'title:mine_collision_reframed_as_attack');
+ const good=translated('שתי מכליות פגעו במוקש ימי ועלו באש, כך מסרה איראן');
+ assert.equal(factualTranslationIssue(source,good),null);
+});
