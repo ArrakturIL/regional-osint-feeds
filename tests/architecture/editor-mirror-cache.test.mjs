@@ -55,6 +55,21 @@ test('stale cached status falls back without implying no events',async()=>{
  assert.equal(await readEditorCachedPair(context(record()).env,'analysts',
   {nowMs:at+8*3600000,maxAgeMs:4*3600000}),null);
 });
+test('editor cache reports enabled fallback without leaking private values and ignores disabled flag',async()=>{
+ const notes=[];
+ const onFallback=notice=>notes.push(notice);
+ const corrupted=record();
+ corrupted.data_sha256='0'.repeat(64);
+ assert.equal(await readEditorCachedPair(context(corrupted).env,'analysts',
+  {nowMs:at+60000,maxAgeMs:4*3600000,onFallback}),null);
+ assert.deepEqual(notes,[{source:'analysts',reason:'cache_invalid'}]);
+ assert.equal(await readEditorCachedPair(context(null).env,'analysts',
+  {nowMs:at+60000,maxAgeMs:4*3600000,onFallback}),null);
+ assert.deepEqual(notes[1],{source:'analysts',reason:'cache_missing'});
+ assert.equal(await readEditorCachedPair(context(record(),'').env,'analysts',{onFallback}),null);
+ assert.equal(notes.length,2);
+});
+
 test('source state error remains error rather than becoming empty success',async()=>{
  const error={...status,state:'error'};
  const result=await readEditorCachedPair(context(record('analysts',summary,error)).env,'analysts',
