@@ -157,12 +157,17 @@ test('Cloudflare gate snapshots exact versions and rolls back changed components
    }else if(path.includes('/workers/scripts/')&&path.endsWith('/deployments')){
      result={deployments:[{versions:[{version_id:released?current:old,percentage:100}]}]};
    }else if(path.endsWith('/pages/projects/regional-watch')){
-     result={production_branch:'main',deployment_configs:{production:{
+     result={production_branch:'main',
+       // A failed, later release remains latest by creation date even after rollback.
+       latest_deployment:{id:currentPages,environment:'production',latest_stage:{status:'success'}},
+       canonical_deployment:{id:released?currentPages:oldPages,environment:'production',latest_stage:{status:'success'}},
+       deployment_configs:{production:{
        services:Object.fromEntries(contract.pages.services.map(s=>[s.binding,{service:s.service,environment:'production'}])),
        d1_databases:Object.fromEntries(contract.pages.d1.map(d=>[d.binding,{id:d.database_id}]))
      }}};
    }else if(path.endsWith('/pages/projects/regional-watch/deployments')){
-     result=[{id:released?currentPages:oldPages,environment:'production',latest_stage:{status:'success'}}];
+     result=[{id:currentPages,environment:'production',latest_stage:{status:'success'}},
+         {id:oldPages,environment:'production',latest_stage:{status:'success'}}];
    }else{
      throw Error('Unexpected Cloudflare endpoint: '+path);
    }
@@ -231,6 +236,11 @@ test('production publish workflow cannot deploy Pages independently and requires
  assert.doesNotMatch(gate,/CLOUDFLARE_WORKERS_API_TOKEN/);
  assert.match(workflow,/verify\.mjs/);
  assert.match(workflow,/cloudflare-gate\.mjs/);
+ const smoke=workflow.split('Production release technical smoke (routes and Pages environment only)')[1]?.split('Verify production service bindings after Pages publication')[0]||'';
+ assert.match(smoke,/for attempt in 1 2 3 4 5 6/,'Pages edge propagation must be retried');
+ assert.match(smoke,/404/);
+ assert.match(smoke,/503/);
+ assert.match(smoke,/000/);
  assert.match(workflow,/rollback/);
  assert.doesNotMatch(workflow,/name: Publish Cloudflare Pages production only after main checks/);
  assert.match(workflow,/needs:\s*\[release-bundle\]/);
