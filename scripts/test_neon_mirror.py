@@ -153,5 +153,50 @@ class TestWorkflowShadowSafety(unittest.TestCase):
                 self.assertIn(fallback, content)
                 self.assertIn("git ", content)
 
+
+class TestStoredSnapshotIntegrity(unittest.TestCase):
+    """A matching DB digest column alone must never certify actual JSONB bytes."""
+    def setUp(self):
+        self.tmp=tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        root=Path(self.tmp.name)
+        (root/"data").mkdir()
+        (root/"data"/"gdelt-context.json").write_text(json.dumps({"source":"gdelt_context","sample":[1]}),encoding="utf8")
+        (root/"data"/"gdelt-status.json").write_text(json.dumps({"checked_at":NOW.isoformat(),"state":"ok"}),encoding="utf8")
+        self.snapshot=load_snapshot("gdelt",root,now=NOW)
+
+    def stored_row(self):
+        s=self.snapshot
+        return (s.source_key,s.checked_at,s.data_sha256,s.status_sha256,s.data,s.status)
+
+    def test_readback_returns_exact_validated_pair(self):
+        from scripts.neon_mirror import validate_stored_row
+        s=validate_stored_row(self.stored_row())
+        self.assertEqual(s.data,self.snapshot.data)
+        self.assertEqual(s.status,self.snapshot.status)
+        self.assertEqual(s.checked_at,self.snapshot.checked_at)
+
+    def test_readback_rejects_payload_changed_without_digest_update(self):
+        from scripts.neon_mirror import validate_stored_row
+        row=list(self.stored_row())
+        row[4]={"source":"gdelt_context","sample":["tampered"]}
+        with self.assertRaisesRegex(ValueError,"digest"):
+            validate_stored_row(tuple(row))
+
+    def test_readback_rejects_status_checked_at_inconsistent_with_db_column(self):
+        from scripts.neon_mirror import validate_stored_row
+        row=list(self.stored_row())
+        row[1]=NOW+timedelta(hours=2)
+        with self.assertRaisesRegex(ValueError,"timestamp"):
+            validate_stored_row(tuple(row))
+
+    def test_readback_rejects_oversized_json_after_db_decode(self):
+        from scripts.neon_mirror import validate_stored_row
+        row=list(self.stored_row())
+        row[4]={"excess":"x"*(MAX_DOC_BYTES+1)}
+        with self.assertRaisesRegex(ValueError,"cap"):
+            validate_stored_row(tuple(row))
+
+
 if __name__ == "__main__":
     unittest.main()
