@@ -18,3 +18,34 @@
 - Last trustworthy durable record is this file **plus actual Git commits**, not transient chat output.
 - On resumed session check the work branch HEAD, read latest section of this checkpoint, inspect the diff/CI. Never redo committed work or infer completion from intent.
 - Mark incomplete tests/features `in progress`; do not claim deployed or corrected production data without corresponding read-only verification.
+
+## Verified execution milestone — 15 Nov 2026, following PR #25
+
+**Isolated branch:** `work/regional-watch-execution-20261115`; draft pull request https://github.com/ArrakturIL/regional-osint-feeds/pull/25 targets the parent feature branch, **not main**. It has not been merged.
+
+### A-02 read-only baseline
+- `main` HEAD observed by GitHub comparison before this work: `8eb9d6a198456130979ae24fffa3fbb1fb1118dc`. Parent feature branch before this work: 79 ahead / 10 behind main; recheck these figures before any merge.
+- Cloudflare Pages production, read-only query: `86cd2f80-d892-4eaf-a491-183f86027eb0` (15 Nov 02:25 UTC); later preview deployments belong to `rw-integrated-preview`, do **not** confuse them with production.
+- Cloudflare Editor 100% version `ee79d24d-45d3-4170-85d7-1de7f7c74a7c`; Monitor 100% version `d68c6b6a-137d-4f8b-af41-a1849bdd52c6`.
+- D1 database `regional-watch-news` was queried with SELECT only. No rows written, no source removed, no secret logged.
+
+### B-01/B-02 exact current production observations (read-only)
+- News ID `67d535234b8e4179f9401a71`: original English title `Two tankers strike mines in Strait of Hormuz`; bad Russian title `Два танкера нападают на мины в Хормузском проливе`; original summary says caught fire `after striking a naval mine`, while RU summary incorrectly describes shelling and a naval mining facility. HE cache also contains `מכרות`/`מכרה` (mining facilities).
+- News ID `da4c4535478a60f9b3975e40`: original Reuters/JPost title `Trump tells advisers he may hold off on Iran attacks barring new provocations`; RU/HE cached titles retain broken causal condition; quality guard must present `needs_review` until a source-verified replacement.
+- News ID `9fc41a45cd3dde0e911c3773`, JPost article-914880: cached Hebrew title reverses who would surprise whom, while English source fears a US strike.
+- **The corrupted live D1 rows were NOT changed**. Do not mark B-01 complete merely because the feature-level guard is green; full release requires controlled retranslation/quarantine and API verification.
+
+### Actual code + TDD
+- `tests/architecture/translation-semantics.test.mjs`: new red cases for `нападают`, `תוקפות`, exact live Hormuz headline (without "naval"), and source summary "after striking". `tests/architecture/news-localization-provenance.test.mjs`: explicit `needs_review` and original English fallback.
+- `backend/editor/src/translations/semantic-meaning.mjs`: scoped vessel+maritime context classifier, present-tense attack detection and gerund `striking`; normal mineral mining/labor actions remain allowed. The initial live-string test failed before implementing, passed after correction.
+- `.github/workflows/regional-watch-app-check.yml`: explicit semantic/provenance tests in Editor job, independent of specialized storage CI.
+- Dedicated `.github/workflows/regional-watch-safe-check.yml` has **no secret use, deploy or D1 mutations**; intended as isolated branch offline CI.
+- GitHub PR CI run 43723534426 SUCCESS, 10 source/build jobs green; preview and production deploy jobs SKIPPED. Latest run **43723810921** SUCCESS, 10 source/build jobs green; preview and production jobs SKIPPED. https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43723810921
+
+### Safe continuation
+1. Check PR #25 and the latest branch HEAD, verify current CI and confirm no other agent changed parent/main. **Never repeat already committed TDD patches.**
+2. Continue B-01 quality gate on exact D1 records with safe read-only checks, then plan source-verified RU/HE corrections and a reversible data update gated by release approval. Production currently still has the erroneous cached rows.
+3. Build A-03 release manifest and complete D-03/D-04 shadow-read parity without changing shared production until appropriate gates.
+4. Keep the unified TODO updated with evidence; if transport fails, this checkpoint is the durable resumption location.
+
+**Important:** User specifically asked that any transport interruption lead to checkpointing and safe termination, not endless retry loops or a claim that the session will automatically resume.
