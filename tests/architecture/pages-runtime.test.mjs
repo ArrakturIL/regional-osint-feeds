@@ -74,3 +74,30 @@ test('private API and methods fail closed; unavailable bindings report 503',asyn
  const noD1=await pages.fetch(request('/api/data'),{ASSETS:env.ASSETS});
  assert.equal(noD1.status,503);
 });
+
+test('canonical Pages HTML assets never redirect to their own routes',async()=>{
+ const {env}=mockEnv();
+ env.ASSETS.fetch=async (req)=>{
+  const pathname=new URL(req.url).pathname;
+  // Cloudflare Pages redirects /index.html to /, and /area/index.html to /area/.
+  if(pathname.endsWith('/index.html')){
+   return Response.redirect('https://regional-watch.pages.dev'+pathname.slice(0,-'index.html'.length),308);
+  }
+  if(['/he','/events','/he/events','/data','/he/data','/analysts','/he/analysts'].includes(pathname)){
+   return Response.redirect('https://regional-watch.pages.dev'+pathname+'/',308);
+  }
+  return new Response('HTML '+pathname,{status:200,headers:{'content-type':'text/html'}});
+ };
+ for(const [path,canonical] of [
+  ['/','/'],['/?utm_source=chatgpt.com','/'],
+  ['/he','/he/'],['/he/','/he/'],
+  ['/events','/events/'],['/events/','/events/'],
+  ['/data','/data/'],['/he/data','/he/data/'],
+  ['/analysts','/analysts/'],['/analysts/post-123','/analysts/'],
+  ['/he/analysts/post-123','/he/analysts/']
+ ]){
+  const response=await pages.fetch(request(path),env);
+  assert.equal(response.status,200,'Redirect loop risk on '+path+': '+response.headers.get('location'));
+  assert.equal(await response.text(),'HTML '+canonical,path);
+ }
+});
