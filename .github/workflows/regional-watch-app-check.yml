@@ -1,7 +1,9 @@
 name: Regional Watch application source checks
 on:
   push:
-    branches: [refactor/regional-watch-modular-20261114]
+    branches: [refactor/regional-watch-modular-20261114, main]
+    # Data collectors commit JSON to main frequently. Never rebuild/redeploy for data-only commits.
+    paths: ['backend/**', 'frontend/**', 'shared/**', 'tests/**', '.github/workflows/regional-watch-app-check.yml']
   pull_request:
     paths: ['backend/**', 'frontend/**', 'shared/**', 'tests/**', '.github/workflows/regional-watch-app-check.yml']
 permissions:
@@ -216,3 +218,80 @@ jobs:
         run: |
           echo "Preview release source: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
           echo 'Preview branch: rw-modular-preview (production branch is main)' >> "$GITHUB_STEP_SUMMARY"
+
+  pages-production:
+    name: Publish Cloudflare Pages production only after main checks
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [editor-source, frontend-source, monitor-source, modern-bundles, pages-documents, pages-static, pages-routing, pages-overview, pages-data, pages-runtime]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    concurrency:
+      group: regional-watch-pages-production
+      cancel-in-progress: false
+    steps:
+      - name: Download the verified immutable Pages artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: regional-watch-pages-preview
+          path: dist
+      - name: Require Cloudflare deployment credentials
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [[ -z "$CF_TOKEN" || -z "$CF_ACCOUNT" ]]; then
+            echo 'Missing CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID; production deployment blocked.'
+            exit 1
+          fi
+      - name: Deploy exactly the checked artifact to production
+        id: pages-upload
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=regional-watch --branch=main
+      - name: Verify immutable production deployment routes
+        env:
+          DEPLOYMENT_URL: ${{ steps.pages-upload.outputs.deployment-url }}
+          PAGES_ENVIRONMENT: ${{ steps.pages-upload.outputs.pages-environment }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$PAGES_ENVIRONMENT" != "production" ]]; then
+            echo "Refusing invalid production result: environment=$PAGES_ENVIRONMENT"; exit 1
+          fi
+          if [[ ! "$DEPLOYMENT_URL" =~ ^https://[a-z0-9-]+\.regional-watch\.pages\.dev/?$ ]]; then
+            echo "Unrecognized deployment host; not checking untrusted URL"; exit 1
+          fi
+          base="${DEPLOYMENT_URL%/}"
+          for path in / '/?utm_source=chatgpt.com' /he/ /events/ /he/events/ /data/ /he/data/ /analysts/ /he/analysts/ /analysts/smoke-post /he/analysts/smoke-post /assets/app.js /assets/app.css; do
+            status=000
+            for attempt in 1 2 3 4 5 6; do
+              status=$(curl --silent --show-error --max-time 20 --max-redirs 0 --output /tmp/rw-prod-body --dump-header /tmp/rw-prod-headers --write-out '%{http_code}' "$base$path") || status=000
+              echo "$path attempt $attempt => HTTP $status"
+              if [[ "$status" == "200" ]]; then break; fi
+              if [[ "$status" != "404" && "$status" != "503" && "$status" != "000" ]]; then break; fi
+              if [[ "$attempt" != "6" ]]; then sleep 3; fi
+            done
+            if [[ "$status" != "200" ]]; then
+              echo "Production route failed: $path HTTP $status"; exit 1
+            fi
+            if [[ "$path" == /assets/*.js ]]; then
+              grep -qi '^content-type:.*javascript' /tmp/rw-prod-headers
+            elif [[ "$path" == /assets/*.css ]]; then
+              grep -qi '^content-type:.*text/css' /tmp/rw-prod-headers
+            else
+              grep -qi '^content-type:.*text/html' /tmp/rw-prod-headers
+              if [[ "$path" == /he* ]]; then
+                grep -Fq 'lang="he"' /tmp/rw-prod-body
+              else
+                grep -Fq 'lang="ru"' /tmp/rw-prod-body
+              fi
+            fi
+          done
+      - name: Record release source
+        run: |
+          echo "Production source: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          echo 'Cloudflare Pages branch: main' >> "$GITHUB_STEP_SUMMARY"

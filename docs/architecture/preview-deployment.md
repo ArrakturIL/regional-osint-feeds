@@ -12,8 +12,8 @@ Workflow: `.github/workflows/regional-watch-app-check.yml`.
 1. Run architecture, source-parity and Pages tests.
 2. Build the static RU/HE site and Pages advanced-mode `_worker.js`.
 3. Save `regional-watch-pages-preview` as a CI artifact.
-4. After all checks pass, use Wrangler to upload the **tested artifact** only to `rw-modular-preview`.
-5. Review the resulting URL and run read-only API parity and RU/HE desktop/mobile smoke checks.
+4. On feature-branch push, upload the tested artifact only to `rw-modular-preview`; on a code-changing `main` push after merge, upload that same checked artifact to the production Pages branch `main`.
+5. Validate the resulting deployment's environment and all RU/HE HTML routes with read-only, no-redirect HTTP checks. After production promotion, do interactive QA in the browser.
 
 ## GitHub Actions secrets
 - `CLOUDFLARE_API_TOKEN` — account-scoped Cloudflare Pages Edit permission.
@@ -25,9 +25,8 @@ Never put token values or other secrets in Git. Secrets are configured in GitHub
 - Compare expected DTOs and real behavior, including failure states; dynamic timestamps may differ.
 - Verify no requests depend on previous Pages deployment URLs.
 - Check Cloudflare deployment metadata explicitly to confirm `environment=preview`, not production.
-- **Do not promote or deploy production automatically from this workflow.** Merge/release requires a separate reviewed action.
+- Production publishing runs only for a code-changing push to `main` (for example, an approved merge). Ordinary data-only JSON commits in `main` are filtered out by `push.paths`. All 10 checks are required before publishing.
 - Before any stateful test, create truly isolated D1 resources or a tested non-writing mock.
 
 ## Rollback
-Production remains on the existing Cloudflare Pages deployment until a reviewed release.
-Rollback procedures and production promotion are separate activities and are not part of the preview pipeline.
+An approved merge to `main` creates a new production Pages deployment after the CI suite completes. Cloudflare Pages retains earlier deployments; roll back to the last good production deployment from Cloudflare Pages → Deployments if the new one fails user QA. Monitor/Editor Workers are not redeployed by this Pages workflow.

@@ -56,5 +56,5 @@
     "app/postlude.js"
   ],
   "baseline": "../../baselines/cloudflare/2026-11-14/pages-0f39f36e/app.js",
-  "note": "Import/export form the editable modular source; compatibility builder strips declarations and joins files in exact existing execution order. Output must match original bytes until a future independently tested ESM/Vite migration."
+  "note": "Import/export form the editable modular source; compatibility builder strips declarations and joins files in exact existing execution order. Original sources are retained in baselines for auditing; the compatibility bundle now allows reviewed component-level bug fixes and is verified against the current assembled source. A future independently tested ESM/Vite migration remains separate."
 }
