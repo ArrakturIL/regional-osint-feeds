@@ -177,8 +177,7 @@ jobs:
           python - <<'PY'
           import json,os,urllib.request,urllib.error
           if not os.environ.get('CF_TOKEN'):
-              print('D1 sync not enabled: scoped CLOUDFLARE_D1_API_TOKEN not yet configured')
-              raise SystemExit(0)
+              raise SystemExit('Dedicated CLOUDFLARE_D1_API_TOKEN missing; D1 sync remains disabled')
           if not os.environ.get('CF_ACCOUNT'):
               raise SystemExit('D1 API check: missing Cloudflare account configuration')
           account=os.environ['CF_ACCOUNT']
