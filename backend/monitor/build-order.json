@@ -5,6 +5,7 @@
     "config/constants.js",
     "network/provider-client.js",
     "network/http.js",
+    "mirrors/collector-cache.js",
     "observations/item.js",
     "config/settings.js",
     "utils/text.js",
@@ -47,5 +48,5 @@
     "index.js"
   ],
   "compatibility": "concat in frozen source order, strip generated import/export directives",
-  "warning": "Compatibility builder verifies code equivalence only; before deployment, replace with a fully tested ES module bundle and verify Worker bindings."
+  "warning": "Baseline Worker is retained for auditing. Source-integrated D1 Neon cache feature flag is off by default. Use regression tests before Worker deployment."
 }

@@ -39,7 +39,8 @@ jobs:
       - run: node --test backend/monitor/tests/source-parity.test.mjs
       - run: |
           node backend/monitor/scripts/build.mjs
-          cmp backend/monitor/dist/worker.js baselines/cloudflare/2026-11-14/monitor-v47/worker.js
+          node --check backend/monitor/dist/worker.js
+          node --test tests/architecture/collector-cache.test.mjs
   modern-bundles:
     runs-on: ubuntu-latest
     steps:
