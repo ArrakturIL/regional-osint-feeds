@@ -4,6 +4,8 @@ on:
     branches: [feature/integrated-data-quality-neon-20261115]
     paths:
       - "storage/neon/**"
+      - "backend/monitor/src/mirrors/**"
+      - "tests/architecture/collector-cache.test.mjs"
       - ".github/workflows/news-open-source-translation.yml"
       - ".github/workflows/unosat-analyses.yml"
       - ".github/workflows/satellite.yml"
@@ -35,6 +37,8 @@ on:
     branches: [main]
     paths:
       - "storage/neon/**"
+      - "backend/monitor/src/mirrors/**"
+      - "tests/architecture/collector-cache.test.mjs"
       - ".github/workflows/news-open-source-translation.yml"
       - ".github/workflows/unosat-analyses.yml"
       - ".github/workflows/satellite.yml"
@@ -85,6 +89,8 @@ jobs:
         run: node --test frontend/tests/ui-qa.test.mjs
       - name: News grouping, attribution and chronology regression checks
         run: node --test tests/architecture/news-quality.test.mjs tests/architecture/news-localization-provenance.test.mjs
+      - name: D1 cache and safe fallback regression tests
+        run: node --test tests/architecture/collector-cache.test.mjs
       - name: Semantic translation regression checks
         run: node --test tests/architecture/translation-semantics.test.mjs tests/architecture/editor-modules.test.mjs
 
