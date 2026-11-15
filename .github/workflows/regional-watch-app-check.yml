@@ -186,6 +186,12 @@ jobs:
             echo 'ready=false' >> "$GITHUB_OUTPUT"
             echo 'Preview upload skipped: CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID not configured in GitHub Actions secrets.' >> "$GITHUB_STEP_SUMMARY"
           fi
+      - name: Refuse Pages Preview when any Worker or D1 binding points at production
+        if: steps.cloudflare.outputs.ready == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: node scripts/release/cloudflare-gate.mjs preview-check
       - name: Upload preview to a non-production branch only
         id: pages-upload
         if: steps.cloudflare.outputs.ready == 'true'
