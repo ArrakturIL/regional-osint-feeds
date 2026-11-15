@@ -169,7 +169,7 @@ def execute_replica_sync(
             # A newly failed/stale collector must not replace a last valid
             # snapshot in D1. An older D1 row is retained for explicit fallback;
             # the source remains unhealthy in the report.
-            if stored.status.get("state") in ("error", "stale"):
+            if stored.status.get("state") in ("error", "stale") or stored.checked_at > now + MAX_FUTURE:
                 try:
                     last_good_exists = last_good_checker(client, source)
                 except Exception:
