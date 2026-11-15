@@ -68,6 +68,8 @@ jobs:
           fi
           python -m scripts.publish_neon_mirror --source news_translation --mode shadow
       - name: Sync verified news_translation cache from Neon to private D1
+        id: neon_d1
+        continue-on-error: true
         # Source-by-source cutover; empty repo variable means NO production D1 write.
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && contains(format(',{0},', vars.REGIONAL_NEON_D1_SOURCES), ',news_translation,')
         env:
@@ -84,7 +86,7 @@ jobs:
           python -m scripts.publish_neon_mirror --source news_translation --mode required
           python -m scripts.neon_to_d1 --source news_translation --init-table
       - name: Publish bounded validated translation mirror
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && !(contains(format(',{0},', vars.REGIONAL_NEON_PRIMARY_SOURCES), ',news_translation,') && steps.neon_d1.outcome == 'success')
         run: |
           if [ ! -s data/news-localization-mirror.json ]; then
             echo 'No new safe translations; retain the last healthy mirror.'
@@ -112,4 +114,9 @@ jobs:
             sleep $((attempt * 2))
           done
           echo 'Unable to publish translation mirror after retries'
+          exit 1
+      - name: Signal Neon primary failure after attempting Legacy GitHub fallback
+        if: always() && contains(format(',{0},', vars.REGIONAL_NEON_PRIMARY_SOURCES), ',news_translation,') && steps.neon_d1.outcome == 'failure'
+        run: |
+          echo "::error::Neon D1 primary sync failed for news_translation; Legacy GitHub data writeback was attempted"
           exit 1

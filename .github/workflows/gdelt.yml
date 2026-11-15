@@ -50,6 +50,8 @@ jobs:
           fi
           python -m scripts.publish_neon_mirror --source gdelt --mode shadow
       - name: Sync verified gdelt cache from Neon to private D1
+        id: neon_d1
+        continue-on-error: true
         # Source-by-source cutover; empty repo variable means NO production D1 write.
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && contains(format(',{0},', vars.REGIONAL_NEON_D1_SOURCES), ',gdelt,')
         env:
@@ -66,7 +68,7 @@ jobs:
           python -m scripts.publish_neon_mirror --source gdelt --mode required
           python -m scripts.neon_to_d1 --source gdelt --init-table
       - name: Commit only small bounded news-context metadata
-        if: always()
+        if: always() && !(contains(format(',{0},', vars.REGIONAL_NEON_PRIMARY_SOURCES), ',gdelt,') && steps.neon_d1.outcome == 'success')
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -76,3 +78,8 @@ jobs:
             git commit -m "Update GDELT public regional news context"
             git push
           fi
+      - name: Signal Neon primary failure after attempting Legacy GitHub fallback
+        if: always() && contains(format(',{0},', vars.REGIONAL_NEON_PRIMARY_SOURCES), ',gdelt,') && steps.neon_d1.outcome == 'failure'
+        run: |
+          echo "::error::Neon D1 primary sync failed for gdelt; Legacy GitHub data writeback was attempted"
+          exit 1

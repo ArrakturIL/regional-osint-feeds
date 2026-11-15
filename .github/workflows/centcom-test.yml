@@ -47,6 +47,8 @@ jobs:
           fi
           python -m scripts.publish_neon_mirror --source centcom --mode shadow
       - name: Sync verified centcom cache from Neon to private D1
+        id: neon_d1
+        continue-on-error: true
         # Source-by-source cutover; empty repo variable means NO production D1 write.
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && contains(format(',{0},', vars.REGIONAL_NEON_D1_SOURCES), ',centcom,')
         env:
@@ -63,7 +65,7 @@ jobs:
           python -m scripts.publish_neon_mirror --source centcom --mode required
           python -m scripts.neon_to_d1 --source centcom --init-table
       - name: Commit updated news or status heartbeat
-        if: always() && github.ref == 'refs/heads/main' && steps.collect.outcome != 'skipped'
+        if: always() && github.ref == 'refs/heads/main' && steps.collect.outcome != 'skipped' && !(contains(format(',{0},', vars.REGIONAL_NEON_PRIMARY_SOURCES), ',centcom,') && steps.neon_d1.outcome == 'success')
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -75,4 +77,8 @@ jobs:
           else
             echo "No new publications or status changes"
           fi
-
+      - name: Signal Neon primary failure after attempting Legacy GitHub fallback
+        if: always() && contains(format(',{0},', vars.REGIONAL_NEON_PRIMARY_SOURCES), ',centcom,') && steps.neon_d1.outcome == 'failure'
+        run: |
+          echo "::error::Neon D1 primary sync failed for centcom; Legacy GitHub data writeback was attempted"
+          exit 1
