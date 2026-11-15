@@ -70,6 +70,18 @@ test('editor cache reports enabled fallback without leaking private values and i
  assert.equal(notes.length,2);
 });
 
+test('editor production fallback logging is bounded and contains no private row data',async()=>{
+ const warnings=[],old=console.warn;
+ console.warn=message=>warnings.push(message);
+ try{
+  const env=context(null,'news_translation').env;
+  assert.equal(await readEditorCachedPair(env,'news_translation',{nowMs:at+60000}),null);
+  assert.equal(await readEditorCachedPair(env,'news_translation',{nowMs:at+60000}),null);
+  assert.deepEqual(warnings,['regional_watch reader_fallback source=news_translation reason=cache_missing']);
+  assert.ok(!warnings.join('').includes('https://'));
+ }finally{console.warn=old}
+});
+
 test('source state error remains error rather than becoming empty success',async()=>{
  const error={...status,state:'error'};
  const result=await readEditorCachedPair(context(record('analysts',summary,error)).env,'analysts',
