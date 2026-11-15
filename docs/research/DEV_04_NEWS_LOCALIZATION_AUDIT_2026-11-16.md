@@ -30,3 +30,17 @@ RED [Actions #43771373615](https://github.com/ArrakturIL/regional-osint-feeds/ac
 Остались full eventRows read и простой расчёт ordering по всем событиям — это необходимо для стабильной пагинации в существующей архитектуре. Тесты не доказывают реальную экономию D1 rows/CPU на production без vendor analytics; не заявлять замеренной экономии Cloudflare. Полный UI/E2E и QA переводов — отдельная очередь. OSS-кандидаты отложены по решению владельца.
 
 **Критерий завершения:** утверждённое слияние, production release green, независимая Cloudflare проверка Pages/Editor/Monitor и обновлённый MASTER TODO; до этого статус DEV-04 не объявлять deployed.
+
+
+---
+
+## Фактический production-релиз и проверка (16.11.2026)
+
+Предшествующее «ещё не опубликовано» в отчёте — промежуточный статус, отменённый этим разделом.
+
+- [PR #44](https://github.com/ArrakturIL/regional-osint-feeds/pull/44) объединён с `main`, commit `eba80a9c2bc9b2a6f9c5b70ff081fd2d68f74f2b`.
+- [Coordinated release #43771725877](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43771725877): completed SUCCESS — **12 успешных заданий, 0 ошибок, 1 пропущенный Preview**, fallback rollback не применялся. Исходники трёх компонентов собирались и проверялись в релизном pipeline; D1 schema/bindings, version capture, RU/HE/API technical smoke и final receipt успешны.
+- **Независимая Cloudflare API проверка после выпуска:** canonical Pages production `dc24c333-5f30-4ceb-a547-333fa50c85b9` success; Editor версия `6999890c-8d3b-45b3-a887-8c31bca7c4fc` 100%; Monitor версия `34b8e6b5-a51b-4bc1-bca5-6238c9dc7ebe` 100%. Editor привязки AI/CORE_DB/NEWS_DB и cron каждые 5 минут, Monitor DB/secret-name bindings и cron каждую минуту сохранены.
+- После правки комментариев повторный [полный PR CI #43771645567](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43771645567) зелёный: **11 successful, 0 failed**, production jobs skipped до merge; [регрессии #43771645568](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43771645568) успешны.
+
+**DEV-04 закрыт по техническому объёму.** Числа 32→4 и 20→3 относятся к Node тестам D1 API имитации. Это доказательство сокращения операций в алгоритме, **не** измерение latency, CPU или реального дневного расхода Cloudflare на production. Не утверждать, что самостоятельный браузерный/контентный QA уже проведён; это отдельный пункт TODO. OSS ветка и долгосрочные backup отложены по решению владельца.
