@@ -4,7 +4,7 @@ import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {buildManifest,verifyManifest} from '../../scripts/release/manifest.mjs';
-import {validateWorker,validatePages,main as cloudflareGate} from '../../scripts/release/cloudflare-gate.mjs';
+import {validateWorker,validatePages,validateSubdomain,main as cloudflareGate} from '../../scripts/release/cloudflare-gate.mjs';
 import {checkD1,verifyColumns} from '../../scripts/release/d1-preflight.mjs';
 
 const root=resolve(new URL('../../',import.meta.url).pathname);
@@ -68,6 +68,7 @@ test('release has source-controlled Worker identities, DB and cron, preserving a
    const cfg=JSON.parse(readFileSync(join(root,w.config),'utf8'));
    assert.equal(cfg.name,w.name);
    assert.equal(cfg.keep_vars,true);
+   assert.equal(cfg.preview_urls,false,'worker preview URLs must never be reenabled by Wrangler');
    assert.deepEqual(cfg.triggers.crons,[w.cron]);
    assert.deepEqual(cfg.d1_databases.map(x=>[x.binding,x.database_id]).sort(),w.d1.map(x=>[x.binding,x.database_id]).sort());
    assert.ok(!cfg.vars,'live plain_text vars must survive, not be redefined by code');
@@ -75,6 +76,12 @@ test('release has source-controlled Worker identities, DB and cron, preserving a
  assert.equal(editor.ai,'AI');
  assert.deepEqual(monitor.secrets.sort(),['AIS_KEY','FIRMS_KEY','GFW_API_TOKEN','SUMMARY_TOKEN']);
  assert.ok(editor.name!==monitor.name);
+});
+
+test('Workers preview URL gate rejects public previews and refuses missing subdomain config',()=>{
+ assert.doesNotThrow(()=>validateSubdomain({enabled:true,previews_enabled:false},{name:'regional-watch-editor'}));
+ assert.throws(()=>validateSubdomain({enabled:true,previews_enabled:true},{name:'regional-watch-editor'}),/preview/i);
+ assert.throws(()=>validateSubdomain({enabled:true},{name:'regional-watch-editor'}),/preview/i);
 });
 
 test('remote Worker validation fails closed on missing bindings, cron and secrets',()=>{
@@ -140,6 +147,8 @@ test('Cloudflare gate snapshots exact versions and rolls back changed components
    }else if(path.endsWith('/settings')){
      const w=contract.workers.find(w=>path.includes('/'+w.name+'/'));
      result=settingsFor(w);
+   }else if(path.endsWith('/subdomain')){
+     result={enabled:true,previews_enabled:false};
    }else if(path.endsWith('/schedules')){
      const w=contract.workers.find(w=>path.includes('/'+w.name+'/'));
      result={schedules:[{cron:w.cron}]};
