@@ -403,6 +403,15 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           BASELINE: ${{ runner.temp }}/rw-release-baseline.json
         run: node scripts/release/cloudflare-gate.mjs postcheck "$SOURCE_SHA" "$BASELINE"
+      - name: Record actual production version IDs and D1 migration digests
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_WORKERS_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          BASELINE: ${{ runner.temp }}/rw-release-baseline.json
+          RECEIPT: ${{ runner.temp }}/rw-release-receipt.json
+        run: node scripts/release/cloudflare-gate.mjs receipt "$SOURCE_SHA" "$BASELINE" "$RECEIPT"
       - name: Record coordinated source SHA and immutable release receipt
         env:
           SOURCE_SHA: ${{ github.sha }}
@@ -424,6 +433,14 @@ jobs:
           else
             echo 'No deployment started; rollback baseline was never captured.'
           fi
+      - name: Archive deployed version receipt for release history
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rw-coordinated-release-receipt
+          path: ${{ runner.temp }}/rw-release-receipt.json
+          retention-days: 90
+          if-no-files-found: error
       - name: Preserve redacted rollback receipt for auditing
         if: always()
         uses: actions/upload-artifact@v4
