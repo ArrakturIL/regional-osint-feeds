@@ -15,6 +15,8 @@ on:
       - "scripts/neon_mirror.py"
       - "scripts/publish_neon_mirror.py"
       - "scripts/test_neon_mirror.py"
+      - "scripts/test_live_smoke_contract.py"
+      - "scripts/test_live_regional_watch.py"
       - "scripts/test_publish_neon_mirror.py"
       - "tests/architecture/translation-semantics.test.mjs"
       - "scripts/translate_news_open_source.py"
@@ -43,6 +45,8 @@ on:
       - ".github/workflows/gdelt.yml"
       - "scripts/neon_mirror.py"
       - "scripts/test_neon_mirror.py"
+      - "scripts/test_live_smoke_contract.py"
+      - "scripts/test_live_regional_watch.py"
       - "tests/architecture/translation-semantics.test.mjs"
       - "scripts/translate_news_open_source.py"
       - "scripts/translation_semantics.py"
@@ -71,6 +75,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Canonical external-smoke contract (offline)
+        run: python -m unittest scripts.test_live_smoke_contract -v
       - name: Unit tests (no external API or secrets)
         run: python -m unittest scripts.test_neon_mirror scripts.test_publish_neon_mirror -v
       - name: Offline translation candidate regression checks
