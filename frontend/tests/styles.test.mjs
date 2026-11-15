@@ -62,7 +62,7 @@ test('eight RU/HE documents contain no duplicated inline CSS',()=>{
   assert.ok(html.includes('/assets/app.css'));
  }
  const baseline=source('../baselines/cloudflare/2026-11-14/pages-0f39f36e/app.css');
- assert.equal(assembleStyles(),baseline+refined+shared);
+ assert.equal(assembleStyles(),baseline+refined+shared+source('src/components/Header/Header.mobile.css'));
 });
 
 test('small screen navigation has two readable columns in both locales',()=>{

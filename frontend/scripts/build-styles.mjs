@@ -17,6 +17,7 @@ export function assembleStyles({includeRefinements=true}={}){
   css+=readFileSync(resolve(frontendRoot,'src/styles/refinements.css'),'utf8');
   // Formerly duplicated in each RU/HE document; loaded after the original CSS.
   css+=readFileSync(resolve(frontendRoot,'src/styles/document-shell.css'),'utf8');
+  css+=readFileSync(resolve(frontendRoot,'src/components/Header/Header.mobile.css'),'utf8');
  }
  return css;
 }

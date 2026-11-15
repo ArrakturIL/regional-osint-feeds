@@ -17,3 +17,6 @@ No production promotion. Changes deploy only through `rw-modular-preview`. The Q
 
 ## HTML shell CSS de-duplication
 The eight frozen RU/HE HTML templates all contained precisely the same 3,365-character `<style id="rw-editor-bottom-v16">` block. Those rules have been moved exactly to `frontend/src/styles/document-shell.css` and appended to the generated `/assets/app.css` **after** design refinements to retain their original cascade priority (original load order: `app.css`, then inline style). All eight templates now reference only the common stylesheet; document structural markup and scripts remain unchanged. `frontend/tests/styles.test.mjs` checks this property and source-byte equality of the extracted block.
+
+## Small-screen header legibility
+Mobile verification at 390 CSS pixels showed the inherited four-slot primary navigation was visually crowded; the legacy rules forced 11–12 px labels. To retain the same four destinations without cramped labels, `frontend/src/components/Header/Header.mobile.css` adds a two-column, two-row grid at ≤430 px, with 14 px labels and ≥44 px targets. This file is appended after the exact frozen HTML shell rules to overrule their legacy `!important` layout at that breakpoint. The physical brand/language placement is unchanged, in both locales.
