@@ -123,13 +123,20 @@ class TestIntegratedShadowSync(TestCase):
         self.assertEqual(status,2)
         self.assertNotIn('postgresql://',stdout.getvalue()+stderr.getvalue())
 
-    def test_workflow_is_main_only_shadow_schedule_no_git_push_or_deploy(self):
+    def test_scheduled_workflow_is_main_only_repair_from_neon_primary(self):
         workflow=(Path(__file__).resolve().parents[1]/'.github/workflows/collector-shadow-sync.yml').read_text('utf8')
         self.assertIn("23 */2 * * *",workflow)
         self.assertIn("refs/heads/main",workflow)
         self.assertIn("contents: read",workflow)
         self.assertIn("cancel-in-progress: false",workflow)
-        self.assertIn("python -m scripts.sync_collector_shadows",workflow)
-        self.assertNotIn("REGIONAL_NEON_PRIMARY_SOURCES",workflow)
+        self.assertIn("python -m scripts.sync_neon_primary_to_d1",workflow)
+        self.assertNotIn("python -m scripts.sync_collector_shadows --root",workflow)
         self.assertNotIn("git push",workflow)
         self.assertNotIn("pages deploy",workflow)
+
+    def test_legacy_json_importer_is_retained_for_manual_recovery_only(self):
+        legacy=(Path(__file__).resolve().parents[1]/'scripts/sync_collector_shadows.py').read_text('utf8')
+        self.assertIn("execute_shadow_sync",legacy)
+        self.assertIn("load_snapshot",legacy)
+        workflow=(Path(__file__).resolve().parents[1]/'.github/workflows/collector-shadow-sync.yml').read_text('utf8')
+        self.assertNotIn("sync_collector_shadows --root",workflow)
