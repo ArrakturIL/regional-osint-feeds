@@ -1,93 +1,116 @@
-# REGIONAL WATCH — DEV-OSS-01: инвентаризация бесплатных инструментов (15.11.2026)
+# REGIONAL WATCH — DEV-OSS-01. Инвентаризация бесплатного OSS-стека
+**Дата:** 15.11.2026 (Asia/Jerusalem)  
+**Результат блока:** каталог изучен; кандидаты сопоставлены с текущими модулями; расставлены решения и обязательные инженерные проверки. **Это НЕ установка или релиз.**  
+**Авторитетная очередь:** [MASTER TODO](../REGIONAL_WATCH_MASTER_TODO.md).
 
-**Статус:** инвентаризация исходников и проверка реестра npm завершены для указанных в таблице пакетов; A/B совместимости и качества пока не проведены, интеграции в production нет.  
-**Основной TODO:** [REGIONAL_WATCH_MASTER_TODO.md](../REGIONAL_WATCH_MASTER_TODO.md).  
-**Предел полномочий этого документа:** read-only аудит исходников + проверка каталога кандидатов; никаких новых API-ключей, хостинга, миграций, npm installs, правок Workers или источников в production.
+## 1. Источники, границы достоверности и правила
 
-## На чём основано
+Проверен полный исходный документ из **Library** с точным заголовком «Regional Watch: бесплатный и open-source стек для мониторинга, OSINT, анализа сырой информации, переводов и проверки достоверности» (291 строка), а также `REGIONAL_WATCH_RESEARCH_CONTEXT_2026-11-15.md` и актуальный MASTER TODO. Исходное исследование — **каталог идей**, а не согласованное техническое задание: оно проектировало собственные Postgres/Redis/Qdrant, локальные LLM и серверы перевода. Наша уже работающая система — **GitHub + Cloudflare Pages/Workers/D1 + Neon Free + существующий Cloudflare AI**. Новая инфраструктура и отдельные модели не разрешены.
 
-Проверены текущие файлы main: backend/monitor/src/collectors/official/centcom-rss.js, backend/monitor/src/utils/text.js, scripts/collect_analysts.py, scripts/collect_news_shadow.py, backend/editor/src/news/normalization.mjs, backend/editor/src/news/claim-identity.mjs, scripts/news_event_filter.py, backend/editor/src/analysts/translation.mjs, backend/editor/src/translations/fact-guard.mjs, backend/editor/src/translations/semantic-meaning.mjs, scripts/translation_semantics.py и package.json четырёх модулей.
+**Факты в этом документе имеют два уровня:**
+- **Verified:** прочитаны файлы `main` или первичный npm/GitHub/Cloudflare/GitHub Docs на 15.11.2026. Ссылки приведены ниже.
+- **Catalog-only:** источник — большой отчёт Library, но лицензия/доступ конкретного отложенного продукта **не проверялись отдельно**. Это НЕ разрешение на внедрение: перед выбором перепроверить upstream, ToS, версию и реальное потребление.
 
-Дополнительно прочитан личный контекст исследования REGIONAL_WATCH_RESEARCH_CONTEXT_2026-11-15.md. **Полный отдельный отчёт Deep Research с названием «Regional Watch: бесплатный и open-source стек…» не удалось извлечь из доступной Library в этой сессии**. Поэтому эта таблица покрывает кандидатов из актуального MASTER TODO и контекстного файла, а не выдаётся за окончательную построчную сверку исходного большого отчёта. Пункт DEV-OSS-01 / G-01 остаётся частично выполненным до этой сверки и экспериментальных замеров.
+**Ни одна строка «TRIAL» не разрешает производственную установку**. Проба (RED→GREEN, bundle, CPU, стоимость, лицензии) принадлежит следующему **DEV-OSS-02** и последующим блокам. Общий QA сайта — отдельный процесс.
 
-## Что уже есть — не устанавливать второй раз
+## 2. Текущее состояние кода main — уже сделано, не дублировать
 
-| Возможность | Реальный код main | Вывод |
+| Текущая функция | Подтверждённый код | Статус |
 |---|---|---|
-| URL, tracking removal, Unicode NFKC | backend/editor/src/news/normalization.mjs; scripts/news_event_filter.py; scripts/collect_news_shadow.py | Уже есть; доработки по тестам, без обязательного нового npm-пакета |
-| Консервативная дедупликация/кластеризация статей | scripts/news_event_filter.py (shadow) и backend/editor/src/news/claim-identity.mjs | Уже есть; **не путать** с независимым подтверждением события |
-| Разбор RSS/Atom | scripts/collect_news_shadow.py и scripts/collect_analysts.py используют Python ElementTree; backend/monitor/src/collectors/official/centcom-rss.js использует JS regexp | Python уже способен читать XML; проверка новой библиотеки нужна прежде всего для рискованного regexp-парсинга Worker |
-| HTML-парсинг Telegram/превью | scripts/collect_analysts.py (HTMLParser с ограничениями и allowlist) | Не заменять без проверенной полноты/безопасности |
-| Контроль перевода и атрибуции | backend/editor/src/analysts/translation.mjs (Cloudflare AI, hash/cache и числа); translations/fact-guard.mjs, semantic-meaning.mjs; scripts/translation_semantics.py | Есть; текущие проверки не равны достоверности; кейсы P1 остаются на независимый QA |
-| Source status, hash, freshness и fallback | backend/monitor/src/mirrors/collector-cache.js; scripts/sync_neon_primary_to_d1.py | Уже в production; не запускать повторную миграцию |
-| Aviation/AIS/спутники/GDELT | backend/monitor/src/collectors/ и scripts/collect_*.py | Есть первичные адаптеры; расширение только по gap и с provenance |
+| RSS/Atom в offline сборщиках | `scripts/collect_news_shadow.py`, `scripts/collect_analysts.py`: Python ElementTree, проверки доступности/размера/даты | **KEEP**; нет основания ставить другой Python XML stack |
+| CENTCOM RSS внутри Worker | `backend/monitor/src/collectors/official/centcom-rss.js`: регулярные выражения `<item>`, `<title>`, `<link>`, `<pubDate>`, HTTP+source/date guards | **TRIAL** parser, поскольку regex не структурный XML разбор; безопасность/регрессии обязательны |
+| Разбор публичного Telegram HTML | `scripts/collect_analysts.py`: `HTMLParser` + ограниченные allowlist/границы | **KEEP** до реальной фикстуры с доказанной потерей данных |
+| Нормализация URL/строк | `backend/editor/src/news/normalization.mjs`: URL/HTTPS/tracking/hash removal/NFKC; `scripts/news_event_filter.py` и `scripts/collect_news_shadow.py` | **KEEP**, стандарты JS/Python уже используются |
+| Кластеризация и разграничение источников | `scripts/news_event_filter.py` (shadow), `backend/editor/src/news/claim-identity.mjs`, `backend/editor/src/news/events.mjs` | **KEEP**, наличие кода не равно точности группировки |
+| Переводы и базовая проверка | `backend/editor/src/analysts/translation.mjs`: Cloudflare AI, ограничения чанков, content-hash, проверка чисел/части отрицаний; `translations/fact-guard.mjs`, `semantic-meaning.mjs`, `scripts/translation_semantics.py` | **KEEP**; расширение качества — DEV-OSS-03, ошибки B-01/B-02 ещё открыты |
+| Источники и репликация | `backend/monitor/src/collectors/` (AIS/ADS-B/GDELT/официальные/спутники); `scripts/sync_neon_primary_to_d1.py`; D1 read cache | **KEEP**; не повторять прошлую миграцию/подключение |
+| UI/карты/графики | `frontend/src/` — работающий React и компоненты; нет доказательства потребности в отдельном map server | **KEEP**, не менять дизайн в этом блоке |
 
-## Проверка версий и лицензий по первоисточнику (15.11.2026)
+**Проверка установленности кандидатов:** поиск по исходникам `main` для `fast-xml-parser`, `franc-min`, `cheerio`, `papaparse`, `mammoth`, `maplibre` нашёл упоминания в планах/спеках, **не production импорты**. `Intl.Segmenter` в существующем прикладном коде не обнаружен. Не принимать найденное название в docs за установленный компонент.
 
-В момент первого черновика сведения о версиях npm не были подтверждены. Теперь проверена страница **npm package registry** для следующих кандидатов; версии ниже — снимок, а не автоматическое обещание совместимости с Workers.
+## 3. Приоритетные кандидаты для маленьких изолированных испытаний
 
-| Пакет | Зарегистрированная версия | Лицензия npm | Актуальность публикации / ограничение | Источник |
-|---|---:|---|---|---|
-| `fast-xml-parser` | 5.12.1 | MIT | свежий релиз; JS ESM/browser по README. В v5 есть обработка entities/DOCTYPE: **проверить безопасность untrusted XML и лимиты парсинга до использования** | [npm](https://www.npmjs.com/package/fast-xml-parser) |
-| `cheerio` | 1.2.0 | MIT | последняя опубликованная версия около 10 месяцев назад, зависимостей больше чем у узкого XML-парсера | [npm](https://www.npmjs.com/package/cheerio) |
-| `@mozilla/readability` | 0.6.0 | Apache-2.0 | последний npm релиз около 2 лет назад; upstream **не очищает небезопасный HTML**, для вывода нужна отдельная санитизация | [npm](https://www.npmjs.com/package/@mozilla/readability), [Mozilla upstream](https://github.com/mozilla/readability) |
-| `franc-min` | 6.2.0 | MIT | последний npm релиз около 3 лет назад. Поддержка mixed/коротких HE/AR **не доказана** | [npm](https://www.npmjs.com/package/franc-min) |
-| `transliteration` | 2.7.0 | MIT | свежий релиз; 1:1 Unicode mapping, не надёжное восстановление имён | [npm](https://www.npmjs.com/package/transliteration) |
-| `papaparse` | 5.7.1 | MIT | свежий релиз; CSV/TSV без сетевого API | [npm](https://www.npmjs.com/package/papaparse) |
-| `pdfjs-dist` | 6.5.438 | Apache-2.0 | свежий релиз; большой PDF в Worker не проверен, резерв — offline Actions | [npm](https://www.npmjs.com/package/pdfjs-dist) |
-| `mammoth` | 1.12.2 | BSD-2-Clause | свежий релиз; DOCX → HTML, не гарантия точного преобразования | [npm](https://www.npmjs.com/package/mammoth) |
-| `@turf/turf` | 7.4.0 | MIT | недавний релиз; полная сборка имеет десятки зависимостей — выбирать точечные модули | [npm](https://www.npmjs.com/package/@turf/turf) |
-| `maplibre-gl` | 6.18.0 | BSD-3-Clause | свежий релиз; картографические tile API и hosting имеют **отдельные условия** | [npm](https://www.npmjs.com/package/maplibre-gl) |
-
-**Что ещё не подтверждено экспериментом:** размер dependency tree в нашей сборке, CPU на настоящем Cloudflare Worker, точность HE/AR, сравнительная полнота RSS/HTML, законность реального извлечения содержимого по каждому источнику, актуальный расход квот конкретного аккаунта. Лицензия npm не отменяет ToS источника.
-
-### Бесплатность запуска — проверена документация провайдеров
-
-- [Cloudflare Workers Free limits](https://developers.cloudflare.com/workers/platform/limits/): 10 мс CPU на HTTP/cron invocation, 128 MB RAM, 100 000 вызовов/сутки. Это **лимит**, не доступный остаток конкретного аккаунта.
-- [Workers AI pricing](https://developers.cloudflare.com/workers-ai/platform/pricing/): 10 000 neurons/сутки бесплатно; превышение на Free блокируется, а не автоматически расширяет бесплатную квоту.
-- [GitHub Actions — standard runner для public repo](https://docs.github.com/en/actions/how-tos/write-workflows/choose-where-workflows-run/choose-the-runner-for-a-job): стандартные hosted runners для публичных репозиториев бесплатны, с техническими лимитами и отдельной квотой на хранение артефактов. Это подходит для **ограниченных offline обработок**, не требует VPS.
-- Пользовательские аккаунтные остатки Workers/D1/AI/Neon в этом блоке не запрашивались и не подтверждались.
-
-### Практический приоритет
-
-1. Для CENTCOM RSS в Worker сейчас применяется regexp-извлечение, поэтому **первый A/B кандидат** — `fast-xml-parser` с фиксированными реальными входами и fail-closed. Тест сначала подтверждает конкретный дефект regex; затем кандидат должен устранить его без изменения публичных типов/дат/source attribution.
-2. После реальной проверки — собственная нормализация/segmenter (без дополнительного npm), `franc-min` на RU/HE/EN/AR только с abstain/unknown, затем HTML и гео по выявленным проблемам.
-3. На следующем DEV-OSS-02 **не устанавливать пакеты массово и не деплоить на production до RED→GREEN, bundle/CPU checks и согласованного release**.
-
-## Оценка кандидатов (статусы: KEEP / TRIAL / BACKLOG / REJECT)
-
-| Инструмент | Проверенная лицензия и активность | Бесплатная эксплуатация/совместимость | Решение и место применения |
+| Кандидат | Лицензия, версия и источник | Реальная задача; оценка совместимости | Решение |
 |---|---|---|---|
-| Встроенные URL / Unicode normalize / Web Crypto | Стандарт JS, без npm и отдельного API | Нет новых квот; очень низкая цена CPU | **KEEP**. Не дублировать существующее; на регрессиях проверить canonicalization, SHA, пробелы и смешанные RTL |
-| Intl.Segmenter | Встроенный стандарт Intl; доступность проверить в target runtime CI | Нет API-тарифа, время CPU измерить | **TRIAL** для границ предложений/фрагментов RU/HE/EN/AR; сначала тесты против splitSource |
-| fast-xml-parser | **MIT**, 5.12.1, релиз в ноябре 2026; [npm](https://www.npmjs.com/package/fast-xml-parser), [upstream](https://github.com/NaturalIntelligence/fast-xml-parser) | JS ESM / браузер; Worker совместимость, размер бандла и безопасные XML limits требуют прогона | **TRIAL №1** в изолированных Node/Worker-compatible фикстурах CENTCOM RSS; не менять Python ElementTree без выигрыша |
-| Cheerio | **MIT**, 1.2.0; [npm](https://www.npmjs.com/package/cheerio), [upstream](https://github.com/cheeriojs/cheerio) | На GitHub Actions Node подходит, Worker-бандл и зависимости отдельно измерить | **TRIAL**, если текущий Python HTMLParser теряет реальные текст/дату/ссылку; не ставить в live Worker вслепую |
-| @mozilla/readability | **Apache-2.0**, 0.6.0, опубликован ~2 года назад; [npm](https://www.npmjs.com/package/@mozilla/readability) | Нужен DOM; для непривилегированного HTML — sanitization и контроль прав на текст | **BACKLOG** после Cheerio и только для разрешённых первоисточников; не републиковать полный текст без прав |
-| franc-min | **MIT**, 6.2.0, публикация ~3 года назад; [npm](https://www.npmjs.com/package/franc-min) | Без внешнего API, но возможны ошибки на коротких/смешанных HE/AR; требуется языковой датасет | **TRIAL** с возможностью abstain/unknown; не превращать эвристику в «подтверждённый язык» |
-| transliteration | **MIT**, 2.7.0, активная публикация; [npm](https://www.npmjs.com/package/transliteration) | Без API; посимвольное отображение не решает имена и варианты написания | **BACKLOG** как вспомогательный индекс поиска; **REJECT** как источник фактических имён/топонимов для публикации |
-| PapaParse | **MIT**, 5.7.1, активная публикация; [npm](https://www.npmjs.com/package/papaparse) | Дешёвый локальный CSV-парсер; пока нет обоснованного CSV production источника | **BACKLOG** до реального CSV fixture (авиация/морской/официальный реестр) |
-| pdfjs-dist | **Apache-2.0**, 6.5.438, активная публикация; [npm](https://www.npmjs.com/package/pdfjs-dist) | Большие PDF/CPU: **offline GitHub Actions**, не minute-cron Worker | **BACKLOG** для конкретного разрешённого PDF и замера памяти/документов |
-| Mammoth | **BSD-2-Clause**, 1.12.2, активная публикация; [npm](https://www.npmjs.com/package/mammoth) | Node Actions, документы DOCX; нет подтверждённого постоянного входа | **BACKLOG** |
-| @turf/turf (предпочтительно отдельные @turf/*) | **MIT**, 7.4.0, активная поддержка; [npm](https://www.npmjs.com/package/@turf/turf), [docs](https://turfjs.org/docs/getting-started) | Полный пакет имеет много зависимостей; точечный GeoJSON алгоритм тестировать отдельно | **TRIAL** только для конкретного спутникового/гео-сопоставления с ground-truth; не обещать геолокацию по совпадению |
-| MapLibre GL JS | **BSD-3-Clause**, 6.18.0, активная публикация; [npm](https://www.npmjs.com/package/maplibre-gl) | Библиотека бесплатна; tiles/hosting **не обязательно бесплатны** | **BACKLOG**, не менять текущую карту без цели UX/лимитов |
-| ExifTool / FFmpeg / yt-dlp / Wayback-CDX | Лицензии/правила конкретных версий и источников **не проверены** в этой сессии | Offline, дорого по CPU/хранению; согласование ToS и прав на медиа обязательно | **BACKLOG**, никакого массового скачивания и обхода ограничений |
-| GDELT Mentions / Media Cloud / Fact Check Tools | Условия API/доступ/квоты **не проверены** | Это внешние сервисы, не «бесплатная локальная библиотека» | **BACKLOG** отдельно от первой волны |
-| Qdrant/OpenSearch/Whisper/локальные LLM/переводческие серверы | Не требуются для выбранной архитектуры | VPS/GPU/долгоживущие серверы нарушают текущую эксплуатационную рамку | **REJECT для этого релиза**, оставить только в историческом исследовании |
+| JS `URL`, Unicode `normalize`, Web Crypto, regexp | Стандарты платформы, без npm/API | URL и хэши уже есть; сравнивать edge cases RU/HE/AR, а не ставить дубликат | **KEEP native** |
+| `Intl.Segmenter` | Встроенный Intl (наличие/локали проверить в target CI) | Границы предложений для HE/AR/RU/EN вместо разрезания по пробелу; качество не измерено | **TRIAL**, нулевая новая зависимость |
+| `fast-xml-parser` | [npm v5.12.1, MIT](https://www.npmjs.com/package/fast-xml-parser), актуальный upstream [GitHub](https://github.com/NaturalIntelligence/fast-xml-parser) | CENTCOM RSS в Worker, namespace/CDATA/XML entities/неверный XML; parser заявляет ESM/browser compatibility, **real Worker CPU и обработка DTD/entities не проверены** | **TRIAL №1** |
+| `rss-parser` | MIT по исходному каталогу; [npm](https://www.npmjs.com/package/rss-parser) — exact version перед пробой | Альтернатива для RSS/Atom; пакет Node ориентирован, поэтому Worker compatibility **не доказана** | **TRIAL в сравнении**, не обе библиотеки сразу |
+| `Cheerio` | [npm v1.2.0, MIT](https://www.npmjs.com/package/cheerio) | HTML/CSS selectors для ограниченных публичных материалов; **Node/Actions прежде Worker**, проверить bundle и права на извлечение | **TRIAL только при реальном провале HTMLParser** |
+| `@mozilla/readability` | [npm v0.6.0, Apache-2.0](https://www.npmjs.com/package/@mozilla/readability); npm версия без нового релиза ~2 года | Извлечение текста из DOM, нужен DOM-provider; результат НЕ безопасный sanitized HTML | **BACKLOG** после HTML fixtures |
+| `franc-min` | [npm v6.2.0, MIT](https://www.npmjs.com/package/franc-min); обновление пакета ~3 года назад | Определение языка на реальных RU/HE/EN/AR, коротких/смешанных фрагментах; **abstain/unknown**, не auto-publish | **TRIAL** если эвристики не хватает |
+| `transliteration` | [npm v2.7.0, MIT](https://www.npmjs.com/package/transliteration) | Только альтернативные поисковые ключи; латинизация **не** подтверждает имена/географию/перевод | **BACKLOG**, **REJECT для фактического отображения** |
+| `minhash` / fuzzy string comparison / shingling | Версии/лицензии подлежащих выбору пакетов не закреплены; встроенные алгоритмы доступны | Exact-URL/hash уже есть, cross-language near-duplicate может быть дорогим и ошибочным | **TRIAL алгоритма** после фикстур false merges, не внедрять автоматически |
+| `winkNLP` / `compromise` / `Natural` / `NLP.js` | MIT по исходному каталогу, детали по пакетам не перепроверены | Преимущественно EN и Node NLP; HE/AR поддержка не доказана, часть правил уже реализована | **BACKLOG**; тестировать только узкую незакрытую задачу |
+| `@turf/turf` / точечные `@turf/*` | [npm v7.4.0, MIT](https://www.npmjs.com/package/@turf/turf), весь bundle содержит >100 зависимостей | GeoJSON geometry/distance, но нельзя автоматически подтверждать реальные события | **TRIAL отдельных пакетов** только по реальным гео-фикстурам |
 
-**Известная граница применимости:** поддержка RU/HE/EN/AR у парсеров означает обработку UTF-8, а не гарантированное лингвистическое качество. У franc-min и transliteration языковое качество отдельно недоказано. Разные версии npm-сайтов могут отражать разное время индексирования; перед установкой фиксировать exact version и lockfile.
+**Первый рекомендуемый эксперимент после нового разрешения:** проверить один CENTCOM XML парсер на фиксированных примерах. Сохранять `title/url/published_at/source_feed/status` и origin checks, fail-closed на malformed/oversize/мнимые будущие даты; сравнить с исходным Worker parser. Проход на Node ≠ доказательство Workers Free 10 ms CPU. Это **план следующего блока, не выполненный тест**.
 
-## Лимиты и защита от неожиданных платежей
+## 4. Полный каталог Deep Research: решение по классам и по каждому названному кандидату
 
-- [Cloudflare Workers Limits](https://developers.cloudflare.com/workers/platform/limits/) (13.11.2026): Workers Free 100 000 запросов/сутки, **10 мс CPU на HTTP/cron invocation**, 128 MB memory, 50 subrequests; ожидание fetch не считается CPU. Не считать эти числа гарантированно доступным остатком аккаунта.
-- [Workers AI Pricing](https://developers.cloudflare.com/workers-ai/platform/pricing/): 10 000 бесплатных neurons/сутки, далее Workers Paid; **существующую модель не заменять**.
-- [D1 free limit enforcement](https://developers.cloudflare.com/changelog/post/2026-09-01-d1-free-tier-limit-enforcement/): с 01.09.2026 превышение daily read/write row limits вызывает ошибки, не автоматическое расширение квоты.
-- GitHub Actions: реальное потребление, execution time, schedule и trigger-политики сравнивать по job artifacts перед включением постоянной обработки. Без runtime/GPU/VPS, новых токенов и платного сервиса.
+Статусы: **KEEP** = уже есть/использовать действующее; **TRIAL** = короткая проверка на измеримую пользу, не релиз; **BACKLOG** = не требуется сейчас; **REJECT** = не включать в выбранную бесплатную архитектуру (возможна историческая справка). Группировка не означает принятие всех членов группы; **каждое перечисленное название получает одинаковый указанный статус**.
 
-## Приёмочные ворота первой реальной интеграции DEV-OSS-02
+| Область / конкретные кандидаты из исходного исследования | Решение | Обоснование/ограничение |
+|---|---|---|
+| Python `ElementTree`, `HTMLParser` и действующие HTTP/source-normalizers | **KEEP** | уже в сборщиках; не ставить «на всякий случай» |
+| `Crawlee`, `Playwright`, `Puppeteer`, `jsdom`, `trafilatura`, `Postlight/Mercury Parser` | **BACKLOG** | браузер/Node/Python CPU, нет доказанной необходимости, проблемы поддержки/прав источников |
+| `changedetection.io`, `Huginn`, `RSSHub`, `FreshRSS`, `Miniflux`, `Feedpushr`, `Feed2toot`, `RSS-Bridge`, `PolitePol`, `Kill the Newsletter`, `FiveFilters Feed Creator` | **REJECT** как новые сервисы для текущей архитектуры | дополнительный self-hosting, администрирование и network terms; можно использовать внешние разрешённые feeds отдельно. RSSHub и FreshRSS — AGPL-3.0 |
+| `Apache Tika`, `Unstructured`, `Apache POI`, `Tesseract OCR`, `PaddleOCR` | **BACKLOG** | тяжёлый offline parser/OCR; при реальном разрешённом документе тестировать на Actions, а не в Workers |
+| `pdfjs-dist/pdf.js` | **BACKLOG**, [npm v6.5.438 Apache-2.0](https://www.npmjs.com/package/pdfjs-dist) | большой PDF требует RAM/CPU; перед внедрением нужны формат, права и точный тест |
+| `pdf-parse`, `SheetJS CE`, `xml2js`, YAML parsers | **BACKLOG** | сначала официальный разрешённый пример и сравнение со встроенным Python/JS парсером; лицензия/версия отдельного пакета не проверены |
+| `Mammoth.js` / `mammoth` | **BACKLOG**, [npm v1.12.2 BSD-2-Clause](https://www.npmjs.com/package/mammoth) | DOCX→semantic HTML, нужен реальный документ |
+| `PapaParse` | **BACKLOG**, [npm v5.7.1 MIT](https://www.npmjs.com/package/papaparse) | для реального CSV/TSV feed, не ставить без входа |
+| `ExifTool`, `FFmpeg/ffprobe`, `ImageMagick`, `OpenCV`, `sharp`, perceptual `pHash/dHash/aHash` | **BACKLOG** | медиа-обработка только offline с правами на содержимое; metadata/hash не доказывают подлинность |
+| `yt-dlp`, `gallery-dl`, `Instaloader`, `Bellingcat Auto Archiver` | **BACKLOG** | можно исследовать ограниченное законное архивирование; ToS, права на видео/посты, размеры и секреты до запуска |
+| `Whisper/faster-whisper` | **REJECT** для текущего runtime, справочный резерв | CPU/GPU для транскрипции без бесплатного постоянно работающего сервера |
+| `GramJS` | **REJECT**, архивирован 14.07.2026 | даже активный fork не даёт права автоматически собирать приватные данные |
+| `teleproto`, `Telethon`, `Pyrogram`, AT Protocol SDK, Mastodon API, `twarc`, Reddit/PRAW, ActivityPub clients | **BACKLOG** | не менять существующие публичные Telegram/YouTube previews; нужны permissions/ToS/source-specific evidence |
+| `OPUS-MT`, `Marian NMT`, `CTranslate2`, `Bergamot`, `Argos Translate`, `LibreTranslate`, `MADLAD` | **REJECT для текущего релиза** | исходное исследование предлагает новые *модели/серверы*, но пользователь прямо требует сохранить Cloudflare AI и не покупать VPS/GPU |
+| `NLLB`, `SeamlessM4T v2` | **REJECT** | у обсуждённых в каталоге checkpoint лицензия CC-BY-NC; конкретную модель и права перепроверять перед любым иным использованием |
+| `Transformers.js`, `spaCy`, `GLiNER`, `fastText`, `Sentence Transformers`, `ml-kmeans/ml-hclust/ml-dbscan` | **BACKLOG** | требует данных/CPU и проверки языка; original fastText repo архивирован — не новая dependency по умолчанию |
+| `Ollama`, `llama.cpp` | **REJECT для текущего релиза** | не заменять Cloudflare AI и не добавлять локальный LLM-хост |
+| `Qdrant`, `OpenSearch`, `Meilisearch CE`, `Typesense Server`, `pgvector` | **REJECT как новая инфраструктура сейчас** | хранение уже работает Neon/D1, отдельный search/vector node не обоснован |
+| `GDELT Events` + существующий `gdelt_context` | **KEEP** | источники уже существуют; coded news signals ≠ подтвердившиеся события |
+| `GDELT Mentions`, `Media Cloud`, `ClaimReview/schema.org` | **TRIAL на read-only источниках после licensing/API gate** | потенциально улучшат цепочку цитирования и независимость; сначала проверка настоящего источника и rate limits |
+| Google Fact Check Tools API | **BACKLOG** | нужен API key, гарантированный бесплатный бюджет и правила доступа не подтверждены |
+| `Common Crawl`, `Wikidata`, `Wikipedia dumps`, `OpenAlex`, `DBpedia`, `GeoNames`, `Internet Archive CDX/Wayback` | **BACKLOG** | под конкретное enrichment/provenance, не mass sync |
+| `OpenAleph`, OCCRP Aleph Pro | **REJECT как новый сервер/hosted entitlement** | self-hosting отдельно от закрытого/по заявке доступа к данным |
+| Bellingcat Online Investigation Toolkit, InVID/WeVerify | **BACKLOG как ручный справочник** | осмысленный human verification, но не новый автоматический Worker |
+| Google Lens, Bing Visual Search, Yandex Images, TinEye | **BACKLOG, ручное исследование** | не делать вид, что есть бесплатные стабильные production APIs |
+| `MapLibre GL JS` | **BACKLOG**, [npm v6.18.0 BSD-3-Clause](https://www.npmjs.com/package/maplibre-gl) | рендерер бесплатен; tiles/hosting условия отдельно, UI изменение не требуется |
+| `Pelias`, `Photon`, `Nominatim self-hosted`, `Overpass self-hosted` | **REJECT как новые сервисы** | memory/CPU+OSM indexes, не в текущих квотах |
+| OpenStreetMap data/public APIs, Natural Earth, OpenHistoricalMap, Sentinel/Copernicus, NASA FIRMS | **KEEP** для уже подключённых NASA/Copernicus; прочее **BACKLOG** | свободная база ≠ безлимитный публичный API, проверить лицензии и attribution |
+| `Apache AGE`, `Neo4j CE`, `JanusGraph` | **REJECT как новые графовые серверы** | текущие links/relations можно вести в существующем DB без долгоживущего graph runtime |
+| `BullMQ/Redis`, `Temporal`, `Node-RED`, `n8n` | **REJECT как дополнительный orchestration runtime** | GitHub Actions/Cloudflare cron уже работают; n8n Sustainable Use **не OSI OSS** |
+| `React` | **KEEP** | существующий frontend |
+| `Next.js`, `TanStack Query/Table`, `Cytoscape.js`, `Sigma.js`, `TimelineJS`, `vis-timeline`, `ECharts`, `Recharts`, `D3`, `OpenSearch Dashboards`, `Grafana`, `Metabase`, `Superset` | **BACKLOG** | UI инструменты только если подтверждена нужда; Dashboard servers потребуют хостинг |
 
-1. **RED:** заморозить реальные, разрешённые RSS/Atom фикстуры (namespaces, CDATA, escaped entities, non-Latin titles, 0 items, malformed XML, oversize, duplicate URLs, неполные даты). Сравнить current parser vs candidate: доля извлечённых полей/ложных новостей и fail-closed.
-2. **GREEN:** только если candidate исправляет воспроизводимый дефект или снижает сложность при неухудшении выходного API, внедрить один адаптер в изоляции, с возможностью возврата к старому. Сохранить source_feed, title/url, published_at, проверку origin и stale/partial semantics. Никогда не выставлять unknown как 0 событий.
-3. **Метрики:** CI Node tests, размер Worker bundle, CPU benchmark в окружении Workers (не равнять Node wall-time CPU), GitHub Actions duration, RU/HE/EN/AR fixtures. Если прироста нет — **KEEP native**, зависимость не добавлять.
-4. **Релиз:** отдельный PR; CI RED→GREEN и coordinated release; проверить live source status/bindings после публикации. Глобальный UI QA — другая работа.
+## 5. G-09: лицензии, сопровождение и эксплуатационные риски
 
-**Ближайший выбор:** один XML-парсер (fast-xml-parser) на пути CENTCOM RSS с регрессионными тестами, затем при подтверждённом результате — язык/текст. Никакого одновременного пакета из 10 библиотек.
+**Проверенные upstream (не по памяти):**
+- [rsshub repository](https://github.com/DIYgod/RSSHub) — AGPL-3.0; [FreshRSS](https://github.com/FreshRSS/FreshRSS) — AGPL-3.0, оба требуют сервера. Это НЕ причина считать их платным API, но это причина **не внедрять** без необходимости/лицензионного анализа.
+- [n8n official licensing FAQ](https://support.n8n.io/article/can-i-use-your-license-for-my-use-case) — Sustainable Use License, community self-host может быть бесплатным в рамках условий, но не OSI-OSS. Исключено из текущего стека.
+- [GramJS archive](https://github.com/gram-js/gramjs) — archived 14.07.2026, README направляет в teleproto. **REJECT** GramJS.
+- [ExifTool авторский README](https://github.com/exiftool/exiftool/blob/master/README): «same terms as Perl», **Artistic или GPL**; прежнее упрощение «только GPL-3.0» в большом отчёте некорректно. `LICENSE` в mirror содержит GPL-3.0; при будущей дистрибуции проверить выбранные условия и attribution.
+- [yt-dlp upstream](https://github.com/yt-dlp/yt-dlp) — source Unlicense, некоторые бинарные дистрибутивы включают GPLv3+/ISC/MIT third-party. Не путать лицензию кода и контента видео.
+- [FFmpeg license](https://github.com/FFmpeg/FFmpeg/blob/master/LICENSE.md) — LGPL по умолчанию, при `--enable-gpl` и некоторых сборках GPL; сборки с `--enable-nonfree` могут быть нераспространяемы.
+- [Bellingcat Auto Archiver](https://github.com/bellingcat/auto-archiver) — MIT, [релиз 1.2.9 от 01.09.2026](https://github.com/bellingcat/auto-archiver/releases); использование платформенных API/архивов регулируется отдельными условиями.
+- [NLLB checkpoint](https://huggingface.co/facebook/nllb-200-distilled-600M) и [SeamlessM4T-v2 checkpoint](https://huggingface.co/facebook/seamless-m4t-v2-large) — только catalog risks: конкретные weights и применимость к коммерции перепроверять отдельно; модели в текущий план **не входят**.
+- **Каталог-only, не upstream verified:** оставшиеся невыбранные проекты (Postlight/Mercury, fastText, minhash ecosystem, Pelias/Photon, graph servers, n8n alternatives и др.) — лицензии/versions из первоначального отчёта не являются достаточными для installation gate.
+
+## 6. Проверенные бесплатные платформенные ограничения
+
+- [Cloudflare Workers limits, 13.11.2026](https://developers.cloudflare.com/workers/platform/limits/): Workers Free **100 000 requests/day**, **10 ms CPU/request и 10 ms CPU/cron invocation**, 128 MB RAM, 50 subrequests/request. Network wait не входит в CPU. **Это НЕ измерение остатка доступной квоты Regional Watch.**
+- [Cloudflare Workers AI, pricing 12.11.2026](https://developers.cloudflare.com/workers-ai/platform/pricing/): 10 000 neurons/day Free, далее операции при превышении лимита на Free падают. Cloudflare AI **сохранить**.
+- [GitHub standard hosted runners](https://docs.github.com/en/actions/how-tos/write-workflows/choose-where-workflows-run/choose-the-runner-for-a-job): для *публичного* репозитория standard runners бесплатны (с техническими ограничениями), что позволяет bounded offline job без отдельного VPS/GPU.
+- Не считать free software = free persistent hosting. Любое новое API/внешний сервис может иметь ключ, ToS, rate limiting; в этой инвентаризации не включали новые платные сервисы, не затрагивали секреты и не меняли подписки.
+
+## 7. Результат, критерии следующего блока и остановка
+
+**Завершено именно в DEV-OSS-01:** прочитан полный исходный Deep Research, проверен рабочий код main, выделены существующие механизмы, полный каталог классифицирован в KEEP/TRIAL/BACKLOG/REJECT, реальные лицензии и даты выбранных npm-кандидатов и рискованных лицензий сверены по upstream, обозначены free runtime ограничения. Это **решения о приоритете**, не о качестве модулей.
+
+**Ещё НЕ сделано и НЕ должно называться выполненным:** фактические A/B benchmarks, Worker bundle/CPU, RU/HE/EN/AR regression fixtures, install, implementation, CI, PR release, production source QA, full UI QA, проверка лимитов конкретного аккаунта. Они принадлежат DEV-OSS-02…05 и отдельному QA.
+
+**Следующий кандидат после отдельного разрешения:** `fast-xml-parser` vs текущий CENTCOM regexp parser (и, если оправдано, `rss-parser`). Первый gate — реальная воспроизводимая ошибка/отсутствующее поле на immutable XML fixtures, RED до исправления; затем GREEN + existing Monitor suite, bundles, Cloudflare CPU, fallback и проверка downstream statuses. Без доказанной пользы — оставить старый код и не вводить зависимость.
+
+**Режим:** после обновления MASTER TODO и этого отчёта **остановиться**. Не выполнять DEV-OSS-02/03/04/05 автоматически.
