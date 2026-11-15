@@ -174,5 +174,29 @@ class TestSourceWorkflowRollout(unittest.TestCase):
                 self.assertIn("python -m scripts.neon_to_d1 --source "+source+" --init-table",workflow)
                 self.assertIn("git ",workflow,"GitHub fallback remains until reader cutover")
 
+
+class TestSafePrimaryCutover(unittest.TestCase):
+    def test_promotion_skips_GitHub_JSON_only_when_D1_mirror_succeeded(self):
+        from pathlib import Path
+        base=Path(__file__).resolve().parents[1]/".github/workflows"
+        workflows={
+           "gdelt":"gdelt.yml","analysts":"analysts.yml",
+           "centcom":"centcom-test.yml","copernicus":"copernicus-analytics.yml",
+           "marad":"marad.yml","satellite":"satellite.yml",
+           "unosat":"unosat-analyses.yml",
+           "news_translation":"news-open-source-translation.yml",
+        }
+        for source,file in workflows.items():
+            with self.subTest(source=source):
+                content=(base/file).read_text(encoding="utf8")
+                self.assertIn("id: neon_d1",content)
+                self.assertIn("continue-on-error: true",content)
+                self.assertIn("vars.REGIONAL_NEON_PRIMARY_SOURCES",content)
+                self.assertIn("steps.neon_d1.outcome == 'success'",content)
+                self.assertIn("steps.neon_d1.outcome == 'failure'",content)
+                self.assertIn("Legacy GitHub",content)
+                # D1-sync selected but failing must *not* disable fallback.
+                self.assertIn("git ",content)
+
 if __name__=="__main__":
     unittest.main()
