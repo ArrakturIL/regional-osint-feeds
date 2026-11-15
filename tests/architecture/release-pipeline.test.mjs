@@ -116,6 +116,46 @@ test('Pages preflight verifies that both service bindings resolve to correct Wor
  assert.throws(()=>validatePages(contract.pages,fake),/EDITOR|service/i);
 });
 
+test('preview deployment is refused when Pages Preview reuses production Worker or D1 bindings',()=>{
+ const p={
+   production_branch:'main',
+   deployment_configs:{
+     production:{
+       services:Object.fromEntries(contract.pages.services.map(x=>[x.binding,{service:x.service,environment:'production'}])),
+       d1_databases:Object.fromEntries(contract.pages.d1.map(x=>[x.binding,{id:x.database_id}]))
+     },
+     preview:{
+       services:Object.fromEntries(contract.pages.services.map(x=>[x.binding,{service:x.service,environment:'production'}])),
+       d1_databases:Object.fromEntries(contract.pages.d1.map(x=>[x.binding,{id:x.database_id}]))
+     }
+   }
+ };
+ // Production release remains valid: this is a preview-only guard.
+ assert.doesNotThrow(()=>validatePages(contract.pages,p));
+ assert.throws(()=>validatePages(contract.pages,p,{requirePreviewIsolation:true}),/preview.*(production|shared|isola)/i);
+ const safe=structuredClone(p);
+ safe.deployment_configs.preview.services={
+   EDITOR:{service:'rw-editor-isolated',environment:'preview'},
+   MONITOR:{service:'rw-monitor-isolated',environment:'preview'}
+ };
+ safe.deployment_configs.preview.d1_databases={
+   DB:{id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'},
+   NEWS_DB:{id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'}
+ };
+ assert.doesNotThrow(()=>validatePages(contract.pages,safe,{requirePreviewIsolation:true}));
+ for(const changes of [
+   x=>{x.deployment_configs.preview.d1_databases.DB.id=contract.pages.d1[1].database_id;},
+   x=>{x.deployment_configs.preview.services.EDITOR.service=contract.pages.services[1].service;},
+   x=>{x.deployment_configs.preview.services.EDITOR.environment='production';},
+   x=>{delete x.deployment_configs.preview.d1_databases.NEWS_DB;},
+   x=>{delete x.deployment_configs.preview.services.MONITOR;},
+   x=>{delete x.deployment_configs.preview;}
+ ]){
+   const unsafe=structuredClone(safe); changes(unsafe);
+   assert.throws(()=>validatePages(contract.pages,unsafe,{requirePreviewIsolation:true}),/preview/i);
+ }
+});
+
 test('Cloudflare gate snapshots exact versions and rolls back changed components, never exposing tokens',async()=>{
  const dir=mkdtempSync(join(tmpdir(),'rw-release-baseline-'));
  const filename=join(dir,'baseline.json');
