@@ -118,6 +118,9 @@ test('approved P1 D1 replacement rows preserve RU/HE provenance and matching Heb
    const invalid={...record,he_hash:'0'.repeat(64)};
    const stale=await localizeNewsRow(null,invalid,'he');
    assert.equal(stale.translation_status,'pending');
-   assert.equal(stale.title,item.original.title);
+   // Pending Hebrew uses the verified Russian fallback, while preserving EN source provenance.
+   assert.equal(stale.title,item.candidate.ru.title);
+   assert.equal(stale.content_language,'ru');
+   assert.equal(stale.source_language,'en');
  }
 });
