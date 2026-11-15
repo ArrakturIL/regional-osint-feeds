@@ -14,7 +14,7 @@ export async function checkD1(contract,query){
  if(!Array.isArray(contract.schemas)||contract.schemas.length!==2)throw Error('D1 release schemas missing');
  let tables=0;
  for(const schema of contract.schemas){
-   if(!/^[a-f0-9]{32}$/.test(schema.database_id))throw Error('Invalid D1 ID in release schema');
+   if(!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(schema.database_id))throw Error('Invalid D1 ID in release schema');
    for(const [table,required] of Object.entries(schema.tables)){
      if(!isIdentifier(table)||!Array.isArray(required)||!required.every(isIdentifier))throw Error('Unsafe D1 schema contract');
      const result=await query(schema.database_id,'PRAGMA table_info('+table+')');
