@@ -69,5 +69,55 @@
         "REGION"
       ]
     }
+  ],
+  "schemas": [
+    {
+      "key": "core",
+      "database_id": "c052acf3-b821-444a-92e4-ffd472a131f0",
+      "tables": {
+        "regional_collector_cache": [
+          "source_key",
+          "checked_at_ms",
+          "data_json",
+          "status_json",
+          "data_sha256",
+          "status_sha256",
+          "synced_at_ms"
+        ],
+        "observations": [
+          "source",
+          "id",
+          "observed_at",
+          "payload"
+        ],
+        "analyst_items": [
+          "id",
+          "analyst_id",
+          "canonical_url",
+          "content_hash"
+        ]
+      }
+    },
+    {
+      "key": "news",
+      "database_id": "d9ba2c51-d551-4615-bbe2-37e76e2d668a",
+      "tables": {
+        "news_items": [
+          "id",
+          "headline",
+          "source",
+          "published_ms"
+        ],
+        "regional_translation_repair_backups": [
+          "batch_id",
+          "item_id",
+          "news_json",
+          "hebrew_json"
+        ],
+        "regional_i18n": [
+          "id"
+        ]
+      }
+    }
   ]
 }
