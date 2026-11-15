@@ -43,7 +43,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test frontend/tests/source-parity.test.mjs
+      - run: node --test frontend/tests/source-parity.test.mjs frontend/tests/app-render-runtime.test.mjs
       - run: |
           node frontend/scripts/build.mjs
           node --check frontend/dist/assets/app.js

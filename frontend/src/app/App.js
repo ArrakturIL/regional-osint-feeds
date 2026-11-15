@@ -26,7 +26,7 @@ export function App(){
  useEffect(()=>{document.title=(UI_HE?HE_TEXT[route==="/events"?"events":route==="/data"?"data":route==="/analysts"?"analysts":"home"][0]:route==="/events"?"События и контекст":route==="/data"?"Данные и источники":route==="/analysts"?"Аналитики и публикации":"Обстановка в регионе")+" — REGIONAL WATCH"},[route]);
  const overview=useFeed("/api/overview",60000,true);
  const news=useFeed("/api/news?lang="+(UI_HE?"he":"ru")+"&limit=40&sort=latest",60000,route==="/");
- const cases=useFeed("/api/stories?lang="+(UI_HE?"he":"ru")+"&limit=40",60000,pages);
+ const cases=useFeed("/api/stories?lang="+(UI_HE?"he":"ru")+"&limit=40",60000,route==="/"||route==="/events");
  const digest=useFeed("/api/changes?lang="+(UI_HE?"he":"ru"),60000,route==="/");
  const editorial=useFeed("/api/editorial-notes?lang="+(UI_HE?"he":"ru")+"&limit=20",120000,route==="/");
  const data=useFeed("/api/data",120000,route==="/data");
