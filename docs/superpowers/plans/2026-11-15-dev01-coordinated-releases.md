@@ -23,7 +23,7 @@
 - [x] **Protection before production writes.** `scripts/release/cloudflare-gate.mjs capture` checks live Worker bindings, cron, Pages service/D1 binding targets and saves redacted rollback IDs. `scripts/release/d1-preflight.mjs` compares live table/column presence read-only without automatic migrations.
 - [x] **Coordinated release job.** `.github/workflows/regional-watch-app-check.yml` runs the existing 10 source test jobs before immutable build, Wrangler dry-run for both Workers, and release job with required credentials, exact verified artifact download, Editor→Monitor→Pages deploy, technical route smoke, live postcheck and rollback on failure.
 - [x] **Rollback/receipt code.** Named previous Worker version 100% deployments and Cloudflare Pages rollback API are invoked on partial failure. Record version IDs, source SHA, checksums and CI run in non-secret receipt artifacts after successful release.
-- [ ] **Production acceptance: MUST NOT MARK COMPLETE UNTIL CONFIRMED.** The existing `CLOUDFLARE_D1_API_TOKEN` **passed** trusted GitHub Actions read-only Cloudflare Worker/D1 access ([run #43752596321](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43752596321)); no new token is needed. Run the merged main workflow and verify `release-production` succeeded, live versions match one release SHA, no bindings/cron regressions, release receipt exists and all previous state is recoverable. Update MASTER TODO and stop before DEV-OSS.
+- [x] **Production acceptance completed 15 Nov 2026.** [PR #30](https://github.com/ArrakturIL/regional-osint-feeds/pull/30) release implementation, [PR #31](https://github.com/ArrakturIL/regional-osint-feeds/pull/31) disabled Worker preview URLs in code and rollback, [PR #32](https://github.com/ArrakturIL/regional-osint-feeds/pull/32) bounded Pages edge propagation retries and canonical deployment rollback target. Existing `CLOUDFLARE_D1_API_TOKEN` with Workers Admin was proved functional by read-only [Actions #43752596321](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43752596321). Final production [Actions #43754130567](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43754130567) **success**, artifact receipt + rollback baseline saved, Pages canonical `c6ad7331-e21a-4340-9f80-b14051fe9d8a`, Editor version `c35e47ba-707e-4ae4-95df-e748b68fa566`, Monitor version `7aedb492-e136-482a-b52f-893a9b07e712`. All D1 bindings, 4 Monitor secret names, variable names, cron and disabled preview URLs were independently checked. MASTER TODO updated; stop and wait for next DEV-OSS block command.
 
 ## Review focus
 - Existing D1+Workers Admin token absent or insufficient → **no** Pages-only publishing; confirmed working read-only in run #43752596321.
@@ -34,5 +34,10 @@
 - Worker route or cron drift → live preflight and postcheck; preserve existing subdomain state.
 - Continuous collectors → no changes to the eight Neon-primary collector workflows or production data.
 
-## Release decision
-Implementation branch `feat/dev01-coordinated-releases-20261115` PR #30. **No production deployment unless the existing D1+Workers Admin token passes Cloudflare preflight**; legacy Pages path remains active on main. Approving a merge will replace the old Pages-only production job with coordinated release, so the secret precondition is binding, not cosmetic.
+## Accepted release decision
+
+Code from PR #30, PR #31 and PR #32 is merged. Final main commit `14ce89599ecca96d645c4461b33970b67e719925` successfully built, deployed and validated as described above. Actual production release used the user's **existing** D1+Workers Admin token; no new token was created.
+
+The intermediate hardening run [#43753618421](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43753618421) failed on an immediate Pages deployment URL HTTP 404 and exercised the exact-version rollback successfully. The active Pages canonical deployment (not newest-created deployment) is now the source of truth for all future rollbacks; retry handles short 404 propagation. No site-wide QA was performed by this development block.
+
+**DEV-01 finished; next DEV-OSS starts only on user's explicit command.**
