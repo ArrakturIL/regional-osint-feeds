@@ -313,4 +313,12 @@ test('production publish workflow cannot deploy Pages independently and requires
  assert.match(workflow,/rollback/);
  assert.doesNotMatch(workflow,/name: Publish Cloudflare Pages production only after main checks/);
  assert.match(workflow,/needs:\s*\[release-bundle\]/);
+ const start=workflow.indexOf('  pages-preview:');
+ const finish=workflow.indexOf('  release-bundle:',start);
+ assert.ok(start>0 && finish>start,'preview workflow block exists');
+ const preview=workflow.slice(start,finish);
+ const gate=preview.indexOf('run: node scripts/release/cloudflare-gate.mjs preview-check');
+ const publish=preview.indexOf('command: pages deploy dist');
+ assert.ok(gate>=0 && publish>gate,'read-only isolation must precede preview publishing');
+ assert.match(preview,/if: steps\.cloudflare\.outputs\.ready == 'true'/);
 });
