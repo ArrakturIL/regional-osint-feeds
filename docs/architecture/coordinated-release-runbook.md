@@ -18,6 +18,12 @@ Verified in [GitHub Actions #43752596321](https://github.com/ArrakturIL/regional
 2. Confirm production Pages binds `EDITOR` and `MONITOR` to the existing two Workers and has correct `DB`/`NEWS_DB`; live Worker configs retain their established cron, D1 IDs, vars and secret names. The CI preflight enforces this without emitting secret values.
 3. Merge PR #30 after checks, which switches production publishing from Pages-only to the coordinated three-component release. The `release-production` GitHub job must succeed; retain `rw-coordinated-release-receipt` and `rw-coordinated-rollback-baseline` artifacts. Verify all three actual Cloudflare deployment IDs and source SHA before completing DEV-01 in MASTER TODO.
 
+## Worker preview URL security gate
+
+The first coordinated production release (GitHub Actions #43752897274) succeeded, but Wrangler silently enabled **Worker preview URLs** because the initial production JSON configs omitted `preview_urls`. Cloudflare API readback detected the drift; both existing Workers were restored to `previews_enabled=false` immediately with their established `workers.dev` endpoints preserved.
+
+The production configs now pin `preview_urls:false` for **both** Workers, and the release preflight/postcheck reads `GET /workers/scripts/{name}/subdomain` to require `enabled=true` and `previews_enabled=false`. If a later publish attempts to re-enable them, the release job fails closed and rollback also restores the preview toggle. Regression coverage tests the two Workers independently; no preview URL is intentionally created for QA.
+
 ## Failure and recovery
 - Missing or insufficient existing D1+Workers Admin token or Pages token: release fails **before any production write**; current deployed services stay in place.
 - Missing D1 table/column, secret binding, service route, cron or contract mismatch: preflight fails **before deploying code**.
