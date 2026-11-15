@@ -9,7 +9,12 @@ export function semanticMeaningIssue(sourceText,targetText) {
 
   // "To strike a naval mine" = collide with an explosive sea mine.
   // Neither "attack a mine" nor "hit a mining facility" is equivalent.
-  const seaMine=/(?:\b(?:naval|sea)\s+mines?\b|морск[\p{L}]*\s+мин[\p{L}]*)/iu.test(source);
+  // Maritime tanker headlines can omit the word "naval" even though "mines"
+  // clearly refers to underwater explosives. The vessel + waterway context
+  // narrows this check so ordinary labor/mineral mining is never classified.
+  const vesselMineCollision= /\b(?:tankers?|vessels?|ships?)\b.{0,90}\b(?:strike|strikes|struck|hit|hits)\s+(?:a\s+|the\s+)?mines?\b/iu.test(source) &&
+    /\b(?:Strait|Hormuz|Gulf|naval|sea|waters)\b/iu.test(source);
+  const seaMine=/(?:\b(?:naval|sea)\s+mines?\b|морск[\p{L}]*\s+мин[\p{L}]*)/iu.test(source) || vesselMineCollision;
   if(seaMine) {
     if(/(?:шахт[а-яё]*|рудник[а-яё]*)/iu.test(target))
       return 'naval_mine_misread';
@@ -19,7 +24,7 @@ export function semanticMeaningIssue(sourceText,targetText) {
     if(/[\u0590-\u05ff]/u.test(target) &&
       /מכרות|מכרה\b/u.test(target) && !/מוקש(?:ים)?/u.test(target))
       return 'naval_mine_misread';
-    const collision=/(?:\b(?:strike|struck|hit|collid\w*\s+with)\s+(?:a\s+|the\s+)?(?:naval|sea)\s+mine\b|столкнул\w*\s+с\s+морск\w*\s+мин)/iu.test(source);
+    const collision=/(?:\b(?:strike|strikes|striking|struck|hit|hits|hitting|collid\w*\s+with)\s+(?:a\s+|the\s+)?(?:naval|sea)\s+mine\b|столкнул\w*\s+с\s+морск\w*\s+мин)/iu.test(source) || vesselMineCollision;
     if(collision && /(?:תקפו|תקפה|תקף|לתקוף|מתקיפ[\u0590-\u05ff]*|תוקף|תוקפת|תוקפים|תוקפות)\s+.{0,30}(?:מוקש|מכרה|מכרות)/u.test(target))
       return 'mine_collision_reframed_as_attack';
     if(collision && /\b(?:attacked|assaulted)\b|(?:напал\w*|атаковал\w*)\s+.{0,35}(?:мин\w*|шахт\w*)/iu.test(target))
