@@ -35,3 +35,13 @@ Do not make D1 write calls on shared production/preview DB merely to satisfy UI 
 - Editor cache reader tests and full application check: https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43719783495 and https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43719783483
 
 Never claim migration complete while GitHub continues to receive JSON commits.
+
+## Legacy GitHub JSON writeback — safe staged cutover gate
+
+The eight collector workflows now have a second, **independent** GitHub repository Actions variable: `REGIONAL_NEON_PRIMARY_SOURCES`. Default/unset is empty, so every old JSON commit keeps working. This is NOT the same as `REGIONAL_NEON_D1_SOURCES`, which only enables shadow D1 synchronization.
+
+For a source to stop committing JSON, the collector workflow must first have a successful `neon_d1` step. A primary flag alone does not skip GitHub data writes. If its Neon→D1 step fails, `continue-on-error` allows the old GitHub writeback to run; a following diagnostic fails the job so this problem is not silently ignored. This is implemented for gdelt, analysts, centcom, copernicus, marad, satellite, unosat, and news_translation. Existing update consistency/lock logic remains intact.
+
+**Do not set `REGIONAL_NEON_PRIMARY_SOURCES` yet.** Before promoting a source, its Worker read flag must be deployed, reader fallback exercised, several fresh scheduled cycles compared, and QA signed off. `REGIONAL_NEON_PRIMARY_SOURCES` is a commit-suppression flag, not a substitute for data quality validation or backup.
+
+Independent GitHub Actions regression: https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43720634079 (test suite green). Current `main` retains all original source writebacks.

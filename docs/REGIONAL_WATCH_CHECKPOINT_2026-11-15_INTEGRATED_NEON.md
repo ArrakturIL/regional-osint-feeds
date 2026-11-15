@@ -66,3 +66,10 @@ Neon Free cost is bounded; do not query the database separately for each public 
 - Editor analyst + news translation cache readers added under `backend/editor/src/mirrors/collector-cache.mjs`, source-gated by `REGIONAL_EDITOR_CACHE_SOURCES` (off unless configured); fallback to GitHub, with SHA/time checks on `CORE_DB`. Regression and full app CI green: https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43719783495 and https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43719783483.
 - Temporary acceptance jobs were removed from `.github/workflows/integrated-data-check.yml` after verification. Current code still on feature branch. **Regular scheduled mirroring and read cutover are not live**; `main`, Pages, Monitor and Editor production deployments and GitHub legacy data commits remain unchanged.
 - Next: establish recurring shadow mirroring with a feature-branch-safe release path; confirm multiple distinct source cycles; controlled Worker read flag in QA, then per-source GitHub JSON writeback deactivation. Preserve rollback.
+
+## Source-gated GitHub writeback retirement prepared (2026-11-15)
+- Eight collector workflows now define `id: neon_d1` on the optional D1 sync step and use `continue-on-error: true` to preserve the legacy GitHub fallback on failure.
+- New independent GitHub variable `REGIONAL_NEON_PRIMARY_SOURCES` is unset and must remain unset until a read cutover is proven. For any selected source, legacy GitHub JSON commits are skipped only if its D1 sync step completed successfully. On D1 failure, GitHub writeback is attempted and job is marked red afterwards.
+- Source-specific verification for analysts is suppressed only if the source was actually promoted. Old code and commit mechanisms remain intact.
+- These are preparatory feature-branch changes, not live production configuration.
+- Successful offline storage gate test: https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43720634079.
