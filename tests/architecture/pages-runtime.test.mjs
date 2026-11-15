@@ -107,6 +107,9 @@ test('integration release branch deploys isolated Pages preview with live API sm
  const workflow=readFileSync(new URL('../../.github/workflows/regional-watch-app-check.yml',import.meta.url),'utf8');
  assert.match(workflow,/release\/regional-watch-architecture-20261115/);
  assert.match(workflow,/rw-architecture-preview/);
+ assert.match(workflow,/github\.event\.pull_request\.head\.repo\.full_name == github\.repository/);
+ assert.match(workflow,/github\.head_ref == 'release\/regional-watch-architecture-20261115'/);
+ assert.match(workflow,/github\.base_ref == 'main'/);
  assert.match(workflow,/Cloudflare Pages preview API wiring smoke/);
  for(const api of ['/api/overview','/api/data','/api/news?lang=ru','/api/news?lang=he']){
    assert.ok(workflow.includes(api),api+' not checked by preview');
