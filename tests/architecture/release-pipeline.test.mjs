@@ -17,7 +17,7 @@ function fakeRelease(){
    'pages/_worker.js','pages/index.html','pages/he/index.html',
    'pages/assets/app.js','pages/assets/app.css',
    'workers/editor.mjs','workers/monitor.mjs',
-   'config/editor.json','config/monitor.json','metadata/contract.json'
+   'config/editor.json','config/monitor.json','metadata/contract.json','metadata/collector-rollout.json','metadata/release-workflow.yml'
  ]){
    const filename=join(dir,rel);
    mkdirSync(resolve(filename,'..'),{recursive:true});
@@ -37,6 +37,8 @@ test('release manifest locks Pages, both Workers and config to the exact source 
    assert.ok(manifest.files['workers/editor.mjs']?.sha256);
    assert.ok(manifest.files['workers/monitor.mjs']?.sha256);
    assert.ok(manifest.files['config/editor.json']?.sha256);
+   assert.ok(manifest.files['metadata/collector-rollout.json']?.sha256);
+   assert.ok(manifest.files['metadata/release-workflow.yml']?.sha256);
    assert.equal(verifyManifest(dir,goodSha).source_sha,goodSha);
    assert.throws(()=>verifyManifest(dir,'a'.repeat(40)),/SHA|source/i);
    writeFileSync(join(dir,'workers/editor.mjs'),'tampered');
