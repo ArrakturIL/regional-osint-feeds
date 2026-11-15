@@ -5,6 +5,7 @@ import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {buildManifest,verifyManifest} from '../../scripts/release/manifest.mjs';
 import {validateWorker,validatePages,main as cloudflareGate} from '../../scripts/release/cloudflare-gate.mjs';
+import {checkD1,verifyColumns} from '../../scripts/release/d1-preflight.mjs';
 
 const root=resolve(new URL('../../',import.meta.url).pathname);
 const contract=JSON.parse(readFileSync(join(root,'deploy/release-contract.json'),'utf8'));
@@ -180,6 +181,24 @@ test('Cloudflare gate snapshots exact versions and rolls back changed components
    }
    rmSync(dir,{recursive:true,force:true});
  }
+});
+
+test('migration gate reads real expected D1 table names but never sends writes',async()=>{
+ const queries=[];
+ const required=contract.schemas;
+ assert.equal(required.length,2);
+ const count=await checkD1(contract,async(db,sql)=>{
+   queries.push({db,sql});
+   const key=db===required[0].database_id?required[0]:required[1];
+   const table=sql.match(/^PRAGMA table_info\(([a-z_]+)\)$/)?.[1];
+   assert.ok(table&&key.tables[table]);
+   return key.tables[table].map(name=>({name}));
+ });
+ assert.equal(count,queries.length);
+ assert.ok(queries.length>=5);
+ assert.ok(queries.every(x=>x.sql.startsWith('PRAGMA table_info(')));
+ await assert.rejects(checkD1(contract,async()=>[{name:'unrelated'}]),/incompatible schema/i);
+ assert.throws(()=>verifyColumns(['id'],[{name:'source'}],'news.items'),/news\.items\.id/);
 });
 
 test('production publish workflow cannot deploy Pages independently and requires immutable unified artifact',()=>{
