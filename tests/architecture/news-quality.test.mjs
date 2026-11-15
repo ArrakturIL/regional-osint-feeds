@@ -142,11 +142,16 @@ test('Hebrew native source alternatives are fetched only for selected news page'
  const db={prepare(sql){
   if(sql.includes('FROM news_event_groups e JOIN news_items n'))
    return{bind(){return this},all:async()=>({results:rows})};
-  if(sql.startsWith('SELECT id,source,headline,headline_ru'))
-   return{bind(...ids){selectedIds.push(...ids);return {all:async()=>({results:ids.map(id=>({
-    id,source:'Native Hebrew',headline:'דיווח מקורי',summary:'מידע מקורי',comment:null,
-    headline_ru:null,summary_ru:null,url:'https://example.org/'+id,published_ms:when,priority:7
-   }))})}}}};
+  if(sql.startsWith('SELECT id,source,headline,headline_ru')){
+   return {bind(...ids){
+    selectedIds.push(...ids);
+    const native=ids.map(id=>({
+     id,source:'Native Hebrew',headline:'דיווח מקורי',summary:'מידע מקורי',comment:null,
+     headline_ru:null,summary_ru:null,url:'https://example.org/'+id,published_ms:when,priority:7
+    }));
+    return {all:async()=>({results:native})};
+   }};
+  }
   if(sql.includes("FROM regional_i18n WHERE kind=?"))
    return{bind(){return this},first:async()=>null};
   throw Error('Unexpected SQL: '+sql.slice(0,90));
