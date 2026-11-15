@@ -29,3 +29,15 @@ Main `docs/REGIONAL_WATCH_MASTER_TODO.md`, block DEV-03 / D-07 remains **[~]** w
 - Keep DEV-04, OSS branch and independent global QA untouched until specifically authorized. One DEV block at a time.
 
 **Next resumed action:** approve or review PR #40 production integration; then inspect actual Actions release/replication logs and D1 read-only state. Separately plan versioned last-good retention, not a surprise schema migration.
+
+---
+
+## Supplemental checkpoint after connectivity interruption — 16 Nov 2026
+
+**Current authority:** only current `main` TODO and exact live GitHub files. The older PR HEAD/CI snapshots above are historic.
+
+- DEV-03 code PR **#40** is now **ready for review, unmerged**. Current head `b0fcaf9716da8aca0bb24e08216cbf82a2d2ad69`, full app CI [#43769577079](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43769577079) **11/11 success**, storage CI [#43769577085](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43769577085) **success**; neither deployed to production. Includes additional TDD future timestamp protection: [RED #43769512553](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43769512553) → GREEN, no erroneous future-dated `ok` D1 overwrite.
+- Newer live Neon audit: 8 sources **5 ok / 3 partial** (GDELT became partial), table 253952 B, free-plan counters 2280 sec compute-time / 9040 sec active-time / 5299277 B transferred. D1 core 11677696 B, news 6258688 B; 456 GitHub Actions runs recorded 15 Nov UTC. All counters are snapshots, not a billing statement. Details in [audit addendum](./DEV_03_STORAGE_HEALTH_AUDIT_2026-11-16.md).
+- DEV-03/D-07 remains **[~]**, because full versioned recovery archive and restore exercise, real Worker fallback logs, per-day D1 rows and Worker CPU usage remain unverified. Existing validated single-row D1 last-good is **not equivalent** to an archived version history.
+- **No code merge, no production writes, no new services or pricing plan.** Before merge, owner must authorize production deployment AND the scheduled Neon→D1 source reconciliation triggered by push to main.
+- Next action on an explicit owner command: code review/fresh compare, merge PR #40, watch complete coordinated release and replica-sync, confirm source statuses and non-sensitive logs. Separate follow-up is to design/test versioned retention before claiming D-07 fully closed. DEV-04/OSS stay untouched.
