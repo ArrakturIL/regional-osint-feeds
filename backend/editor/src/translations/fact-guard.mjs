@@ -1,3 +1,4 @@
+import { semanticMeaningIssue } from './semantic-meaning.mjs';
 /**
  * Deterministic fact-integrity gate for RU/EN -> HE translations.
  *
@@ -57,6 +58,8 @@ export function factualTranslationIssue(original,candidate) {
       if(rule.source.test(src)&&!rule.target.test(translated))
         return field+':'+rule.code;
     }
+    const semanticIssue=semanticMeaningIssue(src,translated);
+    if(semanticIssue)return field+':'+semanticIssue;
     // High-impact false-friend and entity substitutions seen in production.
     const sourceIran=/(?:\bIran(?:ian)?\b|Иран[\p{L}]*)/iu.test(src);
     const sourceJordan=/(?:\bJordan(?:ian)?\b|Иордан[\p{L}]*)/iu.test(src);
