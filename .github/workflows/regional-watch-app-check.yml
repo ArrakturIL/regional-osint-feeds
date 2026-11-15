@@ -163,12 +163,47 @@ jobs:
             echo 'Preview upload skipped: CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID not configured in GitHub Actions secrets.' >> "$GITHUB_STEP_SUMMARY"
           fi
       - name: Upload preview to a non-production branch only
+        id: pages-upload
         if: steps.cloudflare.outputs.ready == 'true'
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=regional-watch --branch=rw-modular-preview
+      - name: Verify deployed preview HTTP routes (no redirect loops)
+        if: steps.cloudflare.outputs.ready == 'true'
+        env:
+          DEPLOYMENT_URL: ${{ steps.pages-upload.outputs.deployment-url }}
+          PAGES_ENVIRONMENT: ${{ steps.pages-upload.outputs.pages-environment }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$PAGES_ENVIRONMENT" != "preview" ]]; then
+            echo "Refusing smoke test: deployment was not preview ($PAGES_ENVIRONMENT)"; exit 1
+          fi
+          if [[ ! "$DEPLOYMENT_URL" =~ ^https://[a-z0-9-]+\\.regional-watch\\.pages\\.dev/?$ ]]; then
+            echo "Unexpected deployment URL; refusing to test an unverified host"; exit 1
+          fi
+          base="${DEPLOYMENT_URL%/}"
+          for path in / '/?utm_source=chatgpt.com' /he/ /events/ /he/events/ /data/ /he/data/ /analysts/ /he/analysts/ /analysts/smoke-post /he/analysts/smoke-post /assets/app.js /assets/app.css; do
+            status=$(curl --silent --show-error --max-time 20 --max-redirs 0 --output /tmp/rw-preview-body --dump-header /tmp/rw-preview-headers --write-out '%{http_code}' "$base$path")
+            echo "$path => HTTP $status"
+            if [[ "$status" != "200" ]]; then
+              echo "Preview route returned non-200, including possible redirect loop: $path"; exit 1
+            fi
+            if [[ "$path" == /assets/*.js ]]; then
+              grep -qi '^content-type:.*javascript' /tmp/rw-preview-headers
+            elif [[ "$path" == /assets/*.css ]]; then
+              grep -qi '^content-type:.*text/css' /tmp/rw-preview-headers
+            else
+              grep -qi '^content-type:.*text/html' /tmp/rw-preview-headers
+              if [[ "$path" == /he* ]]; then
+                grep -Fq 'lang="he"' /tmp/rw-preview-body
+              else
+                grep -Fq 'lang="ru"' /tmp/rw-preview-body
+              fi
+            fi
+          done
       - name: Record the exact tested source commit
         if: steps.cloudflare.outputs.ready == 'true'
         run: |
