@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 // Read-only A/B exploration with synthetic fixtures. Never writes sources or publishes data.
 import {performance} from 'node:perf_hooks';
 import {franc} from 'franc-min';
@@ -31,7 +32,7 @@ const cheerioText=$('article').text().replace(/\s+/g,' ').trim();
 const doc=new JSDOM(newsHtml,{url:'https://example.org/statement'});
 const readable=new Readability(doc.window.document).parse();
 function overlapScore(a,b){
-  const terms=t=>new Set((t.normalize('NFKC').toLowerCase().match(/[\\p{L}\\p{N}]+/gu)||[]));
+  const terms=t=>new Set((t.normalize('NFKC').toLowerCase().match(/[\p{L}\p{N}]+/gu)||[]));
   const x=terms(a),y=terms(b);
   return +([...x].filter(w=>y.has(w)).length/new Set([...x,...y]).size).toFixed(3);
 }
@@ -40,6 +41,9 @@ const similarity={
   related:overlapScore('IDF reports strike near Khan Younis','IDF describes strike near Khan Younis'),
   contradictory:overlapScore('IDF confirms strike near Khan Younis','IDF denies strike near Khan Younis')
 };
+assert.equal(similarity.exact,1);
+assert.ok(similarity.related>0.4 && similarity.related<1);
+assert.ok(similarity.contradictory>0.6 && similarity.contradictory<1,'lexical overlap can conceal an inverted claim');
 const centcomXml='<?xml version="1.0"?><rss><channel><item><title>Officials &amp; reporters</title><link>https://www.centcom.mil/NEWS/77</link><pubDate>Sun, 15 Nov 2026 19:00:00 GMT</pubDate></item></channel></rss>';
 const ms=microbench(()=>parseCentcomRss(centcomXml,Date.parse('2026-11-15T20:00:00Z')));
 console.log('RW_OSS02_PROBES '+JSON.stringify({versions:'pinned by trials/dev-oss-02/package.json',detected,segments,canonical,similarity,html:{cheerioChars:cheerioText.length,readabilityChars:readable?.textContent?.length??0,extractedTitle:readable?.title??null,jsdomRequired:true},xml:{nodeMsPer1000:ms,xmlTitle:parseCentcomRss(centcomXml,Date.parse('2026-11-15T20:00:00Z')).entries[0].payload.title},disclaimer:'synthetic fixtures, Node wall time not Workers CPU, no live source claims'}));
