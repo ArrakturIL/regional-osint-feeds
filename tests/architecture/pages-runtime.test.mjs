@@ -22,7 +22,7 @@ function mockEnv(){
 }
 test('all eight locale HTML routes are served from this deployment ASSETS',async()=>{
  const{env,seen}=mockEnv();
- for(const [pathname,asset] of [['/','/index.html'],['/he','/he/index.html'],['/events','/events/index.html'],['/he/events','/he/events/index.html'],['/data','/data/index.html'],['/he/data','/he/data/index.html'],['/analysts','/analysts/index.html'],['/he/analysts','/he/analysts/index.html']]){
+ for(const [pathname,asset] of [['/','/'],['/he','/he/'],['/events','/events/'],['/he/events','/he/events/'],['/data','/data/'],['/he/data','/he/data/'],['/analysts','/analysts/'],['/he/analysts','/he/analysts/']]){
   const r=await pages.fetch(request(pathname+'?keep=1'),env);
   assert.equal(r.status,200);assert.equal(seen.assets.at(-1),asset,pathname);
  }
