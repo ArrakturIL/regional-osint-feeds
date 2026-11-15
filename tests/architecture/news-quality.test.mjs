@@ -100,6 +100,71 @@ test('RU/HE stable event order and pagination for both sort modes',async()=>{
  assert.equal(invalid.status,400);
 });
 
+test('Hebrew news pages localize only returned rows, not the entire candidate pool',async()=>{
+ const rows=Array.from({length:32},(_,i)=>({
+  ...events[0],event_id:'page-'+i,id:'page-'+i,
+  source:'Publisher '+(i%4),headline:'Update '+i,
+  last_seen_ms:when+i*60_000,published_ms:when+i*60_000,
+  event_priority:7,priority:7,he_hash:null,he_title:null,
+ }));
+ let translations=0;
+ const db={prepare(sql){
+  if(sql.includes('FROM news_event_groups e JOIN news_items n'))
+   return{bind(){return this},all:async()=>({results:rows})};
+  if(sql.includes("FROM regional_i18n WHERE kind=?"))
+   return{bind(){return this},first:async()=>{translations++;return null}};
+  throw Error('Unexpected SQL: '+sql.slice(0,90));
+ }};
+ const response=await readNewsEvents(
+   new Request('https://rw.example/api/news?lang=he&sort=priority&limit=4&offset=8'),{NEWS_DB:db});
+ const body=await response.json();
+ assert.equal(response.status,200);
+ assert.equal(body.articles.length,4);
+ assert.equal(body.total_events,32);
+ assert.equal(body.articles[0].feed_rank,8);
+ assert.equal(translations,4,'i18n D1 reads should be bounded by page size, not 32 source rows');
+ const ru=await readNewsEvents(new Request('https://rw.example/api/news?lang=ru&sort=priority&limit=4&offset=8'),
+  {NEWS_DB:db});
+ const ruBody=await ru.json();
+ assert.deepEqual(body.articles.map(x=>x.event_id),ruBody.articles.map(x=>x.event_id));
+ assert.equal(body.feed_order_hash,ruBody.feed_order_hash);
+});
+
+test('Hebrew native source alternatives are fetched only for selected news page',async()=>{
+ const rows=Array.from({length:20},(_,i)=>({
+  ...events[0],event_id:'he-page-'+i,id:'he-page-'+i,
+  source:'Publisher '+i,headline:'English report '+i,
+  last_seen_ms:when+i*60_000,published_ms:when+i*60_000,
+  event_priority:7,priority:7,he_hash:null,he_title:null,
+  sources_json:JSON.stringify([{language:'he',article_id:'native-'+i}]),
+ }));
+ const selectedIds=[];
+ const db={prepare(sql){
+  if(sql.includes('FROM news_event_groups e JOIN news_items n'))
+   return{bind(){return this},all:async()=>({results:rows})};
+  if(sql.startsWith('SELECT id,source,headline,headline_ru')){
+   return {bind(...ids){
+    selectedIds.push(...ids);
+    const native=ids.map(id=>({
+     id,source:'Native Hebrew',headline:'דיווח מקורי',summary:'מידע מקורי',comment:null,
+     headline_ru:null,summary_ru:null,url:'https://example.org/'+id,published_ms:when,priority:7
+    }));
+    return {all:async()=>({results:native})};
+   }};
+  }
+  if(sql.includes("FROM regional_i18n WHERE kind=?"))
+   return{bind(){return this},first:async()=>null};
+  throw Error('Unexpected SQL: '+sql.slice(0,90));
+ }};
+ const response=await readNewsEvents(new Request('https://rw.example/api/news?lang=he&limit=3&offset=6'),{NEWS_DB:db});
+ const result=await response.json();
+ assert.equal(response.status,200);
+ assert.equal(selectedIds.length,3,'native candidate lookups must not load all 20 events');
+ assert.equal(result.articles.length,3);
+ assert.ok(result.articles.every(x=>x.display_article_id.startsWith('native-')));
+ assert.ok(result.articles.every(x=>x.content_language==='he'));
+});
+
 test('archive explicitly requests latest ordering and avoids duplicate homepage poll',async()=>{
  const {readFileSync}=await import('node:fs');
  const {resolve}=await import('node:path');
