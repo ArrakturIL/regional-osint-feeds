@@ -120,5 +120,17 @@ class TestCollectorSnapshotContract(unittest.TestCase):
         })["match"])
 
 
+
+class TestWorkflowShadowSafety(unittest.TestCase):
+    def test_gdelt_collector_adds_neon_shadow_without_removing_git_fallback(self):
+        workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/gdelt.yml").read_text(encoding="utf8")
+        self.assertIn("branches: [main]", workflow)
+        self.assertIn("python -m scripts.publish_neon_mirror --source gdelt --mode shadow", workflow)
+        self.assertIn("NEON_DATABASE_URL:", workflow)
+        self.assertIn("secrets.NEON_DATABASE_URL", workflow)
+        self.assertIn("Commit only small bounded news-context metadata", workflow)
+        self.assertIn("git push", workflow)
+        self.assertIn("github.ref == 'refs/heads/main'", workflow)
+
 if __name__ == "__main__":
     unittest.main()
