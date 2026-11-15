@@ -1,0 +1,16 @@
+{
+  "name": "regional-osint-monitor-architecture-qa",
+  "main": "../backend/monitor/dist/worker.modern.mjs",
+  "compatibility_date": "2026-11-10",
+  "workers_dev": false,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "regional-osint",
+      "database_id": "c052acf3-b821-444a-92e4-ffd472a131f0"
+    }
+  ],
+  "vars": {
+    "REGION": "{\"marine\":[47,22,61,31]}"
+  }
+}
