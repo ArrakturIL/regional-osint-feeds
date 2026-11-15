@@ -94,6 +94,23 @@ class TestPublisher(unittest.TestCase):
         self.assertNotIn("VERY_SENSITIVE_TOKEN", output.getvalue() + errors.getvalue())
         self.assertIn("mirror_write_error", errors.getvalue())
 
+
+    def test_equal_timestamp_conflicting_pair_fails_closed(self):
+        # A concurrent collector with the same checked_at but different hashes
+        # is an integrity collision, not a successful or stale mirror.
+        class ConflictConnection:
+            def __enter__(self): return self
+            def __exit__(self, typ, val, tb): return False
+            def execute(self, sql, params):
+                if "INSERT" in sql:
+                    return FakeCursor(None)
+                return FakeCursor(("gdelt", NOW, "0" * 64, "1" * 64))
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            with self.assertRaisesRegex(RuntimeError, "conflict"):
+                publish_one("gdelt", self.root, "postgresql://hidden",
+                            connector=lambda _: ConflictConnection(), now=NOW)
+
     def test_required_mode_reports_connection_failure(self):
         with patch.dict(os.environ, {"NEON_DATABASE_URL": "postgresql://secret"}):
             with patch("scripts.publish_neon_mirror._open_connection", side_effect=OSError("connection refused")):
