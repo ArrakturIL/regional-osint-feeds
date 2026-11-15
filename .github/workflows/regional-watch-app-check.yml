@@ -189,7 +189,7 @@ jobs:
             # Retry transient 404/503 during Cloudflare edge propagation, but never follow redirects.
             status=000
             for attempt in 1 2 3 4 5 6; do
-              status=$(curl --silent --show-error --max-time 20 --max-redirs 0 --output /tmp/rw-preview-body --dump-header /tmp/rw-preview-headers --write-out '%{http_code}' "$base$path" || echo 000)
+              status=$(curl --silent --show-error --max-time 20 --max-redirs 0 --output /tmp/rw-preview-body --dump-header /tmp/rw-preview-headers --write-out '%{http_code}' "$base$path") || status=000
               echo "$path attempt $attempt => HTTP $status"
               if [[ "$status" == "200" ]]; then break; fi
               if [[ "$status" != "404" && "$status" != "503" && "$status" != "000" ]]; then break; fi
