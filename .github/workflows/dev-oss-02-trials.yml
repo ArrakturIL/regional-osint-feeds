@@ -27,5 +27,7 @@ jobs:
         run: |
           npm run bundle:xml
           wc -c tmp/candidate.bundle.mjs
+          ./node_modules/.bin/esbuild candidate.mjs --bundle --minify --format=esm --platform=browser --target=es2022 --outfile=tmp/candidate.min.mjs
+          wc -c tmp/candidate.min.mjs
       - name: Record non-production limits
         run: echo 'Node benchmarks are NOT Cloudflare Workers CPU. No source fetch, secrets, deployment, or production write occurred.' >> "$GITHUB_STEP_SUMMARY"
