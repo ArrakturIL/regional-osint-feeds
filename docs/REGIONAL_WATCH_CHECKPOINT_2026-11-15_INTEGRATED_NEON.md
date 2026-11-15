@@ -34,3 +34,17 @@
 - The integrated Pages preview was `https://8ebab741.regional-watch.pages.dev/` during previous verified UI steps; subsequent changes are Neon Python/tests only, not a new Pages deploy.
 - No claim that Neon has replaced GitHub storage until commits actually stop in `main` and the server-side reader is proven functional.
 - GitHub Actions and Cloudflare D1/Worker live bindings are shared by sensitive production paths; avoid mutating D1 in preview.
+
+## Update after GitHub secret configuration — 2026-11-15 12:55 UTC
+
+**Verified, not merely staged:** GitHub Actions repository secret `NEON_DATABASE_URL` exists, is valid, and connects to the intended `regional_watch` database. The test did not print the value. Confirmed run: https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43715836021.
+
+**Real GitHub Actions read/write parity:** all **eight** allowlisted sources were exercised in **strict** mode against Neon and passed actual JSONB integrity readback, run https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43716247457. All eight returned `unchanged` because their stored SHA256/timestamps already matched the GitHub snapshots. The source rows were checked independently through the Neon plugin. This proves connectivity and idempotent SQL from Actions; it does **not** yet prove that newly scheduled collection pushes newer records, because these runs read existing GitHub branch data.
+
+Two bugs were reproduced RED in GitHub CI and fixed GREEN:
+- Same-timestamp divergent snapshots were incorrectly treated as nonfatal. `publish_one()` now rejects conflict and validates newer stored content on stale results.
+- `satellite` JSON contains numbers like `47.0`. Initial backfill used JavaScript canonical JSON (`47`), while Python used `47.0`; hashes differed for equal JSON numbers. The canonicalizer now normalizes integral floats before hashing. All eight pass.
+
+**Important next gate:** all eight source workflows include shadow mirroring **only in the feature branch**. Existing live `main` JSON commits are unchanged. Next build a secure server-side reader/synchronizer with an explicit fallback, do not expose the Neon secret to public JavaScript or deploy a public open SQL endpoint, run real scheduled cycles and compare fresh values. Disable source-by-source GitHub commits only after the read path and freshness safeguards pass. No production merge/deploy has occurred.
+
+Neon Free cost is bounded; do not query the database separately for each public website view. Prefer Cloudflare Worker server-side access with caching/ingest into D1, after Worker credential management and quota checks.
