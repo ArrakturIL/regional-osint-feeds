@@ -1,0 +1,33 @@
+name: Regional Watch integrated data architecture checks
+on:
+  push:
+    branches: [feature/integrated-data-quality-neon-20261115]
+    paths:
+      - "storage/neon/**"
+      - "scripts/neon_mirror.py"
+      - "scripts/test_neon_mirror.py"
+      - ".github/workflows/integrated-data-check.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "storage/neon/**"
+      - "scripts/neon_mirror.py"
+      - "scripts/test_neon_mirror.py"
+      - ".github/workflows/integrated-data-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-neon-contract:
+    name: Validate Neon snapshot contract without credentials
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Unit tests (no external API or secrets)
+        run: python -m unittest scripts.test_neon_mirror -v
