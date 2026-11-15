@@ -1,0 +1,21 @@
+{
+  "name": "regional-watch-editor-architecture-qa",
+  "main": "../backend/editor/dist/worker.modern.mjs",
+  "compatibility_date": "2026-11-10",
+  "workers_dev": false,
+  "d1_databases": [
+    {
+      "binding": "CORE_DB",
+      "database_name": "regional-osint",
+      "database_id": "c052acf3-b821-444a-92e4-ffd472a131f0"
+    },
+    {
+      "binding": "NEWS_DB",
+      "database_name": "regional-watch-news",
+      "database_id": "d9ba2c51-d551-4615-bbe2-37e76e2d668a"
+    }
+  ],
+  "ai": {
+    "binding": "AI"
+  }
+}
