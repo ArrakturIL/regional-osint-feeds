@@ -11,6 +11,22 @@ const TEXT_ENCODER=new TextEncoder();
 const MAX_BYTES=1_048_576;
 const GOOD_STATES=new Set(['ok','partial','error','stale']);
 const DIGEST=/^[0-9a-f]{64}$/;
+// Only fixed source/status codes enter logs; keep production diagnostics
+// bounded to one warning per source/reason/hour/Worker isolate.
+const lastFallbackWarning=new Map();
+function reportReaderFallback(source,reason,opts){
+ const event={source,reason};
+ if(typeof opts.onFallback==='function'){
+  try{opts.onFallback(event)}catch{ /* logger must not break the fallback */ }
+  return;
+ }
+ const key=source+':'+reason, now=Date.now();
+ if(now-(lastFallbackWarning.get(key)??-Infinity)<60*60_000)return;
+ lastFallbackWarning.set(key,now);
+ console.warn('regional_watch reader_fallback source='+source+' reason='+reason);
+}
+const invalidCacheError=err=>/digest|invalid.*(JSON|kind|size)|snapshot cap|source status|timestamp/.test(String(err?.message||''));
+
 const canonical=x=>JSON.stringify(Array.isArray(x)?x.map(sortJson):sortJson(x));
 const sortJson=x=>Array.isArray(x)?x.map(sortJson):
   x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,sortJson(x[k])])):x;
@@ -32,27 +48,44 @@ async function hash(x){
 export async function readEditorCachedPair(env,sourceKey,opts={}){
  if(!SOURCES.has(sourceKey))throw Error('unknown collector source');
  const selected=String(env?.REGIONAL_EDITOR_CACHE_SOURCES||'').split(',').map(x=>x.trim());
- if(!selected.includes(sourceKey)||!env?.CORE_DB?.prepare)return null;
+ if(!selected.includes(sourceKey))return null;
+ if(!env?.CORE_DB?.prepare){
+  reportReaderFallback(sourceKey,'cache_unavailable',opts);
+  return null;
+ }
  try{
   const row=await env.CORE_DB.prepare(
    'SELECT source_key,checked_at_ms,data_json,status_json,data_sha256,status_sha256 '+
    'FROM regional_collector_cache WHERE source_key=?'
   ).bind(sourceKey).first();
-  if(!row||row.source_key!==sourceKey)return null;
+  if(!row){
+   reportReaderFallback(sourceKey,'cache_missing',opts);return null;
+  }
+  if(row.source_key!==sourceKey){
+   reportReaderFallback(sourceKey,'cache_invalid',opts);return null;
+  }
   const data=decode(row.data_json,'data'),status=decode(row.status_json,'status');
-  if(!GOOD_STATES.has(status.state))return null;
+  if(!GOOD_STATES.has(status.state)){
+   reportReaderFallback(sourceKey,'cache_invalid',opts);return null;
+  }
   const checked=Date.parse(status.checked_at),stored=Number(row.checked_at_ms);
-  if(!Number.isFinite(checked)||!Number.isFinite(stored)||Math.abs(checked-stored)>1)return null;
+  if(!Number.isFinite(checked)||!Number.isFinite(stored)||Math.abs(checked-stored)>1){
+   reportReaderFallback(sourceKey,'cache_invalid',opts);return null;
+  }
   const now=Number.isFinite(opts.nowMs)?opts.nowMs:Date.now();
   const maxAge=Number.isFinite(opts.maxAgeMs)?opts.maxAgeMs:Infinity;
-  if(checked>now+20*60_000||checked<now-maxAge)return null;
+  if(checked>now+20*60_000||checked<now-maxAge){
+   reportReaderFallback(sourceKey,'cache_stale',opts);return null;
+  }
   for(const [value,expected] of [[data,row.data_sha256],[status,row.status_sha256]]){
-   if(typeof expected!=='string'||!DIGEST.test(expected)||await hash(value)!==expected)return null;
+   if(typeof expected!=='string'||!DIGEST.test(expected)||await hash(value)!==expected){
+    reportReaderFallback(sourceKey,'cache_invalid',opts);return null;
+   }
   }
   return {data,status,origin:'neon_d1_cache',checkedAtMs:checked};
- }catch{
-  // Loss of D1 connectivity, missing schema, invalid payload or hash: let
-  // the caller follow the existing source fetch rather than publish emptiness.
+ }catch(err){
+  reportReaderFallback(sourceKey,invalidCacheError(err)?'cache_invalid':'cache_unavailable',opts);
+  // Never publish unverifiable D1 as empty but healthy.
   return null;
  }
 }
