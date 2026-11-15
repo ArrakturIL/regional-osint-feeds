@@ -69,6 +69,8 @@ jobs:
         run: npm exec --yes --package=esbuild@0.25.0 -- esbuild backend/editor/src/index.js --bundle --format=esm --target=es2022 --outfile=backend/editor/dist/worker.modern.mjs
       - name: Validate loadable Worker exports and React bundle
         run: node --test tests/architecture/modern-bundles.test.mjs
+      - name: Verify non-public modular Worker staging boundaries
+        run: node --test tests/architecture/worker-staging-config.test.mjs
 
   pages-documents:
     runs-on: ubuntu-latest
