@@ -25,7 +25,7 @@ export function validateSubdomain(subdomain,worker){
  need(subdomain?.enabled===true,'Worker '+worker.name+' workers.dev availability');
  need(subdomain.previews_enabled===false,'Worker '+worker.name+' preview URLs must be disabled');
 }
-export function validatePages(pages,project){
+export function validatePages(pages,project,{requirePreviewIsolation=false}={}){
  need(project?.production_branch===pages.production_branch,'Pages production branch');
  const settings=project?.deployment_configs?.production;
  need(settings,'Pages production binding config');
@@ -36,6 +36,24 @@ export function validatePages(pages,project){
  for(const {binding,database_id} of pages.d1){
    const db=settings.d1_databases?.[binding];
    need(db&&d1id(db)===database_id,'Pages '+binding+' D1 binding');
+ }
+ if(requirePreviewIsolation){
+   const preview=project?.deployment_configs?.preview;
+   need(preview,'Pages preview configuration missing; publishing a preview is unsafe');
+   const productionServices=new Set(pages.services.map(x=>x.service));
+   const productionD1=new Set(pages.d1.map(x=>x.database_id));
+   const services=preview.services||{},databases=preview.d1_databases||{};
+   for(const {binding} of pages.services)need(services[binding],'Pages preview service binding missing: '+binding);
+   for(const {binding} of pages.d1)need(databases[binding],'Pages preview D1 binding missing: '+binding);
+   for(const [binding,service] of Object.entries(services))
+     need(service&&typeof service.service==='string'&&service.service.trim()&&
+          service.environment!=='production'&&!productionServices.has(service.service),
+          'Pages preview shared production service: '+binding);
+   for(const [binding,db] of Object.entries(databases)){
+     const id=db&&d1id(db);
+     need(typeof id==='string'&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(id)&&!productionD1.has(id),
+          'Pages preview shared production D1: '+binding);
+   }
  }
 }
 const token=name=>{const v=process.env[name];if(!v)throw Error('Required GitHub secret missing: '+name);return v;};
@@ -163,11 +181,16 @@ async function receipt(contract,sourceSha,baselineFile,outputFile){
 export async function main(argv=process.argv.slice(2)){
  const [verb,sourceSha,file,output]=argv;
  const contract=readJson('deploy/release-contract.json');
- if(verb==='capture')await capture(contract,sourceSha,file);
+ if(verb==='preview-check'){
+   const project=await api('CLOUDFLARE_API_TOKEN','/pages/projects/'+encodeURIComponent(contract.pages.project));
+   validatePages(contract.pages,project,{requirePreviewIsolation:true});
+   console.log('Pages preview isolation gate: no production Worker/D1 binding shared');
+ }
+ else if(verb==='capture')await capture(contract,sourceSha,file);
  else if(verb==='postcheck')await postcheck(contract,sourceSha,file);
  else if(verb==='rollback')await rollback(contract,sourceSha,file);
  else if(verb==='receipt')await receipt(contract,sourceSha,file,output);
- else throw Error('usage: cloudflare-gate.mjs capture|postcheck|rollback|receipt <sha> <baseline-file> [receipt-file]');
+ else throw Error('usage: cloudflare-gate.mjs preview-check|capture|postcheck|rollback|receipt <sha> <baseline-file> [receipt-file]');
 }
 if(import.meta.url===new URL('file://'+process.argv[1]).href){
  main().catch(e=>{console.error('Release gate:',e?.message?.split('\n')[0]);process.exitCode=1});

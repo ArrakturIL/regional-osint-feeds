@@ -4,6 +4,7 @@ import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {buildManifest,verifyManifest} from '../../scripts/release/manifest.mjs';
+import {expectedWorkerConfig} from '../../scripts/release/build.mjs';
 import {validateWorker,validatePages,validateSubdomain,main as cloudflareGate} from '../../scripts/release/cloudflare-gate.mjs';
 import {checkD1,verifyColumns} from '../../scripts/release/d1-preflight.mjs';
 
@@ -78,6 +79,34 @@ test('release has source-controlled Worker identities, DB and cron, preserving a
  assert.ok(editor.name!==monitor.name);
 });
 
+test('static Worker release files must match every declared deployment contract before bundling',()=>{
+ assert.equal(expectedWorkerConfig(root,'editor',contract).main,'../workers/editor.mjs');
+ assert.equal(expectedWorkerConfig(root,'monitor',contract).main,'../workers/monitor.mjs');
+ const wrongs=[
+  ['worker name',x=>x.workers[0].name='some-other-service'],
+  ['worker cron',x=>x.workers[1].cron='*/2 * * * *'],
+  ['worker D1',x=>x.workers[0].d1[0].database_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'],
+  ['worker secret',x=>x.workers[1].secrets[0]='MISSING_KEY'],
+  ['worker AI',x=>x.workers[0].ai='DIFFERENT_AI'],
+  ['Pages service',x=>x.pages.services[0].service='wrong-editor'],
+  ['Pages D1',x=>x.pages.d1[0].database_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb']
+ ];
+ for(const [label,change] of wrongs){
+  const drift=structuredClone(contract);change(drift);
+  assert.throws(()=>expectedWorkerConfig(root,label.startsWith('worker secret')||label.startsWith('worker cron')?'monitor':'editor',drift),
+    /contract|mismatch|binding|cron|service/i,label);
+ }
+ const dir=mkdtempSync(join(tmpdir(),'rw-release-static-'));
+ try{
+  mkdirSync(join(dir,'deploy'),{recursive:true});
+  writeFileSync(join(dir,'deploy/release-contract.json'),JSON.stringify(contract));
+  const editor=JSON.parse(readFileSync(join(root,'deploy/wrangler.editor.production.json'),'utf8'));
+  editor.triggers.crons=['* * * * *'];
+  writeFileSync(join(dir,'deploy/wrangler.editor.production.json'),JSON.stringify(editor));
+  assert.throws(()=>expectedWorkerConfig(dir,'editor'),/contract|cron|mismatch/i);
+ }finally{rmSync(dir,{recursive:true,force:true});}
+});
+
 test('Workers preview URL gate rejects public previews and refuses missing subdomain config',()=>{
  assert.doesNotThrow(()=>validateSubdomain({enabled:true,previews_enabled:false},{name:'regional-watch-editor'}));
  assert.throws(()=>validateSubdomain({enabled:true,previews_enabled:true},{name:'regional-watch-editor'}),/preview/i);
@@ -114,6 +143,46 @@ test('Pages preflight verifies that both service bindings resolve to correct Wor
  assert.doesNotThrow(()=>validatePages(contract.pages,fake));
  fake.deployment_configs.production.services.EDITOR.service='different-worker';
  assert.throws(()=>validatePages(contract.pages,fake),/EDITOR|service/i);
+});
+
+test('preview deployment is refused when Pages Preview reuses production Worker or D1 bindings',()=>{
+ const p={
+   production_branch:'main',
+   deployment_configs:{
+     production:{
+       services:Object.fromEntries(contract.pages.services.map(x=>[x.binding,{service:x.service,environment:'production'}])),
+       d1_databases:Object.fromEntries(contract.pages.d1.map(x=>[x.binding,{id:x.database_id}]))
+     },
+     preview:{
+       services:Object.fromEntries(contract.pages.services.map(x=>[x.binding,{service:x.service,environment:'production'}])),
+       d1_databases:Object.fromEntries(contract.pages.d1.map(x=>[x.binding,{id:x.database_id}]))
+     }
+   }
+ };
+ // Production release remains valid: this is a preview-only guard.
+ assert.doesNotThrow(()=>validatePages(contract.pages,p));
+ assert.throws(()=>validatePages(contract.pages,p,{requirePreviewIsolation:true}),/preview.*(production|shared|isola)/i);
+ const safe=structuredClone(p);
+ safe.deployment_configs.preview.services={
+   EDITOR:{service:'rw-editor-isolated',environment:'preview'},
+   MONITOR:{service:'rw-monitor-isolated',environment:'preview'}
+ };
+ safe.deployment_configs.preview.d1_databases={
+   DB:{id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'},
+   NEWS_DB:{id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'}
+ };
+ assert.doesNotThrow(()=>validatePages(contract.pages,safe,{requirePreviewIsolation:true}));
+ for(const changes of [
+   x=>{x.deployment_configs.preview.d1_databases.DB.id=contract.pages.d1[1].database_id;},
+   x=>{x.deployment_configs.preview.services.EDITOR.service=contract.pages.services[1].service;},
+   x=>{x.deployment_configs.preview.services.EDITOR.environment='production';},
+   x=>{delete x.deployment_configs.preview.d1_databases.NEWS_DB;},
+   x=>{delete x.deployment_configs.preview.services.MONITOR;},
+   x=>{delete x.deployment_configs.preview;}
+ ]){
+   const unsafe=structuredClone(safe); changes(unsafe);
+   assert.throws(()=>validatePages(contract.pages,unsafe,{requirePreviewIsolation:true}),/preview/i);
+ }
 });
 
 test('Cloudflare gate snapshots exact versions and rolls back changed components, never exposing tokens',async()=>{
@@ -244,4 +313,12 @@ test('production publish workflow cannot deploy Pages independently and requires
  assert.match(workflow,/rollback/);
  assert.doesNotMatch(workflow,/name: Publish Cloudflare Pages production only after main checks/);
  assert.match(workflow,/needs:\s*\[release-bundle\]/);
+ const start=workflow.indexOf('  pages-preview:');
+ const finish=workflow.indexOf('  release-bundle:',start);
+ assert.ok(start>0 && finish>start,'preview workflow block exists');
+ const preview=workflow.slice(start,finish);
+ const previewGateIndex=preview.indexOf('run: node scripts/release/cloudflare-gate.mjs preview-check');
+ const publish=preview.indexOf('command: pages deploy dist');
+ assert.ok(previewGateIndex>=0 && publish>previewGateIndex,'read-only isolation must precede preview publishing');
+ assert.match(preview,/if: steps\.cloudflare\.outputs\.ready == 'true'/);
 });

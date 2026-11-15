@@ -31,8 +31,34 @@ export function migrationMap(root){
  }
  return files.sort((a,b)=>a.path.localeCompare(b.path));
 }
-export function expectedWorkerConfig(root,key){
+export function expectedWorkerConfig(root,key,contract){
+ const release=contract??JSON.parse(readFileSync(join(root,'deploy/release-contract.json'),'utf8'));
+ const specs=release.workers||[];
+ const worker=specs.find(w=>w.key===key);
+ const check=(ok,detail)=>{if(!ok)throw Error('Release source contract mismatch: '+detail);};
+ const equal=(a,b)=>JSON.stringify([...a].sort())===JSON.stringify([...b].sort());
+ check(release.schema_version===1&&specs.length===2&&worker,'worker '+key+' declared exactly once');
+ check(specs.filter(w=>w.key===key).length===1,'duplicate worker '+key);
  const source=JSON.parse(readFileSync(join(root,'deploy/wrangler.'+key+'.production.json'),'utf8'));
+ check(source.name===worker.name,'worker name '+key);
+ check(source.main==='../backend/'+key+'/dist/worker.modern.mjs','worker entrypoint '+key);
+ check(source.compatibility_date==='2026-11-10','worker compatibility date '+key);
+ check(source.keep_vars===true&&!source.vars,'worker retained runtime variables '+key);
+ check(source.preview_urls===false&&source.workers_dev===true,'worker URL and preview policy '+key);
+ check(equal(source.triggers?.crons||[],[worker.cron]),'worker cron '+key);
+ const d1=x=>(x||[]).map(b=>b.binding+'='+b.database_id);
+ check(equal(d1(source.d1_databases),d1(worker.d1)),'worker D1 bindings '+key);
+ check((source.ai?.binding??null)===(worker.ai??null),'worker AI binding '+key);
+ check(equal(source.secrets?.required||[],worker.secrets||[]),'worker required secrets '+key);
+ const pages=release.pages||{};
+ const svc=pages.services?.find(s=>s.binding===key.toUpperCase());
+ check(svc?.service===worker.name,'Pages service '+key);
+ const matches=key==='editor'?{CORE_DB:'DB',NEWS_DB:'NEWS_DB'}:{DB:'DB'};
+ for(const wdb of worker.d1){
+   const pageBinding=matches[wdb.binding];
+   const pageDB=pages.d1?.find(d=>d.binding===pageBinding);
+   check(pageBinding&&pageDB?.database_id===wdb.database_id,'Pages D1 '+key+'.'+wdb.binding);
+ }
  // Keep the release artifact self-contained: no reference to checkout paths.
  source.main='../workers/'+key+'.mjs';
  return source;
