@@ -33,3 +33,17 @@
 5. **ARCH-07:** CI, source coverage и production postcheck каждого независимого release. Не выдавать GH GREEN за сквозной QA сайта; полный QA остаётся отдельной задачей.
 
 **Стоп-условия:** никаких автоматических backups/versioned retention (владелец отложил); никаких новых платных dependencies, фоновых агентов/частот, schema migrations, манипуляций реальными observation rows. Точная production release версия остаётся DEV-04 до явно проверенного нового выпуска.
+
+
+---
+
+## 4. ARCH-02 — первый законченный изолированный рефакторинг (16.11.2026)
+
+**Статус:** [PR #47 merged](https://github.com/ArrakturIL/regional-osint-feeds/pull/47) в `main`, commit `faba8225818291fe0e90428d19b758eecbe4a22a`.
+
+- **RED:** [run #43775136529](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43775136529). Новый `backend/monitor/tests/import-boundaries.test.mjs` прошёл проверку resolvable paths для всех **44 active Monitor modules**, но тест DAG обнаружил циклы между `api/json↔api/router`, `config/constants↔network/ioda`, `collectors/aviation/regions↔adsb`, `schedule/sources↔api/router` и связанные длинные пути. Это доказательство архитектурных циклов, но **не доказательство падения Worker**.
+- **Исправление:** удалены ровно пять **неиспользуемых** статических импортов (`api/json.js`, `config/constants.js`, `collectors/aviation/regions.js`, `schedule/sources.js`, `collectors/media/gdelt.js`), без изменения исполняемого тела функций/DTO, cron, D1, состояния источников. Постоянная проверка циклов и существования import targets подключена к `monitor-source` в mandatory GitHub workflow.
+- **GREEN:** [run #43775296276](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43775296276) **11 успешных jobs / 0 failures**; Monitor import graph tests 2/2, Monitor source parity tests 6/6, collector cache tests 13/13, modern bundle и immutable Wrangler dry-run успешны; preview/production из ветки не публиковались.
+- **Реальный выпуск:** [Actions #43775413609](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43775413609) **completed success (12 successful jobs / 0 failures), rollback skipped**. Независимый read-only Cloudflare postcheck: Pages production `6191ada0-c6cd-4b71-a450-945c6f7348e9` success, Editor version `344d76e5-274e-49f5-a2e4-853b09f914f4` 100%, Monitor version `d37dde7b-9ba7-4a2f-9763-fe3392eb59cb` 100%; все ожидаемые AI/D1/secret/vars bindings и cron Editor `*/5`, Monitor `*/1` сохранены. Не выполнялся искусственный отказ production; RU/HE/API technical smoke не равен глобальному браузерному QA.
+
+**ARCH-02 закрыт [x]; DEV-05 остаётся [~]**. Следующий безопасный шаг по ARCH-04 — отдельно измерить фактическое распределение расписаний относительно деклараций `every` и failure contract, не меняя source clocks вслепую.
