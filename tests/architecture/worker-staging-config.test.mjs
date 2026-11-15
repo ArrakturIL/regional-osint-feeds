@@ -36,6 +36,8 @@ test('staging only executes for trusted same-repo integration PR, never producti
  assert.match(y,/github\.base_ref == 'main'/);
  assert.match(y,/wrangler\.editor\.qa\.json/);
  assert.match(y,/wrangler\.monitor\.qa\.json/);
+ assert.match(y,/secrets\.CLOUDFLARE_WORKERS_API_TOKEN/);
+ assert.doesNotMatch(y,/secrets\.CLOUDFLARE_API_TOKEN/);
  assert.match(y,/workers_dev: false|workers_dev/);
  assert.doesNotMatch(y,/cron:/);
  assert.doesNotMatch(y,/regional-watch-editor\.production/);
