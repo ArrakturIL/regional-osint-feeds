@@ -17,6 +17,7 @@
     "components/MonitorStatus/ActivityChips.js",
     "components/Summary/Summary.js",
     "components/Editorial/Editorial.js",
+    "utils/ruPlural.js",
     "components/NewsCard/NewsCard.js",
     "legacy/Events.js",
     "legacy/SourceList.js",
