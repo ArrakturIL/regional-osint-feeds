@@ -128,6 +128,44 @@ class TestNeonPrimaryReplication(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError,"last|cache|fallback|source"):
             execute_replica_sync("neon","account","token",**hooks)
 
+    def test_main_emits_a_bounded_step_summary_and_warnings_without_raw_payload(self):
+        snap=SimpleNamespace(source_key="copernicus",
+            checked_at=datetime.now(timezone.utc),status={"state":"partial"})
+        report=assess_snapshot_health(snap,{"source":"copernicus","result":"unchanged"})
+        output={"mode":"neon_primary","sources":list(SOURCE_FILES),
+                "d1_verified":8,"health":[report],
+                "health_summary":summarize_health([report])}
+        with tempfile.TemporaryDirectory() as tmp:
+            report_file=str(Path(tmp)/"summary.md")
+            env={"NEON_DATABASE_URL":"SENSITIVE_CONNECTION_URL",
+                 "CLOUDFLARE_ACCOUNT_ID":"acct",
+                 "CLOUDFLARE_D1_API_TOKEN":"PRIVATE_TOKEN",
+                 "GITHUB_STEP_SUMMARY":report_file}
+            with mock.patch.dict(os.environ,env,clear=True),mock.patch(
+                 "scripts.sync_neon_primary_to_d1.execute_replica_sync",return_value=output
+            ),contextlib.redirect_stdout(io.StringIO()) as printed:
+                self.assertEqual(main([]),0)
+            logged=printed.getvalue()
+            summary=Path(report_file).read_text(encoding="utf8")
+            self.assertIn("collector_partial",logged)
+            self.assertIn("::warning",logged)
+            self.assertIn("| copernicus | collector_partial |",summary)
+            for secret in ("SENSITIVE_CONNECTION_URL","PRIVATE_TOKEN"):
+                self.assertNotIn(secret,logged+summary)
+
+    def test_main_error_reports_source_and_fixed_stage_without_vendor_error(self):
+        from scripts.sync_neon_primary_to_d1 import ReplicaSourceFailure
+        with mock.patch.dict(os.environ,{"NEON_DATABASE_URL":"SENSITIVE_DSN",
+              "CLOUDFLARE_ACCOUNT_ID":"acct","CLOUDFLARE_D1_API_TOKEN":"TOKEN"},
+              clear=True),mock.patch(
+                 "scripts.sync_neon_primary_to_d1.execute_replica_sync",
+                 side_effect=ReplicaSourceFailure("gdelt","d1_sync")
+            ),contextlib.redirect_stderr(io.StringIO()) as err:
+            self.assertEqual(main([]),1)
+        self.assertIn("source=gdelt stage=d1_sync",err.getvalue())
+        self.assertNotIn("SENSITIVE_DSN",err.getvalue())
+        self.assertNotIn("TOKEN",err.getvalue())
+
     def test_missing_credentials_never_contact_neon_or_cloudflare(self):
         with self.assertRaises(ValueError):
             execute_replica_sync('','account','token',**self.hooks())
