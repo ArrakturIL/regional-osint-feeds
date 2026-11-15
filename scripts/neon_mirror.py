@@ -47,6 +47,16 @@ FROM public.regional_collector_snapshots WHERE source_key = %s
 """
 
 
+# Full-payload readback is required before a snapshot may be marked mirrored.
+# Verifying only stored digest columns would trust those columns even if the
+# JSONB data had been altered independently.
+READBACK_SQL = """
+SELECT source_key, checked_at, data_sha256, status_sha256,
+       data_payload, status_payload
+FROM public.regional_collector_snapshots
+WHERE source_key = %s
+"""
+
 @dataclass(frozen=True)
 class Snapshot:
     source_key: str
@@ -180,6 +190,47 @@ def inspect_snapshot(snapshot: Snapshot, stored: dict | None) -> dict:
     }
 
 
+def validate_stored_row(row: object) -> Snapshot:
+    """Decode one actual Postgres JSONB row, checking its content and metadata."""
+    fields = ("source_key", "checked_at", "data_sha256", "status_sha256",
+              "data_payload", "status_payload")
+    if isinstance(row, dict):
+        values = row
+    elif isinstance(row, (tuple, list)) and len(row) == len(fields):
+        values = dict(zip(fields, row))
+    else:
+        raise ValueError("invalid stored snapshot shape")
+    source = values.get("source_key")
+    if source not in SOURCE_FILES:
+        raise ValueError("unknown collector in stored snapshot")
+    data = values.get("data_payload")
+    status = values.get("status_payload")
+    if not isinstance(data, (dict, list)) or not isinstance(status, dict):
+        raise ValueError("invalid stored JSONB payload kind")
+    data_bytes = canonical_bytes(data)
+    status_bytes = canonical_bytes(status)
+    if len(data_bytes) > MAX_DOC_BYTES or len(status_bytes) > MAX_DOC_BYTES:
+        raise ValueError("stored snapshot exceeds cap")
+    if status.get("state") not in VALID_STATES:
+        raise ValueError("invalid stored status state")
+    status_time = _utc_timestamp(status.get("checked_at"))
+    checked = values.get("checked_at")
+    if isinstance(checked, str):
+        checked = _utc_timestamp(checked)
+    if not isinstance(checked, datetime) or checked.tzinfo is None:
+        raise ValueError("stored timestamp missing timezone")
+    checked = checked.astimezone(timezone.utc)
+    if checked != status_time:
+        raise ValueError("stored timestamp conflicts with status.checked_at")
+    data_sha = canonical_hash(data)
+    status_sha = canonical_hash(status)
+    if data_sha != str(values.get("data_sha256", "")).strip() or \
+       status_sha != str(values.get("status_sha256", "")).strip():
+        raise ValueError("stored JSONB digest mismatch")
+    return Snapshot(source, data, status, checked, data_sha, status_sha,
+                    len(data_bytes), len(status_bytes))
+
+
 def _row_dict(row: object) -> dict | None:
     if row is None:
         return None
@@ -218,5 +269,13 @@ def publish_snapshot(connection, snapshot: Snapshot) -> str:
 
 
 def verify_snapshot(connection, snapshot: Snapshot) -> dict:
-    stored = _row_dict(connection.execute(READ_SQL, (snapshot.source_key,)).fetchone())
-    return inspect_snapshot(snapshot, stored)
+    raw = connection.execute(READBACK_SQL, (snapshot.source_key,)).fetchone()
+    if raw is None:
+        return inspect_snapshot(snapshot, None)
+    stored = validate_stored_row(raw)
+    return inspect_snapshot(snapshot, {
+        "source_key": stored.source_key,
+        "checked_at": stored.checked_at,
+        "data_sha256": stored.data_sha256,
+        "status_sha256": stored.status_sha256,
+    })
