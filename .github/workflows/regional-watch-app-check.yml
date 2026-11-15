@@ -55,7 +55,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test backend/monitor/tests/source-parity.test.mjs backend/monitor/tests/import-boundaries.test.mjs
+      - run: node --test backend/monitor/tests/source-parity.test.mjs backend/monitor/tests/import-boundaries.test.mjs backend/monitor/tests/schedule-cadence.test.mjs
       - run: |
           node backend/monitor/scripts/build.mjs
           node --check backend/monitor/dist/worker.js
