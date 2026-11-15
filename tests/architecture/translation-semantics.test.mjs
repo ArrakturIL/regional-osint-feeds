@@ -56,3 +56,9 @@ test('exact live 15 Nov Hormuz headline: tankers hitting mines is not an attack 
  assert.equal(factualTranslationIssue(src,translated('Два танкера столкнулись с минами в Хормузском проливе')),null);
  assert.equal(factualTranslationIssue(src,translated('שתי מכליות פגעו במוקשים במצר הורמוז')),null);
 });
+
+test('live naval mine summary: "after striking" cannot become a tanker shelling',()=>{
+ const src=original('Two oil tankers caught fire after striking a naval mine');
+ assert.equal(factualTranslationIssue(src,translated('Нефтяные танкеры обстреляли морские мины')),'title:mine_collision_reframed_as_attack');
+ assert.equal(factualTranslationIssue(src,translated('Нефтяные танкеры загорелись после столкновения с морской миной')),null);
+});
