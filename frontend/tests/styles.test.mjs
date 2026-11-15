@@ -74,3 +74,23 @@ test('small screen navigation has two readable columns in both locales',()=>{
  const css=assembleStyles();
  assert.ok(css.endsWith(mobile),'mobile navigation must load after older inline shell cascade');
 });
+
+test('news order and sources count regression: stable grid and isolated LTR numbers',()=>{
+ const masonry=source('src/components/NewsMasonry/NewsMasonry.js');
+ assert.doesNotMatch(masonry,/gridRowEnd|ResizeObserver|requestAnimationFrame|useEffect/, 'no JS masonry measurement or dynamic reordering');
+ const layout=source('src/components/NewsMasonry/NewsMasonry.layout.css');
+ assert.match(layout,/grid-auto-flow:\s*row\s*;/);
+ assert.match(layout,/grid-auto-rows:\s*auto\s*;/);
+ assert.match(layout,/align-items:\s*stretch\s*;/);
+ assert.match(layout,/@media\s*\(max-width:\s*640px\)/);
+ assert.match(layout,/grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+ const count=source('src/components/Header/Header.js');
+ assert.match(count,/h\("bdi",\{className:"rw-site-source-count",dir:"ltr"\},status\)/);
+ assert.match(count,/h\("bdi",\{className:"rw-dlg-counter",dir:"ltr"\},status\)/);
+ const countStyle=source('src/components/Header/Header.status.css');
+ assert.match(countStyle,/\.rw-global-header\s+\.rw-site-source\s*\{[\s\S]*?display:\s*inline-flex/);
+ assert.match(countStyle,/\.rw-global-header\s+\.rw-site-source-count\s*\{[\s\S]*?unicode-bidi:\s*isolate/);
+ const bundle=assembleStyles();
+ assert.ok(bundle.endsWith(countStyle),'bidi fix must take precedence after legacy header rules');
+ assert.ok(bundle.includes(layout),'news grid must be present in emitted CSS');
+});
