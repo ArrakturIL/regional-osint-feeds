@@ -60,9 +60,9 @@ function latestVersion(deployments){
 async function workerState(w,check=true){
  const path=paths(w.name);
  const [settings,schedules,deployments]=await Promise.all([
-   api('CLOUDFLARE_WORKERS_API_TOKEN',path.settings),
-   api('CLOUDFLARE_WORKERS_API_TOKEN',path.schedules),
-   api('CLOUDFLARE_WORKERS_API_TOKEN',path.deployments)
+   api('CLOUDFLARE_D1_API_TOKEN',path.settings),
+   api('CLOUDFLARE_D1_API_TOKEN',path.schedules),
+   api('CLOUDFLARE_D1_API_TOKEN',path.deployments)
  ]);
  if(check)validateWorker(w,settings,schedules.schedules);
  return {key:w.key,name:w.name,version_id:latestVersion(deployments)};
@@ -105,7 +105,7 @@ async function rollback(contract,sourceSha,file){
    try{
      const now=await workerState(w,false);
      if(now.version_id!==before.version_id){
-       await api('CLOUDFLARE_WORKERS_API_TOKEN',paths(w.name).deployments,'POST',{
+       await api('CLOUDFLARE_D1_API_TOKEN',paths(w.name).deployments,'POST',{
          strategy:'percentage',versions:[{percentage:100,version_id:before.version_id}],
          annotations:{'workers/message':'Regional Watch release '+sourceSha.slice(0,12)+' rollback'}
        });
