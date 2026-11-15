@@ -85,3 +85,19 @@
 **Лимиты и методология:** официальные актуальные тарифные страницы [Neon Free (октябрь 2026)](https://neon.com/blog/neon-free-plan-1-gb-per-project), [Cloudflare D1 Pricing (октябрь 2026)](https://developers.cloudflare.com/d1/platform/pricing/), [GitHub Actions billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions). Free Neon: 100 CU-hours/project/month, 1 GB/project, 5 GB public transfer/month, instant restore 6h; Cloudflare D1 Free: 5GB total, 5M rows read/day, 100K rows write/day; публичные репозитории не тратят billable minutes на стандартные GitHub hosted runners, но расходы artifacts/cache требуют отдельного контроля. Эти значения — **общие тарифные лимиты**, не доказательство конкретного дневного фактического CPU или read/write расхода аккаунта.
 
 **Незакрытая существенная граница:** две таблицы Neon/D1 содержат по одной версии на источник, и Neon instant history = 6 часов. Объективное восстановление ранее здорового пакета после полной потери D1 или надёжное историческое хранение на 7–30 дней пока **не реализовано**, поэтому DEV-03/D-07 остаются `[~]`. Сначала отдельная безопасная стратегия версионированного архива и восстановительный тест; никаких сюрпризных миграций, платного R2 или новых cron в данном PR.
+
+---
+
+## 6. Production release and approved current scope — 16.11.2026
+
+**This final section supersedes earlier "unmerged/unpublished" status paragraphs, retained as historical checkpoints.** User explicitly deferred long-term versioned backups and whole-database restore for possible future work. No such backup exists today.
+
+- Code [PR #40](https://github.com/ArrakturIL/regional-osint-feeds/pull/40) merged into main, source SHA f4347ff936bf04ec0c90d3e273db8826d370feec.
+- [Production release #43770540419](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43770540419): completed SUCCESS, 12 successful jobs, 0 failed, Pages Preview skipped, rollback skipped as unnecessary. Worker + Pages release, D1 schema/bindings verification, source SHA, RU/HE/API technical smoke, and immutable receipts completed.
+- Independent Cloudflare postcheck: Pages canonical deployment 4c163629-8aec-4332-8471-a4527f857bda status success; Editor 7cd1bace-0647-4e67-a6fd-515a81756efc active 100%; Monitor aecc946a-b28b-4578-a1bd-d028de51a86b active 100%; Editor cron */5 and Monitor cron */1; AI, D1, secret names and vars retained.
+- [Actual Neon-primary → D1 main job #43770540423](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43770540423): success, sources=8, d1_verified=8, health overall=degraded, 2 fresh, 3 partial, 3 stale. At job time: analysts stale 220 minutes; centcom stale 232; copernicus partial 231; GDELT partial 40; MARAD stale 871; satellite partial 301; UNOSAT fresh 228; translation fresh 95. 8/8 integrity is not the same as 8 fresh.
+- Current source storage preserves only one current D1 cache entry per source, and Neon time-travel history is limited to 6h. **No versioned long-term backup has been created**, by user choice.
+- Monitor/Editor reader fallback diagnostics are deployed but have NOT been deliberately tested against a live Worker D1 outage; no production faults were injected.
+- Actual per-day Workers CPU/invocations and D1 row operations remain unmeasured with available read-only data; 1728 nominal daily crons is only a schedule estimate, not proof of free-tier safety.
+
+**DEV-03 closed for the explicitly accepted scope; long-term backup is optional future work, not a blocker.** Independent UI/content QA and DEV-04 are separate.
