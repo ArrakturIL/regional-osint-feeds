@@ -2,6 +2,7 @@ name: GDELT public regional news context
 
 on:
   push:
+    branches: [main]
     paths:
       - "scripts/collect_gdelt.py"
       - "scripts/test_gdelt.py"
@@ -34,8 +35,40 @@ jobs:
           python scripts/test_gdelt.py
       - name: Read recent public GDELT Project event exports
         run: python scripts/collect_gdelt.py
+      - name: Shadow-write paired GDELT JSON to Neon (nonfatal until verified cutover)
+        if: github.ref == 'refs/heads/main'
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          if [ -z "$NEON_DATABASE_URL" ]; then
+            echo "Neon shadow skipped: NEON_DATABASE_URL not configured; GitHub JSON remains the reader"
+            exit 0
+          fi
+          if ! python -m pip install --disable-pip-version-check "psycopg[binary]>=3.2,<4"; then
+            echo "Neon shadow dependency unavailable; GitHub JSON remains active"
+            exit 0
+          fi
+          python -m scripts.publish_neon_mirror --source gdelt --mode shadow
+      - name: Sync verified gdelt cache from Neon to private D1
+        id: neon_d1
+        continue-on-error: true
+        # Source-by-source cutover; empty repo variable means NO production D1 write.
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && contains(format(',{0},', vars.REGIONAL_NEON_D1_SOURCES), ',gdelt,')
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          CLOUDFLARE_D1_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          if [ -z "${NEON_DATABASE_URL:-}" ] || [ -z "${CLOUDFLARE_D1_API_TOKEN:-}" ] || [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "D1 cache selected but scoped secrets are missing; no legacy commit disabled"
+            exit 1
+          fi
+          python -m pip install --disable-pip-version-check "psycopg[binary]>=3.2,<4"
+          python -m scripts.publish_neon_mirror --source gdelt --mode required
+          python -m scripts.neon_to_d1 --source gdelt --init-table
       - name: Commit only small bounded news-context metadata
-        if: always()
+        if: always() && !(contains(format(',{0},', vars.REGIONAL_NEON_PRIMARY_SOURCES), ',gdelt,') && steps.neon_d1.outcome == 'success')
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -45,3 +78,8 @@ jobs:
             git commit -m "Update GDELT public regional news context"
             git push
           fi
+      - name: Signal Neon primary failure after attempting Legacy GitHub fallback
+        if: always() && contains(format(',{0},', vars.REGIONAL_NEON_PRIMARY_SOURCES), ',gdelt,') && steps.neon_d1.outcome == 'failure'
+        run: |
+          echo "::error::Neon D1 primary sync failed for gdelt; Legacy GitHub data writeback was attempted"
+          exit 1

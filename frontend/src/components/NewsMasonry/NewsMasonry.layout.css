@@ -1,24 +1,23 @@
-/* Stable source-order news cards: no masonry row spans or dense repacking.
-   Matching row heights avoid staggered columns; mobile uses a single stream. */
+/* Standard CSS multi-column reading order: top-to-bottom per column,
+   with the original DOM order intact. No JS measuring, dense repacking,
+   or row-based blank space when a neighboring article expands. */
 .news-grid.rw-masonry {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-flow: row;
-  grid-auto-rows: auto;
-  gap: 16px;
-  align-items: stretch;
+  display: block;
+  column-count: 2;
+  column-gap: 16px;
 }
-.news-grid.rw-masonry .news-slot {
-  display: flex;
-  min-width: 0;
-  grid-row-end: auto;
+.news-grid.rw-masonry > .news-slot {
+  display: inline-block;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0 0 16px;
+  break-inside: avoid;
+  vertical-align: top;
 }
-.news-grid.rw-masonry .news-slot > .news-card {
-  flex: 1 1 auto;
-  height: 100%;
+.news-grid.rw-masonry > .news-slot > .news-card {
+  height: auto;
+  min-height: 0;
 }
 @media (max-width: 640px) {
-  .news-grid.rw-masonry {
-    grid-template-columns: minmax(0, 1fr);
-  }
+  .news-grid.rw-masonry { column-count: 1; }
 }

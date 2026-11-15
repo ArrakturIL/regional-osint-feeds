@@ -1,13 +1,12 @@
 import { json } from '../../api/json.js';
 import { HOUR, MINUTE } from '../../config/constants.js';
 import { get } from '../../network/http.js';
+import { readCollectorPair } from '../../mirrors/collector-cache.js';
 import { item } from '../../observations/item.js';
 export const SATELLITE_GH_DATA = "https://raw.githubusercontent.com/ArrakturIL/regional-osint-feeds/main/data/satellite-observations.json";
 export const SATELLITE_GH_STATUS = "https://raw.githubusercontent.com/ArrakturIL/regional-osint-feeds/main/data/satellite-status.json";
 export async function satelliteContext(env, slot) {
-  const [snapshot, status] = await Promise.all([
-    get(SATELLITE_GH_DATA, "json"), get(SATELLITE_GH_STATUS, "json"),
-  ]);
+  const {data:snapshot,status}=await readCollectorPair(env,'satellite',SATELLITE_GH_DATA,SATELLITE_GH_STATUS,{nowMs:slot,maxAgeMs:72*HOUR});
   if (!snapshot || snapshot.source !== "satellite_context" || !status ||
       status.source !== "satellite_context" ||
       !Array.isArray(snapshot.visual_overviews) ||

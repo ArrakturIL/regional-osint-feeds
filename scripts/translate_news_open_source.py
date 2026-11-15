@@ -11,6 +11,11 @@ import re
 import sys
 import time
 
+try:
+    from .translation_semantics import semantic_issue
+except ImportError:
+    from translation_semantics import semantic_issue
+
 QUEUE="https://regional-watch-editor.arrakturil.workers.dev/api/translation-queue?limit=80"
 OUTPUT="data/news-localization-mirror.json"
 MODELS={
@@ -62,6 +67,8 @@ def valid(source,target,lang):
             return False
         if lang=="ru" and re.search(r"не\s+(?:нес[её]т|отвеча\w*)\s+[^.]{0,35}ответствен",target,re.I):
             return False
+    if semantic_issue(source,target,lang) is not None:
+        return False
     return True
 
 def read_queue():

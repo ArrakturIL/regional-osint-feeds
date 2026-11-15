@@ -3,7 +3,7 @@ import { UI_HE, h, t, useEffect, useState } from '../../app/runtime.js';
 import { Loading } from '../Loading/Loading.js';
 import { NewsMasonry } from '../NewsMasonry/NewsMasonry.js';
 import { Head } from '../SectionHead/Head.js';
-export function NewsArchive({items}){
+export function NewsArchive(){
  const [page,setPage]=useState(1),[expanded,setExpanded]=useState(null),[read,setRead]=useState({}),[result,setResult]=useState(null),[loading,setLoading]=useState(true),[error,setError]=useState(null),[refresh,setRefresh]=useState(0);
  const pageSize=12;
  useEffect(()=>{
@@ -11,7 +11,7 @@ export function NewsArchive({items}){
   setLoading(true);setError(null);setResult(null);
   (async()=>{const timer=setTimeout(()=>ctrl.abort(),14000);
    try{
-    const url="/api/news?lang="+(UI_HE?"he":"ru")+"&limit="+pageSize+"&offset="+((page-1)*pageSize);
+    const url="/api/news?lang="+(UI_HE?"he":"ru")+"&limit="+pageSize+"&offset="+((page-1)*pageSize)+"&sort=latest";
     const resp=await fetch(url,{cache:"no-store",signal:ctrl.signal});
     if(!resp.ok)throw Error("HTTP "+resp.status);
     const body=await resp.json();

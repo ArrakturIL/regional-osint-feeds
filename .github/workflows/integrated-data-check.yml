@@ -1,0 +1,205 @@
+name: Regional Watch integrated data architecture checks
+on:
+  push:
+    branches: [feature/integrated-data-quality-neon-20261115]
+    paths:
+      - "storage/neon/**"
+      - "backend/monitor/src/mirrors/**"
+      - "tests/architecture/collector-cache.test.mjs"
+      - ".github/workflows/news-open-source-translation.yml"
+      - ".github/workflows/unosat-analyses.yml"
+      - ".github/workflows/satellite.yml"
+      - ".github/workflows/marad.yml"
+      - ".github/workflows/copernicus-analytics.yml"
+      - ".github/workflows/centcom-test.yml"
+      - ".github/workflows/analysts.yml"
+      - ".github/workflows/gdelt.yml"
+      - "scripts/neon_mirror.py"
+      - "scripts/neon_to_d1.py"
+      - "scripts/test_neon_to_d1.py"
+      - "storage/cloudflare/**"
+      - "scripts/publish_neon_mirror.py"
+      - "scripts/test_neon_mirror.py"
+      - "scripts/test_live_smoke_contract.py"
+      - "scripts/test_live_regional_watch.py"
+      - "scripts/test_publish_neon_mirror.py"
+      - "tests/architecture/translation-semantics.test.mjs"
+      - "scripts/translate_news_open_source.py"
+      - "scripts/translation_semantics.py"
+      - "scripts/test_translate_news_open_source.py"
+      - "backend/editor/src/translations/**"
+      - "backend/editor/src/mirrors/**"
+      - "tests/architecture/editor-mirror-cache.test.mjs"
+      - "backend/editor/src/news/**"
+      - "tests/architecture/news-quality.test.mjs"
+      - "tests/architecture/news-localization-provenance.test.mjs"
+      - "backend/editor/src/localization/**"
+      - "frontend/src/**"
+      - "frontend/tests/ui-qa.test.mjs"
+      - "tests/architecture/editor-modules.test.mjs"
+      - ".github/workflows/integrated-data-check.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "storage/neon/**"
+      - "backend/monitor/src/mirrors/**"
+      - "tests/architecture/collector-cache.test.mjs"
+      - ".github/workflows/news-open-source-translation.yml"
+      - ".github/workflows/unosat-analyses.yml"
+      - ".github/workflows/satellite.yml"
+      - ".github/workflows/marad.yml"
+      - ".github/workflows/copernicus-analytics.yml"
+      - ".github/workflows/centcom-test.yml"
+      - ".github/workflows/analysts.yml"
+      - ".github/workflows/gdelt.yml"
+      - "scripts/neon_mirror.py"
+      - "scripts/neon_to_d1.py"
+      - "scripts/test_neon_to_d1.py"
+      - "storage/cloudflare/**"
+      - "scripts/test_neon_mirror.py"
+      - "scripts/test_live_smoke_contract.py"
+      - "scripts/test_live_regional_watch.py"
+      - "tests/architecture/translation-semantics.test.mjs"
+      - "scripts/translate_news_open_source.py"
+      - "scripts/translation_semantics.py"
+      - "scripts/test_translate_news_open_source.py"
+      - "backend/editor/src/translations/**"
+      - "backend/editor/src/mirrors/**"
+      - "tests/architecture/editor-mirror-cache.test.mjs"
+      - "backend/editor/src/news/**"
+      - "tests/architecture/news-quality.test.mjs"
+      - "tests/architecture/news-localization-provenance.test.mjs"
+      - "backend/editor/src/localization/**"
+      - "frontend/src/**"
+      - "frontend/tests/ui-qa.test.mjs"
+      - "tests/architecture/editor-modules.test.mjs"
+      - ".github/workflows/integrated-data-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-neon-contract:
+    name: Validate Neon snapshot contract without credentials
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Canonical external-smoke contract (offline)
+        run: python -m unittest scripts.test_live_smoke_contract -v
+      - name: Neon-to-D1 private cache unit tests (offline)
+        run: python -m unittest scripts.test_neon_to_d1 -v
+      - name: Unit tests (no external API or secrets)
+        run: python -m unittest scripts.test_neon_mirror scripts.test_publish_neon_mirror -v
+      - name: Offline translation candidate regression checks
+        run: python -m unittest discover -s scripts -p 'test_translate_news_open_source.py' -v
+      - name: Frontend bilingual layout and text tests
+        run: node --test frontend/tests/ui-qa.test.mjs
+      - name: News grouping, attribution and chronology regression checks
+        run: node --test tests/architecture/news-quality.test.mjs tests/architecture/news-localization-provenance.test.mjs
+      - name: D1 cache and safe fallback regression tests
+        run: node --test tests/architecture/collector-cache.test.mjs
+      - name: Editor CORE_DB cache and GitHub fallback regression
+        run: node --test tests/architecture/editor-mirror-cache.test.mjs
+      - name: Semantic translation regression checks
+        run: node --test tests/architecture/translation-semantics.test.mjs tests/architecture/editor-modules.test.mjs
+
+  verify-neon-secret:
+    name: Validate private Neon connection and snapshot integrity
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feature/integrated-data-quality-neon-20261115'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check repository secret presence without disclosing its value
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        shell: bash
+        run: |
+          if [[ -z "${NEON_DATABASE_URL:-}" ]]; then
+            echo 'Neon connection unavailable: NEON_DATABASE_URL is not configured'
+            exit 1
+          fi
+          echo 'Neon repository secret exists'
+      - name: Verify Neon reads actual JSONB and accepts guarded shadow writer
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        shell: bash
+        run: |
+          python -m pip install --disable-pip-version-check "psycopg[binary]>=3.2,<4"
+          python - <<'PY'
+          import os
+          from scripts.neon_mirror import load_snapshot, publish_snapshot, read_stored_snapshot, verify_snapshot
+          from scripts.publish_neon_mirror import _open_connection
+
+          try:
+              with _open_connection(os.environ['NEON_DATABASE_URL']) as conn:
+                  database_name = conn.execute('SELECT current_database()').fetchone()[0]
+                  if database_name != 'regional_watch':
+                      raise RuntimeError('Incorrect Neon database')
+                  previous = read_stored_snapshot(conn, 'gdelt')
+                  if previous is None:
+                      raise RuntimeError('No verified seed for GDELT')
+                  candidate = load_snapshot('gdelt')
+                  result = publish_snapshot(conn, candidate)
+                  current = read_stored_snapshot(conn, 'gdelt')
+                  if current is None:
+                      raise RuntimeError('Snapshot missing after shadow write')
+                  if result in ('written', 'unchanged') and not verify_snapshot(conn, candidate)['match']:
+                      raise RuntimeError('Shadow write/readback mismatch')
+                  if result in ('stale', 'conflict') and current.checked_at < candidate.checked_at:
+                      raise RuntimeError('Newer GitHub mirror not persisted')
+                  print('Neon connected, data integrity validated, GDELT shadow result:',result)
+          except Exception as exc:
+              # Client exceptions can include connection strings. Never print them.
+              raise SystemExit('Private Neon check failed: ' + type(exc).__name__) from None
+          PY
+      - name: Mirror all registered sources in strict shadow mode and validate readback
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for source in analysts centcom copernicus gdelt marad satellite unosat news_translation; do
+            python -m scripts.publish_neon_mirror --source "$source" --mode required
+          done
+          echo 'Neon shadow check: 8 collector snapshots verified'
+
+      - name: Check private Cloudflare D1 API scope (read-only; no database mutations)
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json,os,urllib.request,urllib.error
+          if not os.environ.get('CF_TOKEN'):
+              raise SystemExit('Dedicated CLOUDFLARE_D1_API_TOKEN missing; D1 sync remains disabled')
+          if not os.environ.get('CF_ACCOUNT'):
+              raise SystemExit('D1 API check: missing Cloudflare account configuration')
+          account=os.environ['CF_ACCOUNT']
+          url='https://api.cloudflare.com/client/v4/accounts/'+account+'/d1/database?per_page=100'
+          req=urllib.request.Request(url,headers={'Authorization':'Bearer '+os.environ['CF_TOKEN'],'Accept':'application/json'})
+          try:
+              with urllib.request.urlopen(req,timeout=20) as r:
+                  payload=json.load(r)
+              if not payload.get('success'):
+                  raise SystemExit('D1 API permission test unsuccessful')
+              names=[d.get('name') for d in payload.get('result',[])]
+              if 'regional-osint' not in names:
+                  raise SystemExit('D1 API visible but regional-osint not found')
+              print('D1 Read permission verified, regional-osint database available')
+          except urllib.error.HTTPError as e:
+              raise SystemExit('D1 API access denied or unavailable: HTTP '+str(e.code)) from None
+          except urllib.error.URLError:
+              raise SystemExit('D1 API network unavailable') from None
+          PY

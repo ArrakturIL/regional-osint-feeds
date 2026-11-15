@@ -4,6 +4,7 @@ on:
   schedule:
     - cron: '17 */2 * * *'
   push:
+    branches: [main]
     paths:
       - 'scripts/translate_news_open_source.py'
       - 'scripts/test_translate_news_open_source.py'
@@ -52,8 +53,40 @@ jobs:
           HF_HUB_DISABLE_TELEMETRY: '1'
           TOKENIZERS_PARALLELISM: 'false'
         run: python scripts/translate_news_open_source.py
-      - name: Publish bounded validated translation mirror
+      - name: Shadow-write validated news_translation mirror to Neon
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          if [ -z "$NEON_DATABASE_URL" ]; then
+            echo "Neon shadow skipped: no configured secret; GitHub remains active"
+            exit 0
+          fi
+          if ! python -m pip install --disable-pip-version-check "psycopg[binary]>=3.2,<4"; then
+            echo "Neon shadow dependency unavailable; GitHub remains active"
+            exit 0
+          fi
+          python -m scripts.publish_neon_mirror --source news_translation --mode shadow
+      - name: Sync verified news_translation cache from Neon to private D1
+        id: neon_d1
+        continue-on-error: true
+        # Source-by-source cutover; empty repo variable means NO production D1 write.
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && contains(format(',{0},', vars.REGIONAL_NEON_D1_SOURCES), ',news_translation,')
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          CLOUDFLARE_D1_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          if [ -z "${NEON_DATABASE_URL:-}" ] || [ -z "${CLOUDFLARE_D1_API_TOKEN:-}" ] || [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "D1 cache selected but scoped secrets are missing; no legacy commit disabled"
+            exit 1
+          fi
+          python -m pip install --disable-pip-version-check "psycopg[binary]>=3.2,<4"
+          python -m scripts.publish_neon_mirror --source news_translation --mode required
+          python -m scripts.neon_to_d1 --source news_translation --init-table
+      - name: Publish bounded validated translation mirror
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && !(contains(format(',{0},', vars.REGIONAL_NEON_PRIMARY_SOURCES), ',news_translation,') && steps.neon_d1.outcome == 'success')
         run: |
           if [ ! -s data/news-localization-mirror.json ]; then
             echo 'No new safe translations; retain the last healthy mirror.'
@@ -81,4 +114,9 @@ jobs:
             sleep $((attempt * 2))
           done
           echo 'Unable to publish translation mirror after retries'
+          exit 1
+      - name: Signal Neon primary failure after attempting Legacy GitHub fallback
+        if: always() && contains(format(',{0},', vars.REGIONAL_NEON_PRIMARY_SOURCES), ',news_translation,') && steps.neon_d1.outcome == 'failure'
+        run: |
+          echo "::error::Neon D1 primary sync failed for news_translation; Legacy GitHub data writeback was attempted"
           exit 1

@@ -1,4 +1,5 @@
 import {factualTranslationIssue} from '../translations/fact-guard.mjs';
+import {semanticMeaningIssue} from '../translations/semantic-meaning.mjs';
 import {shouldSuppressComment,safePublishedComment} from '../editorial/comment-policy.mjs';
 // REGIONAL WATCH: locale-aware public readers, no client-side credentials.
 const HEADERS={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET, HEAD, OPTIONS','Access-Control-Allow-Headers':'Content-Type','X-Content-Type-Options':'nosniff','Cache-Control':'public,max-age=60'};
@@ -55,14 +56,41 @@ async function localized(db,kind,id,original,lang,prefilled=null){
 
 /** One trusted localization contract for event and legacy news responses. */
 export async function localizeNewsRow(db,row,lang){
-  if(lang==='he'&&/[\u0590-\u05ff]/u.test(String(row.headline||''))&&
-     (!row.summary||/[\u0590-\u05ff]/u.test(String(row.summary||'')))){
-    return{title:row.headline,body:row.summary||'',comment:'',content_language:'he',translation_status:'available'};
+  // The original article language is derived from its original fields, never
+  // from headline_ru or a model's self-reported quality score.
+  const sourceTitle=val(row.headline,260),sourceBody=val(row.summary,650);
+  const originalLanguage=/[\u0590-\u05ff]/u.test(sourceTitle)?'he':
+    /[\u0400-\u04ff]/u.test(sourceTitle)?'ru':'en';
+  const original={title:sourceTitle,body:sourceBody,
+    comment:val(safePublishedComment(row,row.comment),300)};
+  if(lang==='ru'){
+    if(originalLanguage==='ru')return{...original,content_language:'ru',
+      source_language:'ru',translation_status:'source'};
+    const title=val(row.headline_ru,260),body=val(row.summary_ru,650);
+    // A partly translated record is not presented as a complete translation.
+    if(!title||!/[\u0400-\u04ff]/u.test(title)||(sourceBody&&!body))
+      return{...original,content_language:originalLanguage,
+        source_language:originalLanguage,translation_status:'pending'};
+    const issue=semanticMeaningIssue(sourceTitle,title)||
+      (sourceBody&&body?semanticMeaningIssue(sourceBody,body):null);
+    if(issue)return{...original,content_language:originalLanguage,
+      source_language:originalLanguage,translation_status:'needs_review',review_reason:issue};
+    return{...original,title,body:body||sourceBody,content_language:'ru',
+      source_language:originalLanguage,translation_status:'available'};
   }
+  if(lang==='he'&&originalLanguage==='he'&&
+     (!sourceBody||/[\u0590-\u05ff]/u.test(sourceBody)))
+    return{...original,content_language:'he',source_language:'he',translation_status:'source'};
   const cached=row.he_hash?{source_hash:row.he_hash,title:row.he_title,body:row.he_body,
     commentary:row.he_comment,quality_score:row.he_quality}:null;
   const result=await localized(db,'news',row.id,sourceText('news',row),lang,cached);
-  return shouldSuppressComment(row)?{...result,comment:''}:result;
+  const issue=lang==='he'&&result.translation_status==='available'?
+    semanticMeaningIssue(sourceTitle,result.title)||
+    (sourceBody&&result.body?semanticMeaningIssue(sourceBody,result.body):null):null;
+  if(issue)return{...original,content_language:originalLanguage,
+    source_language:originalLanguage,translation_status:'needs_review',review_reason:issue};
+  return {...(shouldSuppressComment(row)?{...result,comment:''}:result),
+    source_language:originalLanguage};
 }
 
 /** Locale-invariant provenance. Never regenerate dates or source links by AI. */

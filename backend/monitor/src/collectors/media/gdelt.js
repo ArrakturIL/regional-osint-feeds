@@ -1,14 +1,12 @@
 import { json } from '../../api/json.js';
 import { HOUR, MINUTE } from '../../config/constants.js';
-import { get } from '../../network/http.js';
+import { readCollectorPair } from '../../mirrors/collector-cache.js';
 import { item } from '../../observations/item.js';
 import { sources } from '../../schedule/sources.js';
 export const GDELT_GH_DATA = "https://raw.githubusercontent.com/ArrakturIL/regional-osint-feeds/main/data/gdelt-context.json";
 export const GDELT_GH_STATUS = "https://raw.githubusercontent.com/ArrakturIL/regional-osint-feeds/main/data/gdelt-status.json";
-export async function gdeltContext(_env, slot) {
-  const [data,status] = await Promise.all([
-    get(GDELT_GH_DATA,"json"),get(GDELT_GH_STATUS,"json"),
-  ]);
+export async function gdeltContext(env, slot) {
+  const {data,status}=await readCollectorPair(env,'gdelt',GDELT_GH_DATA,GDELT_GH_STATUS,{nowMs:slot,maxAgeMs:4*HOUR});
   if (!status || status.source !== "gdelt_context" ||
       !["ok","partial","error"].includes(status.state)) {
     throw new Error("unexpected GDELT mirror status");

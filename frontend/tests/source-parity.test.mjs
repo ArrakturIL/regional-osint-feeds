@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 import {assemble} from '../scripts/build.mjs';
 const here=resolve(dirname(fileURLToPath(import.meta.url)),'..'),root=resolve(here,'..');
 const manifest=JSON.parse(readFileSync(resolve(here,'build-order.json'),'utf8'));
-test('all ordered source modules exist',()=>{assert.equal(manifest.order.length,50);for(const p of manifest.order)assert.ok(existsSync(resolve(here,'src',p)),p+' is missing')});
+test('all ordered source modules exist',()=>{assert.equal(manifest.order.length,51);for(const p of manifest.order)assert.ok(existsSync(resolve(here,'src',p)),p+' is missing')});
 test('bundle preserves the frozen architecture baseline and contains intentional news/grid fixes',()=>{
  const baseline=readFileSync(resolve(root,'baselines/cloudflare/2026-11-14/pages-0f39f36e/app.js'),'utf8');
  const compiled=assemble();

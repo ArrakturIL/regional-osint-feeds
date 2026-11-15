@@ -1,11 +1,11 @@
 name: Regional Watch application source checks
 on:
   push:
-    branches: [refactor/regional-watch-modular-20261114, main]
+    branches: [refactor/regional-watch-modular-20261114, feature/integrated-data-quality-neon-20261115, release/regional-watch-architecture-20261115, main]
     # Data collectors commit JSON to main frequently. Never rebuild/redeploy for data-only commits.
-    paths: ['backend/**', 'frontend/**', 'shared/**', 'tests/**', '.github/workflows/regional-watch-app-check.yml']
+    paths: ['backend/**', 'frontend/**', 'shared/**', 'tests/**', 'scripts/audit_collector_cache.py', 'scripts/test_audit_collector_cache.py', 'scripts/test_p1_backup_contract.py', 'scripts/sync_collector_shadows.py', 'scripts/test_collector_shadow_pipeline.py', '.github/workflows/collector-shadow-sync.yml', 'storage/cloudflare/002_p1_translation_repair_backups.sql', 'storage/cloudflare/003_p1_translation_backup_capture.sql', '.github/workflows/regional-watch-app-check.yml']
   pull_request:
-    paths: ['backend/**', 'frontend/**', 'shared/**', 'tests/**', '.github/workflows/regional-watch-app-check.yml']
+    paths: ['backend/**', 'frontend/**', 'shared/**', 'tests/**', 'scripts/audit_collector_cache.py', 'scripts/test_audit_collector_cache.py', 'scripts/test_p1_backup_contract.py', 'scripts/sync_collector_shadows.py', 'scripts/test_collector_shadow_pipeline.py', '.github/workflows/collector-shadow-sync.yml', 'storage/cloudflare/002_p1_translation_repair_backups.sql', 'storage/cloudflare/003_p1_translation_backup_capture.sql', '.github/workflows/regional-watch-app-check.yml']
 permissions:
   contents: read
 jobs:
@@ -17,6 +17,19 @@ jobs:
         with:
           node-version: '22'
       - run: node --test tests/architecture/editor-modules.test.mjs
+      - name: Verify high-impact translation fidelity and article provenance
+        run: node --test tests/architecture/translation-semantics.test.mjs tests/architecture/news-localization-provenance.test.mjs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify Python mirror translations preserve conditionality
+        run: python -m unittest discover -s scripts -p 'test_translate_news_open_source.py' -v
+      - name: Validate read-only D1 parity reporter offline
+        run: python -m unittest scripts.test_audit_collector_cache -v
+      - name: Verify integrated eight-source shadow sync contract offline
+        run: python -m unittest scripts.test_collector_shadow_pipeline -v
+      - name: Test immutable production translation backup offline
+        run: python -m unittest scripts.test_p1_backup_contract -v
   frontend-source:
     runs-on: ubuntu-latest
     steps:
@@ -39,7 +52,8 @@ jobs:
       - run: node --test backend/monitor/tests/source-parity.test.mjs
       - run: |
           node backend/monitor/scripts/build.mjs
-          cmp backend/monitor/dist/worker.js baselines/cloudflare/2026-11-14/monitor-v47/worker.js
+          node --check backend/monitor/dist/worker.js
+          node --test tests/architecture/collector-cache.test.mjs
   modern-bundles:
     runs-on: ubuntu-latest
     steps:
@@ -137,14 +151,16 @@ jobs:
 
   pages-preview:
     name: Publish isolated Cloudflare Pages preview after all checks
-    if: github.event_name == 'push' && github.ref == 'refs/heads/refactor/regional-watch-modular-20261114'
+    if: >-
+      (github.event_name == 'push' && (github.ref == 'refs/heads/refactor/regional-watch-modular-20261114' || github.ref == 'refs/heads/feature/integrated-data-quality-neon-20261115' || github.ref == 'refs/heads/release/regional-watch-architecture-20261115'))
+      || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'release/regional-watch-architecture-20261115' && github.base_ref == 'main')
     needs: [editor-source, frontend-source, monitor-source, modern-bundles, pages-documents, pages-static, pages-routing, pages-overview, pages-data, pages-runtime]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: read
     concurrency:
-      group: regional-watch-pages-preview
+      group: regional-watch-pages-preview-${{ github.ref_name }}
       cancel-in-progress: true
     steps:
       - name: Download the already-verified Pages build
@@ -171,7 +187,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=regional-watch --branch=rw-modular-preview
+          command: pages deploy dist --project-name=regional-watch --branch=${{ (github.head_ref == 'release/regional-watch-architecture-20261115' || github.ref == 'refs/heads/release/regional-watch-architecture-20261115') && 'rw-architecture-preview' || (github.ref == 'refs/heads/feature/integrated-data-quality-neon-20261115' && 'rw-integrated-preview' || 'rw-modular-preview') }}
       - name: Verify deployed preview HTTP routes (no redirect loops)
         if: steps.cloudflare.outputs.ready == 'true'
         env:
@@ -213,11 +229,35 @@ jobs:
               fi
             fi
           done
+      - name: Cloudflare Pages preview API wiring smoke
+        if: steps.cloudflare.outputs.ready == 'true'
+        env:
+          DEPLOYMENT_URL: ${{ steps.pages-upload.outputs.deployment-url }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="${DEPLOYMENT_URL%/}"
+          for path in '/api/overview' '/api/data' '/api/news?lang=ru&limit=5' '/api/news?lang=he&limit=5'; do
+            status=000
+            # Bounded warm-edge retries only; no unbounded polling after failure.
+            for attempt in 1 2 3; do
+              status=$(curl --silent --show-error --max-time 20 --max-redirs 0 \
+                --output /tmp/rw-api-body --dump-header /tmp/rw-api-headers \
+                --write-out '%{http_code}' "$base$path") || status=000
+              echo "$path attempt $attempt => HTTP $status"
+              if [[ "$status" == "200" ]]; then break; fi
+              if [[ "$status" != "404" && "$status" != "503" && "$status" != "000" ]]; then break; fi
+              if [[ "$attempt" != "3" ]]; then sleep 2; fi
+            done
+            test "$status" = "200" || { echo "::error::Preview API wiring failure: $path"; exit 1; }
+            grep -qi '^content-type:.*application/json' /tmp/rw-api-headers
+            jq -e 'type == "object"' /tmp/rw-api-body >/dev/null
+          done
       - name: Record the exact tested source commit
         if: steps.cloudflare.outputs.ready == 'true'
         run: |
           echo "Preview release source: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
-          echo 'Preview branch: rw-modular-preview (production branch is main)' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Preview branch: rw-integrated-preview or rw-modular-preview (production branch remains main)' >> "$GITHUB_STEP_SUMMARY"
 
   pages-production:
     name: Publish Cloudflare Pages production only after main checks

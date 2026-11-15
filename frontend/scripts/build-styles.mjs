@@ -20,6 +20,7 @@ export function assembleStyles({includeRefinements=true}={}){
   css+=readFileSync(resolve(frontendRoot,'src/components/Header/Header.mobile.css'),'utf8');
   css+=readFileSync(resolve(frontendRoot,'src/components/NewsMasonry/NewsMasonry.layout.css'),'utf8');
   css+=readFileSync(resolve(frontendRoot,'src/components/Header/Header.status.css'),'utf8');
+  css+=readFileSync(resolve(frontendRoot,'src/components/Digest/Digest.qa.css'),'utf8');
  }
  return css;
 }

@@ -1,10 +1,11 @@
 import { json } from '../../api/json.js';
 import { get } from '../../network/http.js';
+import { readCollectorPair } from '../../mirrors/collector-cache.js';
 import { item } from '../../observations/item.js';
 export async function unosatAnalysis(env,slot){
   const root='https://raw.githubusercontent.com/ArrakturIL/regional-osint-feeds/main/data/';
   let doc,health;
-  try {[doc,health]=await Promise.all([get(root+'unosat-analysis.json','json'),get(root+'unosat-analysis-status.json','json')]);}
+  try {({data:doc,status:health}=await readCollectorPair(env,'unosat',root+'unosat-analysis.json',root+'unosat-analysis-status.json',{nowMs:slot,maxAgeMs:48*3600000}));}
   catch{throw Error('UNOSAT_mirror_unavailable')}
   if(doc?.schema_version!==1||doc.source!=='unosat_analysis'||
      !Array.isArray(doc.products)||doc.products.length>24||

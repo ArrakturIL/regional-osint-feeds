@@ -1,3 +1,4 @@
+import {relatedSeniorTarget, distinctNamedTargets, reportingClaim} from './claim-identity.mjs';
 // REGIONAL WATCH production event engine. No AI can certify a factual claim.
 export const FEEDS=[["BBC Middle East","https://feeds.bbci.co.uk/news/world/middle_east/rss.xml","bbc","en",4],["Times of Israel","https://www.timesofisrael.com/feed/","toi","en",4],["Jerusalem Post / Israel","https://www.jpost.com/rss/rssfeedsisraelnews.aspx","jpost","en",4],["Jerusalem Post / Iran","https://www.jpost.com/rss/rssfeedsiran","jpost","en",4],["Al Jazeera","https://www.aljazeera.com/xml/rss/all.xml","aljazeera","en",3],["Israel Hayom","https://www.israelhayom.co.il/rss.xml","israelhayom","he",4],["Maariv","https://www.maariv.co.il/Rss/RssChadashot","maariv","he",4],["Arutz Sheva","https://www.israelnationalnews.com/Rss.aspx?act=.1","arutzsheva","en",3],["JNS","https://www.jns.org/feed/","jns","en",3],["Al-Monitor","https://www.al-monitor.com/rss","almonitor","en",4],["France 24","https://www.france24.com/en/middle-east/rss","france24","en",4],["The Guardian","https://www.theguardian.com/world/israel/rss","guardian","en",3]];
 const META=new Map(FEEDS.map(f=>[f[0],{owner:f[2],language:f[3]}]));
@@ -62,7 +63,7 @@ export function analyze(a){
  const usOnly=region.size===1&&region.has('us')&&!detail.size&&!/\b(?:middle east|persian gulf|strait of hormuz)\b/iu.test(all);
  const policy=(!region.size&&!detail.size)||usOnly?'hold_irrelevant':
    (type!=='news'&&type!=='roundup')?'hold_nonnews':score<3?'hold_low_signal':score<4?'review':'candidate';
- return {...a,title,summary,topic,type,score,policy,region,detail,sub,words:tokens(title),time:Number(a.published_ms||0),
+ return {...a,...reportingClaim({source:a.source,headline:title,summary}),title,summary,topic,type,score,policy,region,detail,sub,words:tokens(title),time:Number(a.published_ms||0),
    owner:publisher(a.source),lang:language(a.source),claimed:hasClaim(all)};
 }
 
@@ -79,7 +80,7 @@ function signals(a){
 }
 function incompatible(a,b){
  const va=overlap(a.detail,VENUES),vb=overlap(b.detail,VENUES);
- return Boolean(va.length&&vb.length&&!va.some(x=>vb.includes(x)))||signals(a).sequel!==signals(b).sequel;
+ return Boolean(va.length&&vb.length&&!va.some(x=>vb.includes(x)))||signals(a).sequel!==signals(b).sequel||distinctNamedTargets(a,b);
 }
 function namedFatality(a){
  // Match the grammatical subject of a death report, not any name mentioned
@@ -99,6 +100,7 @@ export function sameEvent(a,b){
  const region=overlap(a.region,b.region).length>0;
  const common=overlap(a.words,b.words).length,union=new Set([...a.words,...b.words]).size,ratio=union?common/union:0;
  if(a.topic==='strike'){
+  if(relatedSeniorTarget(a,b,hours)&&region)return{ok:true,why:'shared_senior_target'};
   if(hours>24)return{ok:false,why:'strike_window'};
   const victim=namedFatality(a);
   if(region&&victim&&victim===namedFatality(b))return{ok:true,why:'same_named_fatality'};
@@ -209,9 +211,9 @@ export async function reconcile(db,now=Date.now()){
   const best=[...members].sort((a,b)=>b.score-a.score||representativeQuality(b)-representativeQuality(a)||b.time-a.time)[0];
   const ownerCount=new Set(members.map(x=>x.owner)).size;
   const originCount=new Set(members.map(origin)).size;
-  const sources=members.map(x=>({article_id:x.id,source:x.source,publisher:x.owner,language:x.lang,url:x.url,published_ms:x.time}));
+  const sources=members.map(x=>({article_id:x.id,source:x.source,publisher:x.owner,language:x.lang,url:x.url,published_ms:x.time,original_headline:x.title,source_assertion:x.claim_about_death,claimed_by:x.claimed_by}));
   const signature=members.map(x=>x.id).sort().join('|');
-  batch.push(db.prepare("INSERT INTO news_event_groups(event_id,representative_id,topic,priority,last_seen_ms,member_count,source_count,origin_count,verification_status,reason_codes,sources_json,signature,updated_ms) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(event_id) DO UPDATE SET representative_id=excluded.representative_id,topic=excluded.topic,priority=excluded.priority,last_seen_ms=excluded.last_seen_ms,member_count=excluded.member_count,source_count=excluded.source_count,origin_count=excluded.origin_count,verification_status=excluded.verification_status,reason_codes=excluded.reason_codes,sources_json=excluded.sources_json,signature=excluded.signature,updated_ms=excluded.updated_ms WHERE news_event_groups.signature!=excluded.signature OR news_event_groups.priority!=excluded.priority OR news_event_groups.representative_id!=excluded.representative_id")
+  batch.push(db.prepare("INSERT INTO news_event_groups(event_id,representative_id,topic,priority,last_seen_ms,member_count,source_count,origin_count,verification_status,reason_codes,sources_json,signature,updated_ms) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(event_id) DO UPDATE SET representative_id=excluded.representative_id,topic=excluded.topic,priority=excluded.priority,last_seen_ms=excluded.last_seen_ms,member_count=excluded.member_count,source_count=excluded.source_count,origin_count=excluded.origin_count,verification_status=excluded.verification_status,reason_codes=excluded.reason_codes,sources_json=excluded.sources_json,signature=excluded.signature,updated_ms=excluded.updated_ms WHERE news_event_groups.signature!=excluded.signature OR news_event_groups.priority!=excluded.priority OR news_event_groups.representative_id!=excluded.representative_id OR news_event_groups.sources_json!=excluded.sources_json")
    .bind(eventId,best.id,best.topic,Math.max(...members.map(m=>m.score)),Math.max(...members.map(m=>m.time)),members.length,ownerCount,originCount,
    originCount>1?'multi_outlet_reporting':'single_origin_reporting',JSON.stringify([...new Set(g.reasons)]),JSON.stringify(sources),signature,now));
   for(const m of members)batch.push(db.prepare("INSERT INTO news_event_members(article_id,event_id,updated_ms) VALUES(?,?,?) ON CONFLICT(article_id) DO UPDATE SET event_id=excluded.event_id,updated_ms=excluded.updated_ms WHERE news_event_members.event_id!=excluded.event_id").bind(m.id,eventId,now));

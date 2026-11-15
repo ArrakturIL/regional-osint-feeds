@@ -2,6 +2,7 @@ name: Refresh official MARAD maritime advisories
 
 on:
   push:
+    branches: [main]
     paths:
       - "scripts/collect_marad.py"
       - ".github/workflows/marad.yml"
@@ -26,7 +27,40 @@ jobs:
           persist-credentials: true
       - name: Read public MARAD advisories
         run: python3 scripts/collect_marad.py
+      - name: Shadow-write validated marad mirror to Neon
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          if [ -z "$NEON_DATABASE_URL" ]; then
+            echo "Neon shadow skipped: no configured secret; GitHub remains active"
+            exit 0
+          fi
+          if ! python -m pip install --disable-pip-version-check "psycopg[binary]>=3.2,<4"; then
+            echo "Neon shadow dependency unavailable; GitHub remains active"
+            exit 0
+          fi
+          python -m scripts.publish_neon_mirror --source marad --mode shadow
+      - name: Sync verified marad cache from Neon to private D1
+        id: neon_d1
+        continue-on-error: true
+        # Source-by-source cutover; empty repo variable means NO production D1 write.
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && contains(format(',{0},', vars.REGIONAL_NEON_D1_SOURCES), ',marad,')
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          CLOUDFLARE_D1_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          if [ -z "${NEON_DATABASE_URL:-}" ] || [ -z "${CLOUDFLARE_D1_API_TOKEN:-}" ] || [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "D1 cache selected but scoped secrets are missing; no legacy commit disabled"
+            exit 1
+          fi
+          python -m pip install --disable-pip-version-check "psycopg[binary]>=3.2,<4"
+          python -m scripts.publish_neon_mirror --source marad --mode required
+          python -m scripts.neon_to_d1 --source marad --init-table
       - name: Publish changed official advisories or health heartbeat
+        if: success() && !(contains(format(',{0},', vars.REGIONAL_NEON_PRIMARY_SOURCES), ',marad,') && steps.neon_d1.outcome == 'success')
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -38,3 +72,8 @@ jobs:
           else
             echo "No data or health change to commit"
           fi
+      - name: Signal Neon primary failure after attempting Legacy GitHub fallback
+        if: always() && contains(format(',{0},', vars.REGIONAL_NEON_PRIMARY_SOURCES), ',marad,') && steps.neon_d1.outcome == 'failure'
+        run: |
+          echo "::error::Neon D1 primary sync failed for marad; Legacy GitHub data writeback was attempted"
+          exit 1

@@ -1,16 +1,14 @@
 import { json } from '../../api/json.js';
 import { HOUR, MINUTE } from '../../config/constants.js';
 import { get } from '../../network/http.js';
+import { readCollectorPair } from '../../mirrors/collector-cache.js';
 import { item } from '../../observations/item.js';
 export const CENTCOM_DVIDS_FEED = "https://www.dvidshub.net/rss/unit/72";
 export const CENTCOM_BRIDGE_NEWS = "https://raw.githubusercontent.com/ArrakturIL/regional-osint-feeds/main/data/centcom-news.json";
 export const CENTCOM_BRIDGE_STATUS = "https://raw.githubusercontent.com/ArrakturIL/regional-osint-feeds/main/data/centcom-status.json";
 
 export async function centcomDvids(env, slot) {
-  const [snapshot, heartbeat] = await Promise.all([
-    get(CENTCOM_BRIDGE_NEWS, "json"),
-    get(CENTCOM_BRIDGE_STATUS, "json"),
-  ]);
+  const {data:snapshot,status:heartbeat}=await readCollectorPair(env,'centcom',CENTCOM_BRIDGE_NEWS,CENTCOM_BRIDGE_STATUS,{nowMs:slot,maxAgeMs:6*HOUR});
   if (!snapshot || snapshot.source !== "centcom_dvids"
       || snapshot.source_feed !== CENTCOM_DVIDS_FEED
       || !Array.isArray(snapshot.items)

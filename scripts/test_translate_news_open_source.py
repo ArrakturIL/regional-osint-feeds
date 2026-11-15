@@ -66,4 +66,31 @@ class FreeTranslationTests(unittest.TestCase):
         self.assertEqual(mirror["quality"]["rejected"],1)
         self.assertEqual(mirror["items"],[])
 
+
+    def test_marine_mine_collision_never_becomes_tanker_attack_or_mining_facility(self):
+        src="Two tankers strike a naval mine and catch fire"
+        self.assertFalse(valid(src,"Два танкера нападают на мины и горят","ru"))
+        self.assertFalse(valid(src,"שתי מכליות תקפו מכרות ועלו באש","he"))
+        self.assertTrue(valid(src,"Два танкера столкнулись с морской миной и загорелись","ru"))
+        self.assertTrue(valid(src,"שתי מכליות פגעו במוקש ימי ועלו באש","he"))
+
+    def test_barring_is_a_condition_and_may_is_uncertainty(self):
+        src="Trump may postpone strikes on Iran barring new provocations"
+        self.assertFalse(valid(src,"Трамп запретил провокации и отложил удары по Ирану","ru"))
+        self.assertFalse(valid(src,"טראמפ אסר פרובוקציות חדשות ודחה תקיפות באיראן","he"))
+        self.assertTrue(valid(src,"Трамп может отложить удары по Ирану, если не будет новых провокаций","ru"))
+        self.assertTrue(valid(src,"טראמפ עשוי לדחות תקיפות באיראן אם לא יהיו פרובוקציות חדשות","he"))
+
+    def test_hebrew_actor_swap_from_feared_us_strike_is_quarantined(self):
+        src="Israel fears surprise US strike on Iran"
+        self.assertFalse(valid(src,"ישראל חוששת להפתיע את ארה״ב במכה באיראן","he"))
+        self.assertTrue(valid(src,"ישראל חוששת מתקיפה פתאומית של ארה״ב באיראן","he"))
+
+    def test_actual_reuters_may_hold_off_remains_uncertain_in_both_languages(self):
+        src = "Trump tells advisers he may hold off on Iran attacks barring new provocations"
+        self.assertFalse(valid(src, "Трамп отложил удары по Ирану, если не будет новых провокаций", "ru"))
+        self.assertFalse(valid(src, "טראמפ דחה תקיפות באיראן אם לא יהיו פרובוקציות חדשות", "he"))
+        self.assertTrue(valid(src, "Трамп может отложить удары по Ирану, если не будет новых провокаций", "ru"))
+        self.assertTrue(valid(src, "טראמפ עשוי לדחות תקיפות באיראן אם לא יהיו פרובוקציות חדשות", "he"))
+
 if __name__=="__main__":unittest.main()
