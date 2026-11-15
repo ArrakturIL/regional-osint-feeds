@@ -28,6 +28,8 @@ on:
       - "scripts/translation_semantics.py"
       - "scripts/test_translate_news_open_source.py"
       - "backend/editor/src/translations/**"
+      - "backend/editor/src/mirrors/**"
+      - "tests/architecture/editor-mirror-cache.test.mjs"
       - "backend/editor/src/news/**"
       - "tests/architecture/news-quality.test.mjs"
       - "tests/architecture/news-localization-provenance.test.mjs"
@@ -62,6 +64,8 @@ on:
       - "scripts/translation_semantics.py"
       - "scripts/test_translate_news_open_source.py"
       - "backend/editor/src/translations/**"
+      - "backend/editor/src/mirrors/**"
+      - "tests/architecture/editor-mirror-cache.test.mjs"
       - "backend/editor/src/news/**"
       - "tests/architecture/news-quality.test.mjs"
       - "tests/architecture/news-localization-provenance.test.mjs"
@@ -99,6 +103,8 @@ jobs:
         run: node --test tests/architecture/news-quality.test.mjs tests/architecture/news-localization-provenance.test.mjs
       - name: D1 cache and safe fallback regression tests
         run: node --test tests/architecture/collector-cache.test.mjs
+      - name: Editor CORE_DB cache and GitHub fallback regression
+        run: node --test tests/architecture/editor-mirror-cache.test.mjs
       - name: Semantic translation regression checks
         run: node --test tests/architecture/translation-semantics.test.mjs tests/architecture/editor-modules.test.mjs
 
