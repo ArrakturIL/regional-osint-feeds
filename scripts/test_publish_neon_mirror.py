@@ -29,8 +29,10 @@ class FakeConnection:
         return False
     def execute(self, statement, parameters):
         self.statements.append((statement, parameters))
-        return FakeCursor((parameters[0], parameters[-1], parameters[3], parameters[4])
-                          if "INSERT" in statement and self.stored is None else self.stored)
+        if "INSERT" in statement and self.stored is None:
+            self.stored = (parameters[0], parameters[-1], parameters[3], parameters[4])
+            return FakeCursor(self.stored)
+        return FakeCursor(self.stored)
 
 
 NOW = datetime(2026, 11, 15, 3, 10, tzinfo=timezone.utc)
@@ -53,7 +55,7 @@ class TestPublisher(unittest.TestCase):
             result = publish_one("gdelt", self.root, "postgresql://hidden-secret",
                                  connector=lambda url: fake, now=NOW)
         self.assertEqual(result["result"], "written")
-        self.assertEqual(len(fake.statements), 1)
+        self.assertEqual(len(fake.statements), 2)
         self.assertIn("INSERT INTO", fake.statements[0][0])
         self.assertNotIn("hidden-secret", output.getvalue())
         self.assertIn("gdelt", output.getvalue())
