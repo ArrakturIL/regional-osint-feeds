@@ -20,7 +20,7 @@ test('CSS has component and page owners; original 550-line monolith is not autho
 test('modularized baseline preserves every original CSS byte and cascade ordering',()=>{
  const baseline=source('../baselines/cloudflare/2026-11-14/pages-0f39f36e/app.css');
  assert.equal(assembleStyles({includeRefinements:false}),baseline);
- assert.equal(assembleStyles(),baseline+refined+source('src/styles/document-shell.css'));
+ assert.equal(assembleStyles(),baseline+refined+source('src/styles/document-shell.css')+source('src/components/Header/Header.mobile.css'));
 });
 test('both locales share one explicit rhythm for main sections',()=>{
  assert.match(refined,/#overview \.rw-digest \+ \.section\s*\{/);
