@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 import sys
 
-from scripts.neon_mirror import load_snapshot, publish_snapshot, verify_snapshot
+from scripts.neon_mirror import load_snapshot, publish_snapshot, verify_snapshot, read_stored_snapshot
 
 
 def _open_connection(url: str):
@@ -39,7 +39,15 @@ def publish_one(
             parity = verify_snapshot(connection, snapshot)
             if not parity["match"]:
                 raise RuntimeError("Neon mirror parity mismatch after write")
-        elif result not in ("stale", "conflict"):
+        elif result == "stale":
+            # Ensure newer stored JSONB is authentic before preserving it.
+            stored = read_stored_snapshot(connection, snapshot.source_key)
+            if stored is None or stored.checked_at <= snapshot.checked_at:
+                raise RuntimeError("stale mirror without verified newer snapshot")
+        elif result == "conflict":
+            # An equal timestamp with divergent data must never look healthy.
+            raise RuntimeError("Neon mirror conflict at equal checked_at")
+        else:
             raise RuntimeError("unexpected Neon mirror result")
     summary = {
         "source": snapshot.source_key,
