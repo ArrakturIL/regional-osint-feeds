@@ -51,3 +51,16 @@ test('critical content metadata has minimum 12px-equivalent type without enlargi
  }
  assert.ok(refined.includes('font-size: 0.75rem;'),'content metadata should be at least 12px at default zoom');
 });
+
+test('eight RU/HE documents contain no duplicated inline CSS',()=>{
+ const shared=source('src/styles/document-shell.css');
+ assert.ok(shared.length>3000);
+ assert.ok(shared.includes('.rw-home-news-editorial'));
+ for(const lang of ['ru','he'])for(const page of ['home','events','data','analysts']){
+  const html=source('documents/'+lang+'/'+page+'.html');
+  assert.doesNotMatch(html,/<style(?:\s|>)/i,lang+'/'+page);
+  assert.ok(html.includes('/assets/app.css'));
+ }
+ const baseline=source('../baselines/cloudflare/2026-11-14/pages-0f39f36e/app.css');
+ assert.equal(assembleStyles(),baseline+refined+shared);
+});
