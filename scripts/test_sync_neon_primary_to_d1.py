@@ -185,6 +185,30 @@ class TestNeonPrimaryReplication(unittest.TestCase):
             emit_health_report(out["health"],out["health_summary"])
         self.assertIn("retained_age_minutes=",output.getvalue())
 
+    def test_future_dated_ok_snapshot_must_not_overwrite_verified_last_good(self):
+        hooks=self.hooks()
+        mirrored=[]
+        inspected=[]
+        future=datetime.now(timezone.utc)+timedelta(hours=2)
+        def reader(conn,key):
+            return SimpleNamespace(source_key=key,
+                checked_at=future if key=="gdelt" else datetime.now(timezone.utc),
+                status={"state":"ok"})
+        def mirror(conn,client,key):
+            mirrored.append(key)
+            return {"source":key,"result":"unchanged"}
+        def last_good(client,key):
+            inspected.append(key)
+            return {"checked_at_ms":int(datetime.now(timezone.utc).timestamp()*1000),
+                    "state":"ok"}
+        hooks.update(stored_reader=reader,mirror=mirror,last_good_checker=last_good)
+        out=execute_replica_sync("neon","account","token",**hooks)
+        self.assertNotIn("gdelt",mirrored,"future-dated cached data must not be written")
+        self.assertIn("gdelt",inspected,"existing last-good must be verified")
+        row=next(x for x in out["health"] if x["source"]=="gdelt")
+        self.assertEqual(row["health"],"source_unavailable")
+        self.assertEqual(row["replica_state"],"held_last_valid")
+
     def test_missing_credentials_never_contact_neon_or_cloudflare(self):
         with self.assertRaises(ValueError):
             execute_replica_sync('','account','token',**self.hooks())
