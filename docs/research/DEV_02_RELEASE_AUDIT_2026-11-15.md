@@ -27,7 +27,7 @@ Workers:
 
 - **RED 1:** [Actions #43763080780](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43763080780) — preview-проверка не выбрасывала исключение при совместных ресурсах (ожидаемый провал).
 - **RED 2:** [Actions #43763279324](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43763279324) — валидатор source contract игнорировал подмену имени Worker (ожидаемый провал).
-- **GREEN:** [Actions #43763365895](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43763365895) — **11/11 jobs SUCCESS** (в т.ч. Editor/Monitor/Pages/static/modern bundling и immutable release dry run); `pages-preview` и `release-production` **SKIPPED**. Последующая проверка порядка Preview шага выполняется в следующем CI PR #37.
+- **GREEN:** [Actions #43763365895](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43763365895) — исходные 11/11 jobs SUCCESS; затем добавлен тест правильного порядка Preview gate, в [#43763560098](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43763560098) найден конфликт имени переменной исключительно в тестовом JS. Исправлен, и **последний [Actions #43763796634](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43763796634) завершился 11/11 jobs SUCCESS, 0 failures; Preview и production jobs SKIPPED**. Сборка immutable release и dry-run Wrangler включены.
 - **Нет ни одной реальной попытки отправить preview:** новый вызов `preview-check` на Cloudflare с токеном через GitHub не запускался; поведение валидатора подтверждено offline fixtures, а наличие опасной реальной конфигурации — отдельным read-only Cloudflare API.
 
 ## Аудит legacy workflows
