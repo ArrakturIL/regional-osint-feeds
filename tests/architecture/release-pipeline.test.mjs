@@ -4,7 +4,7 @@ import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {buildManifest,verifyManifest} from '../../scripts/release/manifest.mjs';
-import {validateWorker,validatePages} from '../../scripts/release/cloudflare-gate.mjs';
+import {validateWorker,validatePages,main as cloudflareGate} from '../../scripts/release/cloudflare-gate.mjs';
 
 const root=resolve(new URL('../../',import.meta.url).pathname);
 const contract=JSON.parse(readFileSync(join(root,'deploy/release-contract.json'),'utf8'));
@@ -104,6 +104,82 @@ test('Pages preflight verifies that both service bindings resolve to correct Wor
  assert.doesNotThrow(()=>validatePages(contract.pages,fake));
  fake.deployment_configs.production.services.EDITOR.service='different-worker';
  assert.throws(()=>validatePages(contract.pages,fake),/EDITOR|service/i);
+});
+
+test('Cloudflare gate snapshots exact versions and rolls back changed components, never exposing tokens',async()=>{
+ const dir=mkdtempSync(join(tmpdir(),'rw-release-baseline-'));
+ const filename=join(dir,'baseline.json');
+ const oldFetch=globalThis.fetch;
+ const beforeEnv={...process.env};
+ const old='11111111-1111-4111-8111-111111111111';
+ const current='22222222-2222-4222-8222-222222222222';
+ const oldPages='33333333-3333-4333-8333-333333333333';
+ const currentPages='44444444-4444-4444-8444-444444444444';
+ let released=false;
+ const posts=[];
+ process.env.CLOUDFLARE_ACCOUNT_ID='a'.repeat(32);
+ process.env.CLOUDFLARE_API_TOKEN='pages-topsecret';
+ process.env.CLOUDFLARE_WORKERS_API_TOKEN='workers-topsecret';
+ function settingsFor(w){
+   return {compatibility_date:'2026-11-10',bindings:[
+     ...w.d1.map(x=>({name:x.binding,type:'d1',id:x.database_id})),
+     ...w.secrets.map(name=>({name,type:'secret_text'})),
+     ...w.vars.map(name=>({name,type:'plain_text'})),
+     ...(w.ai?[{name:w.ai,type:'ai'}]:[])
+   ]};
+ }
+ globalThis.fetch=async (url,opts)=>{
+   const path=new URL(url).pathname;
+   let result;
+   if(opts?.method==='POST'){
+     posts.push({path,body:JSON.parse(opts.body)});
+     result={};
+   }else if(path.endsWith('/settings')){
+     const w=contract.workers.find(w=>path.includes('/'+w.name+'/'));
+     result=settingsFor(w);
+   }else if(path.endsWith('/schedules')){
+     const w=contract.workers.find(w=>path.includes('/'+w.name+'/'));
+     result={schedules:[{cron:w.cron}]};
+   }else if(path.includes('/workers/scripts/')&&path.endsWith('/deployments')){
+     result={deployments:[{versions:[{version_id:released?current:old,percentage:100}]}]};
+   }else if(path.endsWith('/pages/projects/regional-watch')){
+     result={production_branch:'main',deployment_configs:{production:{
+       services:Object.fromEntries(contract.pages.services.map(s=>[s.binding,{service:s.service,environment:'production'}])),
+       d1_databases:Object.fromEntries(contract.pages.d1.map(d=>[d.binding,{id:d.database_id}]))
+     }}};
+   }else if(path.endsWith('/pages/projects/regional-watch/deployments')){
+     result=[{id:released?currentPages:oldPages,environment:'production',latest_stage:{status:'success'}}];
+   }else{
+     throw Error('Unexpected Cloudflare endpoint: '+path);
+   }
+   return {ok:true,status:200,json:async()=>({success:true,result})};
+ };
+ try{
+   await cloudflareGate(['capture',goodSha,filename]);
+   const baseline=JSON.parse(readFileSync(filename,'utf8'));
+   assert.equal(baseline.source_sha,goodSha);
+   assert.equal(baseline.workers.length,2);
+   assert.deepEqual(baseline.workers.map(x=>x.version_id),[old,old]);
+   assert.equal(baseline.pages.deployment_id,oldPages);
+   assert.ok(!readFileSync(filename,'utf8').includes('topsecret'));
+   released=true;
+   await cloudflareGate(['rollback',goodSha,filename]);
+   const workerPosts=posts.filter(x=>x.path.includes('/workers/scripts/'));
+   const pagesPosts=posts.filter(x=>x.path.includes('/pages/projects/'));
+   assert.equal(workerPosts.length,2);
+   assert.equal(pagesPosts.length,1);
+   assert.ok(workerPosts.every(x=>x.body.versions[0].version_id===old&&x.body.versions[0].percentage===100));
+   assert.match(pagesPosts[0].path,/33333333-3333-4333-8333-333333333333\/rollback/);
+   posts.length=0;
+   await assert.rejects(cloudflareGate(['rollback','a'.repeat(40),filename]),/source SHA|identity/i);
+   assert.equal(posts.length,0);
+ }finally{
+   globalThis.fetch=oldFetch;
+   for(const key of ['CLOUDFLARE_ACCOUNT_ID','CLOUDFLARE_API_TOKEN','CLOUDFLARE_WORKERS_API_TOKEN']){
+     if(key in beforeEnv)process.env[key]=beforeEnv[key];else delete process.env[key];
+   }
+   rmSync(dir,{recursive:true,force:true});
+ }
 });
 
 test('production publish workflow cannot deploy Pages independently and requires immutable unified artifact',()=>{
