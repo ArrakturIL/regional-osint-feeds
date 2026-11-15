@@ -151,7 +151,9 @@ jobs:
 
   pages-preview:
     name: Publish isolated Cloudflare Pages preview after all checks
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/refactor/regional-watch-modular-20261114' || github.ref == 'refs/heads/feature/integrated-data-quality-neon-20261115' || github.ref == 'refs/heads/release/regional-watch-architecture-20261115')
+    if: >-
+      (github.event_name == 'push' && (github.ref == 'refs/heads/refactor/regional-watch-modular-20261114' || github.ref == 'refs/heads/feature/integrated-data-quality-neon-20261115' || github.ref == 'refs/heads/release/regional-watch-architecture-20261115'))
+      || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'release/regional-watch-architecture-20261115' && github.base_ref == 'main')
     needs: [editor-source, frontend-source, monitor-source, modern-bundles, pages-documents, pages-static, pages-routing, pages-overview, pages-data, pages-runtime]
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -185,7 +187,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=regional-watch --branch=${{ github.ref == 'refs/heads/release/regional-watch-architecture-20261115' && 'rw-architecture-preview' || (github.ref == 'refs/heads/feature/integrated-data-quality-neon-20261115' && 'rw-integrated-preview' || 'rw-modular-preview') }}
+          command: pages deploy dist --project-name=regional-watch --branch=${{ (github.head_ref == 'release/regional-watch-architecture-20261115' || github.ref == 'refs/heads/release/regional-watch-architecture-20261115') && 'rw-architecture-preview' || (github.ref == 'refs/heads/feature/integrated-data-quality-neon-20261115' && 'rw-integrated-preview' || 'rw-modular-preview') }}
       - name: Verify deployed preview HTTP routes (no redirect loops)
         if: steps.cloudflare.outputs.ready == 'true'
         env:
