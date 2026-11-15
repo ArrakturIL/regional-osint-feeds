@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readCollectorPair,readD1CollectorSnapshot} from '../../backend/monitor/src/mirrors/collector-cache.js';
+import {gdeltContext} from '../../backend/monitor/src/collectors/media/gdelt.js';
 
 const at=Date.parse('2026-11-15T12:00:00Z');
 const data={source:'gdelt_context',latest_batch:'20261115120000',sample:[]};
@@ -100,4 +101,22 @@ test('D1 lookup does not require a Neon connection string in Cloudflare Worker',
  assert.equal(env.NEON_DATABASE_URL,undefined);
  assert.deepEqual((await readD1CollectorSnapshot(env,'gdelt')).data,data);
  assert.equal(calls.sql.length,1);
+});
+
+test('actual Monitor GDELT collector reads D1 cache when source flag enables Neon mirror',async()=>{
+ const snapshot={...data,created_at:status.checked_at,batches:[data.latest_batch],
+  coded_rows_total:2,coded_rows_matched:1,by_action_country:{IR:1},
+  by_event_root:{"18":1},distinct_publisher_domains:1};
+ const stored={...row(),data_json:JSON.stringify(snapshot),data_sha256:hash(snapshot)};
+ const {env,calls}=fixtureEnv(stored);
+ const originalFetch=globalThis.fetch;
+ globalThis.fetch=async()=>{throw Error('GDELT must not fetch GitHub while D1 cache is healthy')};
+ try{
+  const result=await gdeltContext(env,at+60000);
+  assert.equal(result.entries.length,1);
+  assert.equal(result.entries[0].payload.source_type,'machine_coded_news_context');
+  assert.equal(calls.sql.length,1);
+ }finally{
+  globalThis.fetch=originalFetch;
+ }
 });
