@@ -328,19 +328,18 @@ jobs:
         env:
           SOURCE_SHA: ${{ github.sha }}
         run: node scripts/release/verify.mjs "$SOURCE_SHA"
-      - name: Require BOTH scoped Cloudflare tokens before changing any production service
+      - name: Require existing Pages and infrastructure Cloudflare credentials before changing any production service
         env:
           PAGES_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          WORKERS_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }}
-          D1_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
+          INFRA_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
           CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -euo pipefail
-          if [[ -z "$PAGES_TOKEN" || -z "$WORKERS_TOKEN" || -z "$D1_TOKEN" || -z "$CF_ACCOUNT" ]]; then
-            echo "::error::Coordinated publish blocked: Pages, Workers Editor and read-only D1 access are all required"
+          if [[ -z "$PAGES_TOKEN" || -z "$INFRA_TOKEN" || -z "$CF_ACCOUNT" ]]; then
+            echo "::error::Coordinated publish blocked: Pages and existing D1+Workers Admin infrastructure tokens are both required"
             exit 1
           fi
-          echo 'All scoped release credentials configured; beginning read-only preflight'
+          echo 'Existing Pages and D1+Workers Admin credentials provided; beginning read-only preflight'
       - name: Verify live D1 schema is compatible (read-only; never execute migrations)
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -350,27 +349,27 @@ jobs:
         env:
           SOURCE_SHA: ${{ github.sha }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_WORKERS_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }}
+          CLOUDFLARE_D1_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           BASELINE: ${{ runner.temp }}/rw-release-baseline.json
         run: node scripts/release/cloudflare-gate.mjs capture "$SOURCE_SHA" "$BASELINE"
       - name: Deploy tested Editor module (no rebuild; preserve secrets and vars)
         uses: cloudflare/wrangler-action@v4
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }}
+          apiToken: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --config release/config/editor.json --no-bundle
       - name: Deploy tested Monitor module (no rebuild; preserve secrets and vars)
         uses: cloudflare/wrangler-action@v4
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }}
+          apiToken: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --config release/config/monitor.json --no-bundle
       - name: Check that published Workers preserved cron and all private bindings
         env:
           SOURCE_SHA: ${{ github.sha }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_WORKERS_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }}
+          CLOUDFLARE_D1_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           BASELINE: ${{ runner.temp }}/rw-release-baseline.json
         run: node scripts/release/cloudflare-gate.mjs postcheck "$SOURCE_SHA" "$BASELINE"
@@ -399,7 +398,7 @@ jobs:
         env:
           SOURCE_SHA: ${{ github.sha }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_WORKERS_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }}
+          CLOUDFLARE_D1_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           BASELINE: ${{ runner.temp }}/rw-release-baseline.json
         run: node scripts/release/cloudflare-gate.mjs postcheck "$SOURCE_SHA" "$BASELINE"
@@ -407,7 +406,7 @@ jobs:
         env:
           SOURCE_SHA: ${{ github.sha }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_WORKERS_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }}
+          CLOUDFLARE_D1_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           BASELINE: ${{ runner.temp }}/rw-release-baseline.json
           RECEIPT: ${{ runner.temp }}/rw-release-receipt.json
@@ -424,7 +423,7 @@ jobs:
         env:
           SOURCE_SHA: ${{ github.sha }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_WORKERS_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }}
+          CLOUDFLARE_D1_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           BASELINE: ${{ runner.temp }}/rw-release-baseline.json
         run: |
