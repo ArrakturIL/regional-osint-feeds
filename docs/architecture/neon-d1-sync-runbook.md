@@ -7,17 +7,19 @@ GitHub Actions collects public source information, verifies it and writes to Neo
 
 The additive D1 schema lives at storage/cloudflare/001_regional_collector_cache.sql. scripts/neon_to_d1.py validates Neon JSONB against SHA256 and checked_at; D1 update is an atomic newer-only upsert followed by an independent data/status/digest readback. Missing, corrupted, or divergent data fail closed. Repository code, release logic, tests and docs remain in GitHub.
 
-## Confirmed external blocker
-The existing GitHub secret CLOUDFLARE_API_TOKEN works for Pages but a real GitHub Actions call to the D1 API returned HTTP 401. It must not receive more permissions. A dedicated Cloudflare API token scoped to this account with Account D1 Edit access must be stored in the GitHub repository Actions secret CLOUDFLARE_D1_API_TOKEN. Never paste tokens or Postgres URLs into chat or source.
-
-Both NEON_DATABASE_URL and CLOUDFLARE_ACCOUNT_ID are already confirmed GitHub Actions secrets. The read-only D1 scope diagnostic safely skips until a dedicated token exists.
+## Verified credentials and one-off acceptance (15 Nov 2026)
+- The GitHub secret CLOUDFLARE_D1_API_TOKEN is configured and independently verified in GitHub Actions with D1 access (run 43719157091). Existing Pages token remains separate.
+- Neon to D1 first GDELT backfill succeeded in run 43719275885. The remaining seven source snapshots were synchronized and read back in run 43719906721. All eight cache rows were independently checked via the Cloudflare API.
+- A genuinely fresh GDELT export was fetched, normalized, published to Neon and projected into D1 **without any GitHub JSON commit** (run 43720072599). Timestamp 2026-11-15T13:39:17Z; matching hash 7df7557d55f4 from both DBs. Coverage partial: five successful batches, three missing; preserved state=partial. This is not independent corroboration of real-world incidents.
+- The one-time acceptance jobs were removed from the ongoing CI workflow after they succeeded; audit their immutable GitHub Actions runs above.
+- Regular scheduled collector sync is **not enabled yet**, since the storage workflow changes remain on the feature branch, GitHub Actions variable REGIONAL_NEON_D1_SOURCES is not set, and Worker read feature flags are off.
 
 ## Source-by-source rollout, no global switch
-1. Add dedicated CLOUDFLARE_D1_API_TOKEN, validate D1 access read-only in CI.
-2. Confirm schema creation is additive; initialize private cache with strict script and verify readback.
+1. [DONE] Dedicated D1 token validated; additive table and 8 seed rows verified; fresh GDELT cycle exercised.
+2. [NEXT] Observe recurring scheduled writes after the verified storage workflows are introduced to main under the appropriate release gate, keeping GitHub JSON fallback.
 3. Select only the first source by setting GitHub Actions variable REGIONAL_NEON_D1_SOURCES to gdelt. Empty/unset means no D1 sync. The eight source workflows all have source-gated sync steps, but existing GitHub writebacks still run.
 4. Deploy tested Monitor code with a D1 read feature flag COLLECTOR_CACHE_SOURCES=gdelt only in a controlled QA environment. The adapter verifies SHA256, checked_at and status, and falls back to GitHub on missing, corrupt or stale cache. The production binding is currently unset.
-5. Confirm real fresh scheduled updates, time-and-hash parity and failure behavior. Add the other Monitor sources incrementally: marad, centcom, satellite, copernicus, unosat. The two Editor sources, analysts and news_translation, still need their own CORE_DB read adapters before read cutover.
+5. Confirm real fresh scheduled updates, time-and-hash parity and failure behavior. Add the other Monitor sources incrementally: marad, centcom, satellite, copernicus, unosat. The two Editor sources, analysts and news_translation, now have a gated CORE_DB reader under backend/editor/src/mirrors/collector-cache.mjs; release/deploy and live reader parity are still pending.
 6. Only after server-side read parity, separately disable each corresponding GitHub JSON writeback with an independent confirmed cutover gate. Do not disable eight writebacks in one edit.
 7. Roll back reader sources to GitHub by clearing COLLECTOR_CACHE_SOURCES; stop D1 sync by clearing REGIONAL_NEON_D1_SOURCES; preserve Neon and historical GitHub data.
 
@@ -27,6 +29,9 @@ Do not make D1 write calls on shared production/preview DB merely to satisfy UI 
 - GitHub private Neon connection verification: https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43715836021
 - Eight actual source JSONB round trips: https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43716247457
 - D1 sync module, secure token gate and eight source workflow checks: https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43717841032
-- Live D1 API token test: HTTP 401 with the existing Pages token; use a different scoped D1 token.
+- Dedicated D1 token verified: https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43719157091
+- Initial GDELT and remaining seven-source cache writes: https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43719275885 and https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43719906721
+- Real GDELT fresh cycle (partial coverage, safe attribution): https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43720072599
+- Editor cache reader tests and full application check: https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43719783495 and https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43719783483
 
 Never claim migration complete while GitHub continues to receive JSON commits.

@@ -57,3 +57,12 @@ Neon Free cost is bounded; do not query the database separately for each public 
 - Editor CORE_DB shares the Monitor D1 binding; Editor analysts/news_translation D1 reader still needs implementation.
 - Rollout and rollback guide: docs/architecture/neon-d1-sync-runbook.md.
 - The only authorized next live step is adding the dedicated restricted D1 token and verifying access; no main merge or writeback cutover without end-to-end QA.
+
+## Verified acceptance milestone (2026-11-15 13:39 UTC)
+- Secret `CLOUDFLARE_D1_API_TOKEN` configured and read access verified: https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43719157091.
+- Strict GitHub Actions GDELT Neon→D1 acceptance succeeded: https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43719275885.
+- Remaining seven source cache pairs seeded and checked: https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43719906721. Connected Cloudflare tool independently confirmed eight source rows (analysts, centcom, copernicus, gdelt, marad, news_translation, satellite, unosat).
+- REAL GDELT polling, no git push: https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43720072599. Checked 2026-11-15 13:39:17 UTC; 125 GDELT machine-coded entries, five of eight requested export batches succeeded, three missing; `state=partial`. Both Neon & D1 have hash prefix `7df7557d55f4` and matching timestamp. No verified incidents are inferred from these signals.
+- Editor analyst + news translation cache readers added under `backend/editor/src/mirrors/collector-cache.mjs`, source-gated by `REGIONAL_EDITOR_CACHE_SOURCES` (off unless configured); fallback to GitHub, with SHA/time checks on `CORE_DB`. Regression and full app CI green: https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43719783495 and https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43719783483.
+- Temporary acceptance jobs were removed from `.github/workflows/integrated-data-check.yml` after verification. Current code still on feature branch. **Regular scheduled mirroring and read cutover are not live**; `main`, Pages, Monitor and Editor production deployments and GitHub legacy data commits remain unchanged.
+- Next: establish recurring shadow mirroring with a feature-branch-safe release path; confirm multiple distinct source cycles; controlled Worker read flag in QA, then per-source GitHub JSON writeback deactivation. Preserve rollback.
