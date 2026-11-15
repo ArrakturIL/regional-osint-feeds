@@ -1,7 +1,7 @@
 name: Regional Watch application source checks
 on:
   push:
-    branches: [refactor/regional-watch-modular-20261114, main]
+    branches: [refactor/regional-watch-modular-20261114, feature/integrated-data-quality-neon-20261115, main]
     # Data collectors commit JSON to main frequently. Never rebuild/redeploy for data-only commits.
     paths: ['backend/**', 'frontend/**', 'shared/**', 'tests/**', '.github/workflows/regional-watch-app-check.yml']
   pull_request:
@@ -137,7 +137,7 @@ jobs:
 
   pages-preview:
     name: Publish isolated Cloudflare Pages preview after all checks
-    if: github.event_name == 'push' && github.ref == 'refs/heads/refactor/regional-watch-modular-20261114'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/refactor/regional-watch-modular-20261114' || github.ref == 'refs/heads/feature/integrated-data-quality-neon-20261115')
     needs: [editor-source, frontend-source, monitor-source, modern-bundles, pages-documents, pages-static, pages-routing, pages-overview, pages-data, pages-runtime]
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -171,7 +171,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=regional-watch --branch=rw-modular-preview
+          command: pages deploy dist --project-name=regional-watch --branch=${{ github.ref == 'refs/heads/feature/integrated-data-quality-neon-20261115' && 'rw-integrated-preview' || 'rw-modular-preview' }}
       - name: Verify deployed preview HTTP routes (no redirect loops)
         if: steps.cloudflare.outputs.ready == 'true'
         env:
@@ -217,7 +217,7 @@ jobs:
         if: steps.cloudflare.outputs.ready == 'true'
         run: |
           echo "Preview release source: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
-          echo 'Preview branch: rw-modular-preview (production branch is main)' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Preview branch: rw-integrated-preview or rw-modular-preview (production branch remains main)' >> "$GITHUB_STEP_SUMMARY"
 
   pages-production:
     name: Publish Cloudflare Pages production only after main checks
