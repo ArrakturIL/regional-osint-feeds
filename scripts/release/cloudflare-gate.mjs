@@ -21,6 +21,10 @@ export function validateWorker(worker,settings,schedules){
  need(crons.length===1&&crons[0]===worker.cron,'Worker '+worker.key+' cron schedule');
  need(settings.compatibility_date==='2026-11-10','Worker '+worker.key+' compatibility_date');
 }
+export function validateSubdomain(subdomain,worker){
+ need(subdomain?.enabled===true,'Worker '+worker.name+' workers.dev availability');
+ need(subdomain.previews_enabled===false,'Worker '+worker.name+' preview URLs must be disabled');
+}
 export function validatePages(pages,project){
  need(project?.production_branch===pages.production_branch,'Pages production branch');
  const settings=project?.deployment_configs?.production;
@@ -47,6 +51,7 @@ async function api(key,path,method='GET',body){
  return j.result;
 }
 const paths=name=>({
+ subdomain:'/workers/scripts/'+encodeURIComponent(name)+'/subdomain',
  settings:'/workers/scripts/'+encodeURIComponent(name)+'/settings',
  schedules:'/workers/scripts/'+encodeURIComponent(name)+'/schedules',
  deployments:'/workers/scripts/'+encodeURIComponent(name)+'/deployments'
@@ -59,13 +64,17 @@ function latestVersion(deployments){
 }
 async function workerState(w,check=true){
  const path=paths(w.name);
- const [settings,schedules,deployments]=await Promise.all([
+ const [settings,schedules,deployments,subdomain]=await Promise.all([
    api('CLOUDFLARE_D1_API_TOKEN',path.settings),
    api('CLOUDFLARE_D1_API_TOKEN',path.schedules),
-   api('CLOUDFLARE_D1_API_TOKEN',path.deployments)
+   api('CLOUDFLARE_D1_API_TOKEN',path.deployments),
+   api('CLOUDFLARE_D1_API_TOKEN',path.subdomain)
  ]);
- if(check)validateWorker(w,settings,schedules.schedules);
- return {key:w.key,name:w.name,version_id:latestVersion(deployments)};
+ if(check){
+   validateWorker(w,settings,schedules.schedules);
+   validateSubdomain(subdomain,w);
+ }
+ return {key:w.key,name:w.name,version_id:latestVersion(deployments),previews_enabled:subdomain?.previews_enabled};
 }
 async function pagesState(pages,check=true){
  const p='/pages/projects/'+encodeURIComponent(pages.project);
@@ -110,6 +119,13 @@ async function rollback(contract,sourceSha,file){
          annotations:{'workers/message':'Regional Watch release '+sourceSha.slice(0,12)+' rollback'}
        });
        console.log('rollback restored previous Worker version:',w.key);
+     }
+     // Deploying an older version does not necessarily restore preview URL settings.
+     if(now.previews_enabled!==false){
+       await api('CLOUDFLARE_D1_API_TOKEN',paths(w.name).subdomain,'POST',{enabled:true,previews_enabled:false});
+       const verified=await api('CLOUDFLARE_D1_API_TOKEN',paths(w.name).subdomain);
+       validateSubdomain(verified,w);
+       console.log('rollback disabled Worker preview URLs:',w.key);
      }
    }catch(err){errors++;console.error('rollback Worker failed:',w.key,err?.message?.replace(/Bearer \S+/g,'Bearer [redacted]'));}
  }
