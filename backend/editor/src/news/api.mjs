@@ -66,7 +66,7 @@ export async function readNewsEvents(request,env){
   return{event_id:r.event_id,id:r.id,canonical_article_id:r.id,display_article_id:row.id,source:row.source,
    headline:t.title,summary:t.body,comment:t.comment,url:row.url,
    published_ms:r.last_seen_ms,priority:r.event_priority,category:r.topic,
-   content_language:t.content_language,translation_status:t.translation_status,
+   content_language:t.content_language,source_language:t.source_language,translation_status:t.translation_status,
    translation_state:state,translation_label:label,translation_available:available,
    translation:{state,label,available,requested_language:lang,display_language:t.content_language},
    verification_status:r.verification_status,source_count:r.source_count,
