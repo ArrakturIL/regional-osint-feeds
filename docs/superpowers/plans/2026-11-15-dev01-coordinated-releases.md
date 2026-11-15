@@ -23,10 +23,10 @@
 - [x] **Protection before production writes.** `scripts/release/cloudflare-gate.mjs capture` checks live Worker bindings, cron, Pages service/D1 binding targets and saves redacted rollback IDs. `scripts/release/d1-preflight.mjs` compares live table/column presence read-only without automatic migrations.
 - [x] **Coordinated release job.** `.github/workflows/regional-watch-app-check.yml` runs the existing 10 source test jobs before immutable build, Wrangler dry-run for both Workers, and release job with required credentials, exact verified artifact download, Editor→Monitor→Pages deploy, technical route smoke, live postcheck and rollback on failure.
 - [x] **Rollback/receipt code.** Named previous Worker version 100% deployments and Cloudflare Pages rollback API are invoked on partial failure. Record version IDs, source SHA, checksums and CI run in non-secret receipt artifacts after successful release.
-- [ ] **Production acceptance: MUST NOT MARK COMPLETE UNTIL CONFIRMED.** The existing `CLOUDFLARE_D1_API_TOKEN` has been expanded by the owner to include `Workers → Admin`; validate its actual access in trusted GitHub Actions before release. No new token is needed. Then run the merged main workflow and verify `release-production` succeeded, live versions match one release SHA, no bindings/cron regressions, release receipt exists and all previous state is recoverable. Update MASTER TODO and stop before DEV-OSS.
+- [ ] **Production acceptance: MUST NOT MARK COMPLETE UNTIL CONFIRMED.** The existing `CLOUDFLARE_D1_API_TOKEN` **passed** trusted GitHub Actions read-only Cloudflare Worker/D1 access ([run #43752596321](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43752596321)); no new token is needed. Run the merged main workflow and verify `release-production` succeeded, live versions match one release SHA, no bindings/cron regressions, release receipt exists and all previous state is recoverable. Update MASTER TODO and stop before DEV-OSS.
 
 ## Review focus
-- Missing worker deployment token → **no** Pages-only publishing.
+- Existing D1+Workers Admin token absent or insufficient → **no** Pages-only publishing; confirmed working read-only in run #43752596321.
 - Worker deployment clears hidden environment bindings → Wrangler config `keep_vars=true`, live checks before/after, rollback.
 - Partially deployed Workers/Pages → rollback exact baseline versions, avoid guessing "previous".
 - Changed code artifact in transfer → manifest SHA256 + checkouts both pinned to `github.sha`.
