@@ -87,3 +87,37 @@ test('source-verified P1 correction candidates preserve actor, condition and mar
    }
  }
 });
+
+test('approved P1 D1 replacement rows preserve RU/HE provenance and matching Hebrew source hashes',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const manifest=JSON.parse(readFileSync(new URL('../../data/qa/p1-translation-remediation-20261115.json',import.meta.url),'utf8'));
+ for(const item of manifest.items){
+   const original={title:item.original.title,body:item.original.body,comment:''};
+   const pending={
+     id:item.id,headline:original.title,headline_ru:item.candidate.ru.title,
+     summary:original.body,summary_ru:item.candidate.ru.body,comment:null,source:'Publisher',
+     url:item.source_url,published_ms:Date.now(),priority:8
+   };
+   const hash=await fingerprint({
+     title:pending.headline_ru,body:pending.summary_ru,comment:''
+   });
+   const record={...pending,he_hash:hash,he_title:item.candidate.he.title,
+     he_body:item.candidate.he.body,he_comment:'',he_quality:95};
+   const ru=await localizeNewsRow(null,record,'ru');
+   assert.equal(ru.title,item.candidate.ru.title,item.id+'/ru title');
+   assert.equal(ru.body,item.candidate.ru.body,item.id+'/ru body');
+   assert.equal(ru.content_language,'ru');
+   assert.equal(ru.source_language,'en');
+   assert.equal(ru.translation_status,'available');
+   const he=await localizeNewsRow(null,record,'he');
+   assert.equal(he.title,item.candidate.he.title,item.id+'/he title');
+   assert.equal(he.body,item.candidate.he.body,item.id+'/he body');
+   assert.equal(he.source_language,'en');
+   assert.equal(he.content_language,'he');
+   assert.equal(he.translation_status,'available');
+   const invalid={...record,he_hash:'0'.repeat(64)};
+   const stale=await localizeNewsRow(null,invalid,'he');
+   assert.equal(stale.translation_status,'pending');
+   assert.equal(stale.title,item.original.title);
+ }
+});
