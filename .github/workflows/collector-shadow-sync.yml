@@ -4,6 +4,13 @@ name: Regional Watch Neon-primary D1 replica reconciliation
 # imports the now-frozen GitHub JSON artifacts or writes commits. The individual
 # collector workflows publish to Neon/D1; this is bounded reconciliation.
 on:
+  # One release smoke on the exact main revision containing the reconciler.
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/sync_neon_primary_to_d1.py'
+      - 'scripts/test_sync_neon_primary_to_d1.py'
+      - '.github/workflows/collector-shadow-sync.yml'
   schedule:
     - cron: '23 */2 * * *'
   workflow_dispatch:
