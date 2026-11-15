@@ -44,3 +44,15 @@ Workers:
 - DEV-03, DEV-04 и OSS ветка не затронуты; QA интерфейса по отдельному плану.
 
 **Стоп-правило:** один инженерный блок → тесты → TODO → отчёт → остановка. 
+
+
+---
+
+## Production release — final evidence, 15.11.2026 (supersedes earlier pending-release wording)
+
+- Владелец отдельно **одобрил слияние и фактический выпуск DEV-02**. [PR #37 merged](https://github.com/ArrakturIL/regional-osint-feeds/pull/37), exact main commit `99fb1a87c4a784cc42a918b1d16e122d4fe6d004`.
+- [GitHub Actions release #43764932515](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43764932515): **completed/success**, **12 successful jobs**, **0 failed**, **1 skipped** (Pages Preview). Шаг coordinated publish **success**: immutable bundle source SHA verification, live D1 schema read-only, production bindings/version capture, Editor deploy, Monitor deploy, postchecks, same-SHA Pages deploy, RU/HE/API technical smoke, final postcheck and receipt. Rollback step **skipped** (не потребовался). Артефакты присутствуют: `rw-unified-release-bundle`, `rw-coordinated-release-receipt`, `rw-coordinated-rollback-baseline`. Preview build artifact создан, но Preview deployment не запускался.
+- **Независимая read-only Cloudflare проверка ПОСЛЕ релиза:** Pages canonical production deployment `f1d73d13-8a2f-4e8b-abb3-3187a70c158a` (`success`), Editor 100% version `46de2ca5-e3a7-4664-82d5-e9cfb21a90a5`, Monitor 100% version `7fa11846-4240-443a-b88c-57ca0824f6b9`. Editor AI+CORE_DB+NEWS_DB+REGIONAL_EDITOR_CACHE_SOURCES, cron `*/5`; Monitor DB, 4 secret names, 2 vars, cron `*/1` — на месте, compatibility date `2026-11-10`. Preview URLs у обоих Workers отключены.
+- **Общая Preview инфраструктура НЕ устранена конфигурационно:** в Cloudflare Pages Preview остаются **2 shared service bindings** и **2 shared D1 bindings** с production. Слитая кодовая проверка **теперь останавливает небезопасную публикацию Preview в управляемом GitHub workflow**, не мигрирует/копирует D1 и не запрещает сторонние ручные deployments. Реальный запуск Preview gate against live project в CI не осуществлялся, ибо ветка Preview не публиковалась; доказательство safeguard — offline RED→GREEN контрактные тесты и checked workflow order. Не считать наличие изолированного staging.
+- **Сайт:** автоматический production smoke для `/`, `/he/`, `/api/overview` успешен. Это **не** визуальный/E2E QA и не проверка всего контента.
+- **DEV-02 закрыт как согласованный блок**: все принятые изменения закоммичены, прошли тесты и опубликованы; прежний раздел этого документа описывал состояние **до** объединения PR #37 и сохраняется как историческая запись. DEV-03, DEV-04 и OSS отложены до отдельной команды.
