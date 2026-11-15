@@ -236,10 +236,17 @@ jobs:
           set -euo pipefail
           base="${DEPLOYMENT_URL%/}"
           for path in '/api/overview' '/api/data' '/api/news?lang=ru&limit=5' '/api/news?lang=he&limit=5'; do
-            status=$(curl --silent --show-error --max-time 20 --max-redirs 0 \
-              --output /tmp/rw-api-body --dump-header /tmp/rw-api-headers \
-              --write-out '%{http_code}' "$base$path") || status=000
-            echo "$path => HTTP $status"
+            status=000
+            # Bounded warm-edge retries only; no unbounded polling after failure.
+            for attempt in 1 2 3; do
+              status=$(curl --silent --show-error --max-time 20 --max-redirs 0 \
+                --output /tmp/rw-api-body --dump-header /tmp/rw-api-headers \
+                --write-out '%{http_code}' "$base$path") || status=000
+              echo "$path attempt $attempt => HTTP $status"
+              if [[ "$status" == "200" ]]; then break; fi
+              if [[ "$status" != "404" && "$status" != "503" && "$status" != "000" ]]; then break; fi
+              if [[ "$attempt" != "3" ]]; then sleep 2; fi
+            done
             test "$status" = "200" || { echo "::error::Preview API wiring failure: $path"; exit 1; }
             grep -qi '^content-type:.*application/json' /tmp/rw-api-headers
             jq -e 'type == "object"' /tmp/rw-api-body >/dev/null
