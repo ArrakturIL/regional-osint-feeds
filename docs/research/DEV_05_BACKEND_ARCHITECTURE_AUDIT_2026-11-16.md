@@ -105,3 +105,24 @@
 - **Production:** [release #43781455669](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43781455669) completed success **12 jobs passed, 0 failed**, rollback skipped. Независимый read-only Cloudflare API: Pages production deployment `84240e38-0dc1-45ef-9b98-19809c6881e5` success; Editor `380d69c7-4cf1-4dfc-924c-9ff1d2ad61eb` 100%, Monitor `feb4ba2d-1297-43bd-9284-9ed254c31f52` 100%; source binding names (AI, CORE_DB, NEWS_DB, DB, per-source secrets) и Cron Editor `*/5`, Monitor `*/1` сохранены.
 
 **Не доказано и не заявляется:** фактическая экономия CPU/AI на production (это structural-only refactor), визуальная корректность сайта, успешность каждого отдельного upstream, отсутствие всех исторических багов перевода. Дальше отдельные маленькие задачи: HTTP handler extraction, editorial AI и analyst service boundaries. Версионный резервный архив по решению владельца не создаётся.
+
+
+---
+
+## 8. ARCH-03 — вынос read-only API официальных сообщений ЦАХАЛ (16.11.2026)
+
+**Состояние:** [code PR #55](https://github.com/ArrakturIL/regional-osint-feeds/pull/55) merged code SHA `0d2be9e3814fd5b56678f6ae754d084dc3f59e5a`. Это третий независимый архитектурный boundary после RSS [#51](https://github.com/ArrakturIL/regional-osint-feeds/pull/51) и scheduled RU/IDF translation [#53](https://github.com/ArrakturIL/regional-osint-feeds/pull/53). **ARCH-03 остаётся открытым** — Monitor changes HTTP, scan/editorial AI, localization/analysts остаются в больших модулях.
+
+**Lossless source split:** `rwOfficialTextParts`, `rwOfficialDecode`, `rwOfficialNumbersPreserved`, `readOfficialPosts` вынесены как один ответственный read-only `backend/editor/src/api/official-posts.mjs` (**3833 символа**). `readOfficialPosts` экспортирован; его вызов из `index.js` по `/api/official-posts` не изменён, кроме нового импорта. `index.js` уменьшился **19978→16211 символов**. Frozen Editor v64 parity test проверяет **с точностью до символа** третий extraction, включая сохранение exact исходных body, всех оставшихся байтов `index.js`, RSS и scheduled модулей, а не просто сборку.
+
+**API контракт из исходного кода и TDD:**
+- `lang=ru|he`, `limit` строго 1..10; некорректные параметры → 400 до D1. D1 только SELECT; опубликованы только `https://t.me/idfofficial/<числа>`, duplicate ID исключаются; URL, `published/observed`, `original_title/original_description`, `translation_verified:false`, `source_type`, поле `content_language` и cache/CORS headers сохранены.
+- Русский `title_ru`/`excerpt_ru` используется только когда оба действительно кириллические и **все исходные числа** сохранены; неприемлемая запись получает `needs_review` и исходный EN-текст, без подстановки перевода. Повторяющийся заголовок из `description` убирается как и раньше — промежуточный [CI run #43783000298](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43783000298) выявил неверную тестовую гипотезу; исправлен **только тест**, не production-семантика.
+- **Важное реальное ограничение:** для `lang=he` этот endpoint **возвращает исходный EN-текст и `translation_status:pending`**, даже если RU translation есть. Это обнаруженное поведение, а не новая функция; не обозначать его как готовую HE-переводную ленту и не исправлять без отдельно согласованной спецификации.
+- Новые `tests/architecture/editor-official-posts-api.test.mjs` проверяют 6 независимых случаев, включая прямой `editor.fetch` route. Без подключений к живым провайдерам или записи в D1.
+
+**CI evidence:** [RED #43782913505](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43782913505) — новый импорт отсутствует; [GREEN #43783063984](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43783063984) — 11 jobs success, 0 failed, immutable three-component dry-run success; [integrated #43783064014](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43783064014) success. [Production coordinated release #43783164956](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43783164956) — **12 jobs success, 0 failed, rollback skipped**.
+
+**Independent Cloudflare postcheck:** Pages canonical `5635c9a0-6370-41ce-8768-f7813d1f8d2f` production success; Editor version `35bb1205-1f4e-4792-998a-2808d4345e27` 100%, Monitor `7c2ee158-6a0e-438d-a48e-2ff4bca48be9` 100%; Editor AI+CORE_DB+NEWS_DB bindings, Monitor DB + secrets and existing cron `*/5` and `*/1` preserved. This verifies technical deploy metadata, **not end-user visual QA, upstream freshness, or actual translation quality**.
+
+**Next:** isolate `buildDigest/readMonitorChanges` as another read-only API boundary, then editorial AI/scan responsibilities. Handle HE official posts translation as a separate product requirement only with the user's approval. No backup or paid services introduced.
