@@ -10,8 +10,8 @@ export function reconstructPreBudgetScheduler(){
  }
  undo("const HE_MODEL='@cf/zai-org/glm-4.7-flash';\nconst HE_DAILY_ATTEMPT_CAP=112;\n",
       "const HE_MODEL='@cf/zai-org/glm-4.7-flash';\n",'limit constant');
- undo('attempts<HE_DAILY_ATTEMPT_CAP AND estimated_neurons<4000',
-      'attempts<96 AND estimated_neurons<4000','atomic limit');
+ undo('attempts<? AND estimated_neurons<4000\").bind(now,day,HE_DAILY_ATTEMPT_CAP).run()',
+      'attempts<96 AND estimated_neurons<4000\").bind(now,day).run()','atomic limit');
  undo("    neurons=Number(answer?.usage?.neurons)||0;\n    if(answer?.choices?.[0]?.finish_reason",
       "    if(answer?.choices?.[0]?.finish_reason",'response usage');
  undo("    state='ok';\n  }catch(e)", "    neurons=Number(answer?.usage?.neurons)||0;\n    state='ok';\n  }catch(e)",'old success-only accounting');
