@@ -20,3 +20,13 @@ Baseline code commit `5bd51c94211428aa2a1cadca4ea652f5b8a339e0`; original `backe
 ## Out of scope
 
 - No changes to public UI, sources, model, prompt, translation safety gates, existing historical rows, schema, APIs, 5m cron, RU budget, HE per-cycle cap, or daily 4000-neuron app guard. RU separate follow-up ARCH-04 block; provider cooldown and monitor check also remain open. No paid upgrades.
+
+
+## Completion receipt — 16.11.2026
+
+- [x] Read-only NEWS/CORE D1 inspection and official Workers AI 10,000 free-neuron/day documentation confirmed. HE 90/96 early 16 Nov; historic 96/96; RU 20/20.
+- [x] TDD RED [#43799371448](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43799371448), GREEN Editor app [#43799712304](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43799712304), integrated [#43799712295](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43799712295) success. A preexisting obsolete integrated test locator for extracted analyst queue updated, no UI/production behavior involved.
+- [x] [PR #70](https://github.com/ArrakturIL/regional-osint-feeds/pull/70), code `da45af7f68d461c8fc49d3d8ed1397904d87a2b5`, 96→112 HE daily cap, 4000/app untouched, count returned AI usage before QA/rejection, status `partial` and `budget` recorded, exact original source blobs pinned.
+- [x] [Coordinated #43799838354](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43799838354) completed SUCCESS, Cloudflare independent read-only confirmation, original secret/D1/AI bindings and cron intact.
+- [ ] Later, after a complete UTC day: compare translation successes/pending age/usage and errors; current immediate postrelease read-only D1 still had 90 attempts, no causal improvement claimed.
+- [ ] Separate future ARCH-04: RU quota bottleneck, retry/cooldown fairness, actual shared AI budget, monitor provider/manual concurrency.
