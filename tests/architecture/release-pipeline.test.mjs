@@ -258,6 +258,8 @@ test('Cloudflare gate snapshots exact versions and rolls back changed components
    // Receipt must not stamp a successful new deployment while API still reports old.
    const oldCwd=process.cwd();
    mkdirSync(join(dir,'release','metadata'),{recursive:true});
+   mkdirSync(join(dir,'deploy'),{recursive:true});
+   writeFileSync(join(dir,'deploy','release-contract.json'),JSON.stringify(contract));
    writeFileSync(join(dir,'release','manifest.json'),JSON.stringify({source_sha:goodSha}));
    writeFileSync(join(dir,'release','metadata','migrations.json'),'{}');
    const receiptFile=join(dir,'receipt.json');
