@@ -6,6 +6,7 @@ on:
       - "storage/neon/**"
       - "backend/monitor/src/mirrors/**"
       - "tests/architecture/collector-cache.test.mjs"
+      - "tests/architecture/collector-fallback-policy.test.mjs"
       - ".github/workflows/news-open-source-translation.yml"
       - ".github/workflows/unosat-analyses.yml"
       - ".github/workflows/satellite.yml"
@@ -44,6 +45,7 @@ on:
       - "storage/neon/**"
       - "backend/monitor/src/mirrors/**"
       - "tests/architecture/collector-cache.test.mjs"
+      - "tests/architecture/collector-fallback-policy.test.mjs"
       - ".github/workflows/news-open-source-translation.yml"
       - ".github/workflows/unosat-analyses.yml"
       - ".github/workflows/satellite.yml"
@@ -101,6 +103,8 @@ jobs:
         run: node --test frontend/tests/ui-qa.test.mjs
       - name: News grouping, attribution and chronology regression checks
         run: node --test tests/architecture/news-quality.test.mjs tests/architecture/news-localization-provenance.test.mjs
+      - name: Collector fallback commit safety (offline)
+        run: node --test tests/architecture/collector-fallback-policy.test.mjs
       - name: D1 cache and safe fallback regression tests
         run: node --test tests/architecture/collector-cache.test.mjs
       - name: Editor CORE_DB cache and GitHub fallback regression
