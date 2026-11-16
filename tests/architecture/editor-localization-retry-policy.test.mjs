@@ -17,7 +17,7 @@ const text='Israel reports 5 drones near the border';
 const row=(id,priority=8,published=time)=>({id,headline:text,headline_ru:null,summary:'',summary_ru:null,comment:null,
   cached_he_hash:null,published_ms:published,priority});
 const translated={title:'ישראל מדווחת על 5 כטב״מים ליד הגבול',body:'',comment:'',confidence:95};
-const gitBlob=str=>{const b=Buffer.from(str,'utf8');return createHash('sha1').update(Buffer.from('blob '+b.length,'utf8')).update(b).digest('hex');};
+const gitBlob=str=>{const b=Buffer.from(str,'utf8');return createHash('sha1').update(Buffer.from('blob '+b.length,'utf8')).update(Buffer.from([0])).update(b).digest('hex');};
 function mockEnv({rows=[row('fresh')],previous=null,claimChanges=1,translate=translated}={}){
  const ops=[],calls=[];
  const db=(name)=>({prepare(sql){
