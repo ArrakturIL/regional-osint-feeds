@@ -35,10 +35,15 @@ test('Atom href and published timestamp follow the same URL safety contract',()=
 test('historical and future item limits and non-news classifications are unchanged',()=>{
   const cases=[
     item('Israel military strikes Iran site','Israeli military strike near Tehran','https://news.example.org/old',NOW-72*3_600_000-1000),
-    item('Israel military strikes Iran site','Israeli military strike near Tehran','https://news.example.org/future',NOW+600_001),
+    item('Israel military strikes Iran site','Israeli military strike near Tehran','https://news.example.org/future',NOW+601_000),
     item('Sponsored Israel military briefing about Iran','Advertorial paid content','https://news.example.org/sponsored',NOW-60_000)
   ];
   assert.deepEqual(entries('<rss>'+cases.join('')+'</rss>',FEED,NOW),[]);
+  // RSS pubDate encodes whole seconds; the existing +10 min boundary is inclusive.
+  const boundary=item('Israel military strikes Iran site','Israeli military strike near Tehran',
+    'https://news.example.org/boundary',NOW+600_000);
+  assert.equal(entries('<rss>'+boundary+'</rss>',FEED,NOW).length,1);
+
 });
 
 test('feed fetch preserves RSS gate, status, and error without contacting external service',async t=>{
