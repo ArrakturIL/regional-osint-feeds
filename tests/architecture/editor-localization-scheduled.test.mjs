@@ -207,3 +207,14 @@ test('only native Hebrew originals produce no paid calls or translation attempts
  assert.equal(ai.length,0);
  assert.equal(writes(events,'INSERT OR IGNORE INTO regional_i18n_attempts').length,0);
 });
+
+test('Hebrew headline with untranslated English summary still needs a Hebrew translation',async()=>{
+ const mixed={id:'mixed-language',headline:'ישראל מדווחת על 5 כטב״מים',headline_ru:'Израиль сообщает о 5 беспилотниках',
+  summary:'Officials described 5 drones near the border',summary_ru:null,comment:null,cached_he_hash:null};
+ const {env,ai}=makeEnv({newsRows:[mixed],translate:{
+  title:'ישראל מדווחת על 5 כטב״מים',body:'גורמים רשמיים תיארו 5 כטב״מים ליד הגבול',comment:'',confidence:95
+ }});
+ const result=await translateScheduled(env,atKind('news'));
+ assert.equal(result.attempted,1,'headline language alone does not make an English body ready for HE readers');
+ assert.equal(ai.length,1);
+});
