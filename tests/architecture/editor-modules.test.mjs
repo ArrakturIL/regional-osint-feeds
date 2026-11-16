@@ -68,7 +68,27 @@ test('original v64 logic is exactly preserved, only relative import paths change
   const monitorRoutedExpected=(routedExpected.slice(0,monitorStart)+routedExpected.slice(archiveStart))
     .replace("import {readOfficialPosts} from './api/official-posts.mjs';",
       "import {readOfficialPosts} from './api/official-posts.mjs';\nimport {readMonitorChanges} from './api/monitor-changes.mjs';");
-  assert.equal(actual,monitorRoutedExpected,name);
+  const commentStart=monitorRoutedExpected.indexOf('async function writeComment(env,row){');
+  const commentScanStart=monitorRoutedExpected.indexOf('async function scan(env){',commentStart);
+  const budgetStart=monitorRoutedExpected.indexOf(' const day=new Date(now).toISOString().slice(0,10);',commentScanStart);
+  const idfStart=monitorRoutedExpected.indexOf(' const idfTranslation=await translateIDF(env,now);',budgetStart);
+  assert.ok(commentStart>=0&&commentScanStart>commentStart&&budgetStart>commentScanStart&&idfStart>budgetStart,
+    'frozen v64 editorial AI and budget boundaries');
+  const commentExpected="import {shouldSuppressComment} from './comment-policy.mjs';\n\n"
+    +monitorRoutedExpected.slice(commentStart,commentScanStart).replace('async function writeComment(env,row){',
+      'export async function writeComment(env,row){')
+    +"export async function generateComments(env,now){\n"
+    +monitorRoutedExpected.slice(budgetStart,idfStart)
+    +" return {commented,failures};\n}\n";
+  const afterComment=(monitorRoutedExpected.slice(0,commentStart)
+    +monitorRoutedExpected.slice(commentScanStart,budgetStart)
+    +" const {commented,failures}=await generateComments(env,now);\n"
+    +monitorRoutedExpected.slice(idfStart))
+      .replace("import {shouldSuppressComment} from './editorial/comment-policy.mjs';",
+        "import {generateComments} from './editorial/ai-comments.mjs';");
+  assert.equal(actual,afterComment,name);
+  assert.equal(readFileSync(liveFile('editorial/ai-comments.mjs'),'utf8'),commentExpected,
+    'AI prompt, casualty suppression, daily D1 quota and error charges must be preserved byte-identically');
   assert.equal(readFileSync(liveFile('api/monitor-changes.mjs'),'utf8'),monitorExpected,
     'Monitor run comparison and journal attribution must be moved byte-identically');
   assert.equal(readFileSync(liveFile('api/official-posts.mjs'),'utf8'),officialExpected,
@@ -81,6 +101,6 @@ test('original v64 logic is exactly preserved, only relative import paths change
   const normalized=actual.replace("import { semanticMeaningIssue } from './semantic-meaning.mjs';\n",'').replace("    const semanticIssue=semanticMeaningIssue(src,translated);\n    if(semanticIssue)return field+':'+semanticIssue;\n",'');
   assert.equal(normalized,expected,name);
  }else assert.equal(actual,expected,name);}});
-test('each module import resolves to a real file',()=>{for(const p of [...Object.values(map),'news/rss.mjs','translations/scheduled.mjs','api/official-posts.mjs','api/monitor-changes.mjs']){const source=readFileSync(liveFile(p),'utf8');for(const match of source.matchAll(/from\s+['"](\.[^'"]+)['"]/g))assert.ok(existsSync(resolve(dirname(liveFile(p)),match[1])),p+' -> '+match[1]);}});
-test('Node parses every module',()=>{for(const p of [...Object.values(map),'news/rss.mjs','translations/scheduled.mjs','api/official-posts.mjs','api/monitor-changes.mjs']){const r=spawnSync(process.execPath,['--check',liveFile(p)],{encoding:'utf8'});assert.equal(r.status,0,p+': '+r.stderr);}});
+test('each module import resolves to a real file',()=>{for(const p of [...Object.values(map),'news/rss.mjs','translations/scheduled.mjs','api/official-posts.mjs','api/monitor-changes.mjs','editorial/ai-comments.mjs']){const source=readFileSync(liveFile(p),'utf8');for(const match of source.matchAll(/from\s+['"](\.[^'"]+)['"]/g))assert.ok(existsSync(resolve(dirname(liveFile(p)),match[1])),p+' -> '+match[1]);}});
+test('Node parses every module',()=>{for(const p of [...Object.values(map),'news/rss.mjs','translations/scheduled.mjs','api/official-posts.mjs','api/monitor-changes.mjs','editorial/ai-comments.mjs']){const r=spawnSync(process.execPath,['--check',liveFile(p)],{encoding:'utf8'});assert.equal(r.status,0,p+': '+r.stderr);}});
 test('Editor bindings and 5-minute cron are pinned',()=>{const x=JSON.parse(readFileSync(resolve(root,'backend/editor/wrangler.jsonc'),'utf8'));assert.equal(x.main,'src/index.js');assert.equal(x.compatibility_date,'2026-11-10');assert.deepEqual(x.triggers.crons,['*/5 * * * *']);assert.deepEqual(x.d1_databases.map(d=>d.binding).sort(),['CORE_DB','NEWS_DB']);assert.equal(x.ai.binding,'AI');});
