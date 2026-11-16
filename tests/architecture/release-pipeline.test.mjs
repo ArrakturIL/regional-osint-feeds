@@ -195,7 +195,7 @@ test('Cloudflare gate snapshots exact versions and rolls back changed components
  const oldPages='33333333-3333-4333-8333-333333333333';
  const currentPages='44444444-4444-4444-8444-444444444444';
  let released=false;
- let canonicalReadLag=0,canonicalRollbackLag=false;
+ let canonicalReadLag=0,canonicalAdvanceLag=0,canonicalRollbackLag=false;
  const previewState={editor:false,monitor:false};
  const posts=[];
  process.env.CLOUDFLARE_ACCOUNT_ID='a'.repeat(32);
@@ -230,7 +230,7 @@ test('Cloudflare gate snapshots exact versions and rolls back changed components
      result={production_branch:'main',
        // A failed, later release remains latest by creation date even after rollback.
        latest_deployment:{id:currentPages,environment:'production',latest_stage:{status:'success'}},
-       canonical_deployment:canonicalReadLag-- > 0 ? null : {id:(canonicalRollbackLag?oldPages:(released?currentPages:oldPages)),environment:'production',latest_stage:{status:'success'}},
+       canonical_deployment:canonicalReadLag-- > 0 ? null : {id:(canonicalRollbackLag||canonicalAdvanceLag-- > 0?oldPages:(released?currentPages:oldPages)),environment:'production',latest_stage:{status:'success'}},
        deployment_configs:{production:{
        services:Object.fromEntries(contract.pages.services.map(s=>[s.binding,{service:s.service,environment:'production'}])),
        d1_databases:Object.fromEntries(contract.pages.d1.map(d=>[d.binding,{id:d.database_id}]))
@@ -255,6 +255,20 @@ test('Cloudflare gate snapshots exact versions and rolls back changed components
    canonicalReadLag=2; // CF Pages canonical can lag the deployed edge and list endpoint.
    await cloudflareGate(['postcheck',goodSha,filename]);
    assert.ok(canonicalReadLag<0,'canonical lookup was retried until an active deployment emerged');
+   // Receipt must not stamp a successful new deployment while API still reports old.
+   const oldCwd=process.cwd();
+   mkdirSync(join(dir,'release','metadata'),{recursive:true});
+   writeFileSync(join(dir,'release','manifest.json'),JSON.stringify({source_sha:goodSha}));
+   writeFileSync(join(dir,'release','metadata','migrations.json'),'{}');
+   const receiptFile=join(dir,'receipt.json');
+   canonicalAdvanceLag=2;
+   try{
+     process.chdir(dir);
+     await cloudflareGate(['receipt',goodSha,filename,receiptFile]);
+   }finally{process.chdir(oldCwd);}
+   const receipt=JSON.parse(readFileSync(receiptFile,'utf8'));
+   assert.equal(receipt.after.pages.deployment_id,currentPages,'receipt must wait for new canonical release');
+   assert.ok(canonicalAdvanceLag<0,'receipt retried stale old canonical ID');
    canonicalRollbackLag=true; // A newly uploaded Pages release may still report the old active deployment.
    process.env.PAGES_PUBLISH_SUCCEEDED='true';
    previewState.editor=true; previewState.monitor=true; // Emulate Wrangler enabling previews on both.
