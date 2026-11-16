@@ -1,100 +1,14 @@
-import {semanticMeaningIssue} from '../translations/semantic-meaning.mjs';
-import {shouldSuppressComment,safePublishedComment} from '../editorial/comment-policy.mjs';
-import {DAY,val,sourceText,fingerprint} from './shared.mjs';
-import {HEADERS,respond,fieldLocale,localized} from './read-core.mjs';
+import {HEADERS,respond} from './read-core.mjs';
+import {readLocalizedNews} from './news-reader.mjs';
+import {readLocalizedEditorialNotes} from './editorial-reader.mjs';
+import {readLocalizedStories} from './stories-reader.mjs';
 import {readLocalizedAnalysts} from './analyst-api.mjs';
 import {translateScheduled} from './scheduled.mjs';
 export {fingerprint} from './shared.mjs';
+export {localizeNewsRow} from './news-reader.mjs';
+export {storyProvenance} from './stories-reader.mjs';
 // REGIONAL WATCH: locale-aware public readers, no client-side credentials.
 function locale(request){const l=new URL(request.url).searchParams.get('lang')||'ru';return l==='ru'||l==='he'?l:null;}
-/** One trusted localization contract for event and legacy news responses. */
-export async function localizeNewsRow(db,row,lang){
-  // The original article language is derived from its original fields, never
-  // from headline_ru or a model's self-reported quality score.
-  const sourceTitle=val(row.headline,260),sourceBody=val(row.summary,650);
-  const originalLanguage=/[\u0590-\u05ff]/u.test(sourceTitle)?'he':
-    /[\u0400-\u04ff]/u.test(sourceTitle)?'ru':'en';
-  const original={title:sourceTitle,body:sourceBody,
-    comment:val(safePublishedComment(row,row.comment),300)};
-  if(lang==='ru'){
-    if(originalLanguage==='ru')return{...original,content_language:'ru',
-      source_language:'ru',translation_status:'source'};
-    const title=val(row.headline_ru,260),body=val(row.summary_ru,650);
-    // A partly translated record is not presented as a complete translation.
-    if(!title||!/[\u0400-\u04ff]/u.test(title)||(sourceBody&&!body))
-      return{...original,content_language:originalLanguage,
-        source_language:originalLanguage,translation_status:'pending'};
-    const issue=semanticMeaningIssue(sourceTitle,title)||
-      (sourceBody&&body?semanticMeaningIssue(sourceBody,body):null);
-    if(issue)return{...original,content_language:originalLanguage,
-      source_language:originalLanguage,translation_status:'needs_review',review_reason:issue};
-    return{...original,title,body:body||sourceBody,content_language:'ru',
-      source_language:originalLanguage,translation_status:'available'};
-  }
-  if(lang==='he'&&originalLanguage==='he'&&
-     (!sourceBody||/[\u0590-\u05ff]/u.test(sourceBody)))
-    return{...original,content_language:'he',source_language:'he',translation_status:'source'};
-  const cached=row.he_hash?{source_hash:row.he_hash,title:row.he_title,body:row.he_body,
-    commentary:row.he_comment,quality_score:row.he_quality}:null;
-  const result=await localized(db,'news',row.id,sourceText('news',row),lang,cached);
-  const issue=lang==='he'&&result.translation_status==='available'?
-    semanticMeaningIssue(sourceTitle,result.title)||
-    (sourceBody&&result.body?semanticMeaningIssue(sourceBody,result.body):null):null;
-  if(issue)return{...original,content_language:originalLanguage,
-    source_language:originalLanguage,translation_status:'needs_review',review_reason:issue};
-  return {...(shouldSuppressComment(row)?{...result,comment:''}:result),
-    source_language:originalLanguage};
-}
-
-/** Locale-invariant provenance. Never regenerate dates or source links by AI. */
-export function storyProvenance(data){
-  const validUrl=value=>{
-    if(typeof value!=='string'||value.length>2048)return null;
-    try{
-      const u=new URL(value);
-      if(u.protocol!=='https:'||u.username||u.password||!u.hostname||
-        /^(?:localhost|127[.]|10[.]|192[.]168[.]|169[.]254[.]|0[.])/.test(u.hostname))return null;
-      return value;
-    }catch{return null}
-  };
-  const sources=[];
-  const seen=new Set();
-  const add=(url,type)=>{
-    const safe=validUrl(url);
-    if(safe&&!seen.has(safe)){
-      sources.push({url:safe,type:typeof type==='string'?type.slice(0,100):'source'});
-      seen.add(safe);
-    }
-  };
-  for(const item of Array.isArray(data.sources)?data.sources:[]){
-    if(typeof item==='string')add(item,'source');
-    else if(item&&typeof item==='object')add(item.url,item.type);
-  }
-  // Include source_urls emitted by the monitor and retain HTTPS validation/dedup.
-  for(const item of Array.isArray(data.source_urls)?data.source_urls:[]){
-    if(typeof item==='string')add(item,'listed_source');
-    else if(item&&typeof item==='object')add(item.url,item.type);
-  }
-  add(data.source, 'primary');
-  add(data.source_url,'primary');
-  add(data.url,'primary');
-  // Preserve partial dates like 2026-09; inventing a day would be worse.
-  const occurredAt=data.occurred_at||data.incident_date||data.event_date||
-    data.first_report_date||data.published_date||null;
-  const announcedAt=data.announced_at||
-    (data.incident_date?data.event_date:null)||data.first_report_date||null;
-  return{
-    event_date:occurredAt,occurred_at:occurredAt,
-    announced_at:announcedAt,
-    published_at:data.published_date||null,
-    source_date:data.first_report_date||null,
-    collected_at:data.first_observed_by_monitor||data.first_verified_monitor_cycle||null,
-    source:data.source||null,
-    sources,source_urls:sources.map(x=>x.url),
-    url:sources[0]?.url||null
-  };
-}
-
 export async function fetchLocalized(request,env,analystService){
   if(request.method==='OPTIONS')return new Response(null,{status:204,headers:HEADERS});
   if(request.method!=='GET')return respond({error:'read_only'},405);
@@ -110,58 +24,13 @@ export async function fetchLocalized(request,env,analystService){
   const lim=rawLimit===null?20:Number(rawLimit);
   if(path==='/api/languages')return respond({default:'ru',supported:['ru','he'],requested_language:lang,direction:{ru:'ltr',he:'rtl'}});
   if(path==='/api/news'){
-    const offset=rawOffset===null?0:Number(rawOffset);
-    const readyOnly=lang==='he'&&['1','true'].includes(url.searchParams.get('ready_only'));
-    const base="SELECT n.id,n.source,n.headline,n.headline_ru,n.summary,n.summary_ru,n.comment,n.url,n.published_ms,n.priority";
-    const extra=",t.source_hash he_hash,t.title he_title,t.body he_body,t.commentary he_comment,t.quality_score he_quality";
-    const from=" FROM news_items n LEFT JOIN regional_i18n t ON t.kind='news' AND t.item_id=n.id AND t.language='he'";
-    const sql=lang==='he'?base+extra+from+" WHERE n.published_ms>=?"+(readyOnly?" AND t.quality_score>=85":"")
-      +(readyOnly?" ORDER BY n.priority DESC,n.published_ms DESC":" ORDER BY (t.item_id IS NOT NULL) DESC,n.priority DESC,n.published_ms DESC")+" LIMIT ? OFFSET ?"
-      :base+" FROM news_items n WHERE n.published_ms>=? ORDER BY n.priority DESC,n.published_ms DESC LIMIT ? OFFSET ?";
-    const rows=await env.NEWS_DB.prepare(sql).bind(Date.now()-7*DAY,lim,offset).all();
-    const articles=await Promise.all((rows.results||[]).map(async n=>{
-      const cache=lang==='he'?{source_hash:n.he_hash,title:n.he_title,body:n.he_body,commentary:n.he_comment,quality_score:n.he_quality}:null;
-      const t=await localizeNewsRow(env.NEWS_DB,n,lang);
-      return{id:n.id,source:n.source,headline:t.title,summary:t.body,comment:t.comment,url:n.url,published_ms:n.published_ms,priority:n.priority,content_language:t.content_language,translation_status:t.translation_status};
-    }));
-    const visible=readyOnly?articles.filter(x=>x.content_language==='he'&&x.translation_status==='available'):articles;
-    return respond({requested_language:lang,articles:visible,localized_count:visible.filter(x=>x.content_language===lang).length,
-      limit:lim,offset,next_offset:rows.results?.length===lim?offset+lim:null,ready_only:readyOnly});
+    return readLocalizedNews(env,url,lang,lim,rawOffset);
   }
   if(path==='/api/editorial-notes'){
-    const cols="SELECT n.id,n.headline,n.text,n.source_url,n.published_ms,n.author,n.verified_note";
-    const joined=" FROM editorial_notes n LEFT JOIN regional_i18n t ON t.kind='editorial' AND t.item_id=n.id AND t.language='he'";
-    const ext=",t.source_hash he_hash,t.title he_title,t.body he_body,t.commentary he_comment,t.quality_score he_quality";
-    const sql=lang==='he'?cols+ext+joined+" ORDER BY n.published_ms DESC LIMIT ?":cols+" FROM editorial_notes n ORDER BY n.published_ms DESC LIMIT ?";
-    const rows=await env.NEWS_DB.prepare(sql).bind(lim).all();
-    const notes=await Promise.all((rows.results||[]).map(async n=>{
-      const cache=lang==='he'?{source_hash:n.he_hash,title:n.he_title,body:n.he_body,commentary:n.he_comment,quality_score:n.he_quality}:null;
-      const t=await localized(env.NEWS_DB,'editorial',n.id,sourceText('editorial',n),lang,cache);
-      const note={id:n.id,headline:t.title,text:t.body,source_url:n.source_url,published_ms:n.published_ms,author:n.author,verified_note:n.verified_note,content_language:t.content_language};
-      return{...note,...fieldLocale(note,['headline','text','verified_note'],lang,t.translation_status)};
-    }));
-    return respond({requested_language:lang,notes,localized_count:notes.filter(x=>x.localization_complete).length});
+    return readLocalizedEditorialNotes(env,lang,lim);
   }
   if(path==='/api/stories'){
-    const cols="SELECT n.event_id,n.payload,n.updated_at_ms";
-    const joined=" FROM monitor_events n LEFT JOIN regional_i18n t ON t.kind='story' AND t.item_id=n.event_id AND t.language='he'";
-    const ext=",t.source_hash he_hash,t.title he_title,t.body he_body,t.commentary he_comment,t.quality_score he_quality";
-    const sql=lang==='he'?cols+ext+joined+" WHERE n.updated_at_ms>=? ORDER BY n.updated_at_ms DESC LIMIT ?":
-      cols+" FROM monitor_events n WHERE n.updated_at_ms>=? ORDER BY n.updated_at_ms DESC LIMIT ?";
-    const rows=await env.CORE_DB.prepare(sql).bind(Date.now()-45*DAY,lim).all();
-    const stories=await Promise.all((rows.results||[]).map(async n=>{
-      let data;try{data=JSON.parse(n.payload)}catch{return null}
-      const original=sourceText('story',data);
-      if(!original.title)return null;
-      const cache=lang==='he'?{source_hash:n.he_hash,title:n.he_title,body:n.he_body,commentary:n.he_comment,quality_score:n.he_quality}:null;
-      const t=await localized(env.CORE_DB,'story',n.event_id,original,lang,cache);
-      const story={id:n.event_id,title:t.title,summary:t.body,
-        ...storyProvenance(data),category:data.category||null,updated_at_ms:n.updated_at_ms,
-        content_language:t.content_language};
-      return{...story,...fieldLocale(story,['title','summary'],lang,t.translation_status)};
-    }));
-    const valid=stories.filter(Boolean);
-    return respond({requested_language:lang,stories:valid,localized_count:valid.filter(x=>x.localization_complete).length});
+    return readLocalizedStories(env,lang,lim);
   }
   if(path==='/api/analysts'||path==='/api/analyst-posts'||/^\/api\/analyst-posts\/[a-z0-9-]+$/.test(path)){
     return readLocalizedAnalysts(request,env,analystService,lang,path);
