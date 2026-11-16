@@ -8,6 +8,7 @@ export function reconstructPreRetryScheduler(){
    if(!s.includes(current))throw Error('unexpected retry source boundary: '+label);
    s=s.replace(current,previous);
  }
+ undo("  for(const row of rows){\n    // Already-native HE news is served directly by localizeNewsRow. Never spend\n    // a HE inference attempt translating it back from headline_ru. If the\n    // original body is not Hebrew, the row still needs localization.\n    if(kind==='news'&&/[\\u0590-\\u05ff]/u.test(row.headline||'')&&\n      (!row.summary||/[\\u0590-\\u05ff]/u.test(row.summary)))continue;\n    let t;try{t=sourceText(kind,row);}catch{continue;}\n","  for(const row of rows){let t;try{t=sourceText(kind,row);}catch{continue;}\n",'native Hebrew candidate guard');
  undo("import {eligibleHebrewRetry} from './retry-policy.mjs';\n",'','retry import');
  undo("ORDER BY (t.item_id IS NULL) DESC,n.published_ms DESC,n.priority DESC LIMIT 120",
       "ORDER BY (t.item_id IS NULL) DESC,n.priority DESC,n.published_ms DESC LIMIT 120",'fresh news order');
