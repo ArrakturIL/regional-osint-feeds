@@ -1,11 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {webcrypto} from 'node:crypto';
+import {webcrypto,createHash} from 'node:crypto';
+import {reconstructReaderFacade} from './localization-source-parity.mjs';
 import {readLocalizedAnalysts} from '../../backend/editor/src/localization/analyst-api.mjs';
 import {localized,respond,HEADERS} from '../../backend/editor/src/localization/read-core.mjs';
 import {sourceText,fingerprint} from '../../backend/editor/src/localization/shared.mjs';
 import localization from '../../backend/editor/src/localization/localization.mjs';
 if(!globalThis.crypto)globalThis.crypto=webcrypto;
+
+test('new public reader and analyst modules reconstruct the exact pre-split Git blob',()=>{
+ const source=Buffer.from(reconstructReaderFacade(),'utf8');
+ const blob=createHash('sha1')
+   .update(Buffer.from('blob '+source.length,'utf8'))
+   .update(Buffer.from([0])).update(source).digest('hex');
+ assert.equal(blob,'4e7346b0463edd2a71a8998b121afb604609ae6f',
+  'all original response headers, SQL, cached attribution, errors, translation labels and counters remain lossless');
+});
 
 const url=(path,lang)=>new Request('https://regional-watch.pages.dev'+path+'?lang='+lang);
 function fixture({data,language='ru',cache=[],upstreamStatus=200}={}){
