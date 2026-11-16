@@ -16,13 +16,13 @@
 - Do not change archived/legacy Worker or postponed backups.
 
 ## Single isolated task
-- [ ] **RED** add `tests/architecture/editor-ai-comments.test.mjs`: no AI when budget exhausted; sensitive row marks `EDITORIAL_SKIP`; accepted JSON writes exact existing comment model and neuron cost; malformed response logs `last_ai_error` and charges without publishing; 2 pending-row bound and budget cutoff.
-- [ ] Add this test to mandatory `editor-source` in `.github/workflows/regional-watch-app-check.yml`; open draft PR and observe failure because module is absent.
-- [ ] **GREEN** copy original `writeComment` verbatim and commentary budget block into `editorial/ai-comments.mjs`, wrapping the block as `generateComments`; replace corresponding source spans in `index.js` with import and call.
-- [ ] Extend `tests/architecture/editor-modules.test.mjs` to assert extracted blocks are byte-equivalent to frozen v64, including SQL, budget and prompt; ensure remaining entrypoint equivalence and relative imports.
-- [ ] Run GitHub Actions mandatory app CI/immutable release checks on PR; compare only intended files; no merge if failed.
-- [ ] After green, merge to main and verify coordinated release + independent Pages/Editor/Monitor bindings/cron.
-- [ ] Update `docs/REGIONAL_WATCH_MASTER_TODO.md` and DEV-05 audit with evidence, retain ARCH-03 as partial.
+- [x] **RED** add `tests/architecture/editor-ai-comments.test.mjs`: no AI when budget exhausted; sensitive row marks `EDITORIAL_SKIP`; accepted JSON writes exact existing comment model and neuron cost; malformed response logs `last_ai_error` and charges without publishing; 2 pending-row bound and budget cutoff.
+- [x] Add this test to mandatory `editor-source` in `.github/workflows/regional-watch-app-check.yml`; open draft PR and observe failure because module is absent.
+- [x] **GREEN** copy original `writeComment` verbatim and commentary budget block into `editorial/ai-comments.mjs`, wrapping the block as `generateComments`; replace corresponding source spans in `index.js` with import and call.
+- [x] Extend `tests/architecture/editor-modules.test.mjs` to assert extracted blocks are byte-equivalent to frozen v64, including SQL, budget and prompt; ensure remaining entrypoint equivalence and relative imports.
+- [x] Run GitHub Actions mandatory app CI/immutable release checks on PR; compare only intended files; no merge if failed.
+- [x] After green, merge to main and verify coordinated release + independent Pages/Editor/Monitor bindings/cron.
+- [x] Update `docs/REGIONAL_WATCH_MASTER_TODO.md` and DEV-05 audit with evidence, retain ARCH-03 as partial.
 
 ## Review focus
 - Sensitive military/casualty source text must not be sent to AI.
@@ -30,3 +30,5 @@
 - Malformed AI JSON must not become a published comment.
 - Error and skip attempts consume the same existing estimated budget.
 - Editor scan order, IDF translation and final summary fields remain unchanged.
+
+**Completion receipt:** PR #59 merged as `44d55ef862f7430d0fe3f4a64095b196333548af`; RED #43784760543, app GREEN #43784955476, integrated GREEN #43784955428, production coordinated release #43785057089 SUCCESS. Independent Cloudflare Pages/Editor/Monitor and cron/bindings postcheck recorded in master TODO section 10. This completes only the editorial AI boundary, not ARCH-03/DEV-05.
