@@ -59,7 +59,18 @@ test('original v64 logic is exactly preserved, only relative import paths change
   const routedExpected=(restExpected.slice(0,officialStart)+restExpected.slice(routerStart+1))
     .replace("import {load} from './news/rss.mjs';",
       "import {load} from './news/rss.mjs';\nimport {readOfficialPosts} from './api/official-posts.mjs';");
-  assert.equal(actual,routedExpected,name);
+  const monitorStart=routedExpected.indexOf('function buildDigest(');
+  const archiveStart=routedExpected.indexOf('async function archiveExpiredPolymarket(',monitorStart);
+  assert.ok(monitorStart>=0&&archiveStart>monitorStart,'frozen v64 monitor changes API boundaries');
+  const monitorExpected=routedExpected.slice(monitorStart,archiveStart)
+    .replace('function buildDigest(rows,eventRows){','export function buildDigest(rows,eventRows){')
+    .replace('async function readMonitorChanges(request,env){','export async function readMonitorChanges(request,env){');
+  const monitorRoutedExpected=(routedExpected.slice(0,monitorStart)+routedExpected.slice(archiveStart))
+    .replace("import {readOfficialPosts} from './api/official-posts.mjs';",
+      "import {readOfficialPosts} from './api/official-posts.mjs';\nimport {readMonitorChanges} from './api/monitor-changes.mjs';");
+  assert.equal(actual,monitorRoutedExpected,name);
+  assert.equal(readFileSync(liveFile('api/monitor-changes.mjs'),'utf8'),monitorExpected,
+    'Monitor run comparison and journal attribution must be moved byte-identically');
   assert.equal(readFileSync(liveFile('api/official-posts.mjs'),'utf8'),officialExpected,
     'Read-only IDF API and translation provenance must be moved byte-identically');
   assert.equal(readFileSync(liveFile('news/rss.mjs'),'utf8'),rssExpected,'RSS source must be losslessly extracted');
@@ -70,6 +81,6 @@ test('original v64 logic is exactly preserved, only relative import paths change
   const normalized=actual.replace("import { semanticMeaningIssue } from './semantic-meaning.mjs';\n",'').replace("    const semanticIssue=semanticMeaningIssue(src,translated);\n    if(semanticIssue)return field+':'+semanticIssue;\n",'');
   assert.equal(normalized,expected,name);
  }else assert.equal(actual,expected,name);}});
-test('each module import resolves to a real file',()=>{for(const p of [...Object.values(map),'news/rss.mjs','translations/scheduled.mjs','api/official-posts.mjs']){const source=readFileSync(liveFile(p),'utf8');for(const match of source.matchAll(/from\s+['"](\.[^'"]+)['"]/g))assert.ok(existsSync(resolve(dirname(liveFile(p)),match[1])),p+' -> '+match[1]);}});
-test('Node parses every module',()=>{for(const p of [...Object.values(map),'news/rss.mjs','translations/scheduled.mjs','api/official-posts.mjs']){const r=spawnSync(process.execPath,['--check',liveFile(p)],{encoding:'utf8'});assert.equal(r.status,0,p+': '+r.stderr);}});
+test('each module import resolves to a real file',()=>{for(const p of [...Object.values(map),'news/rss.mjs','translations/scheduled.mjs','api/official-posts.mjs','api/monitor-changes.mjs']){const source=readFileSync(liveFile(p),'utf8');for(const match of source.matchAll(/from\s+['"](\.[^'"]+)['"]/g))assert.ok(existsSync(resolve(dirname(liveFile(p)),match[1])),p+' -> '+match[1]);}});
+test('Node parses every module',()=>{for(const p of [...Object.values(map),'news/rss.mjs','translations/scheduled.mjs','api/official-posts.mjs','api/monitor-changes.mjs']){const r=spawnSync(process.execPath,['--check',liveFile(p)],{encoding:'utf8'});assert.equal(r.status,0,p+': '+r.stderr);}});
 test('Editor bindings and 5-minute cron are pinned',()=>{const x=JSON.parse(readFileSync(resolve(root,'backend/editor/wrangler.jsonc'),'utf8'));assert.equal(x.main,'src/index.js');assert.equal(x.compatibility_date,'2026-11-10');assert.deepEqual(x.triggers.crons,['*/5 * * * *']);assert.deepEqual(x.d1_databases.map(d=>d.binding).sort(),['CORE_DB','NEWS_DB']);assert.equal(x.ai.binding,'AI');});
