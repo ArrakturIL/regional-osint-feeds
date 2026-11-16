@@ -1,45 +1,12 @@
-import {factualTranslationIssue} from '../translations/fact-guard.mjs';
 import {semanticMeaningIssue} from '../translations/semantic-meaning.mjs';
 import {shouldSuppressComment,safePublishedComment} from '../editorial/comment-policy.mjs';
 import {DAY,val,sourceText,fingerprint} from './shared.mjs';
+import {HEADERS,respond,fieldLocale,localized} from './read-core.mjs';
+import {readLocalizedAnalysts} from './analyst-api.mjs';
 import {translateScheduled} from './scheduled.mjs';
 export {fingerprint} from './shared.mjs';
 // REGIONAL WATCH: locale-aware public readers, no client-side credentials.
-const HEADERS={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET, HEAD, OPTIONS','Access-Control-Allow-Headers':'Content-Type','X-Content-Type-Options':'nosniff','Cache-Control':'public,max-age=60'};
-function respond(body,code=200){return Response.json(body,{status:code,headers:HEADERS});}
 function locale(request){const l=new URL(request.url).searchParams.get('lang')||'ru';return l==='ru'||l==='he'?l:null;}
-// Field metadata describes displayed text, never changes source text or provenance.
-function fieldLocale(record,fields,lang,state){
-  const field_languages={},field_translation_status={};
-  for(const key of fields){
-    const text=String(record[key]||'').trim();
-    const ru=/[\u0400-\u04ff]/u.test(text),he=/[\u0590-\u05ff]/u.test(text);
-    const detected=!text?null:ru&&he?'mul':ru?'ru':he?'he':/[\u0600-\u06ff]/u.test(text)?'ar':/[A-Za-z]/u.test(text)?'en':'und';
-    field_languages[key]=detected;
-    field_translation_status[key]=!text?'not_applicable':detected!==lang?'pending':
-      state==='needs_review'?'needs_review':state==='available'?'available':'source';
-  }
-  const complete=Object.values(field_languages).every(x=>x===null||x===lang);
-  return{field_languages,field_translation_status,translation_status:state==='needs_review'?state:complete?state:'pending',localization_complete:complete&&state!=='needs_review'&&state!=='pending'};
-}
-async function localized(db,kind,id,original,lang,prefilled=null){
-  if(lang==='ru'){
-    const detected=/[\u0400-\u04ff]/u.test(original.title+original.body)?'ru':/[\u0590-\u05ff]/u.test(original.title+original.body)?'he':'en';
-    return {...original,content_language:detected,translation_status:detected==='ru'?'source':'pending'};
-  }
-  const h=await fingerprint(original);
-  const t=prefilled||await db.prepare("SELECT source_hash,title,body,commentary,quality_score FROM regional_i18n WHERE kind=? AND item_id=? AND language='he'").bind(kind,id).first();
-  if(t&&t.source_hash===h&&t.quality_score>=85&&/[\u0590-\u05ff]/u.test(t.title||'')
-     &&(!original.body||/[\u0590-\u05ff]/u.test(t.body||''))){
-    const mismatch=factualTranslationIssue(original,{title:t.title,body:t.body,comment:t.commentary||''});
-    if(!mismatch)return{title:t.title,body:t.body,comment:t.commentary||'',content_language:'he',translation_status:'available'};
-    // Fail closed: a high confidence score is not proof of accurate attribution.
-    return {...original,content_language:/[\u0400-\u04ff]/u.test(original.title+original.body)?'ru':'en',
-      translation_status:'needs_review'};
-  }
-  return {...original,content_language:/[\u0400-\u04ff]/u.test(original.title+original.body)?'ru':'en',translation_status:'pending'};
-}
-
 /** One trusted localization contract for event and legacy news responses. */
 export async function localizeNewsRow(db,row,lang){
   // The original article language is derived from its original fields, never
@@ -197,47 +164,7 @@ export async function fetchLocalized(request,env,analystService){
     return respond({requested_language:lang,stories:valid,localized_count:valid.filter(x=>x.localization_complete).length});
   }
   if(path==='/api/analysts'||path==='/api/analyst-posts'||/^\/api\/analyst-posts\/[a-z0-9-]+$/.test(path)){
-    const r=await analystService.fetch(request,{DB:env.CORE_DB,AI:env.AI});
-    if(!r.ok)return r;
-    const old=await r.json(),profiles=path==='/api/analysts',detail=!profiles&&path!=='/api/analyst-posts';
-    const items=profiles?(old.analysts||[]):detail?[old]:(old.posts||[]);
-    const kind=profiles?'profile':'analyst';
-    const ids=items.map(x=>x?.id).filter(x=>typeof x==='string'&&x.length<=180).slice(0,100);
-    const cached=new Map();
-    if(ids.length){
-      const sql="SELECT item_id,source_hash,title,body,commentary,quality_score FROM regional_i18n WHERE kind=? AND language='he' AND item_id IN ("+ids.map(()=>'?').join(',')+")";
-      const rows=await env.CORE_DB.prepare(sql).bind(kind,...ids).all();
-      for(const t of rows.results||[])cached.set(t.item_id,t);
-    }
-    const translated=await Promise.all(items.map(async item=>{
-      const t=await localized(env.CORE_DB,kind,item.id,sourceText(kind,item),lang,cached.get(item.id)||{});
-      const displayLanguage=t.content_language;
-      const native=displayLanguage===lang&&t.translation_status==='source';
-      const state=native?'original':t.translation_status==='available'?'translated':
-        t.translation_status==='needs_review'?'needs_review':'pending';
-      const available=state==='original'||state==='translated';
-      const label=state==='original'?(lang==='he'?'שפת המקור':'Оригинал'):
-        state==='translated'?(lang==='he'?'תורגם':'Переведено'):
-        state==='needs_review'?(lang==='he'?'בבדיקת תרגום':'Перевод проверяется'):
-        (lang==='he'?'ממתין לתרגום':'Перевод ожидается');
-      const attrs={content_language:displayLanguage,translation_status:t.translation_status,
-        translation_state:state,translation_label:label,translation_available:available,
-        requested_language:lang,source_language:item.original_language||'ru',
-        translation:{state,label,available,requested_language:lang,display_language:displayLanguage,source_language:item.original_language||'ru'}};
-      return profiles?{...item,display_name:t.title,description:t.body,...attrs}:
-        {...item,headline:t.title,summary:t.body,short_quote:t.comment,...attrs};
-    }));
-    if(profiles)return respond({requested_language:lang,analysts:translated});
-    if(detail)return respond(translated[0]);
-    return respond({requested_language:lang,posts:translated,post_count:translated.length,
-      localized_count:translated.filter(x=>x.content_language===lang).length,
-      translation_summary:{available:translated.filter(x=>x.translation_available).length,
-        pending:translated.filter(x=>x.translation_state==='pending').length,
-        needs_review:translated.filter(x=>x.translation_state==='needs_review').length,
-        original:translated.filter(x=>x.translation_state==='original').length,
-        translated:translated.filter(x=>x.translation_state==='translated').length},
-      disclaimer:lang==='he'?'פרשנויות הכותבים אינן בהכרח עובדות שאומתו באופן עצמאי.':
-        'Авторские аналитические материалы, утверждения требуют независимой проверки.'});
+    return readLocalizedAnalysts(request,env,analystService,lang,path);
   }
   return respond({error:'not_found'},404);
 }
