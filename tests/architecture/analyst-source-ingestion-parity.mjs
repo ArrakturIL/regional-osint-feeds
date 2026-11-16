@@ -1,8 +1,9 @@
 import {readFileSync} from 'node:fs';
+import {reconstructAnalystDecisionEditor} from './analyst-decision-source-parity.mjs';
 
 export function reconstructAnalystIngestionEditor(){
  const root=new URL('../../backend/editor/src/analysts/',import.meta.url);
- const editor=readFileSync(new URL('editor.mjs',root),'utf8');
+ const editor=reconstructAnalystDecisionEditor();
  const ingest=readFileSync(new URL('source-ingestion.mjs',root),'utf8');
  const addedImport="import {createSourceIngestion} from './source-ingestion.mjs';\n";
  const call="const {sha256,readMirror,validateInput,insertItem}=createSourceIngestion({HOUR,DAY,plain,assertString});\n";
