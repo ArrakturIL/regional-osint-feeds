@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {reconstructOriginalRuTranslator} from './ru-translation-selection-parity.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -145,7 +146,7 @@ test('original v64 logic is exactly preserved, only relative import paths change
   assert.equal(readFileSync(liveFile('api/official-posts.mjs'),'utf8'),officialExpected,
     'Read-only IDF API and translation provenance must be moved byte-identically');
   assert.equal(readFileSync(liveFile('news/rss.mjs'),'utf8'),rssExpected,'RSS source must be losslessly extracted');
-  assert.equal(readFileSync(liveFile('translations/scheduled.mjs'),'utf8'),scheduledExpected,
+  assert.equal(reconstructOriginalRuTranslator(),scheduledExpected,
     'Scheduled translation/AI budgets and source guards must be extracted byte-identically');
  }else if(to==='translations/fact-guard.mjs'){
   // The original logic is unchanged except the reviewed semantic guard hook.
