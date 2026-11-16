@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {webcrypto} from 'node:crypto';
+import {webcrypto,createHash} from 'node:crypto';
+import {readFileSync} from 'node:fs';
 import {translateScheduled} from '../../backend/editor/src/localization/scheduled.mjs';
 import {sourceText,fingerprint} from '../../backend/editor/src/localization/shared.mjs';
 import {fingerprint as publicFingerprint} from '../../backend/editor/src/localization/localization.mjs';
@@ -52,6 +53,38 @@ function makeEnv({budget={attempts:0,estimated_neurons:0},newsRows=[],analystRow
 const writes=(events,part)=>events.filter(e=>e.method==='run'&&e.sql.includes(part));
 const newsRow=(id,n)=>({id,headline:'Israel reports '+n+' drones near the border',headline_ru:null,
  summary:'',summary_ru:null,comment:null,cached_he_hash:null});
+
+test('post-split facade + scheduled + shared reconstruct exact original GitHub blob',()=>{
+ const root=new URL('../../backend/editor/src/localization/',import.meta.url);
+ const main=readFileSync(new URL('localization.mjs',root),'utf8');
+ const shared=readFileSync(new URL('shared.mjs',root),'utf8');
+ const scheduled=readFileSync(new URL('scheduled.mjs',root),'utf8');
+ const extra="import {DAY,val,sourceText,fingerprint} from './shared.mjs';\n"
+   +"import {translateScheduled} from './scheduled.mjs';\n"
+   +"export {fingerprint} from './shared.mjs';\n";
+ assert.ok(main.includes(extra),'facade imports shared and scheduled exports');
+ assert.ok(shared.includes("export const DAY=86400000;\n"));
+ const valStart=shared.indexOf('export function val(');
+ const sourceStart=shared.indexOf('export function sourceText(');
+ const fingerprintStart=shared.indexOf('export async function fingerprint(');
+ const scheduledStart=scheduled.indexOf("const HE_MODEL='@cf/zai-org/glm-4.7-flash';");
+ assert.ok(valStart>0&&sourceStart>valStart&&fingerprintStart>sourceStart&&scheduledStart>0,
+   'all original localization stage boundaries still present');
+ const valuePart=shared.slice(valStart,sourceStart).replace('export function val(','function val(');
+ const sourcePart=shared.slice(sourceStart,fingerprintStart).replace('export function sourceText(','function sourceText(');
+ const hashPart=shared.slice(fingerprintStart);
+ const restored=main.replace(extra,'')
+   .replace('function respond(body,code=200)',"const DAY=86400000;\nfunction respond(body,code=200)")
+   .replace('// Field metadata describes displayed text',valuePart+'// Field metadata describes displayed text')
+   .replace('async function localized(db,kind,id,original,lang,prefilled=null){',
+     sourcePart+hashPart+'async function localized(db,kind,id,original,lang,prefilled=null){')
+   .replace('export default {fetch:fetchLocalized,scheduled:translateScheduled};',
+     scheduled.slice(scheduledStart)+'export default {fetch:fetchLocalized,scheduled:translateScheduled};');
+ const bytes=Buffer.from(restored,'utf8');
+ const got=createHash('sha1').update(Buffer.from('blob '+bytes.length+'\\0','utf8')).update(bytes).digest('hex');
+ assert.equal(got,'5b907775613eec9c1a986eddcd06cb74fd7c9880',
+   'no changes to RU/HE API, GLM-4.7 prompts, SQL, budgets or translation guards');
+});
 
 test('shared source text and fingerprint retain public identity and never fabricate missing comments',async()=>{
  const row={headline:'Israel reports 5 drones',headline_ru:'Израиль сообщает о 5 беспилотниках',
