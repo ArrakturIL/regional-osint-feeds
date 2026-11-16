@@ -15,13 +15,13 @@
 - No global UI QA, no backup/versioned retention, no OSS integration in this block.
 
 ## Task 1 — lossless scheduled ingestion boundary
-- [ ] RED: create `tests/architecture/editor-news-ingestion.test.mjs` importing non-existent `ingestNewsFeeds`; exercise HTTP failures/empty feeds, technical URL dedup, existing canonical URL dedup, same-publisher headline guard, differing publishers, insertion count, and 8-day prune with synthetic fetch and local D1.
-- [ ] Wire the new test into mandatory editor-source workflow; see expected module-not-found on branch PR.
-- [ ] GREEN: move source projection, digest and original `scan` ingest/persist block into `news/ingestion.mjs`; pass `now` from `scan` and retain rest of pipeline.
-- [ ] Reconstruct exact `index.js` and `news/ingestion.mjs` from existing frozen-v64 parity fixture after earlier five moves. Ensure module parsing and import resolution.
-- [ ] Confirm all PR CI jobs, immutable three-component dry-run and integrated offline architecture tests; review exact diff.
-- [ ] Merge only with green checks, coordinated release and independent read-only Cloudflare Pages/Editor/Monitor version/bindings/cron postcheck.
-- [ ] Update MASTER TODO and DEV-05 audit with specific RED, GREEN, production receipts; leave ARCH-03 open for other owners.
+- [x] RED: create `tests/architecture/editor-news-ingestion.test.mjs` importing non-existent `ingestNewsFeeds`; exercise HTTP failures/empty feeds, technical URL dedup, existing canonical URL dedup, same-publisher headline guard, differing publishers, insertion count, and 8-day prune with synthetic fetch and local D1.
+- [x] Wire the new test into mandatory editor-source workflow; see expected module-not-found on branch PR.
+- [x] GREEN: move source projection, digest and original `scan` ingest/persist block into `news/ingestion.mjs`; pass `now` from `scan` and retain rest of pipeline.
+- [x] Reconstruct exact `index.js` and `news/ingestion.mjs` from existing frozen-v64 parity fixture after earlier five moves. Ensure module parsing and import resolution.
+- [x] Confirm all PR CI jobs, immutable three-component dry-run and integrated offline architecture tests; review exact diff.
+- [x] Merge only with green checks, coordinated release and independent read-only Cloudflare Pages/Editor/Monitor version/bindings/cron postcheck.
+- [x] Update MASTER TODO and DEV-05 audit with specific RED, GREEN, production receipts; leave ARCH-03 open for other owners.
 
 ## Review focus
 - Malformed/failed RSS feeds must continue to write status and not break unrelated feeds.
@@ -29,3 +29,5 @@
 - URLs with tracking params must not create duplicate technical identities.
 - Last 240 items and 8-day prune must be unchanged, including counting.
 - Scan summary and subsequent event reconciliation, RU/IDF translation and commentary must retain sequencing.
+
+**Completion receipt:** PR #60 merged as `a7a43f2795a92c547c99dd47e3beb7fb527edf83`; RED #43785869304, app GREEN #43785978638, integrated GREEN #43785978613. Initial main release #43786083010 failed due to transient Cloudflare Pages canonical API propagation; automated Worker rollback and a late Pages canonical transition revealed a release-gate race. PR #61 hotfix (`470a8d79886ba39f9f69b665f6f9f89aef12d29f`) covered this with RED #43786471321 and GREEN #43786660600. Final coordinated production release #43786765089 **SUCCESS**, independent Cloudflare Pages/Editor/Monitor and cron/binding check recorded in MASTER TODO section 11. This closes only this RSS ingest boundary, not ARCH-03/DEV-05.
