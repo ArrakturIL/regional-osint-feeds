@@ -8,11 +8,27 @@ from __future__ import annotations
 import re
 
 
+
+
+def military_strike_misread(source: str, target: str) -> bool:
+    """Quarantine 'airstrikes/strikes' mapped to labor stoppages, not genuine unions."""
+    src = str(source or "")
+    dst = str(target or "")
+    if not re.search(r"\b(?:strikes?|airstrikes?)\b", src, re.I):
+        return False
+    if not re.search(r"שבית\w*|забастовк\w*", dst, re.I):
+        return False
+    if re.search(r"\b(?:unions?|workers?|employees?|teachers?|doctors?|nurses?|pilots?|dockers?|labou?r|industrial|hunger|general|walk-?outs?|histadrut|wages?|pickets?)\b|профсоюз|забастов", src, re.I):
+        return False
+    return bool(re.search(r"\b(?:Israeli|Israel|Iran|Iranian|Hamas|IDF|Gaza|military|airstrikes?|aircraft|air|ballistic|missiles?|bombs?|bombing|attack|war|troops?|army|Hezbollah|IRGC|US|U\.S\.|American|Bahrain|hospital|killed|drones?|targets?|artillery)\b|(?:удар|авиаудар|обстрел)\w*", src, re.I))
+
 def semantic_issue(source: str, target: str, language: str) -> str | None:
     src = str(source or "")
     dst = str(target or "")
     if not src.strip() or not dst.strip() or language not in {"ru", "he"}:
         return None
+    if military_strike_misread(src, dst):
+        return "military_strikes_misread_as_labor_action"
 
     sea_mine = re.search(r"\b(?:naval|sea)\s+mines?\b", src, re.I)
     collision = re.search(r"\b(?:strike|struck|hit|collided with)\s+(?:a\s+|the\s+)?(?:naval|sea)\s+mine\b", src, re.I)
