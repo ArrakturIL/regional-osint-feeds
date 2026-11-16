@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {webcrypto,createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
+import {reconstructReaderFacade} from './localization-source-parity.mjs';
 import {translateScheduled} from '../../backend/editor/src/localization/scheduled.mjs';
 import {sourceText,fingerprint} from '../../backend/editor/src/localization/shared.mjs';
 import {fingerprint as publicFingerprint} from '../../backend/editor/src/localization/localization.mjs';
@@ -56,7 +57,7 @@ const newsRow=(id,n)=>({id,headline:'Israel reports '+n+' drones near the border
 
 test('post-split facade + scheduled + shared reconstruct exact original GitHub blob',()=>{
  const root=new URL('../../backend/editor/src/localization/',import.meta.url);
- const main=readFileSync(new URL('localization.mjs',root),'utf8');
+ const main=reconstructReaderFacade();
  const shared=readFileSync(new URL('shared.mjs',root),'utf8');
  const scheduled=readFileSync(new URL('scheduled.mjs',root),'utf8');
  const extra="import {DAY,val,sourceText,fingerprint} from './shared.mjs';\n"
