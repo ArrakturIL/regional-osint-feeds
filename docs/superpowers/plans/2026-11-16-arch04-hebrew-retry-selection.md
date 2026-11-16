@@ -14,3 +14,12 @@ Baseline main `293501a4b1c0aab1d9046e8ad883cecb39058c93`. Original current sched
 
 ## What this does NOT do
 Does not increase HE cap or cron, solve all pending news, modify RU batches (20/day separate next item), change model, translation quality checks or frontend. Does not assert postrelease improvement until measured from D1 over time. Keep ARCH-04 provider manual/parallel/cooldown wider audit open.
+
+
+## Completion receipt — 16 November 2026
+
+- [x] D1 read-only diagnosis: 15 high-priority news without HE row all failed earlier same day; zero never-attempted high-priority missing rows. RU 20/20 batches but high-priority new items all RU-complete; pending RU mostly priority 4–6.
+- [x] New pure `eligibleHebrewRetry` controls one transient second attempt with 30-minute cooldown; rejects deterministic QA/fact/numeral/actor same-day retry. NEWS missing HE candidates newest-first, unchanged QA/prompt/112/day/4000/4-cycle/5m Cron.
+- [x] [Expected RED #43800944926](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43800944926), [GREEN app #43801136813](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43801136813) and [integrated #43801136812](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43801136812), immutable triple artifact. Strict Git source reconstruction pins current prior `fedc58a681f0e16007dc8311a91c5342dbf2581a` and earlier two scheduler sources.
+- [x] [PR #71](https://github.com/ArrakturIL/regional-osint-feeds/pull/71), squash source `3d5892a3251c51337e3f5fb7495b125350b171b1`; [coordinated production #43801273718](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43801273718) SUCCESS. Independent Cloudflare read-only binding, version and cron postcheck recorded in MASTER TODO §21.
+- [ ] Later: verify real HE approved count and pending age after a UTC day, not merely passed CI. RU policy on priority 4–6 and source relevance, provider health/rate limits and manual concurrency remain ARCH-04 open. No frontend or archived B-01 edits.
