@@ -259,3 +259,17 @@
 **Production:** [coordinated #43796008521](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43796008521) SUCCESS, receipt archived, no rollback. Independent Cloudflare read-only: Pages production canonical `df7298d3-d7a7-478c-9f4b-eea50c55ad32`, Editor `4fb46052-b175-465f-bc0e-e1bf551b9b1c`, Monitor `8c370908-d804-46ad-8aee-df439f7c910f` both 100% and unchanged AI/D1/secrets, cron Editor */5 and Monitor */1.
 
 **Remaining:** Analyst Editor decision/AI translation and scheduled queue/publish orchestration to isolate; ARCH-01/04/05/06/07 and backend chronology/translation backlog issues still active. Frontend and historical B-01 explicitly deferred.
+
+---
+
+## ARCH-03 — analyst editorial AI decision source extraction (16.11.2026)
+
+**Code:** [PR #68](https://github.com/ArrakturIL/regional-osint-feeds/pull/68), source `d545a69bd1ded8b0000a5f318bc3035e47583ec1`. The new `analysts/editorial-decision.mjs` owns byte-identical `validateDecision`, `aiDecision`, `reserveAi` (14/day) and `decide` (publish/skip/needs_data, DB decisions/publications). Original prompts, hard limits, source attribution and quote rules untouched. Queue `prioritizePending/runEditor` still in `analysts/editor.mjs`. No frontend, schema, schedules or AI model changes.
+
+**TDD:** [RED #43796810433](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43796810433), expected missing module 78 pass/1 fail; [GREEN #43797092134](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43797092134), full mandatory app CI + immutable 3-bundle success. Tests cover numerical editorial validation, attribution/quotes, strict AI JSON, wrong foreign quote, quota and duplicate attempts, no-AI rule skip, D1 publications; exact-source reconstructors verify original pre-split editor SHA `742091e2b6818d2cae585985dadb27401e1d02e5`, plus previous pins `29623aa4f01a3cdb1b85820a0471763ae0811f88` and `a4f6289a9f8531278804f0b4dca8b8aee86795fe`.
+
+**Independent production:** [coordinated #43797220991](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43797220991) SUCCESS, receipt saved, no rollback. Cloudflare read-only Pages production `a297c7e2-e1b8-48e3-b82c-d9b825f7b97e`, Editor `5c14520f-8356-423e-8ef9-6b3311550ee8`, Monitor `f066f56f-b902-45da-b8a8-dc6f9d4ac0f6`, both Workers 100%, original AI/D1/secret bindings and */5 and */1 cron unchanged.
+
+**Separate defect found via test:** JS `\\b` regular-expression word boundaries do not reliably match Cyrillic content; current `validateDecision` headline guard allows `официально установлено` to pass, contrary to intent. Confirmed in test RED during refactor, kept original code unchanged to meet lossless parity. Tracked as **E-06** in MASTER TODO (backend P1). Fix as independent TDD Unicode-aware guard, not in this module extraction. Not the archived B-01 issue.
+
+**Remaining:** scheduled analyst queue `runEditor`, other ARCH-01/04/05/06/07, backend news chronology and translation pending/quotas. Frontend deferred by owner.
