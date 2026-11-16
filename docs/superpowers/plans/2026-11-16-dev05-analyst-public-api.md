@@ -7,11 +7,13 @@
 **Boundary:** New `backend/editor/src/analysts/public-api.mjs` contains old analyst `CORS`, `json` and complete `readApi` (health, analysts, analyst-posts list/detail, unknown routes), with explicit `editorVersion` parameter for health response. `backend/editor/src/analysts/editor.mjs` retains `runEditor`, `validateInput`, source collector, AI rules/budgets, `testHooks`, and default `{scheduled,fetch}`, delegating `fetch` to the new function. No dependency from public-api back into editor (no ESM cycles). Do not modify endpoint response JSON, headers, SQL, source attribution, publish rules or old cron.
 
 ## TDD tasks
-- [ ] Add mandatory `tests/architecture/editor-analyst-public-api.test.mjs` checking health, GET read-only, profiles, list paging/clamping and original author/URL/metadata, detail/not_found, preserved CORS and direct/editor delegated calls; exact source reconstruction against original Analyst Editor blob.
-- [ ] Verify RED (missing module) on GitHub Actions.
-- [ ] Move CORS/json/readApi without changing bodies; add explicit version argument only at readApi health and delegation; write deterministic reconstruction helper; preserve legacy `testHooks` and exports.
-- [ ] Verify GREEN all mandatory Editor source, integrated data architecture and immutable 3-component bundle; review complete scoped PR diff.
-- [ ] Merge squash, coordinated production release, independent Cloudflare Pages/Editor/Monitor read-only binding/cron checks and receipt.
-- [ ] Update MASTER TODO, DEV-05 audit and this plan after successful production; leave further `analysts/editor.mjs` ingestion/AI/queue work for next isolated backend PR.
+- [x] Add mandatory `tests/architecture/editor-analyst-public-api.test.mjs` checking health, GET read-only, profiles, list paging/clamping and original author/URL/metadata, detail/not_found, preserved CORS and direct/editor delegated calls; exact source reconstruction against original Analyst Editor blob.
+- [x] Verify RED (missing module) on GitHub Actions.
+- [x] Move CORS/json/readApi without changing bodies; add explicit version argument only at readApi health and delegation; write deterministic reconstruction helper; preserve legacy `testHooks` and exports.
+- [x] Verify GREEN all mandatory Editor source, integrated data architecture and immutable 3-component bundle; review complete scoped PR diff.
+- [x] Merge squash, coordinated production release, independent Cloudflare Pages/Editor/Monitor read-only binding/cron checks and receipt.
+- [x] Update MASTER TODO, DEV-05 audit and this plan after successful production; leave further `analysts/editor.mjs` ingestion/AI/queue work for next isolated backend PR.
 
 **Never:** frontend/CSS, historical B-01 cleanup, AI throughput increases, D1 migrations, new third-party services, changed source schema or cron in this slice.
+
+**Completion receipt:** [PR #66](https://github.com/ArrakturIL/regional-osint-feeds/pull/66) merged source `589ae98200a34a7b92d1406cc5a3432274c5f68f`. [RED #43795068408](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43795068408) expected absent module → [GREEN app #43795161991](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43795161991) success with 3-component immutable build. Git blob of entire Analyst Editor `a4f6289a9f8531278804f0b4dca8b8aee86795fe` reconstructed exactly. Integrated-data workflow path filter did not trigger; no claim of its execution. [Production #43795264479](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43795264479) completed SUCCESS, rollback skipped, Cloudflare independent read-only Pages/Editor/Monitor confirmation recorded in MASTER TODO §16. Remaining Analyst Editor source ingestion, AI decisions and queue orchestration still pending.
