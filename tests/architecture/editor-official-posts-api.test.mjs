@@ -59,7 +59,8 @@ test('RU returns validated numeric-preserving translation and original attributi
  assert.equal(item.content_language,'ru');
  assert.deepEqual(item.field_languages,{title:'ru',description:'ru'});
  assert.equal(item.title,translated.title_ru);
- assert.equal(item.description,translated.excerpt_ru);
+ assert.equal(item.description,'на севере Израиля. Соответствующие службы реагируют на происшествие.');
+ assert.equal(item.title+' '+item.description,translated.excerpt_ru,'existing headline/description deduplication stays intact');
  assert.equal(item.original_title,'IDF reports 12 alerts & 3 interceptions');
  assert.equal(item.original_description,raw.excerpt);
  assert.equal(item.translation_status,'available');
