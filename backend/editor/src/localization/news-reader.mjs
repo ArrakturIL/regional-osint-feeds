@@ -59,4 +59,5 @@ export async function readLocalizedNews(env,url,lang,lim,rawOffset){
     }));
     const visible=readyOnly?articles.filter(x=>x.content_language==='he'&&x.translation_status==='available'):articles;
     return respond({requested_language:lang,articles:visible,localized_count:visible.filter(x=>x.content_language===lang).length,
-      limit:lim,offset,next_offset:rows.results?.length===lim?offset+lim:null,ready_only:readyOnly});}
+      limit:lim,offset,next_offset:rows.results?.length===lim?offset+lim:null,ready_only:readyOnly})
+}
