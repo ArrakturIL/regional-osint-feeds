@@ -119,7 +119,7 @@ test('story API preserves provenance, deduped HTTPS sources, partial event date 
  const x=await r.json();
  assert.equal(x.stories.length,1);
  assert.equal(x.stories[0].event_date,'2026-09');
- assert.equal(x.stories[0].announced_at,'2026-09');
+ assert.equal(x.stories[0].announced_at,null,'an incident date is not an independently announced date');
  assert.deepEqual(x.stories[0].source_urls,['https://example.org/report','https://other.org/independent']);
  assert.equal(x.stories[0].url,'https://example.org/report');
  assert.equal(x.stories[0].localization_complete,true);
