@@ -104,9 +104,11 @@ test('unknown sources fail before any DB reads',async()=>{
 test('existing analyst and translation pipelines are wired to the shared editor cache',async()=>{
  const {readFileSync}=await import('node:fs');
  const analyst=readFileSync(new URL('../../backend/editor/src/analysts/editor.mjs',import.meta.url),'utf8');
+ const analystQueue=readFileSync(new URL('../../backend/editor/src/analysts/queue-runner.mjs',import.meta.url),'utf8');
  const translation=readFileSync(new URL('../../backend/editor/src/translations/news-mirror.mjs',import.meta.url),'utf8');
- assert.match(analyst,/readEditorCachedPair\(env,\s*'analysts'/);
+ assert.match(analystQueue,/readEditorCachedPair\(env,\s*'analysts'/);
+ assert.match(analyst,/createAnalystQueue\(\{[^\n]*readEditorCachedPair/);
  assert.match(translation,/readEditorCachedPair\(env,\s*'news_translation'/);
- assert.match(analyst,/readMirror\('analyst-source-items\.json'\)/);
+ assert.match(analystQueue,/readMirror\('analyst-source-items\.json'\)/);
  assert.match(translation,/MIRROR\+'\?bucket='/);
 });
