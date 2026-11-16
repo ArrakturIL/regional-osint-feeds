@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test tests/architecture/editor-modules.test.mjs tests/architecture/editor-rss-boundary.test.mjs tests/architecture/editor-scheduled-translations.test.mjs tests/architecture/editor-official-posts-api.test.mjs tests/architecture/editor-monitor-changes-api.test.mjs tests/architecture/editor-ai-comments.test.mjs tests/architecture/editor-news-ingestion.test.mjs tests/architecture/editor-scan-orchestration.test.mjs
+      - run: node --test tests/architecture/editor-modules.test.mjs tests/architecture/editor-rss-boundary.test.mjs tests/architecture/editor-scheduled-translations.test.mjs tests/architecture/editor-official-posts-api.test.mjs tests/architecture/editor-monitor-changes-api.test.mjs tests/architecture/editor-ai-comments.test.mjs tests/architecture/editor-news-ingestion.test.mjs tests/architecture/editor-scan-orchestration.test.mjs tests/architecture/editor-localization-scheduled.test.mjs
       - name: Verify high-impact translation fidelity and article provenance
         run: node --test tests/architecture/translation-semantics.test.mjs tests/architecture/news-localization-provenance.test.mjs
       - uses: actions/setup-python@v5
