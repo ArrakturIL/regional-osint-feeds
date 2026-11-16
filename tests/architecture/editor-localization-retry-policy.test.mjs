@@ -86,7 +86,7 @@ test('scheduler skips previously rejected permanent QA candidate without consumi
  assert.equal(x.calls.length,0);
  assert.equal(operations(x.ops,'SET state=\'running\',retry_count=retry_count+1').length,0);
  assert.equal(operations(x.ops,'SET attempts=attempts+1').length,0);
- const prev=x.ops.find(o=>o.sql.startsWith('SELECT state,retry_count FROM regional_i18n_attempts'));
+ const prev=x.ops.find(o=>o.sql.startsWith('SELECT state,retry_count,error,attempted_at_ms FROM regional_i18n_attempts'));
  assert.match(prev?.sql||'',/error,attempted_at_ms/);
 });
 
