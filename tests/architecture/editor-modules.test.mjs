@@ -86,7 +86,40 @@ test('original v64 logic is exactly preserved, only relative import paths change
     +monitorRoutedExpected.slice(idfStart))
       .replace("import {shouldSuppressComment} from './editorial/comment-policy.mjs';",
         "import {generateComments} from './editorial/ai-comments.mjs';");
-  assert.equal(actual,afterComment,name);
+  const feedLine="const FEEDS=EVENT_FEEDS.map(x=>[x[0],x[1],x[4],x[3]]);\n";
+  const feedStart=afterComment.indexOf(feedLine);
+  const regionStart=afterComment.indexOf('const REGION=',feedStart);
+  const ingestDigestStart=afterComment.indexOf('async function digest(s){',regionStart);
+  const ingestScanStart=afterComment.indexOf('async function scan(env){',ingestDigestStart);
+  const ingestStagePrefix=' const now=Date.now(),runs=await Promise.all(FEEDS.map(x=>load(x,now))),all=runs.flatMap(x=>x.items);\n';
+  const ingestStageStart=afterComment.indexOf(ingestStagePrefix,ingestScanStart);
+  const ingestGroupedStart=afterComment.indexOf(" let grouped={state:'pending'};",ingestStageStart);
+  assert.ok(feedStart>=0&&regionStart>feedStart&&ingestDigestStart>regionStart
+    &&ingestScanStart>ingestDigestStart&&ingestStageStart>ingestScanStart&&ingestGroupedStart>ingestStageStart,
+    'frozen v64 scheduled RSS ingestion and D1 journal boundaries');
+  const ingestModuleExpected="import {FEEDS as EVENT_FEEDS} from './events.mjs';\n"
+    +"import {canonicalNewsUrl,normalizedHeadline} from './normalization.mjs';\n"
+    +"import {load} from './rss.mjs';\n\n"
+    +afterComment.slice(feedStart,regionStart)
+    +afterComment.slice(ingestDigestStart,ingestScanStart)
+    +"export async function ingestNewsFeeds(env,now){\n"
+    +afterComment.slice(ingestStageStart,ingestGroupedStart)
+      .replace(ingestStagePrefix,' const runs=await Promise.all(FEEDS.map(x=>load(x,now))),all=runs.flatMap(x=>x.items);\n')
+    +" return {runs,all,inserted};\n}\n";
+  const afterIngest=(afterComment.slice(0,feedStart)
+    +afterComment.slice(regionStart,ingestDigestStart)
+    +afterComment.slice(ingestScanStart,ingestStageStart)
+    +' const now=Date.now();\n const {runs,all,inserted}=await ingestNewsFeeds(env,now);\n'
+    +afterComment.slice(ingestGroupedStart))
+      .replace("import {FEEDS as EVENT_FEEDS,reconcile} from './news/events.mjs';",
+        "import {reconcile} from './news/events.mjs';")
+      .replace("import {canonicalNewsUrl,normalizedHeadline,articlePriority} from './news/normalization.mjs';",
+        "import {articlePriority} from './news/normalization.mjs';")
+      .replace("import {load} from './news/rss.mjs';",
+        "import {ingestNewsFeeds} from './news/ingestion.mjs';");
+  assert.equal(actual,afterIngest,name);
+  assert.equal(readFileSync(liveFile('news/ingestion.mjs'),'utf8'),ingestModuleExpected,
+    'source status, canonical URL dedup, publisher guard, 240 cap, retention and D1 SQL must remain byte-identical');
   assert.equal(readFileSync(liveFile('editorial/ai-comments.mjs'),'utf8'),commentExpected,
     'AI prompt, casualty suppression, daily D1 quota and error charges must be preserved byte-identically');
   assert.equal(readFileSync(liveFile('api/monitor-changes.mjs'),'utf8'),monitorExpected,
@@ -101,6 +134,6 @@ test('original v64 logic is exactly preserved, only relative import paths change
   const normalized=actual.replace("import { semanticMeaningIssue } from './semantic-meaning.mjs';\n",'').replace("    const semanticIssue=semanticMeaningIssue(src,translated);\n    if(semanticIssue)return field+':'+semanticIssue;\n",'');
   assert.equal(normalized,expected,name);
  }else assert.equal(actual,expected,name);}});
-test('each module import resolves to a real file',()=>{for(const p of [...Object.values(map),'news/rss.mjs','translations/scheduled.mjs','api/official-posts.mjs','api/monitor-changes.mjs','editorial/ai-comments.mjs']){const source=readFileSync(liveFile(p),'utf8');for(const match of source.matchAll(/from\s+['"](\.[^'"]+)['"]/g))assert.ok(existsSync(resolve(dirname(liveFile(p)),match[1])),p+' -> '+match[1]);}});
-test('Node parses every module',()=>{for(const p of [...Object.values(map),'news/rss.mjs','translations/scheduled.mjs','api/official-posts.mjs','api/monitor-changes.mjs','editorial/ai-comments.mjs']){const r=spawnSync(process.execPath,['--check',liveFile(p)],{encoding:'utf8'});assert.equal(r.status,0,p+': '+r.stderr);}});
+test('each module import resolves to a real file',()=>{for(const p of [...Object.values(map),'news/rss.mjs','translations/scheduled.mjs','api/official-posts.mjs','api/monitor-changes.mjs','editorial/ai-comments.mjs','news/ingestion.mjs']){const source=readFileSync(liveFile(p),'utf8');for(const match of source.matchAll(/from\s+['"](\.[^'"]+)['"]/g))assert.ok(existsSync(resolve(dirname(liveFile(p)),match[1])),p+' -> '+match[1]);}});
+test('Node parses every module',()=>{for(const p of [...Object.values(map),'news/rss.mjs','translations/scheduled.mjs','api/official-posts.mjs','api/monitor-changes.mjs','editorial/ai-comments.mjs','news/ingestion.mjs']){const r=spawnSync(process.execPath,['--check',liveFile(p)],{encoding:'utf8'});assert.equal(r.status,0,p+': '+r.stderr);}});
 test('Editor bindings and 5-minute cron are pinned',()=>{const x=JSON.parse(readFileSync(resolve(root,'backend/editor/wrangler.jsonc'),'utf8'));assert.equal(x.main,'src/index.js');assert.equal(x.compatibility_date,'2026-11-10');assert.deepEqual(x.triggers.crons,['*/5 * * * *']);assert.deepEqual(x.d1_databases.map(d=>d.binding).sort(),['CORE_DB','NEWS_DB']);assert.equal(x.ai.binding,'AI');});
