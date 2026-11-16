@@ -81,7 +81,7 @@ test('post-split facade + scheduled + shared reconstruct exact original GitHub b
    .replace('export default {fetch:fetchLocalized,scheduled:translateScheduled};',
      scheduled.slice(scheduledStart)+'export default {fetch:fetchLocalized,scheduled:translateScheduled};');
  const bytes=Buffer.from(restored,'utf8');
- const got=createHash('sha1').update(Buffer.from('blob '+bytes.length+'\\0','utf8')).update(bytes).digest('hex');
+ const got=createHash('sha1').update(Buffer.from('blob '+bytes.length,'utf8')).update(Buffer.from([0])).update(bytes).digest('hex');
  assert.equal(got,'5b907775613eec9c1a986eddcd06cb74fd7c9880',
    'no changes to RU/HE API, GLM-4.7 prompts, SQL, budgets or translation guards');
 });
