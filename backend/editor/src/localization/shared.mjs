@@ -1,6 +1,6 @@
 import {safePublishedComment} from '../editorial/comment-policy.mjs';
 
-const DAY=86400000;
+export const DAY=86400000;
 
 export function val(s,len=1800){return String(s||'').trim().slice(0,len);}
 export function sourceText(kind,row){
