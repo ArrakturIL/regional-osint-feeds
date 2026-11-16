@@ -207,3 +207,13 @@
 **Production:** [coordinated #43790331454](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43790331454), source `c3dc69ac03bf208d0b4dc022daaaf7935a3ba1c0`, completed success/receipt archived/rollback skipped. Cloudflare direct read-only postcheck: Pages canonical `c072097d-1983-40e0-bb88-b7d755d17bb7` production success; Editor `b75d7a6a-e70e-4abc-9119-20f88c33e259` 100% with `AI,CORE_DB,NEWS_DB` and cron `*/5`; Monitor `9d627d04-99bd-4aff-82a2-34886087a2ce` 100% with existing secrets, DB and cron `*/1`.
 
 **Still open:** isolate news/editorial/stories reader paths, refactor analyst editor pipeline, ARCH-01 + remaining ARCH-04/05/06 and ARCH-07. Not global browser/content QA, backup or OSS deployment.
+
+---
+
+## Scope clarification from owner — 16.11.2026: backlog translations + news sorting
+
+**ARCH-04 completion scope expanded without authorizing an immediate rate increase:** During remaining provider error/cooldown/quota/manual-run tests, measure translation backlog and age of pending by kind (RU/HE news, editorials, stories, analyst posts, official feeds), success/reject/retry rates, actual Workers AI budget and D1/CPU headroom. Existing Hebrew translation schedule cycles `['news','analyst','story','editorial','news','profile']`; max 4 new items/cycle, daily gate 96 attempts / estimated 4000 neurons. Increasing Cron alone will not improve translation when the daily cap or rejection/retry bottleneck is binding. If and only if live quotas permit, make a **small** bounded increase in effective throughput or priority selection, with RED→GREEN tests, stop criterion and before/after metrics; no paid runtime, no blind increase of model calls. Maintain source_hash/translation_quality gates and truthful pending/needs_review states. Main tracker: ARCH-04.
+
+**B-01** remains three **specific bad-cached-translation corrections** after a safe row-level capture, with direct same-ID RU/HE live readback and no regression in subsequent cycles; B-02 is the broader prevention strategy.
+
+**C-01** now records an owner-observed symptom: older items interspersed with newer news. Diagnose query sorting, time columns, grouping, cache and pagination across API and UI before edits; chronological Latest must be stable and genuinely newest-first, priority must be separate. **C-06** is a new user-visible filtering task (dates, sources, categories, importance/verification, combined filters, consistent RU/HE and pagination). Global UI QA stays in its separate chat; new code only within scoped, tested implementation blocks.
