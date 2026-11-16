@@ -69,5 +69,5 @@ export async function readLocalizedStories(env,lang,lim){
       return{...story,...fieldLocale(story,['title','summary'],lang,t.translation_status)};
     }));
     const valid=stories.filter(Boolean);
-    return respond({requested_language:lang,stories:valid,localized_count:valid.filter(x=>x.localization_complete).length})
+    return respond({requested_language:lang,stories:valid,localized_count:valid.filter(x=>x.localization_complete).length});
 }
