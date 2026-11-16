@@ -70,3 +70,22 @@
 - [Production release #43776494155](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43776494155) completed success, **12 successful jobs, 0 failed, no rollback**; независимый Cloudflare API: Pages canonical deployment `e5344d67-e317-4cbe-9e23-9276371459f4` success, Editor version `cdfb2691-96c0-41f6-a2e5-6f691c9fdbcb` 100%, Monitor version `3df81d16-f497-407f-9f9a-faeb0a9ccf11` 100%. Bindings, secret names, cron Editor `*/5`, Monitor `*/1` сохранены.
 
 **Status ARCH-04 = [~]:** конкретная часть 'не изменять/не сломать cadence' закончена; ещё открыто проверить реальными/controlled тестами provider cooldown/lease, частичные ошибки, D1 `state='error'` и мануальный запрос, а также отсутствие ложного health из Cloudflare Cron. Этим не заниматься в одном массовом refactor PR. DEV-05 в целом остаётся открытым.
+
+
+---
+
+## 6. ARCH-03 — первый модульный этап Editor: RSS/Atom ingress (16.11.2026)
+
+**Контрольное основание:** текущий `main` исходный код Editor и frozen v64 baseline; один небольшой lossless extraction, без изменения поведения. **ARCH-03 всё ещё открыт** для смешанных обязанностей Editor `index.js`, `localization.mjs`, `analysts/editor.mjs`.
+
+**До:** `backend/editor/src/index.js` содержал `decode/tag/safeLink/entries/load` прямо между импортами, `digest` и редакционными/AI/D1 функциями; `scan` вызывал локальный `load`. Разбор и сетевое получение XML были связаны с основным entrypoint и не имели прямых изолированных тестов.
+
+**После:** [PR #51](https://github.com/ArrakturIL/regional-osint-feeds/pull/51) merged, source SHA `59cb9f77b93de6f9f49d85f17acbca165e8da9f8`. Новый `backend/editor/src/news/rss.mjs` — **2498 UTF-8 символов**; `index.js` стал с 31095 до 28674 символов (-2421). `index.js` импортирует только `load` из RSS-модуля, `analyze` и `checkFeedSummary` теперь импортируются только самим `rss.mjs`; `digest` остался в Index без изменения. Ни один алгоритм парсинга, HTTP retry/timeout, фильтрации или D1/AI/cron не изменён.
+
+**Guard against silent regressions:** `tests/architecture/editor-modules.test.mjs` проверяет **точное, побайтово эквивалентное извлечение** блоков из исторического исходника v64 в новый модуль (кроме `export` и `import`) и неизменность всего оставшегося `index.js`. Прямые node tests `tests/architecture/editor-rss-boundary.test.mjs` проверяют RSS+Atom, CDATA/entities, HTTPS-only, source/score, old/new publication window, sponsored suppression, HTTP error, broken XML and failed network. Сетевые ответы подставляются локально — никаких внешних живых fetch/Neon/D1.
+
+**TDD evidence:** [RED #43779607795](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43779607795) — тесты первоначально падали из-за отсутствия `news/rss.mjs`. После переноса [run #43779736437](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43779736437) выявил ошибку **тестового** edge-case: время публикации RSS `pubDate` в секундах, и `+600001 ms` округлялось к допустимой границе +600 sec. Тест поправлен на +601 sec, добавлен явный +600 sec inclusive case. **Production-правило не менялось.** [GREEN #43779806868](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43779806868): **11 CI jobs success / 0 failed** включая Editor tests, bundles и immutable release dry-run; [integrated #43779806793](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43779806793) success.
+
+**Production:** [coordinated release #43779912088](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43779912088): **12 jobs successful, 0 failures, rollback skipped**. Независимый read-only Cloudflare check: Pages canonical `e7d3217b-bac0-447c-bc6f-79c0ca755732` production success; Editor `16257411-0898-4b62-925a-cfbf6cdb8e48` 100%; Monitor `44c02efb-4d33-4f69-a1fa-8deb11a6601c` 100%; expected D1/AI/secret/vars bindings and Editor `*/5`, Monitor `*/1` unchanged. Этот технический smoke **не является независимым полным UI/контент QA**.
+
+**Дальше:** отдельно разбирать путь scheduled translation/AI budgets и HTTP official posts, затем аналитиков. Новых сервисов, backup, cron или расширения provider calls не предлагать без отдельного измерения.
