@@ -26,11 +26,27 @@ test('original v64 logic is exactly preserved, only relative import paths change
  if(['news/events.mjs','news/api.mjs','localization/localization.mjs','analysts/editor.mjs','translations/news-mirror.mjs'].includes(to)){
   // Edited event clustering and ordering are covered by behavior tests.
   assert.ok(actual.length>0&&actual.includes('export '),name);
+ }else if(to==='index.js'){
+  // Lossless extraction: the frozen v64 Editor's parser is moved byte-for-byte.
+  const begin=expected.indexOf('function decode(s)');
+  const digest=expected.indexOf('async function digest(s)');
+  const feed=expected.indexOf('function entries(xml,feed,now)');
+  const commentary=expected.indexOf('async function writeComment(env,row)');
+  assert.ok(begin>=0&&digest>begin&&feed>digest&&commentary>feed,'v64 RSS boundaries');
+  const rssExpected="import {analyze} from './events.mjs';\nimport {checkFeedSummary} from './integrity.mjs';\n\n"
+    +expected.slice(begin,digest)
+    +expected.slice(feed,commentary).replace('function entries(xml,feed,now)','export function entries(xml,feed,now)').replace('async function load(feed,now)','export async function load(feed,now)');
+  // Be explicit: Python/AI/D1 logic in the entrypoint stays byte-identical.
+  const entryExpected=(expected.slice(0,begin)+expected.slice(digest,feed)+expected.slice(commentary))
+    .replace("import {FEEDS as EVENT_FEEDS,analyze,reconcile} from './news/events.mjs';","import {FEEDS as EVENT_FEEDS,reconcile} from './news/events.mjs';")
+    .replace("import {checkFeedSummary} from './news/integrity.mjs';","import {load} from './news/rss.mjs';");
+  assert.equal(actual,entryExpected,name);
+  assert.equal(readFileSync(liveFile('news/rss.mjs'),'utf8'),rssExpected,'RSS source must be losslessly extracted');
  }else if(to==='translations/fact-guard.mjs'){
   // The original logic is unchanged except the reviewed semantic guard hook.
   const normalized=actual.replace("import { semanticMeaningIssue } from './semantic-meaning.mjs';\n",'').replace("    const semanticIssue=semanticMeaningIssue(src,translated);\n    if(semanticIssue)return field+':'+semanticIssue;\n",'');
   assert.equal(normalized,expected,name);
  }else assert.equal(actual,expected,name);}});
-test('each module import resolves to a real file',()=>{for(const p of Object.values(map)){const source=readFileSync(liveFile(p),'utf8');for(const match of source.matchAll(/from\s+['"](\.[^'"]+)['"]/g))assert.ok(existsSync(resolve(dirname(liveFile(p)),match[1])),p+' -> '+match[1]);}});
-test('Node parses every module',()=>{for(const p of Object.values(map)){const r=spawnSync(process.execPath,['--check',liveFile(p)],{encoding:'utf8'});assert.equal(r.status,0,p+': '+r.stderr);}});
+test('each module import resolves to a real file',()=>{for(const p of [...Object.values(map),'news/rss.mjs']){const source=readFileSync(liveFile(p),'utf8');for(const match of source.matchAll(/from\s+['"](\.[^'"]+)['"]/g))assert.ok(existsSync(resolve(dirname(liveFile(p)),match[1])),p+' -> '+match[1]);}});
+test('Node parses every module',()=>{for(const p of [...Object.values(map),'news/rss.mjs']){const r=spawnSync(process.execPath,['--check',liveFile(p)],{encoding:'utf8'});assert.equal(r.status,0,p+': '+r.stderr);}});
 test('Editor bindings and 5-minute cron are pinned',()=>{const x=JSON.parse(readFileSync(resolve(root,'backend/editor/wrangler.jsonc'),'utf8'));assert.equal(x.main,'src/index.js');assert.equal(x.compatibility_date,'2026-11-10');assert.deepEqual(x.triggers.crons,['*/5 * * * *']);assert.deepEqual(x.d1_databases.map(d=>d.binding).sort(),['CORE_DB','NEWS_DB']);assert.equal(x.ai.binding,'AI');});
