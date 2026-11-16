@@ -77,7 +77,7 @@ async function translateLocaleItem(env,item,day,now){
     const retry=await db.prepare("UPDATE regional_i18n_attempts SET state='running',retry_count=retry_count+1,attempted_at_ms=?,error=NULL WHERE kind=? AND item_id=? AND language='he' AND source_hash=? AND day_utc=? AND state='error' AND retry_count<1").bind(now,kind,id,sha,day).run();
     if(retry.meta?.changes!==1)return'attempted';
   }
-  const budget=await env.NEWS_DB.prepare("UPDATE regional_i18n_budget SET attempts=attempts+1,updated_at_ms=? WHERE day_utc=? AND attempts<HE_DAILY_ATTEMPT_CAP AND estimated_neurons<4000").bind(now,day).run();
+  const budget=await env.NEWS_DB.prepare("UPDATE regional_i18n_budget SET attempts=attempts+1,updated_at_ms=? WHERE day_utc=? AND attempts<? AND estimated_neurons<4000").bind(now,day,HE_DAILY_ATTEMPT_CAP).run();
   if(budget.meta?.changes!==1){
     await db.prepare("UPDATE regional_i18n_attempts SET state='budget_exhausted' WHERE kind=? AND item_id=? AND source_hash=? AND day_utc=?").bind(kind,id,sha,day).run();
     return'budget';
