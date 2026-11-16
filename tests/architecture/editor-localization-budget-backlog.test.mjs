@@ -64,7 +64,7 @@ test('moderate allowance permits 97th paid HE attempt but blocks at 112, keeping
  assert.equal(f.ai.length,1);
  const spent=saved(f.events,'UPDATE regional_i18n_budget SET attempts=attempts+1');
  assert.equal(spent.length,1);
- assert.match(spent[0].sql,/attempts<\\? AND estimated_neurons<4000/);
+ assert.ok(spent[0].sql.includes('attempts<? AND estimated_neurons<4000'));
  assert.deepEqual(spent[0].args.slice(-1),[112]);
  for(const budget of [
   {attempts:112,estimated_neurons:900},
