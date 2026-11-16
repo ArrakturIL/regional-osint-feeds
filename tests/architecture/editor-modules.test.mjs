@@ -40,13 +40,25 @@ test('original v64 logic is exactly preserved, only relative import paths change
   const entryExpected=(expected.slice(0,begin)+expected.slice(digest,feed)+expected.slice(commentary))
     .replace("import {FEEDS as EVENT_FEEDS,analyze,reconcile} from './news/events.mjs';","import {FEEDS as EVENT_FEEDS,reconcile} from './news/events.mjs';")
     .replace("import {checkFeedSummary} from './news/integrity.mjs';","import {load} from './news/rss.mjs';");
-  assert.equal(actual,entryExpected,name);
+  const translateStart=entryExpected.indexOf('async function translateTitles(env,now){');
+  const scanStart=entryExpected.indexOf('async function scan(env){',translateStart);
+  assert.ok(translateStart>=0&&scanStart>translateStart,'frozen v64 scheduled translation boundaries');
+  const scheduledExpected="import {validateCandidate} from './news-mirror.mjs';\n\n"
+    +entryExpected.slice(translateStart,scanStart)
+      .replace('async function translateTitles(env,now){','export async function translateTitles(env,now){')
+      .replace('async function translateIDF(env,now){','export async function translateIDF(env,now){');
+  const restExpected=(entryExpected.slice(0,translateStart)+entryExpected.slice(scanStart))
+    .replace("import {translationQueue,importTranslationMirror,validateCandidate} from './translations/news-mirror.mjs';",
+      "import {translationQueue,importTranslationMirror} from './translations/news-mirror.mjs';\nimport {translateTitles,translateIDF} from './translations/scheduled.mjs';");
+  assert.equal(actual,restExpected,name);
   assert.equal(readFileSync(liveFile('news/rss.mjs'),'utf8'),rssExpected,'RSS source must be losslessly extracted');
+  assert.equal(readFileSync(liveFile('translations/scheduled.mjs'),'utf8'),scheduledExpected,
+    'Scheduled translation/AI budgets and source guards must be extracted byte-identically');
  }else if(to==='translations/fact-guard.mjs'){
   // The original logic is unchanged except the reviewed semantic guard hook.
   const normalized=actual.replace("import { semanticMeaningIssue } from './semantic-meaning.mjs';\n",'').replace("    const semanticIssue=semanticMeaningIssue(src,translated);\n    if(semanticIssue)return field+':'+semanticIssue;\n",'');
   assert.equal(normalized,expected,name);
  }else assert.equal(actual,expected,name);}});
-test('each module import resolves to a real file',()=>{for(const p of [...Object.values(map),'news/rss.mjs']){const source=readFileSync(liveFile(p),'utf8');for(const match of source.matchAll(/from\s+['"](\.[^'"]+)['"]/g))assert.ok(existsSync(resolve(dirname(liveFile(p)),match[1])),p+' -> '+match[1]);}});
-test('Node parses every module',()=>{for(const p of [...Object.values(map),'news/rss.mjs']){const r=spawnSync(process.execPath,['--check',liveFile(p)],{encoding:'utf8'});assert.equal(r.status,0,p+': '+r.stderr);}});
+test('each module import resolves to a real file',()=>{for(const p of [...Object.values(map),'news/rss.mjs','translations/scheduled.mjs']){const source=readFileSync(liveFile(p),'utf8');for(const match of source.matchAll(/from\s+['"](\.[^'"]+)['"]/g))assert.ok(existsSync(resolve(dirname(liveFile(p)),match[1])),p+' -> '+match[1]);}});
+test('Node parses every module',()=>{for(const p of [...Object.values(map),'news/rss.mjs','translations/scheduled.mjs']){const r=spawnSync(process.execPath,['--check',liveFile(p)],{encoding:'utf8'});assert.equal(r.status,0,p+': '+r.stderr);}});
 test('Editor bindings and 5-minute cron are pinned',()=>{const x=JSON.parse(readFileSync(resolve(root,'backend/editor/wrangler.jsonc'),'utf8'));assert.equal(x.main,'src/index.js');assert.equal(x.compatibility_date,'2026-11-10');assert.deepEqual(x.triggers.crons,['*/5 * * * *']);assert.deepEqual(x.d1_databases.map(d=>d.binding).sort(),['CORE_DB','NEWS_DB']);assert.equal(x.ai.binding,'AI');});
