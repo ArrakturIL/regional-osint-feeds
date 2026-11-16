@@ -69,19 +69,19 @@ test('original v64 logic is exactly preserved, only relative import paths change
     .replace("import {readOfficialPosts} from './api/official-posts.mjs';",
       "import {readOfficialPosts} from './api/official-posts.mjs';\nimport {readMonitorChanges} from './api/monitor-changes.mjs';");
   const commentStart=monitorRoutedExpected.indexOf('async function writeComment(env,row){');
-  const scanStart=monitorRoutedExpected.indexOf('async function scan(env){',commentStart);
-  const budgetStart=monitorRoutedExpected.indexOf(' const day=new Date(now).toISOString().slice(0,10);',scanStart);
+  const commentScanStart=monitorRoutedExpected.indexOf('async function scan(env){',commentStart);
+  const budgetStart=monitorRoutedExpected.indexOf(' const day=new Date(now).toISOString().slice(0,10);',commentScanStart);
   const idfStart=monitorRoutedExpected.indexOf(' const idfTranslation=await translateIDF(env,now);',budgetStart);
-  assert.ok(commentStart>=0&&scanStart>commentStart&&budgetStart>scanStart&&idfStart>budgetStart,
+  assert.ok(commentStart>=0&&commentScanStart>commentStart&&budgetStart>commentScanStart&&idfStart>budgetStart,
     'frozen v64 editorial AI and budget boundaries');
   const commentExpected="import {shouldSuppressComment} from './comment-policy.mjs';\n\n"
-    +monitorRoutedExpected.slice(commentStart,scanStart).replace('async function writeComment(env,row){',
+    +monitorRoutedExpected.slice(commentStart,commentScanStart).replace('async function writeComment(env,row){',
       'export async function writeComment(env,row){')
     +"export async function generateComments(env,now){\n"
     +monitorRoutedExpected.slice(budgetStart,idfStart)
     +" return {commented,failures};\n}\n";
   const afterComment=(monitorRoutedExpected.slice(0,commentStart)
-    +monitorRoutedExpected.slice(scanStart,budgetStart)
+    +monitorRoutedExpected.slice(commentScanStart,budgetStart)
     +" const {commented,failures}=await generateComments(env,now);\n"
     +monitorRoutedExpected.slice(idfStart))
       .replace("import {shouldSuppressComment} from './editorial/comment-policy.mjs';",
