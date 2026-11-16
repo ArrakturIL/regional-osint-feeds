@@ -173,3 +173,13 @@
 **Verified recovery.** [Main production release #43786765089](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43786765089) completed success with receipt saved; automatic rollback skipped. Cloudflare API read-only: Pages canonical `5e5dd93d-bc0a-460e-b7f6-f2939ca1ae4a`, success; Editor `fb6f2e3f-3bdc-407f-b779-2d951354b665` 100%, AI/CORE_DB/NEWS_DB; Monitor `17b99a5e-1145-4415-be24-3ef4be04b32d` 100%, DB + existing secret names; cron Editor `*/5`, Monitor `*/1`. This checks release integrity, not full browser/UI/translation quality.
 
 **Remaining:** isolate/review remaining scan orchestration and `localization/localization.mjs`, `analysts/editor.mjs` separately; ARCH-04 provider health and ARCH-01/05/06/07 outstanding. Long-term backups and OSS postponed.
+
+---
+
+## ARCH-03 — release: complete Editor scheduled scan orchestration boundary (16.11.2026)
+
+**Scope:** [PR #62](https://github.com/ArrakturIL/regional-osint-feeds/pull/62), main `c7ca95f4df930072addc13a8f934499b5ad1de66`. `scan(env)` moved byte-for-byte to `backend/editor/src/news/scan.mjs`; original `index.js` scheduled call, other independent schedules, router and health unchanged. The module owns existing ordered stages ingest→reconcile with D1 error journal→RU scheduled titles→editorial budget/commentary→IDF translation→last_scan summary. No SQL, clock, budget, model, DB schema, feed registry or edge-route change. Parity test reconstructs exact extracted body from frozen v64 across all earlier ARCH-03 splits.
+
+**Evidence:** [RED #43787495172](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43787495172), expected missing module; [GREEN app #43787584018](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43787584018) and [integrated #43787584005](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43787584005) SUCCESS. Four new synthetic D1/RSS integration-style regressions assert 12 feed statuses, ordered stage effects and exact summary, recoverable reconciliation error, failed summary persistence, and `/health` pending. Mandatory editor-source, module import/parse and immutable three-component bundle green.
+
+**Verified production:** [Coordinated release #43787695419](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43787695419) success, rollback skipped. Cloudflare independent read-only: Pages canonical `c9c1eb18-3e90-41e7-b0f7-860a27f5758d` success; Editor active `dc24a7bc-32fd-4b60-a04b-9e53df74d062` (AI, CORE_DB, NEWS_DB, cron `*/5`) and Monitor active `67df41a1-184a-4617-b851-2f17438aebdc` (DB and expected secrets, cron `*/1`) 100%. No browser/user-facing global QA claim. Remaining ARCH-03: localization and analyst large modules independently; all other DEV-05 scopes stay open.
