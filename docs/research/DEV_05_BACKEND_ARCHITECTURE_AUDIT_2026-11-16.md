@@ -235,3 +235,15 @@
 **Production:** [coordinated #43793828624](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43793828624) SUCCESS, source `d54765a6444dc5440f65c26bb25942c860904c4a`, receipt archived, no rollback. Independent direct Cloudflare read-only postcheck: Pages canonical `f10e02b5-d19f-472d-bed1-1db8e454a23a` production success; Editor `5146b193-6d7c-4e67-be71-745124c469f2` and Monitor `8d5cfca6-8993-4229-bce3-488ca25ae2f2` 100%, respective D1/AI/secrets unchanged, cron `*/5` and `*/1`.
 
 **Outstanding backend:** `analysts/editor.mjs`, complete ARCH-01/04/05/06/07; test/repair C-01 API chronology independently; queue throughput and provider rate-limit audit as explicitly requested by owner. Frontend and historical B-01 cleanup deferred by owner; global UI QA not claimed.
+
+---
+
+## ARCH-03 — analyst service public read API extraction (16.11.2026)
+
+**Code:** [PR #66](https://github.com/ArrakturIL/regional-osint-feeds/pull/66), main SHA `589ae98200a34a7b92d1406cc5a3432274c5f68f`. Original Analyst Editor module Git blob SHA `a4f6289a9f8531278804f0b4dca8b8aee86795fe` retained as strict source reconstruction test. New `backend/editor/src/analysts/public-api.mjs` owns original `CORS`, `json`, and `readApi` for analyst health/directory/public post list/detail; the editor delegate passes `EDITOR_VERSION` explicitly. Original SQL, status/provenance/source_url, pagination, validation, HTTP errors and exported `testHooks` preserved. Collector/translation/AI/queue logic untouched, no cyclic module dependency, no frontend, model, budget, cron or D1 schema changes.
+
+**Evidence:** [RED #43795068408](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43795068408) expected new module absent, 65 passed/1 fail; [GREEN app #43795161991](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43795161991) complete SUCCESS including immutable release bundle and Analyst API source contract tests. The separate integrated-data workflow did not match this PR's path triggers and was not executed. Source parity test reconstructs full original `a4f6289a9f8531278804f0b4dca8b8aee86795fe` Git blob.
+
+**Production:** [coordinated #43795264479](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43795264479) succeeded, archived version receipt/rollback skipped, release SHA `589ae98200a34a7b92d1406cc5a3432274c5f68f`. Independent Cloudflare read-only: Pages canonical `79f2df92-402d-40bf-ba81-4d261276406b` production success, Editor `e2cc567f-1195-41e2-bc86-5e07b58a53f0` 100% with existing AI/D1, Monitor `249c8300-9b84-45d5-9c55-eb89d53b7a3b` 100% with DB/secrets, crons `*/5` and `*/1` unchanged.
+
+**Remaining:** Analyst Editor ingestion, decision/translation and queue scheduling still coupled; isolate in narrow future backend PRs before declaring ARCH-03 done. ARCH-01/04/05/06/07 and data-quality/correct chronology remain open. Frontend explicitly deferred; historical B-01 cleanup archived by owner.
