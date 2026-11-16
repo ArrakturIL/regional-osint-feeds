@@ -68,7 +68,7 @@ jobs:
           python -m scripts.publish_neon_mirror --source centcom --mode required
           python -m scripts.neon_to_d1 --source centcom --init-table
       - name: Commit updated news or status heartbeat
-        if: always() && github.ref == 'refs/heads/main' && steps.collect.outcome != 'skipped' && !((contains(format(',{0},', vars.REGIONAL_NEON_PRIMARY_SOURCES), ',centcom,') || steps.rollout.outputs.enabled == 'true') && steps.neon_d1.outcome == 'success')
+        if: always() && github.ref == 'refs/heads/main' && steps.collect.outcome == 'success' && !((contains(format(',{0},', vars.REGIONAL_NEON_PRIMARY_SOURCES), ',centcom,') || steps.rollout.outputs.enabled == 'true') && steps.neon_d1.outcome == 'success')
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
