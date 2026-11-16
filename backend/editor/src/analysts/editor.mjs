@@ -1,3 +1,4 @@
+import {readApi} from './public-api.mjs';
 import {translatedForEditorial} from './translation.mjs';
 import {readEditorCachedPair} from '../mirrors/collector-cache.mjs';
 /** Regional Watch independent analyst editor.
@@ -25,8 +26,6 @@ function isCommercialAd(text, language) {
   if(language==='en')return /(?:discount|coupon|black friday|sale price)/i.test(s)&&/(?:buy now|shop now|order today|special offer)/i.test(s);
   return false;
 }
-const CORS = {'Access-Control-Allow-Origin':'*','Cache-Control':'public, max-age=120'};
-
 function plain(text, cap) { return String(text ?? '').replace(/\s+/g,' ').trim().slice(0,cap); }
 function bodyWords(text) { return String(text).toLowerCase().match(/[\p{L}\p{N}]{3,}/gu) || []; }
 function similarity(a,b) {
@@ -37,9 +36,6 @@ function similarity(a,b) {
 }
 function assertString(v, min, max) { return typeof v === 'string' && v.length >= min && v.length <= max; }
 function isoNow(ms) { return new Date(ms).toISOString(); }
-function json(value, status=200) {
-  return Response.json(value,{status,headers:{...CORS,'Content-Type':'application/json; charset=utf-8'}});
-}
 async function sha256(s) {
   const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
   return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
@@ -308,40 +304,8 @@ async function runEditor(env, time) {
       .bind(Date.now(),plain(e?.message,200),JSON.stringify(stats),id).run();
   }
 }
-async function readApi(request,env) {
-  const url=new URL(request.url),path=url.pathname;
-  if (request.method!=='GET') return json({error:'read_only'},405);
-  if (path==='/health') {
-    const last=await env.DB.prepare(`SELECT started_at_ms,completed_at_ms,status,stats_json,error_message
-      FROM analyst_runs ORDER BY started_at_ms DESC LIMIT 1`).first();
-    return json({service:'regional-watch-analysts',editor_version:EDITOR_VERSION,last:last||null});
-  }
-  if (path==='/api/analysts') {
-    const q=await env.DB.prepare('SELECT id,display_name,description FROM analysts WHERE enabled=1 ORDER BY display_name').all();
-    return json({analysts:q.results||[]});
-  }
-  if (path==='/api/analyst-posts' || /^\/api\/analyst-posts\/[a-z0-9-]+$/.test(path)) {
-    const detail=path!=='/api/analyst-posts';
-    const id=detail?path.split('/').pop():null;
-    const limit=Math.max(1,Math.min(40,Number(url.searchParams.get('limit')||20)||20));
-    const offset=Math.max(0,Math.min(2000,Number(url.searchParams.get('offset')||0)||0));
-    const q=detail?
-      await env.DB.prepare(`SELECT p.id,p.headline,p.summary,p.short_quote,p.original_url,p.original_published_at_ms,
-      p.published_at_ms,p.source_type,p.fact_check_status,p.authorship_status,p.importance_score,
-      p.status,p.version,p.editor_version,a.display_name AS analyst,s.language AS original_language
-      FROM analyst_publications p JOIN analysts a ON a.id=p.analyst_id JOIN analyst_items i ON i.id=p.item_id JOIN analyst_sources s ON s.id=i.source_id WHERE p.id=? AND p.status IN ('published','corrected')`).bind(id).all():
-      await env.DB.prepare(`SELECT p.id,p.headline,p.summary,p.short_quote,p.original_url,p.original_published_at_ms,
-      p.published_at_ms,p.source_type,p.fact_check_status,p.authorship_status,p.importance_score,
-      p.status,p.version,p.editor_version,a.display_name AS analyst,s.language AS original_language
-      FROM analyst_publications p JOIN analysts a ON a.id=p.analyst_id JOIN analyst_items i ON i.id=p.item_id JOIN analyst_sources s ON s.id=i.source_id WHERE p.status IN ('published','corrected')
-      ORDER BY p.published_at_ms DESC,p.id DESC LIMIT ? OFFSET ?`).bind(limit,offset).all();
-    if (detail && !q.results?.length) return json({error:'not_found'},404);
-    return json(detail?q.results[0]:{posts:q.results||[],disclaimer:'Attributed analyst interpretations. Claims not independently verified unless indicated.'});
-  }
-  return json({error:'not_found'},404);
-}
 export default {
   async scheduled(controller,env) { await runEditor(env,controller.scheduledTime); },
-  async fetch(request,env) { return readApi(request,env); },
+  async fetch(request,env) { return readApi(request,env,EDITOR_VERSION); },
 };
 export const testHooks = {plain,similarity,validateInput,validateDecision,reserveAi,aiDecision};
