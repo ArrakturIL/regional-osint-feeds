@@ -13,4 +13,5 @@ export async function readLocalizedEditorialNotes(env,lang,lim){
       const note={id:n.id,headline:t.title,text:t.body,source_url:n.source_url,published_ms:n.published_ms,author:n.author,verified_note:n.verified_note,content_language:t.content_language};
       return{...note,...fieldLocale(note,['headline','text','verified_note'],lang,t.translation_status)};
     }));
-    return respond({requested_language:lang,notes,localized_count:notes.filter(x=>x.localization_complete).length});}
+    return respond({requested_language:lang,notes,localized_count:notes.filter(x=>x.localization_complete).length})
+}
