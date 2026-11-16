@@ -17,3 +17,11 @@
 - **GREEN** mandatory Editor suite, integrated-data checks and immutable three-component release. Review PR diff; merge squash to main, coordinated deploy, independent Cloudflare read-only check Pages/Editor/Monitor, cron, D1 budget and representative counts. No promise of immediate RU backlog drop while daily 20 batches already exhausted.
 
 **Deferred/other backend:** HE source hash freshness, untranslated event API state, RU 20-batch cap needs follow-up only if actual measured throughput insufficient; provider cooldown/manual concurrency and ARCH-01/05/06/07 remain open. FRONT deferred, B-01 historical correction archive.
+
+
+## Completion receipt — 16 November 2026
+
+- [x] Live NEWS D1: 120 displayed fresh groups, 26 representatives lacked RU headline, all priority 4–6; 24 lacked applicable RU summary. RU 20/20 batches/day; high-priority currently RU complete. Set-based event ID query verified with read-only D1 `EXPLAIN QUERY PLAN`, ~414 rows_read for the production candidate snapshot.
+- [x] TDD [expected RED #43803218802](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43803218802), [GREEN app #43803446409](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43803446409) and [integrated #43803446522](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43803446522) success, immutable 3-component bundle. Original RU scheduled source blob `2b3be8cff87ecb1c94e1ff1c1834e95ba9ef64c4` and frozen v64 body preserved.
+- [x] [PR #72](https://github.com/ArrakturIL/regional-osint-feeds/pull/72), merged source `5ba7f029412e4355d10e3818e56071d4d3bf0e48`, backend-only SQL + extra cutoff bind. [Coordinated production #43803551030](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43803551030) SUCCESS, rollback skipped, independent Cloudflare Pages/Editor/Monitor versions and Cron/bindings verified; see MASTER TODO §22.
+- [ ] After next UTC reset, measure RU approved count, actual event-level `pending` and quality errors before considering any additional 20/day quota change. HE cache source-hash staleness and provider cooldown/parallel exceptions are separate open ARCH-04 tasks.
