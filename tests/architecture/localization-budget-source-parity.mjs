@@ -1,9 +1,9 @@
-import {readFileSync} from 'node:fs';
+import {reconstructPreRetryScheduler} from './localization-retry-source-parity.mjs';
 
 // Reconstruct exact prior ARCH-03 scheduled translator source across the explicitly
 // reviewed ARCH-04 quota/telemetry changes. Unrelated edits must fail the Git blob pin.
 export function reconstructPreBudgetScheduler(){
- let source=readFileSync(new URL('../../backend/editor/src/localization/scheduled.mjs',import.meta.url),'utf8');
+ let source=reconstructPreRetryScheduler();
  function undo(newText,oldText,label){
   if(!source.includes(newText))throw Error('ARCH-04 source boundary changed: '+label);
   source=source.replace(newText,oldText);
