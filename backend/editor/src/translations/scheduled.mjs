@@ -6,8 +6,8 @@ export async function translateTitles(env,now){
   await env.NEWS_DB.prepare("INSERT OR IGNORE INTO news_translation_budget(day_utc,batches,estimated_neurons,updated_ms) VALUES(?,0,0,?)").bind(day,now).run();
   const budget=await env.NEWS_DB.prepare("SELECT batches,estimated_neurons FROM news_translation_budget WHERE day_utc=?").bind(day).first();
   if((budget?.batches||0)>=20||(budget?.estimated_neurons||0)>=2500)return {translated:0,summaries:0,budget:"limit"};
-  const query="SELECT id,headline,summary,headline_ru FROM news_items WHERE priority>=7 AND published_ms>? AND (headline_ru IS NULL OR (summary_ru IS NULL AND length(summary)>10)) ORDER BY published_ms DESC LIMIT 22";
-  const rows=(await env.NEWS_DB.prepare(query).bind(now-36*3600000).all()).results||[];
+  const query="SELECT n.id,n.headline,n.summary,n.headline_ru FROM news_items n WHERE ((n.priority>=7 AND n.published_ms>?) OR n.id IN (SELECT g.representative_id FROM news_event_groups g WHERE g.priority>=4 AND g.last_seen_ms>?)) AND (n.headline_ru IS NULL OR (n.summary_ru IS NULL AND length(n.summary)>10)) ORDER BY n.published_ms DESC LIMIT 22";
+  const rows=(await env.NEWS_DB.prepare(query).bind(now-36*3600000,now-36*3600000).all()).results||[];
   const pending=rows.filter(x=>!/sponsored content|winner cup|euroleague|fashion week|maccabi wins|hapoel tel aviv set to secure/i.test(x.headline)).slice(0,5);
   if(!pending.length)return {translated:0,summaries:0};
   await env.NEWS_DB.prepare("UPDATE news_translation_budget SET batches=batches+1,estimated_neurons=estimated_neurons+125,updated_ms=? WHERE day_utc=?").bind(now,day).run();
