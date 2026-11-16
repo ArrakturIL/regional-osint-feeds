@@ -247,3 +247,15 @@
 **Production:** [coordinated #43795264479](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43795264479) succeeded, archived version receipt/rollback skipped, release SHA `589ae98200a34a7b92d1406cc5a3432274c5f68f`. Independent Cloudflare read-only: Pages canonical `79f2df92-402d-40bf-ba81-4d261276406b` production success, Editor `e2cc567f-1195-41e2-bc86-5e07b58a53f0` 100% with existing AI/D1, Monitor `249c8300-9b84-45d5-9c55-eb89d53b7a3b` 100% with DB/secrets, crons `*/5` and `*/1` unchanged.
 
 **Remaining:** Analyst Editor ingestion, decision/translation and queue scheduling still coupled; isolate in narrow future backend PRs before declaring ARCH-03 done. ARCH-01/04/05/06/07 and data-quality/correct chronology remain open. Frontend explicitly deferred; historical B-01 cleanup archived by owner.
+
+---
+
+## ARCH-03 — Analyst source mirror ingestion module (16.11.2026)
+
+**Code:** [PR #67](https://github.com/ArrakturIL/regional-osint-feeds/pull/67) merged SHA `1aa3e03f1bbf865d60de267dccaf82b8b099856c`. `analysts/source-ingestion.mjs` now owns original mirror location/limits, `sha256`, `readMirror`, `validateInput`, `insertItem` as one factory closure fed `HOUR,DAY,plain,assertString` from the editor. No source URL/freshness/checksum, D1 write/rollback, translation, AI budget, date, status or scheduling behavior changed. Original `testHooks.validateInput` remains connected to the extracted function, with no ESM cycles.
+
+**TDD and parity:** [RED #43795720623](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43795720623) expected missing module, 71 pass/1 fail. [GREEN app #43795888749](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43795888749) mandatory suites + immutable Pages/Editor/Monitor artifact success. Tests cover source identity, malicious/invalid URL, language, timestamp, Telegram vs YouTube metadata-only (no fabricated transcripts), mirror HTTP/JSON and size limits, SHA256, D1 insert, revision and source_changed published state. Byte-exact reconstruction of pre-split editor Git SHA `29623aa4f01a3cdb1b85820a0471763ae0811f88`, plus previous reader-split original `a4f6289a9f8531278804f0b4dca8b8aee86795fe`. Integrated-data workflow did not match paths for this commit; not claimed.
+
+**Production:** [coordinated #43796008521](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43796008521) SUCCESS, receipt archived, no rollback. Independent Cloudflare read-only: Pages production canonical `df7298d3-d7a7-478c-9f4b-eea50c55ad32`, Editor `4fb46052-b175-465f-bc0e-e1bf551b9b1c`, Monitor `8c370908-d804-46ad-8aee-df439f7c910f` both 100% and unchanged AI/D1/secrets, cron Editor */5 and Monitor */1.
+
+**Remaining:** Analyst Editor decision/AI translation and scheduled queue/publish orchestration to isolate; ARCH-01/04/05/06/07 and backend chronology/translation backlog issues still active. Frontend and historical B-01 explicitly deferred.
