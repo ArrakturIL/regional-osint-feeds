@@ -126,3 +126,24 @@
 **Independent Cloudflare postcheck:** Pages canonical `5635c9a0-6370-41ce-8768-f7813d1f8d2f` production success; Editor version `35bb1205-1f4e-4792-998a-2808d4345e27` 100%, Monitor `7c2ee158-6a0e-438d-a48e-2ff4bca48be9` 100%; Editor AI+CORE_DB+NEWS_DB bindings, Monitor DB + secrets and existing cron `*/5` and `*/1` preserved. This verifies technical deploy metadata, **not end-user visual QA, upstream freshness, or actual translation quality**.
 
 **Next:** isolate `buildDigest/readMonitorChanges` as another read-only API boundary, then editorial AI/scan responsibilities. Handle HE official posts translation as a separate product requirement only with the user's approval. No backup or paid services introduced.
+
+
+---
+
+## 9. ARCH-03 — read-only API изменений мониторинга (16.11.2026)
+
+**Release evidence:** [code PR #57](https://github.com/ArrakturIL/regional-osint-feeds/pull/57) merged main SHA `98901fc6b358533db43581bd8870ce21452bf5d5`. Это четвёртое узкое структурное разделение Editor после RSS, scheduled RU/IDF и official posts API; ARCH-03/DEV-05 **не закрыты**.
+
+**Изменение:** `buildDigest(rows,eventRows)` и `readMonitorChanges(request,env)` перенесены без изменений алгоритмов из `backend/editor/src/index.js` в `backend/editor/src/api/monitor-changes.mjs` (3512 символов включая `export`). `index.js` сократился с **16211 до 12775** символов; единственное изменение вызова `/api/changes` — импорт из нового модуля. Node frozen Editor v64 parity реконструирует исходный entrypoint с **четырьмя** точными извлечениями и сравнивает все модули с историческими оригинальными блоками; guard не ослаблен.
+
+**Функциональный контракт** `tests/architecture/editor-monitor-changes-api.test.mjs`:
+- `pending` при 0/1 запусках, `error:invalid_monitor_run_times` при равных или убывающих timestamps, `insufficient_comparison` если нет общих числовых `source_maxima_ms` и зафиксированных изменений; `ready` если есть сравнимые обновления или изменения статуса.
+- Честный count `sourceComparable`/`sourceUpdates` только на пересечении источников, интервал `periodMinutes`; только записи журнала в окне (previous, latest], не более 6; статус outcome изменения первым. `journal_updated` включает буквальную фразу **«само по себе это не подтверждает утверждения источников»**, на обоих языках. **Нельзя превращать готовность для сравнения в факт подтверждения атаки/события.**
+- Bilingual response: `requested_language=ru|he` плюс существующие поля `title/description` и `title_he/description_he`. OPTIONS 204, неверный HTTP метод 405, язык 400; CORS + no-store; D1 failure 503 с безопасным DTO `digest_unavailable`, без утечек SQL.
+- Функции вызывают только старые 2 read-only запроса `monitor_runs` и `monitor_events` (второй только если timestamps позволяют). Никаких D1 writes, AI, new HTTP providers.
+
+**TDD / release:** [RED #43783660498](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43783660498) — отсутствующий ещё ESM import; [GREEN #43783761045](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43783761045) completed success **11 jobs passed, 0 failures**, tests + dry-run 3-bundle; [integrated #43783761075](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43783761075) success. [Production coordinated #43783855495](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43783855495) completed success **12 jobs passed / 0 failed**, rollback skipped.
+
+**Cloudflare independent read-only check:** Pages canonical production `a2543b26-c77f-4b14-99a4-1185a8948eaa` success; Editor version `c40407a2-985b-4042-88e7-8f022d0d49c2` 100%, Monitor version `85338c78-0b66-4aef-93a6-9ddf376d248b` 100%; expected Editor AI, CORE_DB, NEWS_DB, Monitor DB/secrets/vars and existing crons `*/5`, `*/1` unchanged. **Не является самостоятельным браузерным QA** или подтверждением всех upstream обновлений.
+
+**Следующая отдельная работа:** `index.js` содержит сканирование RSS/D1, `writeComment` (AI и budgets), cron, Polymarket archiving, localized fallback; дальнейшие decomposition только TDD и маленькими PR. `localization/localization.mjs` и `analysts/editor.mjs` также требуют functional-boundary audit. Backup и OSS остаются отложенными.
