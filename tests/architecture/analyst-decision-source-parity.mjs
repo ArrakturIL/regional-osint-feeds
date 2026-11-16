@@ -1,8 +1,9 @@
 import {readFileSync} from 'node:fs';
+import {reconstructAnalystQueueEditor} from './analyst-queue-source-parity.mjs';
 
 export function reconstructAnalystDecisionEditor(){
  const root=new URL('../../backend/editor/src/analysts/',import.meta.url);
- const editor=readFileSync(new URL('editor.mjs',root),'utf8');
+ const editor=reconstructAnalystQueueEditor();
  const decision=readFileSync(new URL('editorial-decision.mjs',root),'utf8');
  const addedImport="import {createAnalystDecision} from './editorial-decision.mjs';\n";
  const deps='EDITOR_VERSION,MODEL,DAY,MAX_AI_PER_DAY,REGION,PROMO,isCommercialAd,plain,bodyWords,similarity,assertString,isoNow,translatedForEditorial';
