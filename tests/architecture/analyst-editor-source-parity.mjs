@@ -1,7 +1,8 @@
 import {readFileSync} from 'node:fs';
+import {reconstructAnalystIngestionEditor} from './analyst-source-ingestion-parity.mjs';
 
 export function reconstructAnalystEditor(){
- const editor=readFileSync(new URL('../../backend/editor/src/analysts/editor.mjs',import.meta.url),'utf8');
+ const editor=reconstructAnalystIngestionEditor();
  const publicApi=readFileSync(new URL('../../backend/editor/src/analysts/public-api.mjs',import.meta.url),'utf8');
  const newImport="import {readApi} from './public-api.mjs';\n";
  const corsEnd=publicApi.indexOf('function json(value, status=200) {');
