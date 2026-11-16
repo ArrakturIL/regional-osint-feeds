@@ -38,7 +38,13 @@ async function localeCandidates(env,kind,now){
     rows=(await db.prepare("SELECT id,display_name,description FROM analysts WHERE enabled=1 ORDER BY display_name LIMIT 20").all()).results||[];
   }
   const result=[];
-  for(const row of rows){let t;try{t=sourceText(kind,row);}catch{continue;}
+  for(const row of rows){
+    // Already-native HE news is served directly by localizeNewsRow. Never spend
+    // a HE inference attempt translating it back from headline_ru. If the
+    // original body is not Hebrew, the row still needs localization.
+    if(kind==='news'&&/[\u0590-\u05ff]/u.test(row.headline||'')&&
+      (!row.summary||/[\u0590-\u05ff]/u.test(row.summary)))continue;
+    let t;try{t=sourceText(kind,row);}catch{continue;}
     if(t.title&&t.title.length>=4)result.push({db,kind,id:row.id,text:t,cachedSourceHash:kind==='news'?row.cached_he_hash:undefined});
   }
   return result;
