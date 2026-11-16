@@ -273,3 +273,15 @@
 **Separate defect found via test:** JS `\\b` regular-expression word boundaries do not reliably match Cyrillic content; current `validateDecision` headline guard allows `официально установлено` to pass, contrary to intent. Confirmed in test RED during refactor, kept original code unchanged to meet lossless parity. Tracked as **E-06** in MASTER TODO (backend P1). Fix as independent TDD Unicode-aware guard, not in this module extraction. Not the archived B-01 issue.
 
 **Remaining:** scheduled analyst queue `runEditor`, other ARCH-01/04/05/06/07, backend news chronology and translation pending/quotas. Frontend deferred by owner.
+
+---
+
+## ARCH-03 — analyst scheduled queue isolation (16.11.2026)
+
+**Code:** [PR #69](https://github.com/ArrakturIL/regional-osint-feeds/pull/69), SHA `a0db6a533e80da499371cd112dfc4e05b3547cc2`. Existing `prioritizePending` and `runEditor` functions extracted verbatim to `backend/editor/src/analysts/queue-runner.mjs` as `createAnalystQueue` factory. `analysts/editor.mjs` composition root now 3356 chars instead of 9766. No schema, cron, AI model, queue quota or frontend changes; public API and `testHooks` unchanged.
+
+**TDD + source parity:** [RED #43797722873](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43797722873) expected absent module, 85 pass/1 fail; [GREEN #43797828557](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43797828557) mandatory app CI & immutable 3-component bundle success. Behavioral tests verify metadata-only scheduling, source fairness, run idempotency, partial mirror pending continuation, source SHA rejection, max 3 new AI-eligible candidates/run, item errors, D1 run status. Full exact pre-split Git blob SHA `945a01b602c43b164e30b9fc646803c249fd9600` reconstructed, previous Analyst Editor chain pins `742091e2b6818d2cae585985dadb27401e1d02e5`, `29623aa4f01a3cdb1b85820a0471763ae0811f88`, `a4f6289a9f8531278804f0b4dca8b8aee86795fe` remain. Integrated-data workflow did not trigger for changed paths.
+
+**Production:** [coordinated run #43797939442](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43797939442) complete SUCCESS, source SHA `a0db6a533e80da499371cd112dfc4e05b3547cc2`, receipt archived, no rollback. Independent Cloudflare confirms Pages canonical `5a49c8e6-ab31-4c8e-848c-16a6340923ce` production success, Editor `b835be5a-bbd0-4313-8259-493f1677d148`/Monitor `2e385e82-3e89-4c4a-bcc2-7bd5b685d670` both 100%, existing AI/D1/secrets and */5 / */1 crons.
+
+**Scope remaining:** ARCH-03 module refactor completed, cross-component ARCH-01/07 acceptance still open. DEV-05 incomplete: ARCH-04 provider cooldown/quota and translation pending optimization, ARCH-05 Python collectors, ARCH-06 legacy; backend C-01 news chronology and E-06 Cyrillic headline guard. Frontend and historical B-01 deferred.
