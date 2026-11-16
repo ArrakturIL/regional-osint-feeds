@@ -182,3 +182,28 @@ test('upstream source errors are journaled and do not leave a false success stat
  assert.match(result.error,/test upstream unavailable/);
  assert.equal(writes(events,"VALUES('last_he_localization_error',").length,1);
 });
+
+test('native Hebrew news never spends AI quota even when RU headline is present',async()=>{
+ const native={id:'native-he',headline:'ישראל מדווחת על 5 כטב״מים',headline_ru:'Израиль сообщает о 5 беспилотниках',
+  summary:'',summary_ru:null,comment:null,cached_he_hash:null};
+ const english=newsRow('english-n5',5);
+ const {env,events,ai}=makeEnv({newsRows:[native,english],
+  translate:{title:'ישראל מדווחת על 5 כטב״מים ליד הגבול',body:'',comment:'',confidence:95}});
+ const result=await translateScheduled(env,atKind('news'));
+ assert.equal(result.attempted,1,'native Hebrew original is already available, even with translated Russian field');
+ assert.equal(result.translated,1);
+ assert.equal(ai.length,1);
+ assert.deepEqual(writes(events,'INSERT OR IGNORE INTO regional_i18n_attempts').map(x=>x.args[1]),['english-n5']);
+ assert.deepEqual(writes(events,'UPDATE regional_i18n_budget SET attempts=attempts+1').length,1);
+});
+
+test('only native Hebrew originals produce no paid calls or translation attempts',async()=>{
+ const native={id:'native-only',headline:'משרד הביטחון מסר הודעה בישראל',headline_ru:'Министерство обороны сообщило в Израиле',
+  summary:'',summary_ru:null,comment:null,cached_he_hash:null};
+ const {env,events,ai}=makeEnv({newsRows:[native]});
+ const result=await translateScheduled(env,atKind('news'));
+ assert.equal(result.attempted,0);
+ assert.equal(result.translated,0);
+ assert.equal(ai.length,0);
+ assert.equal(writes(events,'INSERT OR IGNORE INTO regional_i18n_attempts').length,0);
+});
