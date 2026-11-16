@@ -25,7 +25,7 @@ function checkHebrew(original,translation){
 }
 async function localeCandidates(env,kind,now){
   let db=env.NEWS_DB,rows=[];
-  if(kind==='news')rows=(await db.prepare("SELECT n.id,n.headline,n.headline_ru,n.summary,n.summary_ru,n.comment,t.source_hash cached_he_hash FROM news_items n LEFT JOIN regional_i18n t ON t.kind='news' AND t.item_id=n.id AND t.language='he' WHERE n.priority>=7 AND n.published_ms>? ORDER BY (t.item_id IS NULL) DESC,n.published_ms DESC,n.priority DESC LIMIT 120").bind(now-7*DAY).all()).results||[];
+  if(kind==='news')rows=(await db.prepare("SELECT n.id,n.headline,n.headline_ru,n.summary,n.summary_ru,n.comment,t.source_hash cached_he_hash FROM news_items n LEFT JOIN regional_i18n t ON t.kind='news' AND t.item_id=n.id AND t.language='he' WHERE ((n.priority>=7 AND n.published_ms>?) OR n.id IN (SELECT g.representative_id FROM news_event_groups g WHERE g.priority>=4 AND g.last_seen_ms>?)) ORDER BY (t.item_id IS NULL) DESC,n.published_ms DESC,n.priority DESC LIMIT 120").bind(now-7*DAY,now-36*3600000).all()).results||[];
   else if(kind==='editorial')rows=(await db.prepare("SELECT id,headline,text FROM editorial_notes WHERE published_ms>? ORDER BY published_ms DESC LIMIT 12").bind(now-28*DAY).all()).results||[];
   else if(kind==='analyst'){
     db=env.CORE_DB;
