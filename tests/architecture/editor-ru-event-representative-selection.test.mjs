@@ -38,7 +38,7 @@ function makeEnv({rows=[],events=[],budget={batches:0,estimated_neurons:0}}={}){
     async all(){
       sqls.push({method:'all',sql,args});
       if(!sql.includes('FROM news_items'))throw Error('Unexpected all SQL '+sql);
-      if(sql.includes('EXISTS')&&sql.includes('news_event_groups')){
+      if(sql.includes(' IN (SELECT g.representative_id')&&sql.includes('news_event_groups')){
         return{results:rows.filter(eligible).sort((a,b)=>b.published_ms-a.published_ms).slice(0,22)};
       }
       // Precisely model the OLD >=7 selector so the test is RED before the code fix.
@@ -77,8 +77,8 @@ test('recent low-priority displayed events translate; non-displayed low-priority
  assert.equal(data.calls.length,1,'visible event representatives share one existing RU batch');
  assert.deepEqual(data.wrote.map(x=>x.id),['shown4','shown5','shown6']);
  const q=candidateSql(data.sqls);
- assert.match(q.sql,/EXISTS\s*\(SELECT 1 FROM news_event_groups/);
- assert.match(q.sql,/g\.representative_id=n\.id/);
+ assert.match(q.sql,/n\.id IN \(SELECT g\.representative_id FROM news_event_groups/);
+ assert.ok(!q.sql.includes('EXISTS'), 'representative lookup should be set-based');
  assert.match(q.sql,/g\.priority>=4/);
  assert.match(q.sql,/g\.last_seen_ms>\?/);
  assert.equal(q.sql.includes('ORDER BY n.published_ms DESC LIMIT 22'),true);
