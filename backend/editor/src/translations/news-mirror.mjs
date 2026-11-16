@@ -4,6 +4,7 @@
 import {eventRows,hebrew,language} from '../news/events.mjs';
 import {fingerprint} from '../localization/localization.mjs';
 import {factualTranslationIssue} from './fact-guard.mjs';
+import {militaryStrikeMisread} from './semantic-meaning.mjs';
 import {readEditorCachedPair} from '../mirrors/collector-cache.mjs';
 const MIRROR='https://raw.githubusercontent.com/ArrakturIL/regional-osint-feeds/main/data/news-localization-mirror.json';
 const HEADERS={'Access-Control-Allow-Origin':'*','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
@@ -48,6 +49,7 @@ export function validateCandidate(input,result,lang){
  if(/\bIran(?:ian)?\b|Иран[\p{L}]*/iu.test(source)&&
     !/\bJordan(?:ian)?\b|Иордан[\p{L}]*/iu.test(source)&&
     (lang==='he'?/ירד(?:ן|נ[\p{L}]*)/iu:/Иордан[\p{L}]*/iu).test(translated))return false;
+ if(militaryStrikeMisread(source,translated))return false;
  // In a military report, "strike" never means a labour stoppage.
  if(/(?:\b(?:Israeli|IDF|Gaza|Hamas|military|air)\b.{0,90}\bstrike\b|\bstrike\b.{0,90}\b(?:Gaza|Hamas|hospital|killed|IDF)\b|(?:удар|авиаудар|обстрел)[\p{L}]*)/iu.test(source)&&
     (lang==='he'?/שבית[\p{L}]*/iu:/забастовк[\p{L}]*/iu).test(translated))return false;

@@ -1,4 +1,18 @@
 /**
+ * A plural "military strikes" source must not become Hebrew/Russian labor
+ * strikes. Require war context in the source and exclude explicit labor cues.
+ * This deliberately quarantines only a narrow, evidenced false friend.
+ */
+export function militaryStrikeMisread(sourceText,targetText){
+  const source=String(sourceText||''),target=String(targetText||'');
+  if(!/\b(?:strikes?|airstrikes?)\b/iu.test(source))return false;
+  if(!/(?:שבית[\p{L}]*|забастовк[\p{L}]*)/iu.test(target))return false;
+  if(/\b(?:unions?|workers?|employees?|teachers?|doctors?|nurses?|pilots?|dockers?|labou?r|industrial|hunger|general|walk-?outs?|histadrut|wages?|pickets?)\b|профсоюз|забастов/iu.test(source))
+    return false;
+  return /\b(?:Israeli|Israel|Iran|Iranian|Hamas|IDF|Gaza|military|airstrikes?|aircraft|air|ballistic|missiles?|bombs?|bombing|attack|war|troops?|army|Hezbollah|IRGC|US|U\.S\.|American|Bahrain|hospital|killed|drones?|targets?|artillery)\b|(?:удар|авиаудар|обстрел)[\p{L}]*/iu.test(source);
+}
+
+/**
  * Narrow, auditable semantic-risk checks for known high-impact translation
  * ambiguities. Not machine fact-checking: a non-null code only quarantines a
  * candidate for review. Source/target content is untrusted input.
@@ -6,6 +20,7 @@
 export function semanticMeaningIssue(sourceText,targetText) {
   const source=String(sourceText||''),target=String(targetText||'');
   if(!source.trim()||!target.trim())return null;
+  if(militaryStrikeMisread(source,target))return 'military_strikes_misread_as_labor_action';
 
   // "To strike a naval mine" = collide with an explosive sea mine.
   // Neither "attack a mine" nor "hit a mining facility" is equivalent.

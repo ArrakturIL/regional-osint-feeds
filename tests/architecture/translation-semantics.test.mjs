@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { factualTranslationIssue } from '../../backend/editor/src/translations/fact-guard.mjs';
+import {validateCandidate} from '../../backend/editor/src/translations/news-mirror.mjs';
 
 const original=(title)=>({title,body:'',comment:''});
 const translated=(title)=>({title,body:'',comment:''});
@@ -71,4 +72,39 @@ test('exact Reuters "may hold off" remains tentative even when barring condition
    'title:conditional_modality_missing');
  assert.equal(factualTranslationIssue(src,translated('Трамп может отложить удары по Ирану, если не будет новых провокаций')),null);
  assert.equal(factualTranslationIssue(src,translated('טראמפ עשוי לדחות תקיפות באיראן אם לא יהיו פרובוקציות חדשות')),null);
+});
+
+test('military plural strikes never become labor stoppages (real Helsinki corpus C05-C07)',()=>{
+ const samples=[
+  ["Will Israel's repeated strikes on Hamas's replacement commanders lead to lasting change? - analysis",
+   "האם שביתות חוזרות ונשנות של בני ישראל על מפקדיו המחליפים של חמאס יובילו לשינוי מתמשך? (אנליזה)"],
+  ["Iran still has up to 2,500 missiles, capable of major assault even after rounds of strikes - report",
+   "לאיראן עדיין יש עד 2,500 טילים, המסוגלים לתקוף אפילו אחרי סיבובי שביתות."],
+  ["Iran can still produce 50 ballistic missiles a month, despite US-Israeli strikes - report",
+   "איראן עדיין יכולה לייצר 50 טילים בליסטיים בחודש, למרות שביתות ארה״ב-ישראלית - דו״ח"]
+ ];
+ for(const [src,he] of samples){
+  assert.match(factualTranslationIssue(original(src),translated(he)),/military_strikes_misread_as_labor_action/,src);
+  assert.equal(validateCandidate(src,he,'he'),false,'mirror rejects '+src);
+ }
+});
+
+test('military airstrikes rendered as a Russian labor strike are quarantined',()=>{
+ const src='Israeli strikes on Gaza, officials say';
+ const bad='Израильские забастовки в Газе, заявили представители';
+ assert.match(factualTranslationIssue(original(src),translated(bad)),/military_strikes_misread_as_labor_action/);
+ assert.equal(validateCandidate(src,bad,'ru'),false);
+});
+
+test('genuine labor strikes and correct military translations survive the same guards',()=>{
+ const cases=[
+  ["Teachers' strike shuts Israeli schools","שביתת המורים סוגרת את בתי הספר בישראל",'he'],
+  ["Port workers stage strikes","Работники порта проводят забастовки",'ru'],
+  ["Histadrut declares general strike in Israel","ההסתדרות מכריזה על שביתה כללית בישראל",'he'],
+  ["Anti-Houthi forces retreat in Yemen as Iran strikes Bahrain","כוחות מתנגדי החות׳ים נסוגים בתימן בעוד איראן תוקפת בבחריין",'he']
+ ];
+ for(const [src,target,lang] of cases){
+  assert.equal(factualTranslationIssue(original(src),translated(target)),null,src);
+  assert.equal(validateCandidate(src,target,lang),true,src);
+ }
 });

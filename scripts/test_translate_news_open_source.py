@@ -93,4 +93,30 @@ class FreeTranslationTests(unittest.TestCase):
         self.assertTrue(valid(src, "Трамп может отложить удары по Ирану, если не будет новых провокаций", "ru"))
         self.assertTrue(valid(src, "טראמפ עשוי לדחות תקיפות באיראן אם לא יהיו פרובוקציות חדשות", "he"))
 
+
+    def test_real_military_plural_strikes_never_become_labor_stoppages(self):
+        samples = [
+            ("Will Israel's repeated strikes on Hamas's replacement commanders lead to lasting change? - analysis",
+             "האם שביתות חוזרות ונשנות של בני ישראל על מפקדיו המחליפים של חמאס יובילו לשינוי מתמשך? (אנליזה)"),
+            ("Iran still has up to 2,500 missiles, capable of major assault even after rounds of strikes - report",
+             "לאיראן עדיין יש עד 2,500 טילים, המסוגלים לתקוף אפילו אחרי סיבובי שביתות."),
+            ("Iran can still produce 50 ballistic missiles a month, despite US-Israeli strikes - report",
+             "איראן עדיין יכולה לייצר 50 טילים בליסטיים בחודש, למרות שביתות ארה״ב-ישראלית - דו״ח"),
+        ]
+        for original, candidate in samples:
+            with self.subTest(original=original):
+                self.assertFalse(valid(original,candidate,"he"))
+        self.assertFalse(valid("Israeli strikes on Gaza, officials say",
+                               "Израильские забастовки в Газе, заявили представители","ru"))
+
+    def test_labor_strikes_and_correct_military_attacks_remain_allowed(self):
+        self.assertTrue(valid("Teachers' strike shuts Israeli schools",
+                              "שביתת המורים סוגרת את בתי הספר בישראל","he"))
+        self.assertTrue(valid("Port workers stage strikes",
+                              "Работники порта проводят забастовки","ru"))
+        self.assertTrue(valid("Histadrut declares general strike in Israel",
+                              "ההסתדרות מכריזה על שביתה כללית בישראל","he"))
+        self.assertTrue(valid("Anti-Houthi forces retreat in Yemen as Iran strikes Bahrain",
+                              "כוחות מתנגדי החות׳ים נסוגים בתימן בעוד איראן תוקפת בבחריין","he"))
+
 if __name__=="__main__":unittest.main()
