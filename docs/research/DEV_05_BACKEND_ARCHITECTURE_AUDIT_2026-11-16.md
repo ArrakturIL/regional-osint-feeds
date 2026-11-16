@@ -147,3 +147,15 @@
 **Cloudflare independent read-only check:** Pages canonical production `a2543b26-c77f-4b14-99a4-1185a8948eaa` success; Editor version `c40407a2-985b-4042-88e7-8f022d0d49c2` 100%, Monitor version `85338c78-0b66-4aef-93a6-9ddf376d248b` 100%; expected Editor AI, CORE_DB, NEWS_DB, Monitor DB/secrets/vars and existing crons `*/5`, `*/1` unchanged. **Не является самостоятельным браузерным QA** или подтверждением всех upstream обновлений.
 
 **Следующая отдельная работа:** `index.js` содержит сканирование RSS/D1, `writeComment` (AI и budgets), cron, Polymarket archiving, localized fallback; дальнейшие decomposition только TDD и маленькими PR. `localization/localization.mjs` и `analysts/editor.mjs` также требуют functional-boundary audit. Backup и OSS остаются отложенными.
+
+---
+
+## ARCH-03 / редакторские AI-комментарии и бюджет — проверенный выпуск 16.11.2026
+
+**Change:** [PR #59](https://github.com/ArrakturIL/regional-osint-feeds/pull/59), merged `44d55ef862f7430d0fe3f4a64095b196333548af`. Отдельный `backend/editor/src/editorial/ai-comments.mjs` экспортирует исходный `writeComment(env,row)` и прежнюю AI+budget часть `scan()` как `generateComments(env,now)`. `index.js` вызывает её без изменения порядка RSS → reconciliation → RU news translation → editorial comments → official IDF translation → scan summary. Новых D1 migrations, поставщиков, model/prompt, dependency, cron, fallback или AI-бюджета не появилось.
+
+**Contract:** `EDITORIAL_SKIP` для чувствительных заголовков/аннотаций, отсутствие AI вызова на них, 28 попыток/3500 estimated neurons в сутки, максимум две строки за scan, `spent=110` до AI usage reconciliation и `last_ai_error` для некорректного JSON сохранены. Новые семь прямых тестов и frozen v64 exact-source comparison предотвращают незаметную подмену правил в данном boundary.
+
+**Evidence:** RED [43784760543](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43784760543) — новый модуль отсутствовал; GREEN app [43784955476](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43784955476) и integrated [43784955428](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43784955428), обе completed success. Production coordinated [43785057089](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43785057089) completed success, rollback skipped; Cloudflare read-only check: Pages deployment `8f23c384-0c27-4d1b-a46e-5cb470b6ec68` success, Editor `3e27e546-2c00-4c0c-9b6e-7b5e6a75f146` 100% с AI/CORE_DB/NEWS_DB, Monitor `63537fb3-21a2-4529-8a60-306df603fd76` 100%, cron `*/5` и `*/1` неизменны. Не подтверждает качество пользовательских AI-реплик реальными публикациями или глобальный UI QA.
+
+**Open:** ARCH-03 остаётся частичным. Далее отдельными блоками исследовать и при необходимости изолировать оставшийся scan/FEED/D1 management, `localization.mjs` и `analysts/editor.mjs`. ARCH-01/05/06, остаток ARCH-04 и ARCH-07 идут по master TODO. Не поднимать длительные backup и OSS в этом DEV-05.
