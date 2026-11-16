@@ -25,7 +25,7 @@ test('overlapping RU batches share a single atomic 20th budget slot',async()=>{
       summary:'Officials shared a regional security statement.',headline_ru:null}]};
   if(method==='run'&&sql.includes('UPDATE news_translation_budget SET batches=')){
    // Emulate SQLite's affected-row semantics for an atomic guarded UPDATE.
-   const guarded=/AND\\s+batches\\s*<\\s*20\\b/i.test(sql)&&/AND\\s+estimated_neurons\\s*<\\s*2500\\b/i.test(sql);
+   const guarded=/AND\s+batches\s*<\s*20\b/i.test(sql)&&/AND\s+estimated_neurons\s*<\s*2500\b/i.test(sql);
    if(guarded&&batches>=20)return{meta:{changes:0}};
    batches++;return{meta:{changes:1}};
   }
@@ -60,7 +60,7 @@ test('overlapping IDF batches share a single atomic 12th budget slot',async()=>{
    return{batches:11,estimated_neurons:0};
   if(method==='first'&&sql.includes('FROM official_translations'))return null;
   if(method==='run'&&sql.includes('UPDATE official_translation_budget SET batches=')){
-   const guarded=/AND\\s+batches\\s*<\\s*12\\b/i.test(sql)&&/AND\\s+estimated_neurons\\s*<\\s*1500\\b/i.test(sql);
+   const guarded=/AND\s+batches\s*<\s*12\b/i.test(sql)&&/AND\s+estimated_neurons\s*<\s*1500\b/i.test(sql);
    if(guarded&&batches>=12)return{meta:{changes:0}};
    batches++;return{meta:{changes:1}};
   }
