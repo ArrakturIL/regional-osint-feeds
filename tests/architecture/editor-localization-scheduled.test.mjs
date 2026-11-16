@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {webcrypto,createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {reconstructReaderFacade} from './localization-source-parity.mjs';
+import {reconstructPreBudgetScheduler} from './localization-budget-source-parity.mjs';
 import {translateScheduled} from '../../backend/editor/src/localization/scheduled.mjs';
 import {sourceText,fingerprint} from '../../backend/editor/src/localization/shared.mjs';
 import {fingerprint as publicFingerprint} from '../../backend/editor/src/localization/localization.mjs';
@@ -59,7 +60,7 @@ test('post-split facade + scheduled + shared reconstruct exact original GitHub b
  const root=new URL('../../backend/editor/src/localization/',import.meta.url);
  const main=reconstructReaderFacade();
  const shared=readFileSync(new URL('shared.mjs',root),'utf8');
- const scheduled=readFileSync(new URL('scheduled.mjs',root),'utf8');
+ const scheduled=reconstructPreBudgetScheduler();
  const extra="import {DAY,val,sourceText,fingerprint} from './shared.mjs';\n"
    +"import {translateScheduled} from './scheduled.mjs';\n"
    +"export {fingerprint} from './shared.mjs';\n";
@@ -96,15 +97,15 @@ test('shared source text and fingerprint retain public identity and never fabric
  assert.match(await fingerprint(original),/^[a-f0-9]{64}$/);
 });
 
-test('daily Hebrew quotas block selection and AI before source queries at 96 attempts or 4000 neurons',async()=>{
- for(const budget of [{attempts:96,estimated_neurons:0},{attempts:0,estimated_neurons:4000}]){
+test('daily Hebrew quotas block selection and AI before source queries at 112 attempts or 4000 neurons',async()=>{
+ for(const budget of [{attempts:112,estimated_neurons:0},{attempts:0,estimated_neurons:4000}]){
   const {env,events,ai}=makeEnv({budget});
   const result=await translateScheduled(env,atKind('news'));
   assert.deepEqual(result,{state:'budget'});
   assert.equal(ai.length,0);
   assert.equal(events.filter(e=>e.method==='all').length,0,'quota check precedes source scanning');
   assert.equal(writes(events,'INSERT OR IGNORE INTO regional_i18n_budget').length,1);
-  assert.equal(writes(events,'last_he_localization').length,0);
+  assert.equal(writes(events,'last_he_localization').length,1,'explicit budget state replaces stale successful state');
  }
 });
 
@@ -150,7 +151,7 @@ test('high-confidence Hebrew with changed Arabic numerals is rejected and record
   translate:{title:'ישראל מדווחת על 6 כטב״מים ליד הגבול',body:'',comment:'',confidence:98}
  });
  const result=await translateScheduled(env,atKind('news'));
- assert.equal(result.state,'ok');
+ assert.equal(result.state,'partial');
  assert.equal(result.attempted,1);
  assert.equal(result.translated,0);
  assert.equal(result.rejected,1);

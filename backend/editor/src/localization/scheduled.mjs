@@ -2,6 +2,7 @@ import {factualTranslationIssue} from '../translations/fact-guard.mjs';
 import {DAY,sourceText,fingerprint} from './shared.mjs';
 
 const HE_MODEL='@cf/zai-org/glm-4.7-flash';
+const HE_DAILY_ATTEMPT_CAP=112;
 function translationNumerals(s){return (String(s).match(/\d+(?:[.,]\d+)*/g)||[]).map(t=>t.replace(/,/g,'.'));}
 function translationPreservesNumbers(before,after){
   const values=translationNumerals(after);
@@ -76,7 +77,7 @@ async function translateLocaleItem(env,item,day,now){
     const retry=await db.prepare("UPDATE regional_i18n_attempts SET state='running',retry_count=retry_count+1,attempted_at_ms=?,error=NULL WHERE kind=? AND item_id=? AND language='he' AND source_hash=? AND day_utc=? AND state='error' AND retry_count<1").bind(now,kind,id,sha,day).run();
     if(retry.meta?.changes!==1)return'attempted';
   }
-  const budget=await env.NEWS_DB.prepare("UPDATE regional_i18n_budget SET attempts=attempts+1,updated_at_ms=? WHERE day_utc=? AND attempts<96 AND estimated_neurons<4000").bind(now,day).run();
+  const budget=await env.NEWS_DB.prepare("UPDATE regional_i18n_budget SET attempts=attempts+1,updated_at_ms=? WHERE day_utc=? AND attempts<? AND estimated_neurons<4000").bind(now,day,HE_DAILY_ATTEMPT_CAP).run();
   if(budget.meta?.changes!==1){
     await db.prepare("UPDATE regional_i18n_attempts SET state='budget_exhausted' WHERE kind=? AND item_id=? AND source_hash=? AND day_utc=?").bind(kind,id,sha,day).run();
     return'budget';
@@ -91,6 +92,7 @@ async function translateLocaleItem(env,item,day,now){
           required:['title','body','comment','confidence'],additionalProperties:false}}},
       chat_template_kwargs:{enable_thinking:false},temperature:0,max_tokens:1700
     });
+    neurons=Number(answer?.usage?.neurons)||0;
     if(answer?.choices?.[0]?.finish_reason&&answer.choices[0].finish_reason!=='stop')throw Error('model_incomplete');
     const raw=answer?.choices?.[0]?.message?.content??answer?.response;
     if(typeof raw!=='string'||raw.length>9500)throw Error('model_invalid_response');
@@ -98,7 +100,6 @@ async function translateLocaleItem(env,item,day,now){
     if(!checkHebrew(text,value))throw Error(hebrewQualityIssue(text,value));
     await db.prepare("INSERT INTO regional_i18n(kind,item_id,language,source_hash,title,body,commentary,quality_score,model,created_at_ms) VALUES(?,?,'he',?,?,?,?,?,?,?) ON CONFLICT(kind,item_id,language) DO UPDATE SET source_hash=excluded.source_hash,title=excluded.title,body=excluded.body,commentary=excluded.commentary,quality_score=excluded.quality_score,model=excluded.model,created_at_ms=excluded.created_at_ms")
       .bind(kind,id,sha,value.title.trim(),value.body.trim(),value.comment.trim(),value.confidence,HE_MODEL,Date.now()).run();
-    neurons=Number(answer?.usage?.neurons)||0;
     state='ok';
   }catch(e){err=String(e?.message||e).slice(0,180);}
   await db.prepare("UPDATE regional_i18n_attempts SET state=?,error=? WHERE kind=? AND item_id=? AND source_hash=? AND day_utc=?").bind(state,err,kind,id,sha,day).run();
@@ -113,20 +114,24 @@ export async function translateScheduled(env,scheduledTime){
   try{
     await env.NEWS_DB.prepare("INSERT OR IGNORE INTO regional_i18n_budget(day_utc,attempts,estimated_neurons,updated_at_ms) VALUES(?,0,0,?)").bind(day,now).run();
     const budget=await env.NEWS_DB.prepare("SELECT attempts,estimated_neurons FROM regional_i18n_budget WHERE day_utc=?").bind(day).first();
-    if((budget?.attempts||0)>=96||(budget?.estimated_neurons||0)>=4000)return{state:'budget'};
+    if((budget?.attempts||0)>=HE_DAILY_ATTEMPT_CAP||(budget?.estimated_neurons||0)>=4000){
+      const blocked={state:'budget',attempts:budget?.attempts||0,estimated_neurons:budget?.estimated_neurons||0,limit:HE_DAILY_ATTEMPT_CAP};
+      await env.NEWS_DB.prepare("INSERT INTO editor_state(key,value,updated_ms) VALUES('last_he_localization',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_ms=excluded.updated_ms").bind(JSON.stringify(blocked),Date.now()).run();
+      return{state:'budget'};
+    }
     const cycle=['news','analyst','story','editorial','news','profile'];
     const kind=cycle[Math.floor(now/300000)%cycle.length];
     const items=await localeCandidates(env,kind,now);
-    let attempted=0,translated=0,rejected=0;
+    let attempted=0,translated=0,rejected=0,budgetHit=false;
     for(const item of items){
       if(attempted>=4)break;
       const result=await translateLocaleItem(env,item,day,now);
       if(result==='cached'||result==='attempted')continue;
-      if(result==='budget')break;
+      if(result==='budget'){budgetHit=true;break;}
       attempted++;
       if(result==='ok')translated++;else rejected++;
     }
-    const state={state:'ok',kind,attempted,translated,rejected,at:new Date().toISOString()};
+    const state={state:budgetHit?'budget':rejected?'partial':'ok',kind,attempted,translated,rejected,at:new Date().toISOString()};
     await env.NEWS_DB.prepare("INSERT INTO editor_state(key,value,updated_ms) VALUES('last_he_localization',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_ms=excluded.updated_ms").bind(JSON.stringify(state),Date.now()).run();
     return state;
   }catch(e){
