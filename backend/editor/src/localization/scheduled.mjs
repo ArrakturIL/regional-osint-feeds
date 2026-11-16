@@ -1,5 +1,6 @@
 import {factualTranslationIssue} from '../translations/fact-guard.mjs';
 import {DAY,sourceText,fingerprint} from './shared.mjs';
+import {eligibleHebrewRetry} from './retry-policy.mjs';
 
 const HE_MODEL='@cf/zai-org/glm-4.7-flash';
 const HE_DAILY_ATTEMPT_CAP=112;
@@ -24,7 +25,7 @@ function checkHebrew(original,translation){
 }
 async function localeCandidates(env,kind,now){
   let db=env.NEWS_DB,rows=[];
-  if(kind==='news')rows=(await db.prepare("SELECT n.id,n.headline,n.headline_ru,n.summary,n.summary_ru,n.comment,t.source_hash cached_he_hash FROM news_items n LEFT JOIN regional_i18n t ON t.kind='news' AND t.item_id=n.id AND t.language='he' WHERE n.priority>=7 AND n.published_ms>? ORDER BY (t.item_id IS NULL) DESC,n.priority DESC,n.published_ms DESC LIMIT 120").bind(now-7*DAY).all()).results||[];
+  if(kind==='news')rows=(await db.prepare("SELECT n.id,n.headline,n.headline_ru,n.summary,n.summary_ru,n.comment,t.source_hash cached_he_hash FROM news_items n LEFT JOIN regional_i18n t ON t.kind='news' AND t.item_id=n.id AND t.language='he' WHERE n.priority>=7 AND n.published_ms>? ORDER BY (t.item_id IS NULL) DESC,n.published_ms DESC,n.priority DESC LIMIT 120").bind(now-7*DAY).all()).results||[];
   else if(kind==='editorial')rows=(await db.prepare("SELECT id,headline,text FROM editorial_notes WHERE published_ms>? ORDER BY published_ms DESC LIMIT 12").bind(now-28*DAY).all()).results||[];
   else if(kind==='analyst'){
     db=env.CORE_DB;
@@ -72,8 +73,8 @@ async function translateLocaleItem(env,item,day,now){
   }
   const claimed=await db.prepare("INSERT OR IGNORE INTO regional_i18n_attempts(kind,item_id,language,source_hash,day_utc,attempted_at_ms,state) VALUES(?,?,'he',?,?,?,'running')").bind(kind,id,sha,day,now).run();
   if(claimed.meta?.changes!==1){
-    const prev=await db.prepare("SELECT state,retry_count FROM regional_i18n_attempts WHERE kind=? AND item_id=? AND language='he' AND source_hash=? AND day_utc=?").bind(kind,id,sha,day).first();
-    if(prev?.state!=='error'||(prev.retry_count||0)>=1)return'attempted';
+    const prev=await db.prepare("SELECT state,retry_count,error,attempted_at_ms FROM regional_i18n_attempts WHERE kind=? AND item_id=? AND language='he' AND source_hash=? AND day_utc=?").bind(kind,id,sha,day).first();
+    if(!eligibleHebrewRetry(prev,now))return'attempted';
     const retry=await db.prepare("UPDATE regional_i18n_attempts SET state='running',retry_count=retry_count+1,attempted_at_ms=?,error=NULL WHERE kind=? AND item_id=? AND language='he' AND source_hash=? AND day_utc=? AND state='error' AND retry_count<1").bind(now,kind,id,sha,day).run();
     if(retry.meta?.changes!==1)return'attempted';
   }
