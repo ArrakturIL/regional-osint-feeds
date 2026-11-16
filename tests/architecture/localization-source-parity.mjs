@@ -1,4 +1,5 @@
 import {readFileSync} from 'node:fs';
+import {reconstructContentFacade} from './localization-content-parity.mjs';
 
 const requirePart=(text,needle,label)=>{
  const start=text.indexOf(needle);
@@ -8,7 +9,7 @@ const requirePart=(text,needle,label)=>{
 
 export function reconstructReaderFacade(){
  const root=new URL('../../backend/editor/src/localization/',import.meta.url);
- const main=readFileSync(new URL('localization.mjs',root),'utf8');
+ const main=reconstructContentFacade();
  const core=readFileSync(new URL('read-core.mjs',root),'utf8');
  const analyst=readFileSync(new URL('analyst-api.mjs',root),'utf8');
  const readerImports="import {HEADERS,respond,fieldLocale,localized} from './read-core.mjs';\n"
