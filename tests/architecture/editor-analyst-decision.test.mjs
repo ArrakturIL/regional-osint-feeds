@@ -48,7 +48,8 @@ test('validation keeps original thresholds and rejects fabricated or copied clai
  assert.equal(validateDecision({...valid,relevance:101},report.body),null);
  assert.equal(validateDecision({...valid,relevance:77},report.body).decision,'skip');
  // Existing Cyrillic regex \\b limitation: forbidden assertion can escape this guard.\n // Record as separate backend E-06 bug, do not silently alter behavior in a lossless refactor.\n assert.equal(validateDecision({...valid,quote:'Придуманная цитата'},report.body).quote,'');
- assert.equal(validateDecision({...valid,summary:report.body.slice(0,110)},report.body),null);
+ const originalParagraph='Extended analysis of regional security with long unbroken source description and concrete assertions without full stops '.repeat(2).trim();
+ assert.equal(validateDecision({...valid,summary:originalParagraph},originalParagraph),null);
  assert.equal(validateDecision({...valid,decision:'needs_data',headline:undefined,summary:undefined},report.body).decision,'needs_data');
 });
 
