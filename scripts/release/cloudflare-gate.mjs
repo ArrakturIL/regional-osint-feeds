@@ -94,16 +94,25 @@ async function workerState(w,check=true){
  }
  return {key:w.key,name:w.name,version_id:latestVersion(deployments),previews_enabled:subdomain?.previews_enabled};
 }
-async function pagesState(pages,check=true){
+async function pagesState(pages,check=true,{notDeploymentId=null}={}){
  const p='/pages/projects/'+encodeURIComponent(pages.project);
- const project=await api('CLOUDFLARE_API_TOKEN',p);
- if(check)validatePages(pages,project);
- // Cloudflare retains rolled-back deployments as the most recently CREATED
- // release. The active production target is canonical_deployment, not latest.
- const active=project?.canonical_deployment;
- need(active?.environment==='production' && active?.latest_stage?.status==='success' &&
-      /^[0-9a-f-]{36}$/.test(active.id||''),'Pages has no active canonical production deployment');
- return {project:pages.project,deployment_id:active.id};
+ // After a successful Wrangler upload, Cloudflare's project API can temporarily
+ // omit canonical_deployment or still report the old target. Avoid false rollback.
+ for(let attempt=0;attempt<8;attempt++){
+   const project=await api('CLOUDFLARE_API_TOKEN',p);
+   if(check)validatePages(pages,project);
+   // Cloudflare retains rolled-back deployments as the most recently CREATED
+   // release. The active production target is canonical_deployment, not latest.
+   const active=project?.canonical_deployment;
+   if(active?.environment==='production' && active?.latest_stage?.status==='success' &&
+       /^[0-9a-f-]{36}$/.test(active.id||'') &&
+       (notDeploymentId===null||active.id!==notDeploymentId)){
+     return {project:pages.project,deployment_id:active.id};
+   }
+   if(attempt<7)await new Promise(resolve=>setTimeout(resolve,1000));
+ }
+ need(false,notDeploymentId===null?'Pages has no active canonical production deployment':
+   'Pages canonical production deployment did not advance after publish');
 }
 async function capture(contract,sourceSha,filename){
  need(/^[a-f0-9]{40}$/.test(sourceSha),'missing exact release source SHA');
@@ -150,7 +159,7 @@ async function rollback(contract,sourceSha,file){
  try{
    const now=await pagesState(contract.pages,false),before=baseline.pages;
    need(before?.project===contract.pages.project&&/^[0-9a-f-]{36}$/.test(before.deployment_id),'missing Pages restore deployment');
-   if(now.deployment_id!==before.deployment_id){
+   if(now.deployment_id!==before.deployment_id||process.env.PAGES_PUBLISH_SUCCEEDED==='true'){
      const path='/pages/projects/'+encodeURIComponent(contract.pages.project)+'/deployments/'+before.deployment_id+'/rollback';
      await api('CLOUDFLARE_API_TOKEN',path,'POST',{});
      console.log('rollback restored previous Pages production deployment');
@@ -166,7 +175,7 @@ async function receipt(contract,sourceSha,baselineFile,outputFile){
  need(baseline.source_sha===sourceSha&&manifest.source_sha===sourceSha,'release receipt source SHA');
  const [workers,pages]=await Promise.all([
    Promise.all(contract.workers.map(w=>workerState(w))),
-   pagesState(contract.pages)
+   pagesState(contract.pages,true,{notDeploymentId:baseline.pages.deployment_id})
  ]);
  const record={
    schema_version:1,source_sha:sourceSha,
