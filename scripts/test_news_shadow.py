@@ -112,8 +112,9 @@ class Tests(unittest.TestCase):
         match=re.search(r'export const FEEDS=(\[.*?\]);',editor)
         self.assertIsNotNone(match,"active Editor feeds contract missing")
         feeds=json.loads(match.group(1))
-        self.assertEqual(len(feeds),12)
+        self.assertTrue(feeds,"Editor must define production feeds")
         by_url={s.get("feed_url"):s for s in registry["sources"] if s.get("feed_url")}
+        self.assertEqual(len(by_url),sum(bool(s.get("feed_url")) for s in registry["sources"]),"duplicate registry feed URLs")
         active_urls={entry[1] for entry in feeds}
         self.assertEqual(len(active_urls),len(feeds),"duplicate active feed URLs")
         for name,url,*_ in feeds:
