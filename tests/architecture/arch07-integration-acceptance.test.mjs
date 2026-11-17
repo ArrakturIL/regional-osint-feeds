@@ -26,7 +26,7 @@ function d1({easa=[],statuses=[]}={}){
    if(sql[0].includes('FROM satellite_analysis'))return [{results:[]},{results:[]}];
    throw Error('unexpected D1 source read: '+sql[0]);
   },
-  prepare(sql){return{sql}};
+  prepare(sql){return{sql}}
  }};
 }
 function services(options={}){
