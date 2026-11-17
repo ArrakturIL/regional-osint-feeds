@@ -83,6 +83,8 @@ jobs:
         run: node --test backend/monitor/tests/summary-runtime.test.mjs
       - name: Verify live provider cooldown and AvioADSB quota policy on modern source
         run: node --test backend/monitor/tests/provider-recovery-runtime.test.mjs
+      - name: Audit ARCH-01 active runtime graph and eight Neon-to-D1 collector boundaries
+        run: node --test tests/architecture/active-architecture-audit.test.mjs
       - name: Verify production provider client backoff and D1 quota safety
         run: node --test backend/monitor/tests/provider-client-runtime.test.mjs
       - name: Verify live satellite catalogue metadata and provider failure semantics
