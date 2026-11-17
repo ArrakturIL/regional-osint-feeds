@@ -81,6 +81,8 @@ jobs:
           node scripts/audit_legacy_dependencies.mjs --summary
       - name: Verify protected Monitor summary contract on modern source
         run: node --test backend/monitor/tests/summary-runtime.test.mjs
+      - name: Verify live provider cooldown and AvioADSB quota policy on modern source
+        run: node --test backend/monitor/tests/provider-recovery-runtime.test.mjs
 
   pages-documents:
     runs-on: ubuntu-latest
