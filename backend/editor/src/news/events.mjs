@@ -44,11 +44,23 @@ const match=(s,arr)=>new Set(arr.filter(x=>x[1].test(s)).map(x=>x[0]));
 const overlap=(a,b)=>[...a].filter(x=>b.has(x));
 const tokens=s=>new Set((String(s||'').normalize('NFKC').toLowerCase().match(/[\p{L}\p{N}]+/gu)||[]).filter(x=>x.length>2&&!['the','and','for','from','that','with','this','new','says','said','after','before'].includes(x)));
 const hasClaim=s=>/\b(?:reported|reportedly|alleged|claims|according to|unverified)\b|לפי|לדברי|بحسب|زعم|сообща|предполож/iu.test(s);
+// A regulatory restriction on a service is not a new military attack merely
+// because the summary cites a prior security incident as background.
+const CIVIC_RESTRICTION=/\b(?:bans?|banned|blocks?|blocked|restricts?|restricted|prohibits?|prohibited)\b.{0,100}\b(?:national\s+security|security\s+concerns|messaging|platform|applications?|social\s+media|telecom(?:munications)?)\b/iu;
+const OPINION_URL=/(?:^|\/)(?:opinion|commentary|columns?)(?:\/|[?#]|$)/iu;
+const OPINION_SIGNOFF=/(?:^|\.\s*)opinion\.\s*$/iu;
+function explicitPoliticalActor(headline){
+ // Only explicit speaker-first headlines are comparable; do not invent an
+ // identity from a background name shared by unrelated announcements.
+ const m=String(headline||'').trim().match(/^([\p{Lu}][\p{L}-]{2,})(?:['’]s\s+party)?\s+(?:rules?\s+out|warns?|rejects?|opposes?|backs?|endorses?|calls?|says?|states?|declares?)\b/u);
+ return m?m[1].normalize('NFKC').toLowerCase():null;
+}
+
 export function analyze(a){
  const title=String(a.headline||a.title||''),summary=String(a.summary||'');
  const all=title+' '+summary,region=match(all,R),detail=match(all,D),sub=match(all,S);
- let topic=T.find(x=>x[1].test(title))?.[0]||T.find(x=>x[1].test(all))?.[0]||'other';
- const type=/\b(?:opinion|commentary|column)\b|טור דעה|דעה|رأي/iu.test(title)?'opinion':
+ let topic=CIVIC_RESTRICTION.test(title)?'governance':T.find(x=>x[1].test(title))?.[0]||T.find(x=>x[1].test(all))?.[0]||'other';
+ const type=/(?:\b(?:opinion|commentary|column)\b|טור דעה|דעה|رأي)/iu.test(title)||OPINION_URL.test(String(a.url||''))||OPINION_SIGNOFF.test(summary)?'opinion':
    /\b(?:live blog|live updates|as it happened)\b|עדכונים שוטפים|مباشر/iu.test(title)?'liveblog':
    /\b(?:archive|archival|historical footage|from (?:19|20)\d{2})\b|ארכיון|أرشيف|архивн/iu.test(title)?'archive':
    /\b(?:daily\s+briefing|weekly\s+briefing|podcast|roundup|recap)\b|פודקאסט|подкаст/iu.test(title)?'roundup':
@@ -93,6 +105,10 @@ function namedFatality(a){
 export function sameEvent(a,b){
  if(a.id===b.id)return{ok:true,why:'same_article'};
  if(a.topic!==b.topic)return{ok:false,why:'different_action'};
+ if(a.topic==='election'){
+  const pa=explicitPoliticalActor(a.title),pb=explicitPoliticalActor(b.title);
+  if(pa&&pb&&pa!==pb)return{ok:false,why:'different_political_actors'};
+ }
  const hours=Math.abs(a.time-b.time)/3600000;
  if(!a.time||!b.time||incompatible(a,b))return{ok:false,why:'incompatible'};
  const va=overlap(a.detail,VENUES),vb=overlap(b.detail,VENUES);
