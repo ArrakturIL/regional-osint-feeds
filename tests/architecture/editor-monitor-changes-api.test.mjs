@@ -196,20 +196,24 @@ test('C-04 keeps source comparison when an intervening hourly run omitted snapsh
   payload:JSON.stringify({latest_observed_at_ms:{ais:NOW-60000,adsb_alt:NOW-120000}})};
  const earlier={run_id:'earlier-with-cursors',started_at_ms:PREV,outcome:'quiet',
   payload:JSON.stringify({source_max_ms:{ais:PREV-60000,adsb_alt:PREV-120000}})};
- const {env,calls}=fixture([latestNoSnapshot,recent,earlier]);
+ const {env,calls}=fixture([latestNoSnapshot,recent,earlier],[{event_id:'new-story',updated_at_ms:NOW+1000}]);
  const out=await get(await readMonitorChanges(request('?lang=he'),env));
  assert.equal(out.status,200);
  assert.equal(out.json.sourceComparable,2);
  assert.equal(out.json.sourceUpdates,2);
- assert.equal(out.json.lastCheck,new Date(NOW).toISOString());
- assert.equal(out.json.previousCheck,new Date(PREV).toISOString());
+ assert.equal(out.json.lastCheck,new Date(latestNoSnapshot.started_at_ms).toISOString());
+ assert.equal(out.json.previousCheck,new Date(NOW).toISOString());
  assert.equal(out.json.newestRunAt,new Date(latestNoSnapshot.started_at_ms).toISOString());
  assert.equal(out.json.skippedSnapshotRuns,1);
+ assert.equal(out.json.sourceComparisonFrom,new Date(PREV).toISOString());
+ assert.equal(out.json.sourceComparisonTo,new Date(NOW).toISOString());
+ assert.equal(out.json.outcome,'quiet');
+ assert.equal(out.json.changes[0].story_id,'new-story','journal window stays on two newest monitor runs');
  assert.equal(out.json.sourceCoverage.state,'partial');
  assert.equal(out.json.sourceCoverage.reason,'recent_runs_without_source_snapshots');
  assert.equal(calls.length,2);
  assert.match(calls[0].sql,/LIMIT 12/);
- assert.deepEqual(calls[1].args,[PREV,NOW]);
+ assert.deepEqual(calls[1].args,[NOW,latestNoSnapshot.started_at_ms]);
 });
 
 test('C-04 never manufactures a comparison from just one historical snapshot',async()=>{
