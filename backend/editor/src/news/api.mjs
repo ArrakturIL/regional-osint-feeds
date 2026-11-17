@@ -38,13 +38,13 @@ export async function readNewsEvents(request,env){
  const dateParam=name=>{
   const raw=url.searchParams.getAll(name);
   if(!raw.length)return null;
-  if(raw.length!==1||!/^\\d{1,16}$/.test(raw[0]))return NaN;
+  if(raw.length!==1||!/^\d{1,16}$/.test(raw[0]))return NaN;
   const ms=Number(raw[0]);return Number.isSafeInteger(ms)&&ms>0?ms:NaN;
  };
  const fromMs=dateParam('from_ms'),toMs=dateParam('to_ms');
  const rawPriority=url.searchParams.getAll('min_priority');
  const minPriority=rawPriority.length===0?null:
-  rawPriority.length===1&&/^\\d{1,2}$/.test(rawPriority[0])&&Number(rawPriority[0])<=10?Number(rawPriority[0]):NaN;
+  rawPriority.length===1&&/^\d{1,2}$/.test(rawPriority[0])&&Number(rawPriority[0])<=10?Number(rawPriority[0]):NaN;
  if(sources===null||!validSlugs(categories)||!validSlugs(verifications)||
    Number.isNaN(fromMs)||Number.isNaN(toMs)||Number.isNaN(minPriority)||
    (fromMs!==null&&toMs!==null&&fromMs>toMs))return respond({error:'invalid_filters'},400);
