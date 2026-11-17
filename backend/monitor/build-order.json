@@ -45,6 +45,7 @@
     "api/aviation.js",
     "api/localization.js",
     "api/router.js",
+    "schedule/dispatch.js",
     "index.js"
   ],
   "compatibility": "concat in frozen source order, strip generated import/export directives",

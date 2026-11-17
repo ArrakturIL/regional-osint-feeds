@@ -8,7 +8,7 @@ import {assemble} from '../scripts/build.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const repo=resolve(root,'../..');
 const manifest=JSON.parse(readFileSync(resolve(root,'build-order.json'),'utf8'));
-test('all 44 monitored source modules exist',()=>{assert.equal(manifest.order.length,44);for(const x of manifest.order)assert.ok(existsSync(resolve(root,'src',x)),x)});
+test('all 45 monitored source modules exist (incl. SYS-01 dispatch)',()=>{assert.equal(manifest.order.length,45);for(const x of manifest.order)assert.ok(existsSync(resolve(root,'src',x)),x)});
 test('frozen Monitor v47 baseline remains intact while gated D1 source reader is integrated',()=>{const baseline=readFileSync(resolve(repo,'baselines/cloudflare/2026-11-14/monitor-v47/worker.js'),'utf8');const current=assemble();assert.equal(baseline.length,103561);assert.notEqual(current,baseline);assert.ok(current.includes('async function readD1CollectorSnapshot('));assert.ok(current.includes('COLLECTOR_CACHE_SOURCES'));assert.ok(current.includes("readCollectorPair(env,'gdelt'"));});
 test('every module parses as an ES module',()=>{for(const x of manifest.order){const r=spawnSync(process.execPath,['--check',resolve(root,'src',x)],{encoding:'utf8'});assert.equal(r.status,0,x+': '+r.stderr)}});
 test('all named local imports resolve and their symbol is exported',()=>{for(const x of manifest.order){const path=resolve(root,'src',x),s=readFileSync(path,'utf8');for(const m of s.matchAll(/^import \{ ([^}]+) \} from '([^']+)';$/gm)){const target=resolve(dirname(path),m[2]);assert.ok(existsSync(target),x+' -> '+m[2]);const contents=readFileSync(target,'utf8');for(const sym of m[1].split(',').map(t=>t.trim()))assert.ok(contents.includes(sym),x+' -> '+sym);}}});
