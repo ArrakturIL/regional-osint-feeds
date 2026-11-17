@@ -85,6 +85,8 @@ jobs:
         run: node --test backend/monitor/tests/provider-recovery-runtime.test.mjs
       - name: Audit ARCH-01 active runtime graph and eight Neon-to-D1 collector boundaries
         run: node --test tests/architecture/active-architecture-audit.test.mjs
+      - name: Emit reproducible active backend architecture audit summary
+        run: node scripts/audit_active_architecture.mjs --summary
       - name: Verify production provider client backoff and D1 quota safety
         run: node --test backend/monitor/tests/provider-client-runtime.test.mjs
       - name: Verify live satellite catalogue metadata and provider failure semantics
