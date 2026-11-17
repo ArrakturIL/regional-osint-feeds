@@ -96,3 +96,20 @@ test('all four apparently untested historic Editor modules are explicitly syntax
    'historical CI explicitly checks this module; never propose deletion as an orphan: '+path);
  }
 });
+
+
+test('each of 14 historical CI suites has an explicit retention and modern-equivalent decision',()=>{
+ const report=audit();
+ const decisionDoc=readFileSync(resolve(root,
+  'docs/research/ARCH_06_LEGACY_TESTS_DECISIONS_2026-11-17.md'),'utf8');
+ assert.equal(report.ci.historicalTestRoots.length,14);
+ for(const path of report.ci.historicalTestRoots){
+  const basename=path.split('/').at(-1);
+  assert.ok(decisionDoc.includes('`'+basename+'`'),
+   'Historical CI suite missing from current retention decision: '+path);
+  const matching=report.worker.classifications.find(x=>x.path===path);
+  assert.equal(matching?.decision,'keep-until-proven-safe',path);
+ }
+ assert.ok(decisionDoc.includes('KEEP / NONPRODUCTION HISTORICAL'),
+  'Dormant optional-provider adapters must not be treated as active production modules');
+});
