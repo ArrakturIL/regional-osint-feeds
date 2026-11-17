@@ -146,3 +146,25 @@ test('common facade retains 400/405/204/404 validation before three public reade
  assert.equal(options.status,204);
  assert.equal(f.queries.length,0);
 });
+
+
+test('B-04 ready Hebrew editorial headline/body remain field-available when unlocalized verified note is pending',async()=>{
+ const n={id:'field-note',headline:'Ситуация в регионе',text:'Наблюдаются изменения в работе системы.',
+   verified_note:'Проверка источника завершена.',author:'Editor',
+   published_ms:1730000000000,source_url:'https://example.org/editorial-note'};
+ n.he_hash=await fingerprint(sourceText('editorial',n));
+ n.he_title='המצב באזור';n.he_body='נצפו שינויים בפעולת המערכת.';
+ n.he_comment='';n.he_quality=95;
+ const f=makeEnv({notes:[n]});
+ const response=await readLocalizedEditorialNotes(f.env,'he',20);
+ const result=(await response.json()).notes[0];
+ assert.equal(response.status,200);
+ assert.equal(result.field_translation_status.headline,'available');
+ assert.equal(result.field_translation_status.text,'available');
+ assert.equal(result.field_translation_status.verified_note,'pending');
+ assert.equal(result.localization_complete,false,'untranslated verified note still prevents full completeness');
+ assert.equal(result.translation_status,'pending');
+ assert.equal(result.core_translation_status,'available','primary editorial article should not be mislabeled as untranslated');
+ assert.deepEqual(result.pending_fields,['verified_note']);
+ assert.equal(result.verified_note,n.verified_note,'do not invent an Hebrew translation');
+});
