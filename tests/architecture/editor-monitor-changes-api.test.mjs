@@ -136,7 +136,7 @@ test('C-04 exposes exact comparable source changes and reasons for missing cover
 
 
 test('C-04 a journal update cannot disguise lack of source-comparison coverage',()=>{
- const observed=[{...runs[0],payload:JSON.stringify({})},{...runs[1],payload:JSON.stringify({})}];
+ const observed=[{...runs[0],outcome:'quiet',payload:JSON.stringify({})},{...runs[1],outcome:'quiet',payload:JSON.stringify({})}];
  const result=buildDigest(observed,[{event_id:'journal',updated_at_ms:PREV+1000}]);
  assert.equal(result.status,'ready','journal updated but no source snapshots');
  assert.equal(result.changes.length,1);
