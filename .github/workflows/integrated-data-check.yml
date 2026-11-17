@@ -17,6 +17,7 @@ on:
       - "scripts/neon_mirror.py"
       - "scripts/neon_to_d1.py"
       - "scripts/test_neon_to_d1.py"
+      - "scripts/test_gdelt_cursor.py"
       - "storage/cloudflare/**"
       - "scripts/publish_neon_mirror.py"
       - "scripts/test_neon_mirror.py"
@@ -55,6 +56,7 @@ on:
       - "scripts/neon_mirror.py"
       - "scripts/neon_to_d1.py"
       - "scripts/test_neon_to_d1.py"
+      - "scripts/test_gdelt_cursor.py"
       - "storage/cloudflare/**"
       - "scripts/test_neon_mirror.py"
       - "scripts/test_live_smoke_contract.py"
@@ -91,6 +93,8 @@ jobs:
           python-version: "3.12"
       - name: Canonical external-smoke contract (offline)
         run: python -m unittest scripts.test_live_smoke_contract -v
+      - name: GDELT chronological catch-up and missing archive regression (offline)
+        run: python -m unittest scripts.test_gdelt_cursor -v
       - name: Neon-to-D1 private cache unit tests (offline)
         run: python -m unittest scripts.test_neon_to_d1 -v
       - name: Unit tests (no external API or secrets)
