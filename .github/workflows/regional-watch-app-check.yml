@@ -308,6 +308,8 @@ jobs:
           node-version: '22'
       - name: Verify coordinated release unit contracts
         run: node --test tests/architecture/release-pipeline.test.mjs
+      - name: ARCH-07 final Pages/Editor/Monitor public boundaries and rollback acceptance
+        run: node --test tests/architecture/arch07-integration-acceptance.test.mjs
       - name: Assemble Pages and Worker bundles and verify the exact source SHA
         env:
           SOURCE_SHA: ${{ github.sha }}
