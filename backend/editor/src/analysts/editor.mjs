@@ -14,7 +14,7 @@ const MODEL = '@cf/zai-org/glm-4.7-flash';
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 const MAX_AI_PER_RUN = 3;
-const MAX_AI_PER_DAY = 14;
+const MAX_AI_PER_DAY = 60; // B1: ceiling only; shared AI pool decides
 const REGION = /(?:израил|иран|цахал|сша|вашингтон|пентагон|трамп|байден|американск|ближн(?:ий|его) восток|хусит|хезболл|хамас|йемен|ливан|сири|ирак|ормуз|залив|саудов|катар|иордан|иерусалим|тегеран|хаменеи|нетаньяху|iran|israel|tehran|middle east|centcom|pentagon|hormuz|hezbollah|houthi|gaza|idf|us military)/i;
 const PROMO = /(?:рекламная интеграция|на правах рекламы|промокод|скидк[аи]|покупайте|подписывайтесь на наш|для рекламы|заказать рекламу|впн.*скидк)/i;
 // Reject unambiguous multilingual commercial ads before spending Workers AI neurons.

@@ -87,17 +87,17 @@ test('ARCH-03 actual modern facades retain scheduled and fetch delegates without
 test('ARCH-03 Editor scheduled dispatch keeps independent source, translation, enrichment and analyst pipelines',()=>{
  const entry=source('backend/editor/src/index.js');
  const markers=[
-  'ctx.waitUntil(scan(env))',
+  'ctx.waitUntil(scan(aiEnv))',
   'ctx.waitUntil(archiveExpiredPolymarket(env.CORE_DB,Date.now()))',
-  'ctx.waitUntil(localization.scheduled(env,event.scheduledTime))',
+  'ctx.waitUntil(localization.scheduled(aiEnv,event.scheduledTime))',
   'getUTCMinutes()%15===0',
   'ctx.waitUntil(importTranslationMirror(env))',
   'getUTCMinutes()%15===5',
-  'ctx.waitUntil(enrichNewMonitorStories(env))',
+  'ctx.waitUntil(enrichNewMonitorStories(aiEnv))',
   'getUTCMinutes() === 30',
   // E-01: the analyst editor needs the full env (cache flag + CORE_DB);
   // behaviour is covered by editor-entrypoint-analyst-wiring.test.mjs.
-  'ctx.waitUntil(analystService.scheduled(event, {...env, DB: env.CORE_DB}))'
+  'ctx.waitUntil(analystService.scheduled(event, {...aiEnv, DB: env.CORE_DB}))'
  ];
  for(const mark of markers)assert.ok(entry.includes(mark),'Editor scheduled boundary drift: '+mark);
  assert.ok(!entry.includes('worker/live-editor'),'archived modules must not drive active cron');
@@ -108,11 +108,11 @@ test('ARCH-03 Editor scheduled dispatch keeps independent source, translation, e
   'analyst queue must retain explicit AI run budget');
 });
 
-test('ARCH-03 active Editor 34-module graph is complete, D1/AI bindings match release and CI owns regression suites',()=>{
+test('ARCH-03 active Editor 35-module (+ai/budget B1) graph is complete, D1/AI bindings match release and CI owns regression suites',()=>{
  const audit=auditActiveArchitecture(root);
  const active=audit.graph.components.find(c=>c.owner==='editor');
  assert.ok(active);
- assert.equal(active.sourceModuleCount,34);
+ assert.equal(active.sourceModuleCount,35);
  assert.deepEqual(active.unreachableModules,[]);
  assert.deepEqual(active.importedOutsideOwner,[]);
  assert.deepEqual(audit.release.editorD1,['CORE_DB','NEWS_DB']);
