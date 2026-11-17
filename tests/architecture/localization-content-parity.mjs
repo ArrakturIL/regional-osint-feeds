@@ -30,10 +30,19 @@ const before=(text,start,end,label)=>{
  if(a<0||b<a)throw Error('missing '+label+' source boundary');
  return text.slice(a,b);
 };
+// B-04 is an intentionally additive API change. To prove all *other*
+// pre-extraction text remains byte-for-byte frozen, remove this exact,
+// reviewed addition before reconstructing the historical Git blob.
 const extractBody=(source,signature,label)=>{
  const a=source.indexOf(signature);
  if(a<0||!source.endsWith('}\n'))throw Error('missing '+label+' signature/closure');
- return source.slice(a+signature.length,-2);
+ let body=source.slice(a+signature.length,-2);
+ if(label==='/api/editorial-notes'){
+  const addition="      const locale=fieldLocale(note,['headline','text','verified_note'],lang,t.translation_status);\n      const status=locale.field_translation_status;\n      const good=new Set(['source','available','not_applicable']);\n      const coreReady=['headline','text'].every(k=>good.has(status[k]));\n      return{...note,...locale,core_translation_status:coreReady?'available':\n        ['headline','text'].some(k=>status[k]==='needs_review')?'needs_review':'pending',\n        pending_fields:Object.keys(status).filter(k=>status[k]==='pending'||status[k]==='needs_review')};";
+  if(!body.includes(addition))throw Error('B-04 narrow completeness-contract boundary missing');
+  body=body.replace(addition,"      return{...note,...fieldLocale(note,['headline','text','verified_note'],lang,t.translation_status)};");
+ }
+ return body;
 };
 
 export function reconstructContentFacade(){
