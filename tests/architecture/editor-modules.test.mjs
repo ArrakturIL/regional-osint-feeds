@@ -159,14 +159,18 @@ test('original v64 logic is exactly preserved, only relative import paths change
   const queryEnd=monitorActual.indexOf('  const prev=Number(runs[1]?.started_at_ms||0)',queryBegin);
   assert.ok(queryBegin>=0&&queryEnd>queryBegin&&monitorActual.slice(queryBegin,queryEnd).includes('LIMIT 12'),
     'C-04 only broadens bounded source snapshot SELECT');
-  const originalMonitorQuery="  const result=await env.CORE_DB.prepare('SELECT run_id,started_at_ms,outcome,payload FROM monitor_runs ORDER BY started_at_ms DESC LIMIT 2').all();\\n  const runs=result.results||[];\\n".replaceAll('\\n','\\n');
+  const originalMonitorQuery=`  const result=await env.CORE_DB.prepare('SELECT run_id,started_at_ms,outcome,payload FROM monitor_runs ORDER BY started_at_ms DESC LIMIT 2').all();
+  const runs=result.results||[];
+`;
   monitorActual=monitorActual.slice(0,queryBegin)+originalMonitorQuery+monitorActual.slice(queryEnd);
   const monitorFooterStart=monitorActual.indexOf('  const digest=buildDigest(runs,events);');
   const monitorFooterEnd=monitorActual.indexOf(' }catch(e){',monitorFooterStart);
   assert.ok(monitorFooterStart>=0&&monitorFooterEnd>monitorFooterStart&&
     monitorActual.slice(monitorFooterStart,monitorFooterEnd).includes('sourceComparisonFrom'),
     'C-04 source snapshot comparison is isolated from the existing journal query');
-  const frozenMonitorFooter="  const digest=buildDigest(runs,events);\\n  return Response.json({requested_language:lang,...digest},{status:200,headers});\\n".replaceAll('\\n','\\n');
+  const frozenMonitorFooter=`  const digest=buildDigest(runs,events);
+  return Response.json({requested_language:lang,...digest},{status:200,headers});
+`;
   monitorActual=monitorActual.slice(0,monitorFooterStart)+frozenMonitorFooter+monitorActual.slice(monitorFooterEnd);
   const monitorEditStart=monitorActual.indexOf(' const a=parse(latest.payload),b=parse(prior.payload);');
   const monitorEditEnd=monitorActual.indexOf(' const changedEvents=',monitorEditStart);
