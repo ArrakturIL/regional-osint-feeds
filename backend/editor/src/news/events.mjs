@@ -47,6 +47,12 @@ const hasClaim=s=>/\b(?:reported|reportedly|alleged|claims|according to|unverifi
 // A regulatory restriction on a service is not a new military attack merely
 // because the summary cites a prior security incident as background.
 const CIVIC_RESTRICTION=/\b(?:bans?|banned|blocks?|blocked|restricts?|restricted|prohibits?|prohibited)\b.{0,100}\b(?:national\s+security|security\s+concerns|messaging|platform|applications?|social\s+media|telecom(?:munications)?)\b/iu;
+function restrictedSubject(headline){
+ if(!CIVIC_RESTRICTION.test(String(headline||'')))return null;
+ const m=String(headline).match(/\b(?:bans?|banned|blocks?|blocked|restricts?|restricted|prohibits?|prohibited)\s+(?:the\s+)?([\p{L}][\p{L}\p{N}-]*)/iu);
+ const subject=m?.[1]?.normalize('NFKC').toLowerCase();
+ return subject&&!new Set(['messaging','app','application','platform','social','internet','online']).has(subject)?subject:null;
+}
 const OPINION_URL=/(?:^|\/)(?:opinion|commentary|columns?)(?:\/|[?#]|$)/iu;
 const OPINION_SIGNOFF=/(?:^|\.\s*)opinion\.\s*$/iu;
 function explicitPoliticalActor(headline){
@@ -141,6 +147,11 @@ export function sameEvent(a,b){
   }
  }
  if(hours>W[a.topic])return{ok:false,why:'different_time'};
+ if(a.topic==='governance'&&region){
+  const aa=restrictedSubject(a.title),bb=restrictedSubject(b.title);
+  if(aa&&bb&&aa!==bb)return{ok:false,why:'different_regulated_subject'};
+  if(aa&&aa===bb&&common>=3)return{ok:true,why:'same_regulatory_subject'};
+ }
  if(venue&&region)return{ok:true,why:'same_venue_action_time'};
  if(overlap(a.detail,b.detail).some(v=>PEOPLE.has(v))&&region&&(ratio>=.26||(hours<=6&&overlap(a.sub,b.sub).length)))return{ok:true,why:'same_person_context'};
  if(region&&common>=4&&ratio>=.7)return{ok:true,why:'high_headline_overlap'};
