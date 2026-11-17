@@ -395,3 +395,35 @@ test('C-01 optional order-hash continuation detects changed feed before returnin
  assert.equal((await invalid.json()).error,'invalid_order_hash');
  assert.equal(dbReads,before,'invalid token must be rejected before D1 reads');
 });
+
+
+test('C-02 live Jordan court verdict stays a judicial event, not a military strike or a reported new death',()=>{
+ const headlines=[
+  article('court-aj','Al Jazeera','Jordan sentences three men to death by hanging after deadly church attack',
+   'This is a breaking news story.',0),
+  article('court-f24','France 24','Three sentenced to death over Jordan church attack',
+   'A Jordanian court sentenced gunmen responsible for an earlier attack that killed nine people.',20),
+  article('court-bbc','BBC Middle East','Three men sentenced to death in Jordan over fatal church mass shooting',
+   'The attack killed nine and injured others last month.',40),
+ ];
+ for(const row of headlines){
+  const a=analyze(row);
+  assert.equal(a.topic,'governance','judicial sentencing must not inherit attack topic from background');
+  assert.equal(a.claim_about_death,'not_reported','a death sentence is not a claim that people died today');
+  assert.equal(a.policy,'candidate');
+ }
+ const output=group(headlines);
+ assert.equal(output.held.length,0);
+ assert.equal(output.groups.length,1,'three reports of a same court decision should still group');
+ assert.equal(output.groups[0].members.length,3);
+});
+
+test('C-03 judicial verdict and actual lethal strike remain distinct despite same country and fatalities vocabulary',()=>{
+ const verdict=article('verdict','BBC Middle East','Jordan court sentences three suspects to death over church attack',
+  'Nine people were killed in an attack last month.',0);
+ const violence=article('attack','Al Jazeera','Jordan military strikes militant targets after church attack',
+  'An airstrike hit armed targets in retaliation for the attack.',5);
+ const g=group([verdict,violence]);
+ assert.equal(analyze(verdict).claim_about_death,'not_reported');
+ assert.equal(g.groups.length,2);
+});
