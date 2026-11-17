@@ -17,6 +17,8 @@ jobs:
         with:
           node-version: '22'
       - run: node --test tests/architecture/editor-modules.test.mjs tests/architecture/editor-rss-boundary.test.mjs tests/architecture/editor-scheduled-translations.test.mjs tests/architecture/editor-translation-atomic-budget.test.mjs tests/architecture/editor-ru-event-representative-selection.test.mjs tests/architecture/editor-he-event-representative-selection.test.mjs tests/architecture/editor-official-posts-api.test.mjs tests/architecture/editor-monitor-changes-api.test.mjs tests/architecture/editor-ai-comments.test.mjs tests/architecture/editor-news-ingestion.test.mjs tests/architecture/editor-scan-orchestration.test.mjs tests/architecture/editor-localization-scheduled.test.mjs tests/architecture/editor-localization-budget-backlog.test.mjs tests/architecture/editor-localization-retry-policy.test.mjs tests/architecture/editor-localization-analysts.test.mjs tests/architecture/editor-localization-content-readers.test.mjs tests/architecture/editor-analyst-public-api.test.mjs tests/architecture/editor-analyst-source-ingestion.test.mjs tests/architecture/editor-analyst-decision.test.mjs tests/architecture/editor-analyst-queue-runner.test.mjs
+      - name: ARCH-03 cross-component Editor structural and Pages runtime acceptance
+        run: node --test tests/architecture/editor-cross-component-acceptance.test.mjs
       - name: Verify high-impact translation fidelity and article provenance
         run: node --test tests/architecture/translation-semantics.test.mjs tests/architecture/news-localization-provenance.test.mjs
       - uses: actions/setup-python@v5
@@ -75,6 +77,24 @@ jobs:
         run: npm exec --yes --package=esbuild@0.25.0 -- esbuild backend/editor/src/index.js --bundle --format=esm --target=es2022 --outfile=backend/editor/dist/worker.modern.mjs
       - name: Validate loadable Worker exports and React bundle
         run: node --test tests/architecture/modern-bundles.test.mjs
+      - name: Audit legacy dependency reachability before archive decisions
+        run: |
+          node --test tests/architecture/legacy-dependency-audit.test.mjs
+          node scripts/audit_legacy_dependencies.mjs --summary
+      - name: Verify protected Monitor summary contract on modern source
+        run: node --test backend/monitor/tests/summary-runtime.test.mjs
+      - name: Verify live provider cooldown and AvioADSB quota policy on modern source
+        run: node --test backend/monitor/tests/provider-recovery-runtime.test.mjs
+      - name: Audit ARCH-01 active runtime graph and eight Neon-to-D1 collector boundaries
+        run: node --test tests/architecture/active-architecture-audit.test.mjs
+      - name: Emit reproducible active backend architecture audit summary
+        run: node scripts/audit_active_architecture.mjs --summary
+      - name: Verify production provider client backoff and D1 quota safety
+        run: node --test backend/monitor/tests/provider-client-runtime.test.mjs
+      - name: Verify live satellite catalogue metadata and provider failure semantics
+        run: node --test backend/monitor/tests/geo-catalog-runtime.test.mjs
+      - name: Verify preserved Editor legacy translation and news invariants on modular source
+        run: node --test tests/architecture/legacy-editor-runtime-parity.test.mjs
 
   pages-documents:
     runs-on: ubuntu-latest
@@ -288,6 +308,8 @@ jobs:
           node-version: '22'
       - name: Verify coordinated release unit contracts
         run: node --test tests/architecture/release-pipeline.test.mjs
+      - name: ARCH-07 final Pages/Editor/Monitor public boundaries and rollback acceptance
+        run: node --test tests/architecture/arch07-integration-acceptance.test.mjs
       - name: Assemble Pages and Worker bundles and verify the exact source SHA
         env:
           SOURCE_SHA: ${{ github.sha }}
