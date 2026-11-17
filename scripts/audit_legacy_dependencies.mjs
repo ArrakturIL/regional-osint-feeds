@@ -133,8 +133,8 @@ export function auditLegacyDependencies(root){
     classifications},
   ci:{historicalTestRoots:ciTestRoots,legacyWorkflows:sorted(legacyWorkflows)},
   baselines:{editor,monitor,
-    editorConsumers:baselineConsumers.filter(x=>text(root,x).includes('editor-v64/')),
-    monitorConsumers:baselineConsumers.filter(x=>text(root,x).includes('monitor-v47/'))},
+    editorConsumers:baselineConsumers.filter(x=>text(root,x).includes('editor-v64')),
+    monitorConsumers:baselineConsumers.filter(x=>text(root,x).includes('monitor-v47'))},
   graph:{files:sorted(sources),edges:graph.edges,unresolvedRelativeImports:graph.unresolvedRelativeImports}
  };
 }
