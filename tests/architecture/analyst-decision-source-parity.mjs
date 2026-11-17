@@ -19,6 +19,17 @@ export function reconstructAnalystDecisionEditor(){
  const finish=decision.lastIndexOf(tail);
  if(!(start>=signature.length&&ai>start&&reserve>ai&&decide>reserve&&finish>decide))
   throw Error('original decision methods/ordering changed');
+ // E-06 is the sole intentionally behavior-changing deviation from the
+ // pre-extraction frozen Editor. Normalize ONLY this guard when comparing the
+ // rest of the modern runtime against the historical Git blob.
  const functions=decision.slice(signature.length,finish);
- return editor.replace(addedImport,'').replace(call,functions);
+ const guardStart=functions.indexOf('  // JavaScript \\b is ASCII-centric');
+ const guardEnd=functions.indexOf('  let q=plain(d.quote',guardStart);
+ if(guardStart<0||guardEnd<guardStart)throw Error('E-06 Unicode guard boundary missing');
+ const guard=functions.slice(guardStart,guardEnd);
+ if(!guard.includes('const certainty=')||!guard.includes('for(const m of d.headline.matchAll(certainty))'))
+  throw Error('E-06 Unicode guard contract changed');
+ const historicLine='  if (/\\b(?:подтвержден[оы]|доказан[оы]|официально установлено)\\b/i.test(d.headline)) return null;\\n';
+ const historical=functions.slice(0,guardStart)+historicLine+functions.slice(guardEnd);
+ return editor.replace(addedImport,'').replace(call,historical);
 }
