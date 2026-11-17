@@ -158,3 +158,34 @@ test('C-04 source-comparison coverage is partial when known source snapshots hav
  assert.equal(result.sourceCoverage.comparable,1);
  assert.equal(result.sourceCoverage.uncomparable,1);
 });
+
+
+test('C-04 compares actual hourly monitor payload aliases without fabricated coverage',()=>{
+ const latest={run_id:'hourly:new',started_at_ms:NOW,outcome:'no_alert',payload:JSON.stringify({
+  latest_observed_at_ms:{ais:NOW-60000,adsb_alt:NOW-120000,airbridge_context:NOW-90000,idf_official:NOW-7200000,mil_lol:NOW-10000000},
+  source_status:{adsb_alt:'partial',ais:'ok_but_zero_short_samples'}
+ })};
+ const prior={run_id:'hourly:prior',started_at_ms:PREV,outcome:'no_alert',payload:JSON.stringify({
+  source_max_ms:{ais:PREV-60000,adsb_alt:PREV-120000,airbridge_context:PREV-90000,idf_official:NOW-7200000,mil_lol:NOW-10000000,polymarket:PREV-1000}
+ })};
+ const out=buildDigest([latest,prior],[]);
+ assert.equal(out.status,'ready');
+ assert.equal(out.sourceComparable,5);
+ assert.equal(out.sourceUpdates,3);
+ assert.deepEqual(out.sourceChanges.map(x=>x.source),['adsb_alt','airbridge_context','ais']);
+ assert.deepEqual(out.sourceGaps,[{source:'polymarket',reason:'missing_latest_snapshot'}]);
+ assert.deepEqual(out.sourceCoverage,{state:'partial',reason:'invalid_or_missing_source_timestamps',comparable:5,uncomparable:1});
+ assert.equal(out.independentPrimarySources,null);
+ assert.deepEqual(out.changes,[],'advancing cursors are not verified incidents');
+});
+
+test('C-04 accepts the older measured-observation alias, but never mistakes a status label for a timestamp',()=>{
+ const latest={...runs[0],outcome:'no_alert',payload:JSON.stringify({source_max_observed_at_ms:{ais:NOW-1000,adsb_alt:NOW-2000}})};
+ const prior={...runs[1],outcome:'no_alert',payload:JSON.stringify({last_observed_by_source_ms:{ais:PREV-1000,adsb_alt:PREV-2000}})};
+ const out=buildDigest([latest,prior],[]);
+ assert.equal(out.sourceComparable,2);
+ assert.equal(out.sourceUpdates,2);
+ const noData=buildDigest([{...latest,payload:JSON.stringify({source_status:{ais:'ok'}})},prior],[]);
+ assert.equal(noData.sourceComparable,0);
+ assert.equal(noData.sourceCoverage.state,'unavailable');
+});
