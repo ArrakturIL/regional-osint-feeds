@@ -438,7 +438,7 @@ test('C-06 filters whole event pool before sort, pagination, i18n and includes a
   {...events[2],event_id:'other',id:'other',topic:'military',event_priority:9,verification_status:'single_origin_reporting',last_seen_ms:when-86400000,
    sources_json:JSON.stringify([{source:'Jerusalem Post / Israel',publisher:'jpost',published_ms:when-86400000}])}
  ];
- const db={prepare(sql){if(!sql.includes('FROM news_event_groups e JOIN news_items n'))throw Error('Unexpected database query');return{bind(){return this},all:async()=>({results:sourceEvents})}}};
+ const db={prepare(sql){if(sql.includes("FROM regional_i18n WHERE kind=?"))return{bind(){return this},first:async()=>null};if(!sql.includes('FROM news_event_groups e JOIN news_items n'))throw Error('Unexpected database query');return{bind(){return this},all:async()=>({results:sourceEvents})}}};
  const query='source=Times%20of%20Israel&category=military&verification=multi_outlet_reporting&min_priority=8&from_ms='+when+'&to_ms='+(when+3600000)+'&sort=latest&limit=1';
  const results=[];
  for(const lang of ['ru','he']){
