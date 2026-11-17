@@ -133,3 +133,28 @@ test('C-04 exposes exact comparable source changes and reasons for missing cover
  assert.equal(out.lastCheck,new Date(now).toISOString());
  assert.deepEqual(out.changes,[],'a source cursor advancing cannot certify a new incident');
 });
+
+
+test('C-04 a journal update cannot disguise lack of source-comparison coverage',()=>{
+ const observed=[{...runs[0],outcome:'quiet',payload:JSON.stringify({})},{...runs[1],outcome:'quiet',payload:JSON.stringify({})}];
+ const result=buildDigest(observed,[{event_id:'journal',updated_at_ms:PREV+1000}]);
+ assert.equal(result.status,'ready','journal updated but no source snapshots');
+ assert.equal(result.changes.length,1);
+ assert.equal(result.sourceComparable,0);
+ assert.deepEqual(result.sourceGaps,[],'do not invent fake source names');
+ assert.deepEqual(result.sourceCoverage,{
+  state:'unavailable',reason:'no_source_snapshots',comparable:0,uncomparable:0
+ });
+ assert.equal(result.independentPrimarySources,null);
+});
+
+test('C-04 source-comparison coverage is partial when known source snapshots have gaps',()=>{
+ const latest={...runs[0],payload:JSON.stringify({source_maxima_ms:{adsb:200,missing:null}})};
+ const previous={...runs[1],payload:JSON.stringify({source_maxima_ms:{adsb:100,missing:100}})};
+ const result=buildDigest([latest,previous],[]);
+ assert.equal(result.sourceComparable,1);
+ assert.equal(result.sourceCoverage.state,'partial');
+ assert.equal(result.sourceCoverage.reason,'invalid_or_missing_source_timestamps');
+ assert.equal(result.sourceCoverage.comparable,1);
+ assert.equal(result.sourceCoverage.uncomparable,1);
+});
