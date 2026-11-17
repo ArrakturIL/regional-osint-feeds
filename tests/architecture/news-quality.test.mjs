@@ -204,3 +204,30 @@ test('C-01/C-03/C-05: event update time, original publication and assertions are
  }
  assert.deepEqual(data.map(x=>x.event_id),['chronology-claim','chronology-claim']);
 });
+
+
+test('B-03 preserves original headline/summary/hash and per-field translation state across RU and HE',async()=>{
+ const {createHash}=await import('node:crypto');
+ const headline='Israel and Iran discuss regional security';
+ const summary='Officials discussed regional security after new diplomatic statements.';
+ const english={...events[0],event_id:'provenance-original',id:'source-en',source:'BBC Middle East',
+  headline,summary,headline_ru:'Израиль и Иран обсуждают региональную безопасность',
+  summary_ru:'Официальные лица обсудили региональную безопасность после новых дипломатических заявлений.',
+  sources_json:JSON.stringify([{article_id:'source-en',language:'en',source:'BBC Middle East',published_ms:when}])};
+ const db={prepare(){return{bind(){return this},all:async()=>({results:[english]}),first:async()=>null}}};
+ const originalHash=createHash('sha256').update(JSON.stringify([headline,summary])).digest('hex');
+ const ru=await(await readNewsEvents(new Request('https://rw.example/api/news?lang=ru'),{NEWS_DB:db})).json();
+ const he=await(await readNewsEvents(new Request('https://rw.example/api/news?lang=he'),{NEWS_DB:db})).json();
+ for(const record of [ru.articles[0],he.articles[0]]){
+  assert.equal(record.original_language,'en');
+  assert.equal(record.original_headline,headline);
+  assert.equal(record.original_summary,summary);
+  assert.equal(record.source_hash,originalHash,'hash must describe the immutable original, never headline_ru');
+  assert.equal(record.event_id,'provenance-original');
+ }
+ assert.equal(ru.articles[0].translation_state,'translated');
+ assert.equal(ru.articles[0].field_translation_status.headline,'available');
+ assert.equal(ru.articles[0].field_translation_status.summary,'available');
+ assert.equal(he.articles[0].field_translation_status.headline,'pending');
+ assert.equal(he.articles[0].field_translation_status.summary,'pending');
+});
