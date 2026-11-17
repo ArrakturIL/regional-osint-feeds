@@ -81,3 +81,28 @@
 **TDD:** RED [#44001175343](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/44001175343) — нового теста ещё нет в PR и CI правильно требует его существования; GREEN [#44001299306](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/44001299306) — **7/7 modern summary tests + 7/7 legacy graph safety tests + остальные application jobs и immutable release build SUCCESS**, оба Cloudflare release jobs `skipped` на PR. Ни сетевых вызовов, ни D1 writes, ни правок Worker runtime.
 
 **Важно:** это частичная миграция контрактов. Оставшиеся в `worker/test-aviation.mjs` проверки quota/cooldown/airbridge/authorization variants и ещё 13 старых suites нужно сопоставить с уже существующими modern тестами. Не удалять старые suites и Worker до матрицы уникального покрытия и подтверждённого замещения. `PR #84` только готов к review.
+
+## 4. Сопоставление старого CI с modern coverage (17.11.2026)
+
+Сравнены исполняемые `worker/test-*.mjs` (14 исторических CLI suites) и текущие `backend/monitor/tests`, `tests/architecture`. Ниже статусы **предварительного сопоставления реальных сценариев**, а не автоматическое признание тестов эквивалентными. Modern suites выполняются на исходниках, входящих в current release, old Worker остаётся в репозитории.
+
+| Legacy suite | Modern coverage / явная граница | Решение |
+| --- | --- | --- |
+| `test-aviation` | `backend/monitor/tests/summary-runtime.test.mjs` — 7 real `backend/monitor/src/index.js` запросов: auth, 404/400, D1 reads, stale/failed ADS-B, disagreement. | **PARTIAL**: остались отдельные historic quota/provider/source summary cases |
+| `test-adsb-recovery` | `backend/monitor/tests/provider-recovery-runtime.test.mjs` — 9 реальных `runSchedule` сценариев: 429 cooldown, lease, Tehran-first recovery, healthy context/mil, low shared AvioADSB quota. | **COVERED IN SELECTED SAFETY SCENARIOS**, исторический файл пока KEEP |
+| `test-provider-adapters`, `test-provider-collectors` | Старые optional OpenSky/ADS-B Exchange utilities `worker/aviation-providers.mjs`, `worker/aviation-provider-collectors.mjs`; эти модули **не входят** в modern Monitor release. | **HISTORICAL / KEEP**; не добавлять неиспользуемых провайдеров в production только ради соответствия legacy тесту |
+| `test-gdelt` | Modern import graph, `scripts/test_gdelt_cursor.py`, `tests/architecture/collector-cache.test.mjs`, Neon/D1 sync tests. | **PARTIAL**: исторические mock-provider GDELT cases оценить отдельно |
+| `test-geo-catalog` | Modern Monitor `collectors/satellite/catalog.js` + текущие tests source-parity/Pages satellite/public routes. | **GAP**: отдельно перенести реальные provider request и catalogue metadata-contract fixtures |
+| `test-analysts`, `test-analysts-translation`, `test-news-analysts-integration` | Modern `editor-analyst-decision`, `editor-analyst-queue-runner`, `editor-analyst-public-api`, `editor-localization-analysts` — алгоритмы, public read, provenance, budget. | **PARTIAL REVIEW**: перепроверить уникальные old thresholds/translation numbers, не переносить слепо |
+| `test-editorial-comment-policy` | Modern `backend/editor/src/editorial/comment-policy.mjs` + `editor-ai-comments`. | **PARTIAL REVIEW**: сравнить старые темы safety policy с текущими suppression fixtures |
+| `test-live-editor-integrity`, `test-open-source-translation` | Modern `translation-semantics`, `news-localization-provenance`, `editor-localization-retry-policy`, `editor-translation-atomic-budget`. | **PARTIAL REVIEW**: old BE-01/02/03/12 и source-hash cases могут оставаться уникальными |
+| `test-live-news-events`, `test-live-news-normalization` | Modern `news-quality`, `editor-news-ingestion`, `editor-monitor-changes-api`, `editor-modules` byte parity. | **PARTIAL REVIEW**: old specific grouping/dedup fixtures нуждаются в точном сравнении |
+| `worker/live-editor/{regional-watch-editor.js,analysts-editor.mjs,analysts-translation.mjs,story-enrichment.mjs}` | Связная историческая цепочка source imports, не prod entrypoint и не reachable из старых CI test roots; седьмой audit test защищает её от ошибочного удаления. | **RETAIN / UNKNOWN ROLLBACK VALUE**: no deletion or automatic promotion |
+
+### 5 дополнительных modern provider-client safeguards (плюс recovery pacing)
+
+В рабочей [PR #84](https://github.com/ArrakturIL/regional-osint-feeds/pull/84) к 7 modern summary и 9 scheduler recovery tests добавлены **6** `backend/monitor/tests/provider-client-runtime.test.mjs` тестов исходного `network/provider-client.js`: 429 и Retry-After, 403 шести-часовой cooldown, запрет второго сетевого запроса при lease, отклонение старого снапшота, фиксация AvioADSB rate-limit headers и постепенное восстановление после ошибок. Исключительно локальные HTTP + D1 fixtures.
+
+В первом CI был некорректный assert в тесте: после `failures=3` успешный опрос уменьшает счётчик до `2`, а next_allowed gap составляет **2 минуты**, не 4. Исходный код реализует `MINUTE * 2 ** (remainingFailures - 1)`. Ожидание исправлено **в тесте**, а не в production; [GREEN modern-bundles job последующего CI #44002577983](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/44002577983) показал **6/6** client, **9/9** scheduler, **7/7** graph tests. Общий итог всего workflow фиксировать только после его завершения.
+
+**Остаётся:** доказать assertion-level parity для старых policy/news/geo тестов; после этого решать, какие old files служат regression baseline/rollback и что можно архивировать безопасно. Отсутствие статической ссылки само по себе НЕ разрешает удалять. Приоритетный следующий кандидат: modern satellite catalog provider fixture, затем BE-specific translation guards.
