@@ -75,6 +75,9 @@ For the full CI suite and deployment contract, inspect the workflow and [coordin
 
 ## Read this before contributing or reviewing
 
+**For a new chat / agent:** first read [AGENTS.md](AGENTS.md) and the [preferred concise reporting style, with copyable templates](docs/REGIONAL_WATCH_RESPONSE_STYLE.md). The reporting preference survives chat context resets and is subordinate to the current [MASTER TODO](docs/REGIONAL_WATCH_MASTER_TODO.md).
+
+
 1. **[Master TODO and current decisions](docs/REGIONAL_WATCH_MASTER_TODO.md)** — authoritative work queue, completed milestones, open risks, production status and user decisions.
 2. **[DEV-05 backend architecture audit](docs/research/DEV_05_BACKEND_ARCHITECTURE_AUDIT_2026-11-16.md)** — current module boundaries, identified issues and recommended verification.
 3. **[Coordinated release runbook](docs/architecture/coordinated-release-runbook.md)** — deployment, bindings, manifests, rollback and safety requirements.
