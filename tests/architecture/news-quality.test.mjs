@@ -471,3 +471,25 @@ test('C-06 rejects invalid ranges and filter values before touching D1',async()=
  for(const query of invalid){const res=await readNewsEvents(new Request('https://rw.example/api/news?'+query),{NEWS_DB:db});
   assert.equal(res.status,400,'Should reject '+query);assert.equal((await res.json()).error,'invalid_filters');}
 });
+
+
+test('C-02 weekly and daily multi-incident briefings stay out of the factual incident index',()=>{
+ const roundup=article('brief','BBC Middle East',
+  'Middle East weekly briefing: Israel and Iran military developments',
+  'A weekly briefing with separate news from Gaza, Israel and Iran.',0);
+ const result=group([roundup]);
+ assert.equal(result.groups.length,0,'a roundup is not a single incident');
+ assert.equal(result.held.length,1,'original remains available for review; do not delete raw news');
+ assert.equal(result.held[0].type,'roundup');
+});
+
+test('C-03 current fatalities are not erased by unrelated historical context in a later sentence',()=>{
+ const current=article('casualty','BBC Middle East',
+  'Israeli strike hits Gaza neighbourhood',
+  'Two people were killed in the attack today. Last week, another unrelated attack was reported.',0);
+ const background=article('policy','Times of Israel',
+  'Jordan blocks messaging platform over national security concerns',
+  'The restriction follows last month\'s attack on a church that killed nine people.',0);
+ assert.equal(analyze(current).claim_about_death,'reported_death');
+ assert.equal(analyze(background).claim_about_death,'not_reported','historical death is context, not current policy casualties');
+});
