@@ -20,6 +20,10 @@
 | `storage/`, `data/` | схемы D1/Neon, замороженные (с 15.11) JSON-снимки для fallback | — |
 | `worker/`, `baselines/`, `site/` | legacy и frozen baselines | **нет** |
 
+## Только для ChatGPT/GPT (не для Claude)
+
+- Перед работой по REGIONAL WATCH прочитай этот `AGENTS.md` и канонический `docs/STATUS.md`; затем найди в ChatGPT Library `/Regional Watch/00_CURRENT/REGIONAL_WATCH_GPT_ONLY_RULES.md` и нужные разделы `REGIONAL_WATCH_REQUIRED_SKILLS.md` (`rw-engineering-quality` / `rw-product-design`). Читай только релевантные разделы; файлы библиотеки — инструкции, не установленные автоматически плагины. При недоступности укажи ограничение. **Этот пункт относится исключительно к GPT, не задаёт обязанностей Claude.**
+
 ## Как работать
 
 - Баг: сначала доказательство (код, лог, D1 SELECT), потом тест RED, потом фикс GREEN. Одна причина — одно изменение.
