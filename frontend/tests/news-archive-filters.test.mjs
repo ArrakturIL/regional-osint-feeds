@@ -62,3 +62,30 @@ test('F-07 rejects malformed body or wrong locale instead of showing stale/mixed
  assert.throws(()=>rwArchiveValidatePayload({...valid,feed_order_hash:''},'ru',0,1),/Invalid/);
  assert.throws(()=>rwArchiveValidatePayload({...valid,offset:12},'ru',0,1),/Invalid/);
 });
+
+
+test('C-06 archive renders accessible sort and filter controls in Russian and Hebrew without duplicating news fetch',()=>{
+ for(const he of [false,true]){
+  const h=(type,props,...children)=>({type,props:props||{},children});
+  const runtime={URLSearchParams,Date,RangeError,Error,Number,String,Array,Object,Set,
+   UI_HE:he,h,t:(tag,cls,body)=>h(tag,{className:cls},body),
+   useState:initial=>[typeof initial==='function'?initial():initial,()=>{}],
+   useRef:initial=>({current:initial}),useEffect:()=>{},rwNormalizeNewsArticle:x=>x,
+   Loading(){},NewsMasonry(){},Head(){}};
+  const root=vm.runInNewContext(src+'\nNewsArchive()',runtime,{filename:'NewsArchive.js'});
+  const nodes=[];
+  const walk=x=>{if(!x||typeof x!=='object')return;nodes.push(x);for(const y of x.children||[])walk(y);};
+  walk(root);
+  const sort=nodes.filter(n=>n.type==='button'&&typeof n.props['aria-pressed']==='boolean');
+  assert.deepEqual(sort.map(x=>x.children[0]),he?['החדשות ביותר','החשובות']:['Последние','Важные']);
+  assert.deepEqual(sort.map(x=>x.props['aria-pressed']),[true,false]);
+  const inputs=nodes.filter(n=>n.type==='input');
+  assert.equal(inputs.filter(x=>x.props.type==='search').length,1);
+  const selects=nodes.filter(n=>n.type==='select');
+  assert.deepEqual(selects.map(x=>x.props.id),['rw-archive-category','rw-archive-verification','rw-archive-minPriority','rw-archive-period']);
+  const form=nodes.find(n=>n.type==='form');
+  assert.equal(typeof form.props.onSubmit,'function');
+  assert.ok(nodes.some(n=>n.type==='button'&&n.props.type==='reset')===false);
+  assert.ok(nodes.some(n=>n.type==='button'&&n.children[0]===(he?'איפוס':'Сбросить')));
+ }
+});
