@@ -11,7 +11,13 @@ export async function readLocalizedEditorialNotes(env,lang,lim){
       const cache=lang==='he'?{source_hash:n.he_hash,title:n.he_title,body:n.he_body,commentary:n.he_comment,quality_score:n.he_quality}:null;
       const t=await localized(env.NEWS_DB,'editorial',n.id,sourceText('editorial',n),lang,cache);
       const note={id:n.id,headline:t.title,text:t.body,source_url:n.source_url,published_ms:n.published_ms,author:n.author,verified_note:n.verified_note,content_language:t.content_language};
-      return{...note,...fieldLocale(note,['headline','text','verified_note'],lang,t.translation_status)};
+      const locale=fieldLocale(note,['headline','text','verified_note'],lang,t.translation_status);
+      const status=locale.field_translation_status;
+      const good=new Set(['source','available','not_applicable']);
+      const coreReady=['headline','text'].every(k=>good.has(status[k]));
+      return{...note,...locale,core_translation_status:coreReady?'available':
+        ['headline','text'].some(k=>status[k]==='needs_review')?'needs_review':'pending',
+        pending_fields:Object.keys(status).filter(k=>status[k]==='pending'||status[k]==='needs_review')};
     }));
     return respond({requested_language:lang,notes,localized_count:notes.filter(x=>x.localization_complete).length});
 }
