@@ -1,0 +1,44 @@
+/* News archive controls only; preserve the existing RU/HE layout and card masonry. */
+.rw-news-archive .rw-archive-controls{
+ margin:14px 0 20px;padding:16px 18px;border:1px solid var(--rw-ui-border,#466b54);
+ border-radius:12px;background:rgba(24,45,35,.55);
+}
+.rw-archive-sort,.rw-archive-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rw-archive-sort{margin-block-end:14px}
+.rw-archive-sort>span{font-size:.85rem;color:var(--rw-body-muted);margin-inline-end:2px}
+.rw-archive-sort button,.rw-archive-actions button{
+ min-height:44px;padding:9px 16px;font:inherit;border-radius:8px;
+ background:transparent;border:1px solid var(--rw-ui-border,#466b54);color:inherit;cursor:pointer;
+}
+.rw-archive-sort button.active,.rw-archive-actions button[type="submit"]{
+ background:#254c38;color:#dcffe7;border-color:#83e7ad;
+}
+.rw-archive-fields{
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,205px),1fr));
+ gap:12px;align-items:start;
+}
+.rw-archive-field{display:flex;flex-direction:column;gap:5px;min-width:0;color:var(--rw-body-muted)}
+.rw-archive-field>span{font-size:.8125rem;line-height:1.5}
+.rw-archive-field input,.rw-archive-field select{
+ min-height:44px;width:100%;min-width:0;box-sizing:border-box;padding:9px 11px;
+ border:1px solid var(--rw-ui-border,#466b54);border-radius:8px;
+ color:#e4f8e9;background:#12241b;font:inherit;font-size:.91rem;
+}
+.rw-archive-field input::placeholder{color:#b2c9b8;opacity:1}
+.rw-archive-field input[type="date"]{color-scheme:dark}
+.rw-archive-date-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;grid-column:1/-1}
+.rw-archive-actions{margin-block-start:16px}
+.rw-archive-sort button:focus-visible,.rw-archive-actions button:focus-visible,
+.rw-archive-field input:focus-visible,.rw-archive-field select:focus-visible{
+ outline:2px solid #83e7ad;outline-offset:3px
+}
+.rw-archive-error{color:#ffb7ad;margin:10px 0 0}
+.rw-archive-notice{border-inline-start:3px solid #83e7ad;padding:8px 12px;background:#203b2b;margin:8px 0 16px}
+@media(max-width:640px){
+ .rw-news-archive .rw-archive-controls{padding:12px}
+ .rw-archive-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+ .rw-archive-field:first-child{grid-column:1/-1}
+ .rw-archive-date-pair{grid-template-columns:minmax(0,1fr);grid-column:1/-1}
+ .rw-archive-actions button{flex:1;min-width:110px}
+}
+@media(max-width:360px){.rw-archive-fields{grid-template-columns:minmax(0,1fr)}}
