@@ -79,6 +79,8 @@ jobs:
         run: |
           node --test tests/architecture/legacy-dependency-audit.test.mjs
           node scripts/audit_legacy_dependencies.mjs --summary
+      - name: Verify protected Monitor summary contract on modern source
+        run: node --test backend/monitor/tests/summary-runtime.test.mjs
 
   pages-documents:
     runs-on: ubuntu-latest
