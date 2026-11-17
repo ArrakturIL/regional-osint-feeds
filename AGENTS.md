@@ -30,4 +30,4 @@
 
 ## Запреты без явного разрешения владельца
 
-Production merge/deploy · write в production D1/Neon (preview делит bindings) · cron/секреты/платные квоты/AI-лимиты · новые Workers · удаление legacy без доказательства · работа по блоку B (на паузе).
+Production merge/deploy · write в production D1/Neon (preview делит bindings) · cron/секреты/платные квоты/AI-лимиты · новые Workers · удаление legacy без доказательства. Блок B снят с паузы 18.11, план: docs/architecture/translation-refactor-plan.md.
