@@ -99,7 +99,12 @@ export function auditLegacyDependencies(root){
  const ciTestRoots=sorted([...workflowTexts.values()].flatMap(y=>
   [...y.matchAll(/\bnode\s+(worker\/test-[a-zA-Z0-9_-]+\.mjs)\b/g)].map(m=>m[1])));
  requireFiles(root,ciTestRoots,'legacy CI test');
+ const checkedPaths=sorted([...workflowTexts.values()].flatMap(y=>
+  [...y.matchAll(/\bnode\s+--check\s+(worker\/[a-zA-Z0-9_./-]+\.(?:js|mjs))\b/g)].map(m=>m[1])));
+ requireFiles(root,checkedPaths,'legacy CI syntax-check source');
  const testReach=reachable(ciTestRoots,graph.edges);
+ const syntaxOnlyLegacy=sorted(checkedPaths.filter(path=>path.startsWith('worker/')&&
+  !testReach.has(path)&&!ciTestRoots.includes(path)));
  const legacyWorkflows=workflows.filter(path=>
   /worker\/(?:\*\*|test-|live-editor\/|regional-osint-monitor\.js|regional-watch-editor\.js)/.test(workflowTexts.get(path)));
  const workerSource=walk(root,'worker').filter(isModule);
@@ -116,6 +121,7 @@ export function auditLegacyDependencies(root){
   if(testReach.has(path)&&!ciTestRoots.includes(path))reasons.push('Reachable from historical CI tests');
   if(prodReach.has(path))reasons.push('Reachable from production entrypoint');
   if(workflows.some(w=>workflowTexts.get(w).includes(path)))reasons.push('Explicit workflow reference');
+  if(checkedPaths.includes(path))reasons.push('Explicit legacy CI syntax check');
   if(!reasons.length)reasons.push('No static reference proven; computed imports and rollback may still depend on it');
   return {path,kind,reasons,decision:'keep-until-proven-safe'};
  });
@@ -131,7 +137,8 @@ export function auditLegacyDependencies(root){
     activeLegacyCSS,unlistedLegacyCSS:sorted(legacyCSS.filter(x=>!frontendCSS.includes(x)))},
   worker:{testReferenced,productionReferenced,untestedCandidates,
     classifications},
-  ci:{historicalTestRoots:ciTestRoots,legacyWorkflows:sorted(legacyWorkflows)},
+  ci:{historicalTestRoots:ciTestRoots,legacyWorkflows:sorted(legacyWorkflows),
+    checkedPaths,syntaxOnlyLegacy},
   baselines:{editor,monitor,
     editorConsumers:baselineConsumers.filter(x=>text(root,x).includes('editor-v64')),
     monitorConsumers:baselineConsumers.filter(x=>text(root,x).includes('monitor-v47'))},
