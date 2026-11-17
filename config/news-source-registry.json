@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "description": "Read-only shadow feed audit. No candidate is published before source/rights and QA acceptance.",
-  "updated_date": "2026-11-12",
+  "description": "Read-only shadow feed audit. The production-origin flag records actual Editor use and is not a license or terms-of-service approval. No new candidate is published before source/rights and QA acceptance.",
+  "updated_date": "2026-11-17",
   "sources": [
     {
       "id": "bbc-middle-east",
@@ -75,9 +75,9 @@
       "publisher": "israelhayom",
       "language": "he",
       "feed_url": "https://www.israelhayom.co.il/rss.xml",
-      "origin": "candidate_unverified",
+      "origin": "existing_production",
       "probe": true,
-      "public_enabled": false,
+      "public_enabled": true,
       "license_status": "pending_terms_review"
     },
     {
@@ -86,9 +86,9 @@
       "publisher": "maariv",
       "language": "he",
       "feed_url": "https://www.maariv.co.il/Rss/RssChadashot",
-      "origin": "candidate_unverified",
+      "origin": "existing_production",
       "probe": true,
-      "public_enabled": false,
+      "public_enabled": true,
       "license_status": "pending_terms_review"
     },
     {
@@ -97,9 +97,9 @@
       "publisher": "arutzsheva",
       "language": "en",
       "feed_url": "https://www.israelnationalnews.com/Rss.aspx?act=.1",
-      "origin": "candidate_unverified",
+      "origin": "existing_production",
       "probe": true,
-      "public_enabled": false,
+      "public_enabled": true,
       "license_status": "pending_terms_review"
     },
     {
@@ -130,9 +130,9 @@
       "publisher": "guardian",
       "language": "en",
       "feed_url": "https://www.theguardian.com/world/israel/rss",
-      "origin": "candidate_unverified",
+      "origin": "existing_production",
       "probe": true,
-      "public_enabled": false,
+      "public_enabled": true,
       "license_status": "pending_terms_review"
     },
     {
@@ -141,9 +141,9 @@
       "publisher": "jns",
       "language": "en",
       "feed_url": "https://www.jns.org/feed/",
-      "origin": "candidate_unverified",
+      "origin": "existing_production",
       "probe": true,
-      "public_enabled": false,
+      "public_enabled": true,
       "license_status": "pending_terms_review"
     },
     {
@@ -152,9 +152,9 @@
       "publisher": "almonitor",
       "language": "en",
       "feed_url": "https://www.al-monitor.com/rss",
-      "origin": "candidate_unverified",
+      "origin": "existing_production",
       "probe": true,
-      "public_enabled": false,
+      "public_enabled": true,
       "license_status": "pending_terms_review"
     },
     {
@@ -163,9 +163,9 @@
       "publisher": "france24",
       "language": "en",
       "feed_url": "https://www.france24.com/en/middle-east/rss",
-      "origin": "candidate_unverified",
+      "origin": "existing_production",
       "probe": true,
-      "public_enabled": false,
+      "public_enabled": true,
       "license_status": "pending_terms_review"
     },
     {
