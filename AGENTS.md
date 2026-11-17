@@ -10,6 +10,8 @@
 - При вопросе о прогрессе целиком можно использовать компактную таблицу/счётчики; в обычном итоговом отчёте достаточно одного короткого списка.
 - **Не выдумывай успех, тесты, часы, CI и ссылки.** `CI green` ≠ `merged` ≠ `production deployed` ≠ `live QA accepted`. Отвечать только по проверенным артефактам.
 
+**PAUSE / checkpoint 17.11.2026:** владелец попросил сохранить прогресс и остановить работу. Не выполнять новые PR/CI/merge/deploy/D1 writes до дальнейшего указания. C PR #88 → `81f011bd`, production CI #44017673318 success, HTTP/Cloudflare проверки passed, но live D1 materialized judicial group/collected_ms ещё **не проверены после нового scheduled reconciliation**. E-01 read-only: 59 pending, 16 needs_data, 27 published, stale analyst mirror (GitHub files от 15.11 17:39Z); E-02 Israel Hayom HTTP 403; E-03 скрипт уже на canonical API, live smoke не делали. Истина: MASTER TODO §43. Весь B отложен.
+
 ## Работа с проектом
 
 - **Source of truth:** `docs/REGIONAL_WATCH_MASTER_TODO.md` на `main`. Для нового чата сверяй живые ветки, latest commits, PR, CI и фактическую Cloudflare версию; старые handoff тексты могут устареть.
