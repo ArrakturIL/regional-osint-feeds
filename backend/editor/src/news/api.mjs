@@ -23,6 +23,32 @@ export async function readNewsEvents(request,env){
  const expectedOrderHash=url.searchParams.get('expected_order_hash');
  if(expectedOrderHash!==null&&!/^[a-f0-9]{64}$/i.test(expectedOrderHash))
   return respond({error:'invalid_order_hash'},400);
+ // C-06: API filtering is locale-independent and always precedes sort,
+ // diversity caps and offset pagination. A selection inside one facet is OR;
+ // selections across facets are AND. No client-side partial-page filtering.
+ const selection=(name,maxLength=120)=>{
+  const raw=url.searchParams.getAll(name);
+  if(raw.length>20||raw.some(x=>!x.trim()||x.length>maxLength))return null;
+  return [...new Set(raw.map(x=>x.trim()))];
+ };
+ const sources=selection('source');
+ const categories=selection('category',64);
+ const verifications=selection('verification',64);
+ const validSlugs=items=>items!==null&&items.every(x=>/^[a-z][a-z0-9_]{0,63}$/.test(x));
+ const dateParam=name=>{
+  const raw=url.searchParams.getAll(name);
+  if(!raw.length)return null;
+  if(raw.length!==1||!/^\d{1,16}$/.test(raw[0]))return NaN;
+  const ms=Number(raw[0]);return Number.isSafeInteger(ms)&&ms>0?ms:NaN;
+ };
+ const fromMs=dateParam('from_ms'),toMs=dateParam('to_ms');
+ const rawPriority=url.searchParams.getAll('min_priority');
+ const minPriority=rawPriority.length===0?null:
+  rawPriority.length===1&&/^\d{1,2}$/.test(rawPriority[0])&&Number(rawPriority[0])<=10?Number(rawPriority[0]):NaN;
+ if(sources===null||!validSlugs(categories)||!validSlugs(verifications)||
+   Number.isNaN(fromMs)||Number.isNaN(toMs)||Number.isNaN(minPriority)||
+   (fromMs!==null&&toMs!==null&&fromMs>toMs))return respond({error:'invalid_filters'},400);
+ const applied_filters={sources,categories,verifications,min_priority:minPriority,from_ms:fromMs,to_ms:toMs};
  const requestedReadyOnly=['1','true'].includes(url.searchParams.get('ready_only'));
  // Main feed is locale-invariant; never hide events because translation is pending.
  const readyOnly=false;
@@ -40,7 +66,25 @@ export async function readNewsEvents(request,env){
  // Sort the complete raw event pool before doing any per-row i18n D1 reads.
  // Feed order and publisher diversity must remain independent of language/page size.
  // The Latest feed is newest-first, without silently promoting older priority items.
- let visible=rows.map(row=>({row,event_id:row.event_id,published_ms:row.last_seen_ms,priority:row.event_priority,_owner:publisher(row.source)})).sort((a,b)=>sort==='latest'?
+ const sourceNames=new Set(sources.map(x=>x.toLowerCase()));
+ const categoryNames=new Set(categories);
+ const verificationNames=new Set(verifications);
+ const matching=rows.filter(row=>{
+  if(fromMs!==null&&Number(row.last_seen_ms)<fromMs)return false;
+  if(toMs!==null&&Number(row.last_seen_ms)>toMs)return false;
+  if(minPriority!==null&&Number(row.event_priority)<minPriority)return false;
+  if(categoryNames.size&&!categoryNames.has(String(row.topic||'').toLowerCase()))return false;
+  if(verificationNames.size&&!verificationNames.has(String(row.verification_status||'').toLowerCase()))return false;
+  if(sourceNames.size){
+   let members=[];
+   try{members=JSON.parse(row.sources_json||'[]')}catch{}
+   if(!Array.isArray(members))members=[];
+   const names=[row.source,publisher(row.source),...members.flatMap(x=>[x?.source,x?.publisher])];
+   if(!names.some(x=>typeof x==='string'&&sourceNames.has(x.toLowerCase())))return false;
+  }
+  return true;
+ });
+ let visible=matching.map(row=>({row,event_id:row.event_id,published_ms:row.last_seen_ms,priority:row.event_priority,_owner:publisher(row.source)})).sort((a,b)=>sort==='latest'?
    b.published_ms-a.published_ms||String(a.event_id).localeCompare(String(b.event_id)):
    b.priority-a.priority||b.published_ms-a.published_ms||String(a.event_id).localeCompare(String(b.event_id)));
  // Soft diversity: high-impact stories are never blocked to satisfy quotas.
@@ -143,6 +187,6 @@ export async function readNewsEvents(request,env){
  return respond({requested_language:lang,articles:output,events:output,localized_count:output.filter(x=>x.content_language===lang).length,
   translation_summary:{available:output.filter(x=>x.translation_available).length,pending:output.filter(x=>x.translation_state==='pending').length,
     needs_review:output.filter(x=>x.translation_state==='needs_review').length},
-  limit,offset,total_events:visible.length,feed_order_hash,next_offset:visible.length>offset+limit?offset+limit:null,ready_only:readyOnly,requested_ready_only:requestedReadyOnly,
+  limit,offset,total_events:visible.length,applied_filters,feed_order_hash,next_offset:visible.length>offset+limit?offset+limit:null,ready_only:readyOnly,requested_ready_only:requestedReadyOnly,
   sort,grouping:'event_v1',status:'published',source_policy:'attributed_reporting_not_fact_verification'});
 }

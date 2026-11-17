@@ -427,3 +427,69 @@ test('C-03 judicial verdict and actual lethal strike remain distinct despite sam
  assert.equal(analyze(verdict).claim_about_death,'not_reported');
  assert.equal(g.groups.length,2);
 });
+
+
+test('C-06 filters whole event pool before sort, pagination, i18n and includes all member sources',async()=>{
+ const sourceEvents=[
+  {...events[0],event_id:'older',id:'older',topic:'strike',event_priority:10,last_seen_ms:when-4*86400000,
+   sources_json:JSON.stringify([{source:'BBC Middle East',publisher:'bbc',published_ms:when-4*86400000}])},
+  {...events[1],event_id:'matching',id:'matching',topic:'military',event_priority:8,verification_status:'multi_outlet_reporting',
+   last_seen_ms:when+120000,sources_json:JSON.stringify([{source:'BBC Middle East',publisher:'bbc',published_ms:when+120000},{source:'Times of Israel',publisher:'toi',published_ms:when+120000}])},
+  {...events[2],event_id:'other',id:'other',topic:'military',event_priority:9,verification_status:'single_origin_reporting',last_seen_ms:when-86400000,
+   sources_json:JSON.stringify([{source:'Jerusalem Post / Israel',publisher:'jpost',published_ms:when-86400000}])}
+ ];
+ const db={prepare(sql){if(sql.includes("FROM regional_i18n WHERE kind=?"))return{bind(){return this},first:async()=>null};if(!sql.includes('FROM news_event_groups e JOIN news_items n'))throw Error('Unexpected database query');return{bind(){return this},all:async()=>({results:sourceEvents})}}};
+ const query='source=Times%20of%20Israel&category=military&verification=multi_outlet_reporting&min_priority=8&from_ms='+when+'&to_ms='+(when+3600000)+'&sort=latest&limit=1';
+ const results=[];
+ for(const lang of ['ru','he']){
+  const res=await readNewsEvents(new Request('https://rw.example/api/news?lang='+lang+'&'+query),{NEWS_DB:db});
+  assert.equal(res.status,200);
+  const body=await res.json();results.push(body);
+  assert.deepEqual(body.articles.map(x=>x.event_id),['matching']);
+  assert.equal(body.total_events,1);
+  assert.equal(body.next_offset,null);
+  assert.deepEqual(body.applied_filters,{sources:['Times of Israel'],categories:['military'],verifications:['multi_outlet_reporting'],min_priority:8,from_ms:when,to_ms:when+3600000});
+ }
+ assert.equal(results[0].feed_order_hash,results[1].feed_order_hash);
+});
+
+test('C-06 multiselect filtering returns deterministic page ranks and 409 on changed filter continuation',async()=>{
+ const rows=events.map((event,i)=>({...event,topic:i===2?'military':'strike',source_count:1,sources_json:JSON.stringify([{source:i===2?'Jerusalem Post / Israel':'BBC Middle East',publisher:'other',published_ms:event.last_seen_ms}])}));
+ const db={prepare(){return{bind(){return this},all:async()=>({results:rows})}}};
+ const base='https://rw.example/api/news?lang=ru&source=BBC%20Middle%20East&source=Jerusalem%20Post%20%2F%20Israel&category=strike&category=military&limit=1&sort=latest';
+ const p1=await(await readNewsEvents(new Request(base+'&offset=0'),{NEWS_DB:db})).json();
+ assert.equal(p1.total_events,3);assert.equal(p1.articles[0].feed_rank,0);
+ const p2=await readNewsEvents(new Request(base+'&offset=1&expected_order_hash='+p1.feed_order_hash),{NEWS_DB:db});
+ assert.equal(p2.status,200);assert.equal((await p2.json()).articles[0].feed_rank,1);
+ const changed=await readNewsEvents(new Request(base+'&offset=1&to_ms='+(when-2*86400000)+'&expected_order_hash='+p1.feed_order_hash),{NEWS_DB:db});
+ assert.equal(changed.status,409);assert.equal((await changed.json()).error,'feed_changed');
+});
+
+test('C-06 rejects invalid ranges and filter values before touching D1',async()=>{
+ const db={prepare(){throw Error('Rejected filter must not query DB')}};
+ const invalid=['from_ms=yesterday','from_ms=2000000000000&to_ms=1000000000000','min_priority=11','category=%20','verification=not%20a%20slug','source=','source='+('a'.repeat(150))];
+ for(const query of invalid){const res=await readNewsEvents(new Request('https://rw.example/api/news?'+query),{NEWS_DB:db});
+  assert.equal(res.status,400,'Should reject '+query);assert.equal((await res.json()).error,'invalid_filters');}
+});
+
+
+test('C-02 weekly and daily multi-incident briefings stay out of the factual incident index',()=>{
+ const roundup=article('brief','BBC Middle East',
+  'Middle East weekly briefing: Israel and Iran military developments',
+  'A weekly briefing with separate news from Gaza, Israel and Iran.',0);
+ const result=group([roundup]);
+ assert.equal(result.groups.length,0,'a roundup is not a single incident');
+ assert.equal(result.held.length,1,'original remains available for review; do not delete raw news');
+ assert.equal(result.held[0].type,'roundup');
+});
+
+test('C-03 current fatalities are not erased by unrelated historical context in a later sentence',()=>{
+ const current=article('casualty','BBC Middle East',
+  'Israeli strike hits Gaza neighbourhood',
+  'Two people were killed in the attack today. Last week, another unrelated attack was reported.',0);
+ const background=article('policy','Times of Israel',
+  'Jordan blocks messaging platform over national security concerns',
+  'The restriction follows last month\'s attack on a church that killed nine people.',0);
+ assert.equal(analyze(current).claim_about_death,'reported_death');
+ assert.equal(analyze(background).claim_about_death,'not_reported','historical death is context, not current policy casualties');
+});

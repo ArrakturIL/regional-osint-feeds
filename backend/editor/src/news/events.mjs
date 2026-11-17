@@ -90,7 +90,7 @@ export function analyze(a){
  // A purely domestic U.S. issue is not automatically Middle East news.
  const usOnly=region.size===1&&region.has('us')&&!detail.size&&!/\b(?:middle east|persian gulf|strait of hormuz)\b/iu.test(all);
  const policy=(!region.size&&!detail.size)||usOnly?'hold_irrelevant':
-   (type!=='news'&&type!=='roundup')?'hold_nonnews':score<3?'hold_low_signal':score<4?'review':'candidate';
+   type!=='news'?'hold_nonnews':score<3?'hold_low_signal':score<4?'review':'candidate';
  return {...a,...reportingClaim({source:a.source,headline:title,summary}),title,summary,topic,type,score,policy,region,detail,sub,words:tokens(title),time:Number(a.published_ms||0),
    owner:publisher(a.source),lang:language(a.source),claimed:hasClaim(all)};
 }

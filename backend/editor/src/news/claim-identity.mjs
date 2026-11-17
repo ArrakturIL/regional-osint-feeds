@@ -37,9 +37,14 @@ export function reportingClaim(x){
  const head=String(x.title||x.headline||''),summary=String(x.summary||'');
  // A prior killing cited as context does not assert fatalities in the
  // reported administrative action or statement.
- const historic=/\b(?:last|previous)\s+(?:week|month|year)\b|\b(?:weeks?|months?|years?)\s+(?:earlier|ago|after)\b/iu.test(summary);
+ // Determine death claims sentence by sentence: an unrelated historical
+ // attack mentioned later must not suppress casualties reported in the lead.
+ // At the same time, deaths mentioned only as historical context stay out.
+ const historic=/\b(?:last|previous)\s+(?:week|month|year)\b|\b(?:weeks?|months?|years?)\s+(?:earlier|ago|after)\b/iu;
+ const currentSummaryDeath=summary.split(/(?<=[.!?])\s+/u)
+  .some(sentence=>deathTerms.test(sentence)&&!historic.test(sentence));
  const judicialSentence=/\b(?:sentenc(?:e(?:s|d)?|ing)|convict(?:s|ed|ion))\b.{0,140}\bdeath\b/iu.test(head)
   ||(/\b(?:sentenc(?:e(?:s|d)?|ing)|convict(?:s|ed|ion))\b/iu.test(head)&&/\bdeath\b/iu.test(head));
- const death=!judicialSentence&&(deathTerms.test(head)||(!historic&&deathTerms.test(summary)));
+ const death=!judicialSentence&&(deathTerms.test(head)||currentSummaryDeath);
  return {claimed_by:String(x.source||''),claim_about_death:unconfirmed?'death_not_confirmed_by_idf':death?'reported_death':'not_reported'};
 }
