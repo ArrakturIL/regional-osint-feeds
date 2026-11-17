@@ -201,7 +201,7 @@ function representativeQuality(a){
 }
 
 export async function reconcile(db,now=Date.now()){
- const rows=(await db.prepare("SELECT n.id,n.source,n.headline,n.headline_ru,n.summary,n.url,n.published_ms,n.priority,CASE WHEN t.title IS NOT NULL AND t.quality_score>=85 THEN 1 ELSE 0 END he_cached FROM news_items n LEFT JOIN regional_i18n t ON t.kind='news' AND t.item_id=n.id AND t.language='he' WHERE n.published_ms>=? ORDER BY n.published_ms DESC LIMIT 380").bind(now-7*86400000).all()).results||[];
+ const rows=(await db.prepare("SELECT n.id,n.source,n.headline,n.headline_ru,n.summary,n.url,n.published_ms,n.discovered_ms,n.priority,CASE WHEN t.title IS NOT NULL AND t.quality_score>=85 THEN 1 ELSE 0 END he_cached FROM news_items n LEFT JOIN regional_i18n t ON t.kind='news' AND t.item_id=n.id AND t.language='he' WHERE n.published_ms>=? ORDER BY n.published_ms DESC LIMIT 380").bind(now-7*86400000).all()).results||[];
  const {groups,held}=group(rows);
  const previous=(await db.prepare('SELECT article_id,event_id FROM news_event_members').all()).results||[];
  const prior=new Map(previous.map(r=>[r.article_id,r.event_id]));
@@ -238,7 +238,7 @@ export async function reconcile(db,now=Date.now()){
   const best=[...members].sort((a,b)=>b.score-a.score||representativeQuality(b)-representativeQuality(a)||b.time-a.time)[0];
   const ownerCount=new Set(members.map(x=>x.owner)).size;
   const originCount=new Set(members.map(origin)).size;
-  const sources=members.map(x=>({article_id:x.id,source:x.source,publisher:x.owner,language:x.lang,url:x.url,published_ms:x.time,original_headline:x.title,source_assertion:x.claim_about_death,claimed_by:x.claimed_by}));
+  const sources=members.map(x=>({article_id:x.id,source:x.source,publisher:x.owner,language:x.lang,url:x.url,published_ms:x.time,collected_ms:Number.isSafeInteger(x.discovered_ms)&&x.discovered_ms>0?x.discovered_ms:null,original_headline:x.title,source_assertion:x.claim_about_death,claimed_by:x.claimed_by}));
   const signature=members.map(x=>x.id).sort().join('|');
   batch.push(db.prepare("INSERT INTO news_event_groups(event_id,representative_id,topic,priority,last_seen_ms,member_count,source_count,origin_count,verification_status,reason_codes,sources_json,signature,updated_ms) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(event_id) DO UPDATE SET representative_id=excluded.representative_id,topic=excluded.topic,priority=excluded.priority,last_seen_ms=excluded.last_seen_ms,member_count=excluded.member_count,source_count=excluded.source_count,origin_count=excluded.origin_count,verification_status=excluded.verification_status,reason_codes=excluded.reason_codes,sources_json=excluded.sources_json,signature=excluded.signature,updated_ms=excluded.updated_ms WHERE news_event_groups.signature!=excluded.signature OR news_event_groups.priority!=excluded.priority OR news_event_groups.representative_id!=excluded.representative_id OR news_event_groups.sources_json!=excluded.sources_json")
    .bind(eventId,best.id,best.topic,Math.max(...members.map(m=>m.score)),Math.max(...members.map(m=>m.time)),members.length,ownerCount,originCount,
