@@ -143,13 +143,13 @@ class GdeltWatermarkSafety(unittest.TestCase):
         # scripts/collect_gdelt.py as a file hides the root scripts package.
         root = Path(__file__).resolve().parents[1]
         workflow = (root / ".github/workflows/gdelt.yml").read_text(encoding="utf8")
-        match = re.search(r"^\\s+run: (python (?:-m )?scripts[./]collect_gdelt(?:\\.py)?)\\s*$", workflow, re.M)
+        match = re.search(r"^\s+run: (python (?:-m )?scripts[./]collect_gdelt(?:\.py)?)\s*$", workflow, re.M)
         self.assertIsNotNone(match, "GDELT action must expose its actual collector command")
         with tempfile.TemporaryDirectory() as temp:
             (Path(temp) / "psycopg.py").write_text(
-                'def connect(*args, **kwargs):\\n'
-                '    print("GDELT_CHECKPOINT_READER_REACHED")\\n'
-                '    raise OSError("synthetic database failure")\\n',
+                'def connect(*args, **kwargs):\n'
+                '    print("GDELT_CHECKPOINT_READER_REACHED")\n'
+                '    raise OSError("synthetic database failure")\n',
                 encoding="utf8",
             )
             env = dict(os.environ)
