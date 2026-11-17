@@ -85,6 +85,8 @@ jobs:
         run: node --test backend/monitor/tests/provider-recovery-runtime.test.mjs
       - name: Verify production provider client backoff and D1 quota safety
         run: node --test backend/monitor/tests/provider-client-runtime.test.mjs
+      - name: Verify live satellite catalogue metadata and provider failure semantics
+        run: node --test backend/monitor/tests/geo-catalog-runtime.test.mjs
 
   pages-documents:
     runs-on: ubuntu-latest
