@@ -62,7 +62,7 @@ function judicialVerdict(headline){
  const count=digit?(names[digit]||Number(digit)):null;
  return{count,deathSentence:/\bdeath\b/iu.test(title)};
 }
-const COMMON_JUDICIAL_TOKENS=new Set(['jordan','court','courts','sentenced','sentence','sentences','death','men','people','three','two','one','four','five','after','over','attack','deadly','fatal','killed']);
+const COMMON_JUDICIAL_TOKENS=new Set(['court','courts','sentenced','sentence','sentences','death','men','people','three','two','one','four','five','after','over','attack','deadly','fatal','killed']);
 const OPINION_URL=/(?:^|\/)(?:opinion|commentary|columns?)(?:\/|[?#]|$)/iu;
 const OPINION_SIGNOFF=/(?:^|\.\s*)opinion\.\s*$/iu;
 function explicitPoliticalActor(headline){
@@ -162,7 +162,8 @@ export function sameEvent(a,b){
   if(ja&&jb){
    if(ja.count&&jb.count&&ja.count!==jb.count)return{ok:false,why:'different_sentencing_counts'};
    if(ja.count&&ja.count===jb.count&&ja.deathSentence===jb.deathSentence&&hours<=24){
-    const distinctive=overlap(a.words,b.words).filter(x=>!COMMON_JUDICIAL_TOKENS.has(x));
+    const generic=new Set([...COMMON_JUDICIAL_TOKENS,...a.region,...b.region]);
+    const distinctive=overlap(a.words,b.words).filter(x=>!generic.has(x));
     if(distinctive.length>=1&&common>=4)return{ok:true,why:'same_judicial_verdict'};
    }
   }
