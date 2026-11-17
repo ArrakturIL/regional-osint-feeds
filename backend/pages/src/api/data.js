@@ -3,7 +3,17 @@ import {ISO,assembleSources} from './sources.js';
 const json=s=>{try{const x=typeof s==='string'?JSON.parse(s):s;return x&&typeof x==='object'&&!Array.isArray(x)?x:{}}catch{return{}}};
 const str=x=>typeof x==='string'?x.trim():'';
 const numeric=x=>Number.isFinite(Number(x))?Number(x):0;
-const yesPrice=x=>Array.isArray(x?.outcome_prices)&&Number.isFinite(Number(x.outcome_prices[0]))&&Number(x.outcome_prices[0])>=0&&Number(x.outcome_prices[0])<=1?Number(x.outcome_prices[0]):null;
+const yesPrice=x=>{
+ // Gamma outcome order is not the YES/NO order; null is not zero.
+ const outcomes=Array.isArray(x?.outcomes)?x.outcomes:[];
+ const prices=Array.isArray(x?.outcome_prices)?x.outcome_prices:[];
+ const matches=outcomes.flatMap((o,i)=>String(o??'').trim().toLowerCase()==='yes'?[i]:[]);
+ if(matches.length!==1)return null;
+ const raw=prices[matches[0]];
+ if(raw===null||raw===undefined||String(raw).trim()==='')return null;
+ const price=Number(raw);
+ return Number.isFinite(price)&&price>=0&&price<=1?price:null;
+};
 const validHttps=x=>{try{const u=new URL(String(x||''));return u.protocol==='https:'?u.href:null}catch{return null}};
 function marketSnapshots(rows,nowMs){
  const groups=new Map();
@@ -17,12 +27,14 @@ function marketSnapshots(rows,nowMs){
  for(const [id,items] of groups){
   items.sort((a,b)=>b.at-a.at);
   const latest=items[0],previous=items[1]||null,p=latest.payload,yes=yesPrice(p),end=Date.parse(p.ends_at||'');
-  if(yes===null||!Number.isFinite(end)||end<=nowMs||!str(p.question))continue;
+  if(yes===null||p.closed===true||p.active===false||!Number.isFinite(end)||end<=nowMs||!str(p.question))continue;
   const url=validHttps(p.url);if(!url||!url.startsWith('https://polymarket.com/event/'))continue;
   const prior=previous&&yesPrice(previous.payload);
   const changePoints=typeof prior==='number'?(yes-prior)*100:null;
   markets.push({id,question:p.question,yes,volume:numeric(p.volume_24h),liquidity:numeric(p.liquidity),
-   url,asOf:ISO(latest.at),end:p.ends_at,changePoints,comparisonFrom:changePoints===null?null:ISO(previous.at)});
+   url,asOf:ISO(latest.at),end:p.ends_at,changePoints,comparisonFrom:changePoints===null?null:ISO(previous.at),
+   price_kind:'yes_token_price',independent_probability:false,market_status:'active',
+   caveat:'Цена YES-токена отражает сделки и правила рынка, а не независимо подтверждённую вероятность события.'});
  }
  return markets.sort((a,b)=>b.volume-a.volume||a.id.localeCompare(b.id));
 }
