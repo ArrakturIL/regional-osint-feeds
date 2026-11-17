@@ -151,7 +151,7 @@ test('original v64 logic is exactly preserved, only relative import paths change
   const origEnd=monitorExpected.indexOf(' const changedEvents=',origBegin);
   assert.ok(monitorEditStart>=0&&monitorEditEnd>monitorEditStart&&origBegin>=0&&origEnd>origBegin,'C-04 comparison edit boundaries');
   monitorActual=monitorActual.slice(0,monitorEditStart)+monitorExpected.slice(origBegin,origEnd)+monitorActual.slice(monitorEditEnd);
-  const added='sourceChanges,sourceGaps,independentPrimarySources:null,';
+  const added='sourceChanges,sourceGaps,sourceCoverage,independentPrimarySources:null,';
   assert.ok(monitorActual.includes(added),'C-04 exact fields must remain present');
   monitorActual=monitorActual.replace(added,'');
   const oldReturn='return Response.json({requested_language:lang,...digest},{status:200,headers});';
