@@ -176,7 +176,7 @@ Binding user instruction: remove eight automated source JSON pushes to `main` **
 
 ## 2026-11-15 ~20:52 IL — ЗАВЕРШЕНИЕ БЛОКА COLLECTORS / NEON / D1 / GITHUB
 
-**USER WORKFLOW:** завершить один блок TODO, обновить [MASTER TODO](./REGIONAL_WATCH_MASTER_TODO.md), сообщить результат пользователю, **остановиться до команды на следующий блок**. Не начинать QA новостей или UI самостоятельно.
+**USER WORKFLOW:** завершить один блок TODO, обновить [MASTER TODO](MASTER_TODO_HISTORY_2026-11-17.md), сообщить результат пользователю, **остановиться до команды на следующий блок**. Не начинать QA новостей или UI самостоятельно.
 
 **РЕЛИЗ:**
 - [PR #28](https://github.com/ArrakturIL/regional-osint-feeds/pull/28) merged to main `c58340d7ce438f622368befaf7ff4272eac80868`. Все восемь source workflows читают политику `config/collector-rollout.json`, source Neon→D1 writer checks stored digest readback; GitHub JSON writeback выполняется **только при source D1 failure**. Основные редакторские/monitor Workers опубликованы и настроены (IDs см. выше).
@@ -184,7 +184,7 @@ Binding user instruction: remove eight automated source JSON pushes to `main` **
 - REAL PRODUCTION SOURCE RUNS: all eight main workflow IDs **SUCCESS**, per-source D1 sync step **SUCCESS**, data JSON commit step **SKIPPED**: analysts `43746934552`, CENTCOM `43746934593`, Copernicus `43746934582`, GDELT `43746934609`, MARAD `43746934548`, satellite `43746934631`, UNOSAT `43746934605`, news translation `43746934572`. No need to fabricate another validation run.
 - REAL PRODUCTION RECONCILIATION: [GitHub Actions #43748774226](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43748774226), on main SHA `0b00b1be3`: **SUCCESS**; 54 offline tests OK and actual runner stdout `replica_sync mode=neon_primary sources=8 d1_verified=8`. Both production deploy/worker settings remained active. Independent subsequent Neon SQL + Cloudflare private D1 SQL: **8/8 source data and status SHA256 pairs match**. Older MARAD/NASA collection timestamps reflect their collector schedule and do not invalidate exact replication; distinct `partial` coverage states are not silently converted to `ok`.
 - Old PR #27 closed as superseded (not merged); no new Worker token privilege required for this release. No changes to existing Cloudflare secrets, Pages public data contracts, news translations, editor outputs, P1 cached articles or browser UI.
-- [Master TODO](./REGIONAL_WATCH_MASTER_TODO.md) updated in main by commit `f2377c468d6da78ab89ebed3a378f9841c0352d0`. GLOBAL-01..08 and D-03..06 closed for the collector block; GLOBAL-09/H and quota/UX/backlog remain for the **next user-approved block**.
+- [Master TODO](MASTER_TODO_HISTORY_2026-11-17.md) updated in main by commit `f2377c468d6da78ab89ebed3a378f9841c0352d0`. GLOBAL-01..08 and D-03..06 closed for the collector block; GLOBAL-09/H and quota/UX/backlog remain for the **next user-approved block**.
 
 **One remaining limitation (NOT a collector-block regression):** the conditional GitHub fallback on a *real* Neon/D1 outage was verified by source workflow contracts and offline tests, not by deliberately breaking production; user-visible RU/HE/browser end-to-end acceptance is the next independent QA block. Do not claim all platform QA is finished.
 
@@ -202,7 +202,7 @@ User workflow: full architecture/dev block → updated MASTER TODO → brief rep
 - [PR #32](https://github.com/ArrakturIL/regional-osint-feeds/pull/32): second hardening main [run #43753618421](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43753618421) got Pages URL HTTP 404 immediately after deployment and successfully rolled back both Worker versions + previous Pages deployment. Fixed bounded retry for transient Pages 404/503 and replaced dangerous `latest_deployment` with actual active `canonical_deployment` as rollback target.
 - FINAL success: main commit `14ce89599ecca96d645c4461b33970b67e719925`, [GitHub Actions #43754130567](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43754130567) **ALL release/source jobs SUCCESS**, preview optional job SKIPPED. Preflight + D1 schema + Worker deployments + technical `/`, `/he/`, `/api/overview` HTTP 200 + postcheck + release receipt all succeeded. Artifacts: `rw-unified-release-bundle`, `rw-coordinated-release-receipt`, `rw-coordinated-rollback-baseline`.
 - Independent connected Cloudflare API verification: active Pages **canonical deployment** `c6ad7331-e21a-4340-9f80-b14051fe9d8a` `success`; Editor Worker deployed `c35e47ba-707e-4ae4-95df-e748b68fa566` 100%, cron `*/5`, AI/CORE_DB/NEWS_DB/`REGIONAL_EDITOR_CACHE_SOURCES`; Monitor Worker `7aedb492-e136-482a-b52f-893a9b07e712` 100%, cron `*/1`, DB, `REGION`, `COLLECTOR_CACHE_SOURCES`, 4 secret bindings. Both Workers `previews_enabled=false`, `workers_dev=true`. No D1 migrations or production data changes made by release.
-- [MASTER TODO](./REGIONAL_WATCH_MASTER_TODO.md): DEV-01 and A-03 marked complete, A-02/A-04/H-01 partially open for other broader work. Next recommended DEV-OSS-01…05 (free OSS tool integrations) only after user's instruction. No site-wide QA performed.
+- [MASTER TODO](MASTER_TODO_HISTORY_2026-11-17.md): DEV-01 and A-03 marked complete, A-02/A-04/H-01 partially open for other broader work. Next recommended DEV-OSS-01…05 (free OSS tool integrations) only after user's instruction. No site-wide QA performed.
 
 **Recovery:** This final checkpoint supersedes all earlier sections suggesting Workers deployment credentials missing, PR #30 not merged, or Pages release still separate. Follow the latest main MASTER TODO, not old historical branch snapshots.
 
@@ -219,4 +219,4 @@ User screenshot at `https://regional-watch.pages.dev/` showed rendered backgroun
 
 **Caveat:** An open browser tab will still execute the previously loaded broken JS until refreshed. Need user to refresh/hard-refresh and report whether page visibly displays; no claim of independent live browser DOM proof. The new runtime regression catches this specific render crash before future release.
 
-[MASTER TODO](./REGIONAL_WATCH_MASTER_TODO.md) updated (HOTFIX-01..04). Do not begin separate broad UI/news/content QA or DEV-OSS until requested.
+[MASTER TODO](MASTER_TODO_HISTORY_2026-11-17.md) updated (HOTFIX-01..04). Do not begin separate broad UI/news/content QA or DEV-OSS until requested.
