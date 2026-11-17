@@ -61,8 +61,17 @@ export async function runSchedule(controller, env) {
   if (manual) {
     const states = await env.DB.prepare("SELECT source,state,detail,attempted_at FROM source_status").all();
     const names=new Set(manual.wanted);
-    const report={requested:manual.wanted, observed:(states.results||[]).filter(x=>names.has(x.source)), rejected:results.map((x,i)=>x.status==="rejected"?due[i].name:null).filter(Boolean), missing_secrets:manual.wanted.filter(name=>!due.some(x=>x.name===name))};
-    await env.DB.prepare("UPDATE worker_manual_runs SET status=?, finished_ms=?, result_json=? WHERE id=? AND status='running'").bind(report.rejected.length?"partial":"done",Date.now(),JSON.stringify(report),manual.id).run();
+    // A source may keep an older status after a skipped run; only this
+    // manual slot can establish what actually happened for this request.
+    const observed=(states.results||[]).filter(x=>names.has(x.source)&&x.attempted_at===slot);
+    const report={requested:manual.wanted,observed,
+      rejected:results.map((x,i)=>x.status==="rejected"?due[i].name:null).filter(Boolean),
+      missing_secrets:manual.wanted.filter(name=>!due.some(x=>x.name===name))};
+    const complete=manual.wanted.length>0 &&
+      report.rejected.length===0 && report.missing_secrets.length===0 &&
+      observed.length===manual.wanted.length &&
+      observed.every(x=>x.state==="ok"||x.state==="empty");
+    await env.DB.prepare("UPDATE worker_manual_runs SET status=?, finished_ms=?, result_json=? WHERE id=? AND status='running'").bind(complete?"done":"partial",Date.now(),JSON.stringify(report),manual.id).run();
   }
   if (minute % 1440 === 3) {
     await env.DB.prepare("DELETE FROM observations WHERE observed_at < ?").bind(slot - 90 * 24 * HOUR).run();

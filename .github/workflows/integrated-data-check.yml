@@ -6,6 +6,7 @@ on:
       - "storage/neon/**"
       - "backend/monitor/src/mirrors/**"
       - "tests/architecture/collector-cache.test.mjs"
+      - "tests/architecture/collector-fallback-policy.test.mjs"
       - ".github/workflows/news-open-source-translation.yml"
       - ".github/workflows/unosat-analyses.yml"
       - ".github/workflows/satellite.yml"
@@ -17,6 +18,9 @@ on:
       - "scripts/neon_mirror.py"
       - "scripts/neon_to_d1.py"
       - "scripts/test_neon_to_d1.py"
+      - "scripts/test_gdelt_cursor.py"
+      - "scripts/test_satellite_status_heartbeat.py"
+      - "scripts/collect_satellite.py"
       - "storage/cloudflare/**"
       - "scripts/publish_neon_mirror.py"
       - "scripts/test_neon_mirror.py"
@@ -44,6 +48,7 @@ on:
       - "storage/neon/**"
       - "backend/monitor/src/mirrors/**"
       - "tests/architecture/collector-cache.test.mjs"
+      - "tests/architecture/collector-fallback-policy.test.mjs"
       - ".github/workflows/news-open-source-translation.yml"
       - ".github/workflows/unosat-analyses.yml"
       - ".github/workflows/satellite.yml"
@@ -55,6 +60,9 @@ on:
       - "scripts/neon_mirror.py"
       - "scripts/neon_to_d1.py"
       - "scripts/test_neon_to_d1.py"
+      - "scripts/test_gdelt_cursor.py"
+      - "scripts/test_satellite_status_heartbeat.py"
+      - "scripts/collect_satellite.py"
       - "storage/cloudflare/**"
       - "scripts/test_neon_mirror.py"
       - "scripts/test_live_smoke_contract.py"
@@ -91,6 +99,12 @@ jobs:
           python-version: "3.12"
       - name: Canonical external-smoke contract (offline)
         run: python -m unittest scripts.test_live_smoke_contract -v
+      - name: Install image library for NASA collector offline tests
+        run: python -m pip install --disable-pip-version-check "Pillow>=11,<13"
+      - name: Satellite heartbeat and verified Neon freshness (offline)
+        run: python -m unittest scripts.test_satellite_status_heartbeat -v
+      - name: GDELT chronological catch-up and missing archive regression (offline)
+        run: python -m unittest scripts.test_gdelt_cursor -v
       - name: Neon-to-D1 private cache unit tests (offline)
         run: python -m unittest scripts.test_neon_to_d1 -v
       - name: Unit tests (no external API or secrets)
@@ -101,6 +115,8 @@ jobs:
         run: node --test frontend/tests/ui-qa.test.mjs
       - name: News grouping, attribution and chronology regression checks
         run: node --test tests/architecture/news-quality.test.mjs tests/architecture/news-localization-provenance.test.mjs
+      - name: Collector fallback commit safety (offline)
+        run: node --test tests/architecture/collector-fallback-policy.test.mjs
       - name: D1 cache and safe fallback regression tests
         run: node --test tests/architecture/collector-cache.test.mjs
       - name: Editor CORE_DB cache and GitHub fallback regression

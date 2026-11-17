@@ -10,7 +10,8 @@ export async function translateTitles(env,now){
   const rows=(await env.NEWS_DB.prepare(query).bind(now-36*3600000,now-36*3600000).all()).results||[];
   const pending=rows.filter(x=>!/sponsored content|winner cup|euroleague|fashion week|maccabi wins|hapoel tel aviv set to secure/i.test(x.headline)).slice(0,5);
   if(!pending.length)return {translated:0,summaries:0};
-  await env.NEWS_DB.prepare("UPDATE news_translation_budget SET batches=batches+1,estimated_neurons=estimated_neurons+125,updated_ms=? WHERE day_utc=?").bind(now,day).run();
+  const claimed=await env.NEWS_DB.prepare("UPDATE news_translation_budget SET batches=batches+1,estimated_neurons=estimated_neurons+125,updated_ms=? WHERE day_utc=? AND batches<20 AND estimated_neurons<2500").bind(now,day).run();
+  if(claimed.meta?.changes!==1)return {translated:0,summaries:0,budget:"limit"};
   const system="Ты опытный русскоязычный редактор-переводчик. Переведи каждый английский или ивритский заголовок и короткую RSS-аннотацию на естественный, грамотный русский. Сохраняй все факты, числа, даты, имена, источники утверждений и вопросительные формы. Не превращай подозрения или заявления в доказанные факты, не добавляй ничего своего. Формат ответа: строго валидный JSON-массив объектов вида [{\"id\":\"исходный id\",\"title_ru\":\"русский заголовок\",\"summary_ru\":\"русская аннотация\"}]. Для каждого переданного id ровно один объект. Никаких пояснений, markdown или текста вне JSON. Rezaei — Резаи, Bessent — Бессент, Netanyahu — Нетаньяху, IRGC — КСИР, IDF — ЦАХАЛ.";
   const payload=pending.map(x=>({id:x.id,headline:x.headline,summary:x.summary||""}));
   const out=await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast",{messages:[{role:"system",content:system},{role:"user",content:JSON.stringify(payload)}],temperature:0.1,max_tokens:1900});
@@ -64,7 +65,8 @@ export async function translateIDF(env,now){
    if(candidates.length>=3)break;
   }
   if(!candidates.length)return {translated:0};
-  await env.NEWS_DB.prepare("UPDATE official_translation_budget SET batches=batches+1,estimated_neurons=estimated_neurons+125,updated_ms=? WHERE day_utc=?").bind(now,day).run();
+  const claimed=await env.NEWS_DB.prepare("UPDATE official_translation_budget SET batches=batches+1,estimated_neurons=estimated_neurons+125,updated_ms=? WHERE day_utc=? AND batches<12 AND estimated_neurons<1500").bind(now,day).run();
+  if(claimed.meta?.changes!==1)return {translated:0,budget:"limit"};
   const instruction="Ты редактор-переводчик официальных сообщений ЦАХАЛ. Переведи на грамотный русский ровно предоставленные заголовки и выдержки. Не добавляй фактов и не завершай оборванные фразы. Сохраняй числа, даты, географические имена, оговорки и атрибуцию («по сообщению ЦАХАЛ»). Для сообщений о тревогах обязательно сохраняй различие между предварительным сообщением и последующим признанием ложного срабатывания. Верни ТОЛЬКО валидный JSON-массив объектов [{\"url\":\"оригинальный URL\",\"title_ru\":\"русский заголовок\",\"excerpt_ru\":\"русский перевод выдержки\"}]. Не переводить ссылки; ЦАХАЛ вместо IDF, КСИР вместо IRGC, Служба тыла вместо Home Front Command.";
   const resp=await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast",{messages:[{role:"system",content:instruction},{role:"user",content:JSON.stringify(candidates)}],temperature:.1,max_tokens:1900});
   const output=String(resp?.choices?.[0]?.message?.content||(typeof resp?.response==="string"?resp.response:"")).trim();
