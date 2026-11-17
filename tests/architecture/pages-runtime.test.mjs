@@ -14,7 +14,7 @@ function mockEnv(){
    {results:[]},
    {results:[]}
   ]:[
-   {results:[{observed_at:1794689958000,payload:JSON.stringify({market_id:'A',question:'Future market',outcome_prices:[0.3,0.7],volume_24h:120,liquidity:50,ends_at:'2099-01-01T00:00:00Z',url:'https://polymarket.com/event/a'})}]},
+   {results:[{observed_at:1794689958000,payload:JSON.stringify({market_id:'A',question:'Future market',outcomes:['Yes','No'],outcome_prices:[0.3,0.7],volume_24h:120,liquidity:50,ends_at:'2099-01-01T00:00:00Z',url:'https://polymarket.com/event/a'})}]},
    {results:[]},{results:[]},{results:[]}
   ]}}
  };
