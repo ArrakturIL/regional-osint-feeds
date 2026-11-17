@@ -300,3 +300,98 @@ test('C-02 regulatory grouping requires the same restricted service, not only th
  assert.equal(held.length,0);
  assert.equal(groups.length,2,'two distinct applications are not one regulatory event');
 });
+
+
+test('C-05 reconcile preserves measured discovery timestamp per attributed source',async()=>{
+ const {reconcile}=await import('../../backend/editor/src/news/events.mjs');
+ const discovered=when+4500000,published=when;
+ const source={...article('clock-1','BBC Middle East','Israel and Iran hold regional security talks',
+  'Diplomats in Israel and Iran held regional security talks.',0),discovered_ms:discovered};
+ const writes=[],reads=[];
+ const db={
+  prepare(sql){
+   const stmt={args:[],bind(...args){this.args=args;return this;},
+    async all(){
+     reads.push(sql);
+     if(sql.includes('FROM news_items n LEFT JOIN regional_i18n'))return {results:[source]};
+     if(sql.includes('SELECT article_id,event_id FROM news_event_members'))return {results:[]};
+     throw Error('unexpected SELECT '+sql);
+    },async run(){return {meta:{changes:1}}}};
+   stmt.sql=sql;return stmt;
+  },
+  async batch(items){writes.push(...items);return[];}
+ };
+ const result=await reconcile(db,when+5000000);
+ assert.equal(result.events,1);
+ assert.ok(reads.some(x=>x.includes('n.discovered_ms')),'source-select must include actual D1 discovery time');
+ const upsert=writes.find(x=>x.sql.startsWith('INSERT INTO news_event_groups('));
+ assert.ok(upsert,'materialized group must be written through the existing batch');
+ const sources=JSON.parse(upsert.args[10]);
+ assert.equal(sources.length,1);
+ assert.equal(sources[0].published_ms,published);
+ assert.equal(sources[0].collected_ms,discovered,'original source discovery must never be inferred from publication');
+});
+
+test('C-01/C-05 distinguish publishing, collecting and unknown event occurrence in RU/HE',async()=>{
+ const created=when-2*3600000,latest=when+30*60000;
+ const firstCollected=created+2*3600000,secondCollected=latest+45*60000;
+ const sources=[
+  {article_id:'clock-old',source:'BBC Middle East',publisher:'bbc',url:'https://example.org/old',
+   published_ms:created,collected_ms:firstCollected,source_assertion:'not_reported'},
+  {article_id:'clock-new',source:'Times of Israel',publisher:'toi',url:'https://example.org/new',
+   published_ms:latest,collected_ms:secondCollected,source_assertion:'not_reported'}
+ ];
+ const event={...events[0],event_id:'clock-event',id:'clock-old',published_ms:created,last_seen_ms:latest,
+  sources_json:JSON.stringify(sources),source_count:2,origin_count:2};
+ const db={prepare(sql){return {bind(){return this},all:async()=>({results:sql.includes('FROM news_event_groups e JOIN news_items n')?[event]:[]}),first:async()=>null}}};
+ const seen=[];
+ for(const lang of ['ru','he']){
+  const res=await readNewsEvents(new Request('https://regional-watch.example/api/news?lang='+lang+'&sort=latest'),{NEWS_DB:db});
+  assert.equal(res.status,200);
+  const item=(await res.json()).articles[0];seen.push(item);
+  assert.equal(item.event_earliest_published_ms,created);
+  assert.equal(item.event_latest_published_ms,latest);
+  assert.equal(item.event_first_collected_ms,firstCollected);
+  assert.equal(item.event_last_collected_ms,secondCollected);
+  assert.equal(item.event_at_ms,null,'RSS publication is not observed event occurrence');
+  assert.equal(item.event_first_seen_ms,created,'backward-compatible field remains publication-based');
+  assert.equal(item.event_first_seen_basis,'source_publication');
+  assert.equal(item.published_ms,latest,'legacy timestamp remains compatible');
+  assert.deepEqual(item.sources.map(s=>s.collected_ms),[firstCollected,secondCollected]);
+ }
+ assert.deepEqual(seen.map(x=>x.event_first_collected_ms),[firstCollected,firstCollected]);
+ const missing={...event,sources_json:JSON.stringify([{article_id:'legacy',source:'BBC Middle East',published_ms:created}])};
+ const legacyDB={prepare(){return {bind(){return this},all:async()=>({results:[missing]}),first:async()=>null}}};
+ const old=await(await readNewsEvents(new Request('https://regional-watch.example/api/news?lang=ru'),{NEWS_DB:legacyDB})).json();
+ assert.equal(old.articles[0].event_first_collected_ms,null,'old index has unknown discovery time, not fabricated 0');
+ assert.equal(old.articles[0].event_last_collected_ms,null);
+});
+
+test('C-01 optional order-hash continuation detects changed feed before returning overlapping pages',async()=>{
+ let rows=[...events];
+ let dbReads=0;
+ const db={prepare(sql){
+  dbReads++;
+  if(!sql.includes('FROM news_event_groups e JOIN news_items n'))throw Error('unexpected database query: '+sql);
+  return {bind(){return this},all:async()=>({results:rows})};
+ }};
+ const ask=async(query)=>await readNewsEvents(new Request('https://regional-watch.example/api/news?lang=ru&sort=latest&'+query),{NEWS_DB:db});
+ const first=await(await ask('limit=1&offset=0')).json();
+ assert.match(first.feed_order_hash,/^[a-f0-9]{64}$/);
+ const next=await ask('limit=1&offset=1&expected_order_hash='+first.feed_order_hash);
+ assert.equal(next.status,200);
+ assert.equal((await next.json()).articles[0].event_id,'yesterday7');
+ rows=[{...events[0],event_id:'newest',id:'newest',published_ms:when+5*3600000,last_seen_ms:when+5*3600000},...rows];
+ const stale=await ask('limit=1&offset=1&expected_order_hash='+first.feed_order_hash);
+ assert.equal(stale.status,409,'old offset must not silently serve duplicate after newer insert');
+ const mismatch=await stale.json();
+ assert.equal(mismatch.error,'feed_changed');
+ assert.match(mismatch.feed_order_hash,/^[a-f0-9]{64}$/);
+ assert.notEqual(mismatch.feed_order_hash,first.feed_order_hash);
+ assert.equal(mismatch.restart_offset,0);
+ const before=dbReads;
+ const invalid=await ask('limit=1&offset=1&expected_order_hash=not-a-sha');
+ assert.equal(invalid.status,400);
+ assert.equal((await invalid.json()).error,'invalid_order_hash');
+ assert.equal(dbReads,before,'invalid token must be rejected before D1 reads');
+});
