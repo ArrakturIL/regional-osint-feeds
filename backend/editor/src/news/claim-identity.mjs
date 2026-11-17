@@ -33,6 +33,11 @@ export function relatedSeniorTarget(a,b,hours){
 export function reportingClaim(x){
  const text=sourceText(x);
  const unconfirmed=/\b(?:IDF|military)\b.{0,60}\b(?:had not yet|has not|did not|not yet|not)\s+(?:officially\s+)?confirm(?:ed)?\b.{0,45}\b(?:death|killing|dead)\b|צה.ל.{0,45}לא\s+אישר/iu.test(text);
- const death=/\b(?:killed|death|slain|died|fatality)\b|חוסל|נהרג|מותו|убит|погиб|ликвидир/iu.test(text);
+ const deathTerms=/\b(?:killed|death|slain|died|fatality)\b|חוסל|נהרג|מותו|убит|погиб|ликвидир/iu;
+ const head=String(x.title||x.headline||''),summary=String(x.summary||'');
+ // A prior killing cited as context does not assert fatalities in the
+ // reported administrative action or statement.
+ const historic=/\b(?:last|previous)\s+(?:week|month|year)\b|\b(?:weeks?|months?|years?)\s+(?:earlier|ago|after)\b/iu.test(summary);
+ const death=deathTerms.test(head)||(!historic&&deathTerms.test(summary));
  return {claimed_by:String(x.source||''),claim_about_death:unconfirmed?'death_not_confirmed_by_idf':death?'reported_death':'not_reported'};
 }
