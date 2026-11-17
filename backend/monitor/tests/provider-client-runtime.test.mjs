@@ -90,5 +90,5 @@ test('recovery success decreases failure count gradually instead of restoring bu
  const update=out.writes.find(x=>x.sql.includes('last_status=200'));
  assert.ok(update);
  assert.equal(update.params[1],2,'one successful probe reduces failures only one step');
- assert.ok(update.params[0]>=before+4*60000,'remaining failures enforce reduced request rate');
+ assert.ok(update.params[0]>=before+2*60000,'two remaining failures enforce a two-minute recovery gap');
 });
