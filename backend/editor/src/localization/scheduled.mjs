@@ -3,7 +3,7 @@ import {DAY,sourceText,fingerprint} from './shared.mjs';
 import {eligibleHebrewRetry} from './retry-policy.mjs';
 
 const HE_MODEL='@cf/zai-org/glm-4.7-flash';
-const HE_DAILY_ATTEMPT_CAP=112;
+const HE_DAILY_ATTEMPT_CAP=300; // B1: ceiling only; shared AI pool decides
 function translationNumerals(s){return (String(s).match(/\d+(?:[.,]\d+)*/g)||[]).map(t=>t.replace(/,/g,'.'));}
 function translationPreservesNumbers(before,after){
   const values=translationNumerals(after);
@@ -84,7 +84,7 @@ async function translateLocaleItem(env,item,day,now){
     const retry=await db.prepare("UPDATE regional_i18n_attempts SET state='running',retry_count=retry_count+1,attempted_at_ms=?,error=NULL WHERE kind=? AND item_id=? AND language='he' AND source_hash=? AND day_utc=? AND state='error' AND retry_count<1").bind(now,kind,id,sha,day).run();
     if(retry.meta?.changes!==1)return'attempted';
   }
-  const budget=await env.NEWS_DB.prepare("UPDATE regional_i18n_budget SET attempts=attempts+1,updated_at_ms=? WHERE day_utc=? AND attempts<? AND estimated_neurons<4000").bind(now,day,HE_DAILY_ATTEMPT_CAP).run();
+  const budget=await env.NEWS_DB.prepare("UPDATE regional_i18n_budget SET attempts=attempts+1,updated_at_ms=? WHERE day_utc=? AND attempts<? AND estimated_neurons<6000").bind(now,day,HE_DAILY_ATTEMPT_CAP).run();
   if(budget.meta?.changes!==1){
     await db.prepare("UPDATE regional_i18n_attempts SET state='budget_exhausted' WHERE kind=? AND item_id=? AND source_hash=? AND day_utc=?").bind(kind,id,sha,day).run();
     return'budget';
@@ -121,7 +121,7 @@ export async function translateScheduled(env,scheduledTime){
   try{
     await env.NEWS_DB.prepare("INSERT OR IGNORE INTO regional_i18n_budget(day_utc,attempts,estimated_neurons,updated_at_ms) VALUES(?,0,0,?)").bind(day,now).run();
     const budget=await env.NEWS_DB.prepare("SELECT attempts,estimated_neurons FROM regional_i18n_budget WHERE day_utc=?").bind(day).first();
-    if((budget?.attempts||0)>=HE_DAILY_ATTEMPT_CAP||(budget?.estimated_neurons||0)>=4000){
+    if((budget?.attempts||0)>=HE_DAILY_ATTEMPT_CAP||(budget?.estimated_neurons||0)>=6000){
       const blocked={state:'budget',attempts:budget?.attempts||0,estimated_neurons:budget?.estimated_neurons||0,limit:HE_DAILY_ATTEMPT_CAP};
       await env.NEWS_DB.prepare("INSERT INTO editor_state(key,value,updated_ms) VALUES('last_he_localization',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_ms=excluded.updated_ms").bind(JSON.stringify(blocked),Date.now()).run();
       return{state:'budget'};

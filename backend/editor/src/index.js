@@ -1,5 +1,6 @@
 import {enrichNewMonitorStories} from './stories/enrichment.mjs';
 import analystService from './analysts/editor.mjs';
+import {meteredAI} from './ai/budget.mjs';
 import localization from './localization/localization.mjs';
 import {readNewsEvents} from './news/api.mjs';
 import {translationQueue,importTranslationMirror} from './translations/news-mirror.mjs';
@@ -35,17 +36,19 @@ async function archiveExpiredPolymarket(db, timestamp=Date.now()) {
 export default {
   async scheduled(event, env, ctx) {
     // Keep existing news editor independent from the analysts pipeline.
-    ctx.waitUntil(scan(env));
+    // B1: every AI pipeline draws from one shared daily neuron pool.
+    const aiEnv={...env, AI: meteredAI(env.AI, env.NEWS_DB)};
+    ctx.waitUntil(scan(aiEnv));
     ctx.waitUntil(archiveExpiredPolymarket(env.CORE_DB,Date.now()));
-    ctx.waitUntil(localization.scheduled(env,event.scheduledTime));
+    ctx.waitUntil(localization.scheduled(aiEnv,event.scheduledTime));
     if(new Date(event.scheduledTime).getUTCMinutes()%15===0)ctx.waitUntil(importTranslationMirror(env));
-    if(new Date(event.scheduledTime).getUTCMinutes()%15===5){ctx.waitUntil(enrichNewMonitorStories(env));}
+    if(new Date(event.scheduledTime).getUTCMinutes()%15===5){ctx.waitUntil(enrichNewMonitorStories(aiEnv));}
     // The analyst mirror refreshes hourly at :17 UTC. Run its editor at :30 UTC.
     // An hourly D1 run ID provides additional duplicate-run protection.
     if (new Date(event.scheduledTime).getUTCMinutes() === 30) {
       // Keep the full env: the analysts cache reader needs CORE_DB and
       // REGIONAL_EDITOR_CACHE_SOURCES, not only the queue DB alias (E-01).
-      ctx.waitUntil(analystService.scheduled(event, {...env, DB: env.CORE_DB}));
+      ctx.waitUntil(analystService.scheduled(event, {...aiEnv, DB: env.CORE_DB}));
     }
   },
   async fetch(request, env) {

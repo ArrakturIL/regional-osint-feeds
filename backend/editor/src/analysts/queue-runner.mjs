@@ -95,6 +95,8 @@ async function runEditor(env, time) {
         const stat=result==='skip'?'skipped':result;
         stats[stat]=(stats[stat]||0)+1; stats.processed++;
       } catch (e) {
+        // B1: a spent shared pool is not the item's fault; do not burn its attempts.
+        if (e?.message==='ai_global_budget_exhausted') {stats.budget_exhausted=1;continue;}
         stats.errors++;
         await db.prepare(`UPDATE analyst_items SET last_error=?,last_attempt_at_ms=?,attempts=attempts+1,
            state=CASE WHEN attempts>=2 THEN 'needs_data' ELSE 'pending' END WHERE id=?`)

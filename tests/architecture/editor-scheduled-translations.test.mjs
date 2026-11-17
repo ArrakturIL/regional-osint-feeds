@@ -19,7 +19,7 @@ test('daily news budget cap prevents source reads and AI calls',async()=>{
   let ai=0,queries=0;
   const NEWS_DB=makeDb((method,sql)=>{
     queries++;
-    if(method==='first'&&sql.includes('FROM news_translation_budget'))return{batches:20,estimated_neurons:0};
+    if(method==='first'&&sql.includes('FROM news_translation_budget'))return{batches:48,estimated_neurons:0};
     if(method==='run'&&sql.includes('INSERT OR IGNORE INTO news_translation_budget'))return{meta:{changes:0}};
     throw Error('Unexpected query after news budget cap: '+sql);
   });
@@ -85,7 +85,7 @@ test('IDF translation rejects missing core database and keeps its independent da
   const NEWS_DB=makeDb((method,sql)=>{
     reads++;
     if(method==='run'&&sql.includes('INSERT OR IGNORE INTO official_translation_budget'))return{meta:{changes:1}};
-    if(method==='first'&&sql.includes('FROM official_translation_budget'))return{batches:12,estimated_neurons:0};
+    if(method==='first'&&sql.includes('FROM official_translation_budget'))return{batches:24,estimated_neurons:0};
     throw Error('Unexpected IDF budget request: '+sql);
   });
   const env={NEWS_DB,AI:{run:async()=>{ai++;return null}}};

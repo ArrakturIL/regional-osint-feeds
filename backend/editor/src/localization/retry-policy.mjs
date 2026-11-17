@@ -1,7 +1,8 @@
 // Same-day retries must be reserved for transient model/provider failures, not
 // deterministic fact/meaning/number guards. Existing SHA+day claim remains authoritative.
 const TRANSIENT_HE_FAILURES=new Set([
-  '8004: Internal server error','model_incomplete','model_invalid_response'
+  '8004: Internal server error','model_incomplete','model_invalid_response',
+  'ai_global_budget_exhausted' // B1: shared pool spent; retry after cooldown
 ]);
 export const HE_RETRY_COOLDOWN_MS=30*60*1000;
 export function eligibleHebrewRetry(previous,now){
