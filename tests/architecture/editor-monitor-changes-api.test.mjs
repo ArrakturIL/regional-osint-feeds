@@ -113,3 +113,23 @@ test('real Editor fetch router still exposes monitor comparison at /api/changes'
  assert.equal(res.json.requested_language,'ru');
  assert.equal(res.json.sourceUpdates,1);
 });
+
+
+test('C-04 exposes exact comparable source changes and reasons for missing coverage without certifying incidents',()=>{
+ const now=NOW,prev=PREV;
+ const curr={run_id:'c',started_at_ms:now,outcome:'quiet',payload:JSON.stringify({source_maxima_ms:{adsb:240,ais:50,satellite:null,new_only:120}})};
+ const old={run_id:'p',started_at_ms:prev,outcome:'quiet',payload:JSON.stringify({source_maxima_ms:{adsb:100,ais:50,satellite:160,lost:180}})};
+ const out=buildDigest([curr,old],[]);
+ assert.equal(out.status,'ready');
+ assert.equal(out.sourceComparable,2);
+ assert.equal(out.sourceUpdates,1);
+ assert.deepEqual(out.sourceChanges,[{source:'adsb',from_ms:100,to_ms:240,kind:'source_timestamp_advanced'}]);
+ assert.deepEqual(out.sourceGaps,[
+  {source:'lost',reason:'missing_latest_snapshot'},
+  {source:'new_only',reason:'missing_previous_snapshot'},
+  {source:'satellite',reason:'invalid_latest_timestamp'}
+ ]);
+ assert.equal(out.independentPrimarySources,null,'source count is not independent fact verification');
+ assert.equal(out.lastCheck,new Date(now).toISOString());
+ assert.deepEqual(out.changes,[],'a source cursor advancing cannot certify a new incident');
+});
