@@ -4,23 +4,23 @@
 >
 > Статусы: ✅ закрыто · ◐ частично / ждёт приёмки · ○ открыто · ⏸ пауза · ❓ ждёт решения владельца. `код есть` ≠ `CI green` ≠ `merged` ≠ `production` ≠ `live QA принят`.
 
-**Обновлено:** 2026-11-18 00:45 IL.
+**Обновлено:** 2026-11-18 01:05 IL.
 
 ## Production
 
-`f14d91e6` ([PR #92](https://github.com/ArrakturIL/regional-osint-feeds/pull/92)), [release #44187818952](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/44187818952) SUCCESS; live `/`, `/he/`, `/api/news`, `/api/overview`, `/api/data` отвечают HTTP 200. Merge в `main` по путям приложения запускает coordinated release. `docs/` и данные сборщиков релиз не запускают.
+`dacc39eb` ([PR #95](https://github.com/ArrakturIL/regional-osint-feeds/pull/95)), [release #44194957353](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/44194957353) SUCCESS; live `/`, `/he/`, `/api/news`, `/api/overview`, `/api/data` отвечают HTTP 200. Merge в `main` по путям приложения запускает coordinated release. `docs/` и данные сборщиков релиз не запускают.
 
 ## 1. Сейчас — backend надёжность
 
 | # | Задача | Статус | Что нужно для закрытия |
 |---|---|---|---|
-| 1 | **GDELT догоняет** (E-02) | ◐ | Фикс в production. Первый прогон: +24 ч, 0 пропусков. Закрыть, когда `latest_batch` моложе 6 ч и Monitor `gdelt_context` больше не `error`. |
-| 2 | **Надёжный запуск сборщиков** (SYS-01) | ❓ | GitHub cron срабатывает примерно в 30 раз реже объявленного (analysts 4 из ~136 за 34 ч). Вариант: Monitor cron → `workflow_dispatch`, нужен GitHub token в секретах Worker. |
+| 2 | **Надёжный запуск сборщиков** (SYS-01) | ◐ | Код в production (PR #95): Monitor раз в минуту запускает 9 workflows сборщиков по их объявленному расписанию, GitHub cron остаётся запасным. Первый запуск подтверждён: CENTCOM 23:00 UTC, `workflow_dispatch`, success. Закрыть после суток наблюдения: число запусков ≈ объявленному, analysts-кэш свежее 4 ч. |
 | 3 | **Пропускная способность AI аналитиков** (E-01b) | ❓ | `MAX_AI_PER_DAY=14` при 80 pending, published 0 за последний запуск. Поднять лимит или сократить источники. |
 | 4 | **Приёмка ARCH-05**: сборщики, Python/Actions | ◐ | Назначена на 18.11 18:00 IL. Учесть #1 и #2. До неё `DEFERRED`, а не `FAIL`. |
 | 5 | **Приёмка ARCH-04**: переводы RU/HE, квоты провайдеров | ◐ | Назначена на 20.11 09:00 IL. До неё `DEFERRED`. |
 | 6 | **Поведенческие тесты entrypoint** | ○ | Тесты `index.scheduled`/`fetch` для Editor и Monitor по образцу `editor-entrypoint-analyst-wiring`. Постепенно заменить проверки по подстрокам и побайтовые baseline — E-01 прошёл через все такие тесты. |
 | 7 | **Мониторинг квот и откат по источнику** (H-01, H-04) | ◐ | Есть единый release с откатом всех трёх билдов. Нет учёта реального расхода Workers CPU / D1 / AI / Actions и отката отдельного источника. |
+| 8a | **Читаемость кода** | ○ | Многие файлы написаны «минифицированным» стилем (строки до 3000 символов). Переформатировать механически (Prettier) по одному модулю. Сначала заменить побайтовые baseline-тесты поведенческими (#6), иначе они упадут на каждом переносе строки. Поведение не менять, проверка: тот же набор тестов и тот же esbuild-бандл после минификации. |
 | 8 | **Реестр RSS** (E-04) | ◐ | Draft PR #89: 7/12 feeds переклассифицированы. Проверить ToS/лицензии, затем решить merge. |
 
 ## 2. Потом — frontend и сквозной QA (после пункта 1)
@@ -52,11 +52,11 @@
 
 ## Закрыто (не переделывать без новой регрессии)
 
-✅ **E-01** Analyst Editor: фикс env в PR #92, live 22:30 UTC — `error_message=null`, discovered 36, processed 12. · ✅ A-01…A-04 (release contracts, manifest, gates) · ✅ D-01…D-07 (Neon→D1, 8 источников, SHA parity) · ✅ ARCH-01/02/03/06/07 · ✅ DEV-01…04 · ✅ E-03 (smoke 19 endpoints) · ✅ E-06 · ✅ F-01 · ✅ G-00/01/09 · ✅ HOTFIX-01…04 · ✅ Наведение порядка в docs (PR #92).
+✅ **E-02** GDELT: лимит 96 пакетов (PR #92), 36 ч отставания разобраны за два запуска, Monitor `gdelt_context=ok` в 22:55 UTC. · ✅ **E-01** Analyst Editor: фикс env в PR #92, live 22:30 UTC — `error_message=null`, discovered 36, processed 12. · ✅ A-01…A-04 (release contracts, manifest, gates) · ✅ D-01…D-07 (Neon→D1, 8 источников, SHA parity) · ✅ ARCH-01/02/03/06/07 · ✅ DEV-01…04 · ✅ E-03 (smoke 19 endpoints) · ✅ E-06 · ✅ F-01 · ✅ G-00/01/09 · ✅ HOTFIX-01…04 · ✅ Наведение порядка в docs (PR #92).
 
 ## Технический долг
 
-- Код в «минифицированном» стиле (строки до 3000 символов). Новый код так не писать, старый трогать только при правках.
+- Код в «минифицированном» стиле: см. пункт 8a. Новый код так не писать.
 - Frontend собирается склейкой файлов по `build-order.json` с вырезанием `import` регэкспом. Строки i18n зашиты в компоненты.
 - Legacy `worker/`, `baselines/`, `site/` (~900 КБ) не входят в release. Удалять только с доказательством неиспользования.
 
