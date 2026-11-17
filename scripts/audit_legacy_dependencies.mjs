@@ -141,6 +141,17 @@ export function auditLegacyDependencies(root){
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  try{
   const report=auditLegacyDependencies(process.cwd());
-  console.log(JSON.stringify(report,null,2));
+  if(process.argv.includes('--summary'))console.log('ARCH06_AUDIT_SUMMARY '+JSON.stringify({
+   scanned_source_files:report.graph.files.length,import_edges:report.graph.edges.length,
+   historical_ci_test_roots:report.ci.historicalTestRoots.length,
+   legacy_worker_sources:report.worker.classifications.length,
+   covered_by_historical_tests:report.worker.testReferenced.length,
+   unverified_worker_candidates:report.worker.untestedCandidates.length,
+   production_legacy_frontend_js:report.frontend.activeLegacyJS.length,
+   production_legacy_frontend_css:report.frontend.activeLegacyCSS.length,
+   frozen_editor_files:report.baselines.editor.length,
+   frozen_monitor_files:report.baselines.monitor.length
+  }));
+  else console.log(JSON.stringify(report,null,2));
  }catch(error){console.error('ARCH-06 audit failed:',error.message);process.exitCode=1;}
 }
