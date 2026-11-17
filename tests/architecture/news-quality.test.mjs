@@ -174,3 +174,33 @@ test('archive explicitly requests latest ordering and avoids duplicate homepage 
  assert.ok(archive.includes('&sort=latest'),'Archive must request chronological order');
  assert.ok(!app.includes('const pages=route==="/"||route==="/events"'),'Event page must not poll an unused home news feed');
 });
+
+test('C-01/C-03/C-05: event update time, original publication and assertions are distinct and locale-stable',async()=>{
+ const old=when-2*86400000,latest=when+60000;
+ const sourceClaims=[
+  {article_id:'o1',source:'BBC Middle East',publisher:'bbc',published_ms:old,source_assertion:'death_not_confirmed_by_idf',claimed_by:'BBC Middle East'},
+  {article_id:'o2',source:'Times of Israel',publisher:'toi',published_ms:latest,source_assertion:'reported_death',claimed_by:'Times of Israel'},
+ ];
+ const report={...events[0],event_id:'chronology-claim',id:'o1',source:'BBC Middle East',
+  published_ms:old,last_seen_ms:latest,verification_status:'multi_outlet_reporting',
+  source_count:2,origin_count:2,sources_json:JSON.stringify(sourceClaims)};
+ const db={prepare(){return{bind(){return this},all:async()=>({results:[report]})}}};
+ const data=[];
+ for(const lang of ['ru','he']){
+  const response=await readNewsEvents(new Request('https://rw.example/api/news?lang='+lang+'&sort=latest'),{NEWS_DB:db});
+  assert.equal(response.status,200);
+  data.push((await response.json()).articles[0]);
+ }
+ for(const row of data){
+  assert.equal(row.event_last_seen_ms,latest);
+  assert.equal(row.event_first_seen_ms,old);
+  assert.equal(row.representative_published_ms,old);
+  assert.equal(row.published_ms,latest,'existing event-card timestamp remains stable');
+  assert.equal(row.sort_basis,'event_last_seen_ms');
+  assert.equal(row.independent_verification,'not_established');
+  assert.deepEqual(row.source_assertions,sourceClaims.map(s=>({
+   article_id:s.article_id,source:s.source,claimed_by:s.claimed_by,source_assertion:s.source_assertion
+  })));
+ }
+ assert.deepEqual(data.map(x=>x.event_id),['chronology-claim','chronology-claim']);
+});
