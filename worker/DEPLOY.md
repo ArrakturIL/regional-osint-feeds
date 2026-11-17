@@ -1,5 +1,13 @@
 # Worker deployment and rollback checklist
 
+> **АРХИВНАЯ ИНСТРУКЦИЯ / НЕ ИСПОЛЬЗОВАТЬ ДЛЯ НОВЫХ DEPLOY (с 17.11.2026).**
+> Этот файл описывает **старый ручной release** из `worker/regional-osint-monitor.js` и `worker/regional-watch-editor.js`. Он сохранён только как историческая справка о bindings, откате и прежнем v64 runtime. Пункты ниже (включая «GitHub не деплоит» и «canonical source worker/regional-watch-editor.js») **устарели**, не соответствуют рабочему production.
+>
+> **Сегодня source-of-truth:** `backend/monitor/src/index.js`, `backend/editor/src/index.js`, `backend/pages/src/index.js`; неизменяемый релиз собирает `scripts/release/build.mjs` по `deploy/release-contract.json`, проверяет `scripts/release/verify.mjs`. Только release job `Publish coordinated Pages and Workers` в `.github/workflows/regional-watch-app-check.yml` выпускает Pages+Editor+Monitor с одним SHA и проверкой сохранности binding, cron, version и rollback. **Не загружай старый Worker вручную и не запускай отдельный Worker из этой папки.**
+>
+> Карту безопасной архивации см. `docs/research/ARCH_06_LEGACY_DEPENDENCY_INVENTORY_2026-11-17.md`; статусы — `docs/REGIONAL_WATCH_MASTER_TODO.md` в `main`.
+
+
 Production Workers: `regional-osint-monitor` (OSINT) and `regional-watch-editor` (news + analysts v1.1). GitHub stores **source snapshots**, not an automatic deployment pipeline. The existing Worker and its deployable versions are the rollback mechanism; **do not create backup Workers**.
 
 ## Before deployment
