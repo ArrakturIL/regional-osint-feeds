@@ -10,6 +10,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import io
+import os
 import json
 import re
 import sys
@@ -121,12 +122,50 @@ def parse_export(blob: bytes, stamp: str) -> tuple[int, list[dict]]:
     return total, out
 
 
+def _load_neon_checkpoint(url: str) -> dict | None:
+    """Read the last *verified* Neon snapshot; do not rely on stale Git fallback."""
+    # Lazy imports: no database dependency for offline/legacy collectors.
+    import psycopg
+    from scripts.neon_mirror import read_stored_snapshot
+    with psycopg.connect(url, connect_timeout=10) as connection:
+        snapshot = read_stored_snapshot(connection, "gdelt")
+    if snapshot is None:
+        return None  # First-time cutover: GitHub snapshot remains a usable seed.
+    data = snapshot.data
+    if not isinstance(data, dict) or data.get("source") != "gdelt_context":
+        raise ValueError("invalid verified Neon GDELT source")
+    return data
+
+
 def load_previous():
     try:
         value = json.loads(SNAP.read_text(encoding="utf-8"))
-        return value if value.get("source") == "gdelt_context" else {}
+        previous = value if isinstance(value, dict) and value.get("source") == "gdelt_context" else {}
     except (OSError, ValueError, TypeError):
-        return {}
+        previous = {}
+    url = os.environ.get("NEON_DATABASE_URL", "").strip()
+    if not url:
+        return previous  # Legacy GitHub-only collector remains fully independent.
+    try:
+        neon = _load_neon_checkpoint(url)
+        if neon is None:
+            return previous
+        for cursor in (previous.get("latest_batch"), neon.get("latest_batch")):
+            if cursor is not None:
+                if not isinstance(cursor, str) or not re.fullmatch(r"\d{14}", cursor):
+                    raise ValueError("malformed GDELT checkpoint")
+                datetime.strptime(cursor, "%Y%m%d%H%M%S")
+        # GitHub fallback can occasionally be newer than Neon (pre-cutover).
+        # Choose the newer verified cursor; never move backward on an hourly run.
+        if neon.get("latest_batch") and (
+            not previous.get("latest_batch") or neon["latest_batch"] > previous["latest_batch"]
+        ):
+            return neon
+        return previous
+    except Exception:
+        # Connection errors may contain credentials. Fail closed without logging
+        # passwords, and do not silently restart catch-up from stale Git JSON.
+        raise RuntimeError("Neon checkpoint unavailable") from None
 
 
 def emit(checked_at: str, state: str, detail: str | None, batch_stamp: str | None, data: dict | None):
