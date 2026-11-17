@@ -4,20 +4,20 @@
 >
 > Правило статусов: `код есть` ≠ `CI green` ≠ `merged` ≠ `production` ≠ `live QA принят`. Ставить только то, что подтверждено артефактом (PR, CI run, Cloudflare version, read-only D1/Neon запрос).
 
-**Обновлено:** 2026-11-17, после аудита Claude (ветка `fix/e01-e02-docs-cleanup`).
+**Обновлено:** 2026-11-18 00:35 IL, после релиза PR #92.
 
 ## Production
 
-- Последний подтверждённый production code: `2d95654d` (PR #91), [CI #44120730249](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/44120730249) SUCCESS, Pages + Editor + Monitor.
+- Последний подтверждённый production code: `f14d91e6` ([PR #92](https://github.com/ArrakturIL/regional-osint-feeds/pull/92)), [coordinated release #44187818952](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/44187818952) SUCCESS (12 jobs, preview skipped). Live `/`, `/he/`, `/api/news`, `/api/overview`, `/api/data` отвечают HTTP 200.
 - Релиз: merge в `main` запускает coordinated release (`regional-watch-app-check.yml`: тесты → immutable bundle → D1 preflight → Editor → Monitor → Pages → smoke → postcheck/rollback). Data-only коммиты сборщиков приложение не передеплоивают.
 
 ## Открыто — по приоритету
 
 | ID | Суть | Состояние |
 |---|---|---|
-| **E-01** | Analyst Editor: каждый запуск `mirror_missing_incomplete_or_stale`, 0 processed, ~59 pending. | **Причина найдена:** `index.js` передавал в Analyst Editor урезанный env `{DB, AI}`. Reader D1-кэша молча возвращал `null`, срабатывал откат на замороженное с 15.11 GitHub-зеркало. Фикс и entrypoint-тест в PR этой ветки. Принять после штатного запуска :30 UTC без ошибки. |
-| **E-01b** | Пропускная способность AI аналитиков: `MAX_AI_PER_DAY=14` при ~59 pending, очередь растёт с 13.11. | Не баг кода, это квота. **Нужно решение владельца** (поднять лимит или сократить источники). |
-| **E-02** | GDELT отстаёт на ~36 ч, Monitor `gdelt_context=error`. | **Причина найдена:** cron объявлен ежечасным, а GitHub реально запускает его раз в 4–10 ч. При лимите 8 пакетов (2 ч данных) за запуск отставание росло. Лимит поднят до 96 пакетов (24 ч) с сохранением хронологии, job timeout 5→15 мин. В PR этой ветки. Принять после двух штатных запусков с `latest_batch` моложе 6 ч. |
+| ~~E-01~~ | Analyst Editor: на каждом запуске `mirror_missing_incomplete_or_stale`. | **Закрыт.** Причина: `index.js` передавал урезанный env `{DB, AI}`. Фикс в PR #92. Первый штатный запуск после релиза (2026-11-17 22:30 UTC): `error_message=null`, discovered 36, processed 12, partial_sources 0 (read-only D1). |
+| **E-01b** | Пропускная способность AI аналитиков: `MAX_AI_PER_DAY=14` при 80 pending (после фикса E-01 добавились 36 новых), запуск 22:30 UTC упёрся в `budget_exhausted`, published 0. | Не баг кода, это квота. **Нужно решение владельца** (поднять лимит или сократить источники). |
+| **E-02** | GDELT отставал на ~36 ч, Monitor `gdelt_context=error`. | **Фикс в production (PR #92), ждём догонялку.** Первый прогон с новым лимитом (22:13 UTC): 96 пакетов, 0 пропусков, `latest_batch` 20261116014500 → 20261117014500 (+24 ч), D1 обновлён через Neon. Ещё ~20 ч догнать, это примерно один запуск. Закрыть, когда `latest_batch` моложе 6 ч и `gdelt_context` больше не `error`. |
 | **SYS-01** | **Все cron-сборщики GitHub Actions выполняются в разы реже объявленного** (за ~34 ч: analysts 4 из ~136, centcom 4 из ~136, gdelt ~4 из 34). | Открыто. Нужен надёжный триггер, например Cloudflare Monitor cron → `workflow_dispatch`. Для этого нужен GitHub token в секретах Worker, **требуется решение владельца**. Пока это не сделано, свежесть analysts и CENTCOM ограничена реальной частотой. |
 | E-04 | Реестр RSS: 7/12 feeds переклассифицированы. | Draft PR #89, не merged, права/ToS не проверены. |
 | E-05 | Polymarket: backend принят (114 рынков RU/HE). | UI не проверен. |
