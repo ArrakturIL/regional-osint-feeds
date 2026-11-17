@@ -78,3 +78,21 @@ test('four unverified live-editor files remain a connected historical rollback s
   'worker/live-editor/analysts-editor.mjs -> worker/live-editor/analysts-translation.mjs'
  ])assert.ok(pairs.has(edge),'Retained historical dependency must be reviewed: '+edge);
 });
+
+
+test('all four apparently untested historic Editor modules are explicitly syntax-checked by legacy CI',()=>{
+ const report=audit();
+ assert.deepEqual(report.ci.syntaxOnlyLegacy,[
+  'worker/live-editor/analysts-editor.mjs',
+  'worker/live-editor/analysts-translation.mjs',
+  'worker/live-editor/regional-watch-editor.js',
+  'worker/live-editor/story-enrichment.mjs'
+ ]);
+ for(const path of report.ci.syntaxOnlyLegacy){
+  const record=report.worker.classifications.find(c=>c.path===path);
+  assert.ok(record,'syntax-check file not inventoried: '+path);
+  assert.equal(record.decision,'keep-until-proven-safe');
+  assert.ok(record.reasons.some(x=>x.includes('syntax check')),
+   'historical CI explicitly checks this module; never propose deletion as an orphan: '+path);
+ }
+});
