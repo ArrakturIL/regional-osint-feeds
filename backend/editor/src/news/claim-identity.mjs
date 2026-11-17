@@ -38,6 +38,8 @@ export function reportingClaim(x){
  // A prior killing cited as context does not assert fatalities in the
  // reported administrative action or statement.
  const historic=/\b(?:last|previous)\s+(?:week|month|year)\b|\b(?:weeks?|months?|years?)\s+(?:earlier|ago|after)\b/iu.test(summary);
- const death=deathTerms.test(head)||(!historic&&deathTerms.test(summary));
+ const judicialSentence=/\b(?:sentenc(?:e(?:s|d)?|ing)|convict(?:s|ed|ion))\b.{0,140}\bdeath\b/iu.test(head)
+  ||(/\b(?:sentenc(?:e(?:s|d)?|ing)|convict(?:s|ed|ion))\b/iu.test(head)&&/\bdeath\b/iu.test(head));
+ const death=!judicialSentence&&(deathTerms.test(head)||(!historic&&deathTerms.test(summary)));
  return {claimed_by:String(x.source||''),claim_about_death:unconfirmed?'death_not_confirmed_by_idf':death?'reported_death':'not_reported'};
 }
