@@ -103,6 +103,21 @@
 
 В рабочей [PR #84](https://github.com/ArrakturIL/regional-osint-feeds/pull/84) к 7 modern summary и 9 scheduler recovery tests добавлены **6** `backend/monitor/tests/provider-client-runtime.test.mjs` тестов исходного `network/provider-client.js`: 429 и Retry-After, 403 шести-часовой cooldown, запрет второго сетевого запроса при lease, отклонение старого снапшота, фиксация AvioADSB rate-limit headers и постепенное восстановление после ошибок. Исключительно локальные HTTP + D1 fixtures.
 
-В первом CI был некорректный assert в тесте: после `failures=3` успешный опрос уменьшает счётчик до `2`, а next_allowed gap составляет **2 минуты**, не 4. Исходный код реализует `MINUTE * 2 ** (remainingFailures - 1)`. Ожидание исправлено **в тесте**, а не в production; [GREEN modern-bundles job последующего CI #44002577983](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/44002577983) показал **6/6** client, **9/9** scheduler, **7/7** graph tests. Общий итог всего workflow фиксировать только после его завершения.
+В первом CI был некорректный assert в тесте: после `failures=3` успешный опрос уменьшает счётчик до `2`, а next_allowed gap составляет **2 минуты**, не 4. Исходный код реализует `MINUTE * 2 ** (remainingFailures - 1)`. Ожидание исправлено **в тесте**, а не в production; [GREEN modern-bundles job последующего CI #44002577983](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/44002577983) показал **6/6** client, **9/9** scheduler, **7/7** graph tests. Весь [CI #44002577983](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/44002577983) впоследствии завершился SUCCESS, включая immutable 3-компонентный bundle; Pages/Workers публикация в ветке skipped.
 
 **Остаётся:** доказать assertion-level parity для старых policy/news/geo тестов; после этого решать, какие old files служат regression baseline/rollback и что можно архивировать безопасно. Отсутствие статической ссылки само по себе НЕ разрешает удалять. Приоритетный следующий кандидат: modern satellite catalog provider fixture, затем BE-specific translation guards.
+
+## 5. Дополнительная приёмка действующих каталогов и реестра провайдеров (17.11.2026)
+
+В том же [PR #84](https://github.com/ArrakturIL/regional-osint-feeds/pull/84) отдельный `backend/monitor/tests/geo-catalog-runtime.test.mjs` прямо вызывает `backend/monitor/src/collectors/satellite/catalog.js`, а не legacy Worker. Шесть независимых in-memory/no-network regressions:
+
+- ограниченный (limit=8), строго HTTPS Earth Search запрос и сохранение только metadata-only Sentinel scenes, без фабрикации инцидента;
+- OpenAerialMap архив с `acquired_at` исходной датой 2024 года и явным `archive_only` (не дата сбора);
+- настоящая пустая страница OpenAerialMap — `entries=[]`, не exception;
+- непустой, но повреждённый STAC response отклоняется, а не превращается в «ноль сцен»;
+- 429 с Retry-After сохраняет provider backoff в D1; очередной запрос не подменяет ошибку пустыми результатами;
+- активный provider cooldown не запускает внешний HTTP вообще.
+
+**Verified [CI #44002825806](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/44002825806)**, SHA `d5c1317fb602f49a21e259985f0501d6b1f1a049`: **completed SUCCESS** по всем application jobs, immutable three-component bundle SUCCESS; CI `modern-bundles`: 7/7 static graph, 7/7 protected Monitor summary, 9/9 provider recovery/quota, 6/6 provider-client, 6/6 geocatalog = **35/35** тестов из текущего блока. Release/preview steps **skipped** на ветке, production вообще не затронут. Весь [PR #84](https://github.com/ArrakturIL/regional-osint-feeds/pull/84) изменяет только CI workflow, новые тесты и read-only audit script; [diff](https://github.com/ArrakturIL/regional-osint-feeds/pull/84/files) не содержит production modules, old Worker removal или миграций.
+
+**Граница приёмки:** старые `worker/test-geo-catalog.mjs` и `worker/test-aviation.mjs` всё ещё имеют отдельные end-to-end `source_status` и provider fixtures; наши новые 35 тестов **не означают**, что можно удалить все 14 legacy suites. Следующий этап — assertion-by-assertion сравнение remaining Editor translation/story и status/publisher fixtures, затем согласованное архивирование, если остаются дубликаты. На основе одного отсутствия ссылки автоматическое удаление запрещено.
