@@ -9,7 +9,7 @@ function validateDecision(d, original) {
   if (d.relevance<80 || d.novelty<60 || d.substance<70) return {decision:'skip',relevance:d.relevance,novelty:d.novelty,substance:d.substance,reason:'Авторская публикация недостаточно релевантна, нова или содержательна для выбранного редакционного порога.'};
   // JavaScript \b is ASCII-centric and misses whole Cyrillic claims.
   // Negated wording (e.g. "не подтверждено") is not a categorical claim.
-  const certainty=/(?<![\p{L}\p{N}_])(?:подтвержден[оыа]|доказан[оыа]|официально\s+установлен[оыа])(?![\p{L}\p{N}_])/giu;
+  const certainty=/(?<![\p{L}\p{N}_])(?:подтвержден[оыа]?|доказан[оыа]?|официально\s+установлен[оыа]?)(?![\p{L}\p{N}_])/giu;
   for(const m of d.headline.matchAll(certainty)){
     const before=d.headline.slice(Math.max(0,m.index-20),m.index);
     if(!/(?:^|[\s—–:,«(])не\s*$/iu.test(before)) return null;
