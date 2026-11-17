@@ -160,7 +160,7 @@ def collect() -> int:
         if last_done is not None:
             # Catch up oldest-first so an hourly run never skips an older
             # export when more than MAX_BATCHES accumulated during downtime.
-            if not isinstance(last_done, str) or not re.fullmatch(r"\\d{14}", last_done):
+            if not isinstance(last_done, str) or not re.fullmatch(r"\d{14}", last_done):
                 raise ValueError("GDELT previous checkpoint malformed")
             cursor = datetime.strptime(last_done, "%Y%m%d%H%M%S").replace(tzinfo=timezone.utc) + timedelta(minutes=15)
             while len(stamps) < MAX_BATCHES and cursor <= latest_dt:
