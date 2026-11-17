@@ -63,3 +63,21 @@
 **TDD и состояние:** [RED #43999930193](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43999930193) — тест импортировал ещё отсутствующий analyzer; при первом implementation run [#44000053396](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/44000053396) нашли проблему обнаружения пути `editor-v64`, сконструированного по частям; исправлено без изменения production. [GREEN ARCH-06 7/7 tests в #44000702098](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/44000702098) подтверждены; full app / immutable release status сверять отдельно до объявления общей зелёной сборки. Изменения живут в **отдельном PR #84, ещё не merged/deployed**; продакшен и базы данных не менялись.
 
 **Дальше:** проверить вручную и поведением 4 не покрытых старым CI файла, включая rollback значение; переносить только уникальные legacy-тесты на современные `backend/` модули; возможную архивацию делать отдельным TDD PR. Никакого автоматического удаления или переписывания старого Worker пока не делать.
+
+## 3. Перенос защищённого Monitor summary API на современный entrypoint (17.11.2026)
+
+После сетевого сбоя сверены сохранённые PR/code/CI/docs и Cloudflare live. Подтверждено, что работа не пропала, production Cloudflare версии не менялись, а [PR #84](https://github.com/ArrakturIL/regional-osint-feeds/pull/84) всё ещё не merged/deployed.
+
+Старый `worker/test-aviation.mjs` проверял legacy `worker/regional-osint-monitor.js` через `data:text/javascript` import, а modern `backend/monitor/tests/*` до этого тестировал преимущественно import DAG, schedule и compatible source parity. **Семь выделенных runtime contracts** перенесены как реальные запросы к `backend/monitor/src/index.js`, не скопированы по строкам из старого Worker:
+
+1. `/summary` требует точный Bearer token, без секретов D1 не запрашивает.
+2. Неизвестный маршрут и non-GET `/summary` не открывают приватный D1.
+3. Некорректные `hours` отклоняются до D1.
+4. Шесть ограниченных D1 выборок, отсутствие секретов в output, структура источников/airbridge.
+5. Устаревший нулевой ADS-B sample не считается доказательством пустого неба.
+6. `source_status.state=error` запрещает выдавать прошлый sample как текущий.
+7. Сравнение разновеликих provider snapshots остаётся `source_disagreement`, `confirmed_empty_airspace=false`.
+
+**TDD:** RED [#44001175343](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/44001175343) — нового теста ещё нет в PR и CI правильно требует его существования; GREEN [#44001299306](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/44001299306) — **7/7 modern summary tests + 7/7 legacy graph safety tests + остальные application jobs и immutable release build SUCCESS**, оба Cloudflare release jobs `skipped` на PR. Ни сетевых вызовов, ни D1 writes, ни правок Worker runtime.
+
+**Важно:** это частичная миграция контрактов. Оставшиеся в `worker/test-aviation.mjs` проверки quota/cooldown/airbridge/authorization variants и ещё 13 старых suites нужно сопоставить с уже существующими modern тестами. Не удалять старые suites и Worker до матрицы уникального покрытия и подтверждённого замещения. `PR #84` только готов к review.
