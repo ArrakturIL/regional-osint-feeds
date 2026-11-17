@@ -109,7 +109,7 @@ class Tests(unittest.TestCase):
         root=Path(__file__).resolve().parents[1]
         registry=json.loads((root/"config/news-source-registry.json").read_text(encoding="utf-8"))
         editor=(root/"backend/editor/src/news/events.mjs").read_text(encoding="utf-8")
-        match=re.search(r'export const FEEDS=(\\[.*?\\]);',editor)
+        match=re.search(r'export const FEEDS=(\[.*?\]);',editor)
         self.assertIsNotNone(match,"active Editor feeds contract missing")
         feeds=json.loads(match.group(1))
         self.assertEqual(len(feeds),12)
