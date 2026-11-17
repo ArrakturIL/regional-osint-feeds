@@ -141,8 +141,25 @@ test('original v64 logic is exactly preserved, only relative import paths change
     'source status, canonical URL dedup, publisher guard, 240 cap, retention and D1 SQL must remain byte-identical');
   assert.equal(readFileSync(liveFile('editorial/ai-comments.mjs'),'utf8'),commentExpected,
     'AI prompt, casualty suppression, daily D1 quota and error charges must be preserved byte-identically');
-  assert.equal(readFileSync(liveFile('api/monitor-changes.mjs'),'utf8'),monitorExpected,
-    'Monitor run comparison and journal attribution must be moved byte-identically');
+  // C-04 deliberately extends the old monitor comparison DTO. Reconstruct
+  // the frozen bytes by stripping ONLY those reviewed API additions, so all
+  // unrelated v64 logic must still match exactly.
+  let monitorActual=readFileSync(liveFile('api/monitor-changes.mjs'),'utf8');
+  const begin=monitorActual.indexOf(' const a=parse(latest.payload),b=parse(prior.payload);');
+  const end=monitorActual.indexOf(' const changedEvents=',begin);
+  const origBegin=monitorExpected.indexOf(' const a=parse(latest.payload),b=parse(prior.payload),oldS=');
+  const origEnd=monitorExpected.indexOf(' const changedEvents=',origBegin);
+  assert.ok(begin>=0&&end>begin&&origBegin>=0&&origEnd>origBegin,'C-04 comparison edit boundaries');
+  monitorActual=monitorActual.slice(0,begin)+monitorExpected.slice(origBegin,origEnd)+monitorActual.slice(end);
+  const added='sourceChanges,sourceGaps,independentPrimarySources:null,';
+  assert.ok(monitorActual.includes(added),'C-04 exact fields must remain present');
+  monitorActual=monitorActual.replace(added,'');
+  const oldReturn='return Response.json({requested_language:lang,...digest},{status:200,headers});';
+  const newReturn='return Response.json({requested_language:lang,generatedAt:new Date().toISOString(),...digest},{status:200,headers});';
+  assert.ok(monitorActual.includes(newReturn),'C-04 response generation timestamp required');
+  monitorActual=monitorActual.replace(newReturn,oldReturn);
+  assert.equal(monitorActual,monitorExpected,
+    'Only the explicit C-04 source comparison extension may differ from frozen monitor logic');
   assert.equal(readFileSync(liveFile('api/official-posts.mjs'),'utf8'),officialExpected,
     'Read-only IDF API and translation provenance must be moved byte-identically');
   assert.equal(readFileSync(liveFile('news/rss.mjs'),'utf8'),rssExpected,'RSS source must be losslessly extracted');
