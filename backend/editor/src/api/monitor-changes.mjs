@@ -7,7 +7,17 @@ export function buildDigest(rows,eventRows){
  // Only strictly positive integer timestamps describe comparable observations.
  // null/empty cannot silently become epoch zero via Number(null).
  const maxima=x=>x&&typeof x==='object'&&!Array.isArray(x)?x:{};
- const oldS=maxima(b.source_maxima_ms),newS=maxima(a.source_maxima_ms);
+ // Hourly monitor jobs have used several names for the same D1-observation
+ // maximum timestamps. Prefer the canonical field, but read verified legacy
+ // aliases from historical runs rather than falsely claiming no snapshots.
+ // Never treat provider status, checked_at, or an arbitrary number as a cursor.
+ const cursorFields=['source_maxima_ms','latest_observed_at_ms','source_max_ms',
+  'source_max_observed_at_ms','last_observed_by_source_ms'];
+ const snapshot=p=>{
+  for(const key of cursorFields)if(Object.hasOwn(p,key))return maxima(p[key]);
+  return {};
+ };
+ const oldS=snapshot(b),newS=snapshot(a);
  const validMs=v=>(typeof v==='number'||typeof v==='string')&&String(v).trim()!==''&&Number.isSafeInteger(Number(v))&&Number(v)>0;
  const keys=[...new Set([...Object.keys(oldS),...Object.keys(newS)])].sort();
  const common=keys.filter(k=>validMs(newS[k])&&validMs(oldS[k]));
