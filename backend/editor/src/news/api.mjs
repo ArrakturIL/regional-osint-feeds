@@ -82,7 +82,19 @@ export async function readNewsEvents(request,env){
     state==='translated'?(lang==='he'?'תורגם':'Переведено'):
     state==='needs_review'?(lang==='he'?'בבדיקת תרגום':'Перевод проверяется'):
     lang==='he'?'ממתין לתרגום':'Перевод ожидается';
+  // The event's latest report is not the original representative article.
+  // Expose both time bases and every publisher's claim without claiming fact verification.
+  const sources=JSON.parse(r.sources_json||'[]');
+  const publishedTimes=sources.map(s=>s.published_ms).filter(t=>Number.isSafeInteger(t)&&t>0);
+  const representativePublished=Number.isSafeInteger(row.published_ms)&&row.published_ms>0?row.published_ms:null;
+  const firstSeen=publishedTimes.length?Math.min(...publishedTimes):representativePublished;
+  const latestSeen=Number.isSafeInteger(r.last_seen_ms)&&r.last_seen_ms>0?r.last_seen_ms:null;
+  const sourceAssertions=sources.map(s=>({article_id:s.article_id,source:s.source,
+    claimed_by:s.claimed_by,source_assertion:s.source_assertion||'not_reported'}));
   return{event_id:r.event_id,id:r.id,canonical_article_id:r.id,display_article_id:row.id,source:row.source,
+   event_first_seen_ms:firstSeen,event_last_seen_ms:latestSeen,representative_published_ms:representativePublished,
+   sort_basis:'event_last_seen_ms',independent_verification:'not_established',
+   source_assertions:sourceAssertions,
    headline:t.title,summary:t.body,comment:t.comment,url:row.url,
    published_ms:r.last_seen_ms,priority:r.event_priority,category:r.topic,
    content_language:t.content_language,source_language:t.source_language,translation_status:t.translation_status,
@@ -90,7 +102,7 @@ export async function readNewsEvents(request,env){
    translation:{state,label,available,requested_language:lang,display_language:t.content_language},
    verification_status:r.verification_status,source_count:r.source_count,
    reporting_origin_count:r.origin_count,article_count:r.member_count,
-   sources:JSON.parse(r.sources_json||'[]'),reason_codes:JSON.parse(r.reason_codes||'[]'),
+   sources,reason_codes:JSON.parse(r.reason_codes||'[]'),
    _owner:publisher(r.source)};
  }));
  const output=translated.map(({_owner,...rest},i)=>({...rest,feed_rank:offset+i}));
