@@ -171,7 +171,13 @@ test('archive explicitly requests latest ordering and avoids duplicate homepage 
  const root=resolve(import.meta.dirname,'../..');
  const archive=readFileSync(resolve(root,'frontend/src/components/NewsArchive/NewsArchive.js'),'utf8');
  const app=readFileSync(resolve(root,'frontend/src/app/App.js'),'utf8');
- assert.ok(archive.includes('&sort=latest'),'Archive must request chronological order');
+ const {default:vm}=await import('node:vm');
+ const source=archive.replace(/^import\s+[^\n]+\n/gm,'').replace(/^export\s+(?=(?:function|const)\s)/gm,'');
+ const q=vm.runInNewContext(source+'\nrwArchiveRequest({language:"ru",page:1,sort:"latest"})',{URLSearchParams});
+ const u=new URL(q,'https://rw.test');
+ assert.equal(u.searchParams.get('sort'),'latest','Archive must request chronological order through the server');
+ assert.equal(u.searchParams.get('offset'),'0');
+
  assert.ok(!app.includes('const pages=route==="/"||route==="/events"'),'Event page must not poll an unused home news feed');
 });
 
