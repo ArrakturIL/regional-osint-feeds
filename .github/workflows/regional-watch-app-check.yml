@@ -75,6 +75,8 @@ jobs:
         run: npm exec --yes --package=esbuild@0.25.0 -- esbuild backend/editor/src/index.js --bundle --format=esm --target=es2022 --outfile=backend/editor/dist/worker.modern.mjs
       - name: Validate loadable Worker exports and React bundle
         run: node --test tests/architecture/modern-bundles.test.mjs
+      - name: Audit legacy dependency reachability before archive decisions
+        run: node --test tests/architecture/legacy-dependency-audit.test.mjs
 
   pages-documents:
     runs-on: ubuntu-latest
