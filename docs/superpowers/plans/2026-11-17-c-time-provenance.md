@@ -40,3 +40,22 @@
 - [ ] Report exact RED/GREEN CI, affected files and explicit remaining C-02/C-03/C-04 work.
 - [ ] Review and only then authorized main merge/coordinated release.
 - [ ] Independent production D1/HTTP verification; archive result in MASTER TODO.
+
+
+### Task 4 — source-backed C-02/C-03 judicial verdict integrity
+**Files:** `tests/architecture/news-quality.test.mjs`, `backend/editor/src/news/events.mjs`, `backend/editor/src/news/claim-identity.mjs`.
+- [ ] RED tests from three actual live D1 court articles: governance/not_reported/same court case, vs separate military incident.
+- [ ] Add a generic headline judicial-action rule, a conservative same-verdict matcher and avoid death-claim from legal sentencing.
+- [ ] Verify all existing grouping corpus remains GREEN and no country/source hardcodes.
+
+### Task 5 — C-04 comparable coverage explanation
+**Files:** `tests/architecture/editor-monitor-changes-api.test.mjs`, `backend/editor/src/api/monitor-changes.mjs`, `tests/architecture/editor-modules.test.mjs`.
+- [ ] RED tests: no maxima in both runs but journal updated => source coverage unavailable, not a fake source; partial when some timestamps invalid.
+- [ ] Add `sourceCoverage` object with honest zero/partial/comparable state, preserve `sourceGaps` and `independentPrimarySources:null`.
+- [ ] Narrow historical parity normalization solely for new approved field.
+- [ ] Re-run combined full CI on final code HEAD before release.
+
+### Task 6 — final C bundle gate
+- [ ] Confirm full source/application/integrated jobs + immutable Pages/Editor/Monitor dry-run green.
+- [ ] PR review/authorized merge, production control-plane and D1 normal-cycle (no manual DB writes) checks.
+- [ ] Record C-01–C-05 partial/closed *only* for verified live cases; keep C-06/F-07 frontend separate and B deferred.
