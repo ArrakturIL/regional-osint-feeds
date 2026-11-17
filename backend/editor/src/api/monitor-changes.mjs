@@ -19,10 +19,17 @@ export function buildDigest(rows,eventRows){
     !validMs(newS[k])?'invalid_latest_timestamp':'invalid_previous_timestamp'
  }));
  const sourceUpdates=sourceChanges.length;
+ const sourceCoverage=!keys.length?
+  {state:'unavailable',reason:'no_source_snapshots',comparable:0,uncomparable:0}:
+  !common.length?
+    {state:'unavailable',reason:'no_comparable_source_timestamps',comparable:0,uncomparable:sourceGaps.length}:
+  sourceGaps.length?
+    {state:'partial',reason:'invalid_or_missing_source_timestamps',comparable:common.length,uncomparable:sourceGaps.length}:
+    {state:'comparable',reason:null,comparable:common.length,uncomparable:0};
  const changedEvents=(Array.isArray(eventRows)?eventRows:[]).filter(x=>Number(x.updated_at_ms)>prevMs&&Number(x.updated_at_ms)<=latestMs);
  const changes=changedEvents.slice(0,6).map(x=>({id:"monitor-event-"+x.event_id,story_id:x.event_id,kind:"journal_updated",title:"Обновлено досье мониторинга",title_he:"עודכן תיק מעקב",description:"Поступило обновление записи; само по себе это не подтверждает утверждения источников.",description_he:"עודכנה רשומת המעקב; העדכון עצמו אינו מאמת טענות של מקורות.",time:new Date(Number(x.updated_at_ms)).toISOString()}));
  if(latest.outcome!==prior.outcome)changes.unshift({id:"monitor-state-"+latest.run_id,kind:"assessment_changed",title:"Изменилось решение мониторинга",title_he:"השתנתה הערכת המעקב",description:"Текущий статус: "+String(latest.outcome).slice(0,50),description_he:"מצב הבדיקה: "+String(latest.outcome).slice(0,50),time:new Date(latestMs).toISOString()});
- return{status:(common.length||changes.length)?"ready":"insufficient_comparison",changes,lastCheck:new Date(latestMs).toISOString(),previousCheck:new Date(prevMs).toISOString(),periodMinutes:Math.round((latestMs-prevMs)/60000),sourceUpdates,sourceComparable:common.length,sourceChanges,sourceGaps,independentPrimarySources:null,outcome:latest.outcome,previousOutcome:prior.outcome};
+ return{status:(common.length||changes.length)?"ready":"insufficient_comparison",changes,lastCheck:new Date(latestMs).toISOString(),previousCheck:new Date(prevMs).toISOString(),periodMinutes:Math.round((latestMs-prevMs)/60000),sourceUpdates,sourceComparable:common.length,sourceChanges,sourceGaps,sourceCoverage,independentPrimarySources:null,outcome:latest.outcome,previousOutcome:prior.outcome};
 }
 
 export async function readMonitorChanges(request,env){
