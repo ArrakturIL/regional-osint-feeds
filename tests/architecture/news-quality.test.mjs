@@ -461,7 +461,7 @@ test('C-06 multiselect filtering returns deterministic page ranks and 409 on cha
  assert.equal(p1.total_events,3);assert.equal(p1.articles[0].feed_rank,0);
  const p2=await readNewsEvents(new Request(base+'&offset=1&expected_order_hash='+p1.feed_order_hash),{NEWS_DB:db});
  assert.equal(p2.status,200);assert.equal((await p2.json()).articles[0].feed_rank,1);
- const changed=await readNewsEvents(new Request(base+'&offset=1&source=Another&expected_order_hash='+p1.feed_order_hash),{NEWS_DB:db});
+ const changed=await readNewsEvents(new Request(base+'&offset=1&to_ms='+(when-2*86400000)+'&expected_order_hash='+p1.feed_order_hash),{NEWS_DB:db});
  assert.equal(changed.status,409);assert.equal((await changed.json()).error,'feed_changed');
 });
 
