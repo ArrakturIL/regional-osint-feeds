@@ -28,7 +28,11 @@ STATUS = DATA / "gdelt-status.json"
 BASE = "https://data.gdeltproject.org/gdeltv2/"
 REGION = {"IS", "IR", "LE", "SY", "IZ"}  # GDELT's FIPS/legacy codes
 EVENT_ROOTS = {"13", "15", "17", "18", "19", "20"}
-MAX_BATCHES = 8  # 2 hours per hourly invocation, allowing modest scheduling drift
+# Catch-up budget per run: 24 h of 15-minute exports. The workflow cron is
+# declared hourly, but GitHub actually fires it every 4-10 h; with the old
+# 8-batch (2 h) budget the backlog grew on every run (E-02, 36 h lag).
+MAX_BATCHES = 96
+MAX_LISTED_BATCHES = 8  # Monitor contract: data.batches has at most 8 entries
 MAX_COMPRESSED = 6_000_000
 MAX_EXPANDED = 40_000_000
 MAX_SAMPLE = 32
@@ -253,7 +257,8 @@ def collect() -> int:
             # Advance only through the uninterrupted prefix of successful
             # exports. Later successful batches never mask a missing archive.
             "latest_batch": watermark,
-            "batches": downloaded,
+            # Most recent processed exports only; batch_count keeps the full total.
+            "batches": downloaded[-MAX_LISTED_BATCHES:],
             "batch_count": len(downloaded),
             "coded_rows_total": total,
             "coded_rows_matched": len(matched),

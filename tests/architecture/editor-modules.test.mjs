@@ -133,7 +133,13 @@ test('original v64 logic is exactly preserved, only relative import paths change
     .replace("import {translateTitles,translateIDF} from './translations/scheduled.mjs';\n",'')
     .replace("import {generateComments} from './editorial/ai-comments.mjs';\n",'')
     .replace("import {ingestNewsFeeds} from './news/ingestion.mjs';",
-      "import {scan} from './news/scan.mjs';");
+      "import {scan} from './news/scan.mjs';")
+    // E-01 (17.11.2026): the v64 entrypoint dropped CORE_DB and the cache flag
+    // from the Analyst Editor env; this deliberate fix is the only behaviour change.
+    .replace('      ctx.waitUntil(analystService.scheduled(event, {DB: env.CORE_DB, AI: env.AI}));',
+      '      // Keep the full env: the analysts cache reader needs CORE_DB and\n'
+      +'      // REGIONAL_EDITOR_CACHE_SOURCES, not only the queue DB alias (E-01).\n'
+      +'      ctx.waitUntil(analystService.scheduled(event, {...env, DB: env.CORE_DB}));');
   assert.equal(actual,indexExpected,name);
   assert.equal(readFileSync(liveFile('news/scan.mjs'),'utf8'),scanExpected,
     'RSS grouping, translation, editorial, IDF and last_scan summary order must remain byte-identical');

@@ -1,24 +1,33 @@
-# REGIONAL WATCH — обязательные инструкции для помощников
+# REGIONAL WATCH — инструкции для помощников
 
-**Первым делом прочитай:** [стиль отчётов и шаблоны](docs/REGIONAL_WATCH_RESPONSE_STYLE.md) и [канонический MASTER TODO](docs/REGIONAL_WATCH_MASTER_TODO.md) из `main`. Эта инструкция специально предназначена для продолжения разработки в новом чате после обрыва связи или потери контекста.
+**Сначала прочитай [docs/STATUS.md](docs/STATUS.md)** (одна страница: production, открытые задачи, запреты). Затем сверь живое состояние: `git log` на `main`, открытые PR, последние CI runs. Если документ расходится с артефактами, верь артефактам и обнови документ. История лежит в `docs/archive/`, доказательства в `docs/research/`. Читай их только при необходимости, целиком не загружай.
 
-## Как общаться с владельцем
+## Общение с владельцем
 
-- **Русский язык, «ты», живой технически грамотный разговор.** Не пересказывай поручение, не раздувай отчёты, не соглашайся автоматически с ошибочным предположением.
-- **После завершения/проверки этапа — короткий красивый отчёт как в ARCH-03 (17.11.2026):** `**ARCH-XX официально закрыт.** ✅` → 1 абзац доказательств с точным CI → где сохранён результат (TODO/PR/отчёт) → при необходимости 2–4 строки статусов → точная граница PR/production и согласованный следующий этап.
-- Для проваленных/частичных задач тот же ритм, но честное `не закрыт`, причина и оставшаяся работа. Для обычного вопроса просто отвечай на вопрос — не превращай любой ответ в шаблон.
-- При вопросе о прогрессе целиком можно использовать компактную таблицу/счётчики; в обычном итоговом отчёте достаточно одного короткого списка.
-- **Не выдумывай успех, тесты, часы, CI и ссылки.** `CI green` ≠ `merged` ≠ `production deployed` ≠ `live QA accepted`. Отвечать только по проверенным артефактам.
+- Русский, на «ты», живой технический разговор. Не пересказывай поручение, не раздувай ответы, не соглашайся с ошибочным предположением.
+- Не выдумывай успех, тесты, CI и ссылки. `CI green` ≠ `merged` ≠ `production` ≠ `live QA принят`.
+- Итог этапа: результат одной строкой (`**E-01 закрыт.** ✅` или `**E-01 — не закрыт.** ⚠️`), затем абзац доказательств с точным PR/CI, затем где записано (STATUS/PR), затем граница: что в production, что не трогали, следующий шаг. На обычный вопрос просто ответь, без шаблона.
 
-**АКТУАЛЬНЫЙ CHECKPOINT / RESTORE (17.11.2026, после PR #91):** читать [MASTER TODO §2 + §51](docs/REGIONAL_WATCH_MASTER_TODO.md) и [E-01 failed acceptance report](docs/research/E_01_ANALYST_EDITOR_ACCEPTANCE_2026-11-17.md). **57 пунктов A–I: 22 x / 20 partial / 15 open**, не путать исторические чекбоксы с текущими. **PR #91 merged и production**: [CI #44120730249](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/44120730249) SUCCESS, source SHA `2d95654d`; RU/HE desktop archive filters live PASS, mobile/keyboard/409 UI QA pending. **E-01 OPEN**: Analyst Editor штатные run до 15:30Z повторяют `mirror_missing_incomplete_or_stale` при D1 analysts cache `state=ok` (12:33Z), pending=59, root cause не доказан. **E-02 OPEN**: GDELT 36h data→status batch lag и CORE `source_status.gdelt_context=error`. **E-04**: draft PR #89 unmerged; **E-05** backend accepted (114 markets), UI pending. ARCH-01/02/03/06/07 technically closed; **ARCH-04/05 только условно приняты для планирования, независимые проверки 20.11/18.11**. B весь на паузе; Israel Hayom low priority §50. Общее разрешение продолжать не равно согласию на новые production merge/deploy, D1/Neon writes, cron/secrets/quota/AI изменения.
+## Структура
 
-## Работа с проектом
+| Путь | Что | В release? |
+|---|---|---|
+| `frontend/` | RU/HE UI (React без JSX, сборка по `build-order.json`) | да (Pages) |
+| `backend/pages/` | Pages runtime и API proxy | да |
+| `backend/editor/` | Editor Worker: новости, переводы, аналитики, публичные API, cron `*/5` | да |
+| `backend/monitor/` | Monitor Worker: OSINT-адаптеры, статусы, cron `*/1` | да |
+| `scripts/`, `.github/workflows/` | Python-сборщики → Neon → private D1, релизные скрипты | сборщики отдельно |
+| `storage/`, `data/` | схемы D1/Neon, замороженные (с 15.11) JSON-снимки для fallback | — |
+| `worker/`, `baselines/`, `site/` | legacy и frozen baselines | **нет** |
 
-- **Source of truth:** `docs/REGIONAL_WATCH_MASTER_TODO.md` на `main`. Для нового чата сверяй живые ветки, latest commits, PR, CI и фактическую Cloudflare версию; старые handoff тексты могут устареть.
-- **Структура:** frontend `frontend/`, Pages `backend/pages/`, Editor `backend/editor/`, Monitor `backend/monitor/`, collectors `scripts/` и `.github/workflows/`. Исторический `worker/` и frozen baselines **не равны активному release** и не удаляются без доказательства.
-- **Текущий технический checkpoint (17.11.2026 после PR #91):** ARCH-01/02/03/06/07 закрыты по своей области; ARCH-04/05 ещё ждут независимой приёмки 20/18 ноября. C backend и C-06/F-07 UI опубликованы, но общий C/F/H QA частичен; E-01/E-02 открыты. **Единая актуальная матрица — MASTER TODO §2/§51**. Старые записи §§36–50 исторические, не перезапускай закрытые проверки автоматически.
-- **QUALITY-02/03 LIVE checkpoint (17.11.2026):** PR #86 → `0e34f017` и PR #87 → `948cd327` опубликованы и независимо проверены Cloudflare/API. После штатного Editor reconciliation (04:10 UTC) read-only D1 подтвердил исправление трёх ошибок группировки C-02/C-03; в HE editorial API проверены поля B-04. [Доказательства и текущие границы — MASTER TODO §40–41](docs/REGIONAL_WATCH_MASTER_TODO.md) и [QUALITY-03 live отчёт](docs/research/QUALITY_03_LIVE_REGROUPING_2026-11-17.md). C-02/C-03/B-04 остаются `[~]` в полном продукте. **Обновление решения владельца 17.11.2026:** весь блок B (включая B-02/B-05) поставлен на паузу до полной переработки; не запускать B-кодинг/переводы/точечные D1 fixes. Следующий блок — **C-01–C-05 backend**, затем отдельный frontend C-06/F-07; D уже закрыт. См. MASTER TODO §42. ARCH-04/05 владелец **условно принимает для планирования** до независимых проверок 18/20 ноября (не объявлять заранее PASS).
-- **Порядок работы:** основной backend C и UI фильтров PR #91 уже released; теперь точечно E-01/E-02 и F/H global QA с учётом ARCH-04/05 запланированных проверок, без дублей. Минимум агентов/токенов, полноценная реализация без MVP, @superpowers и профильные инструменты, RED→GREEN, source/prod release contracts.
-- **Безопасность:** без разрешённого этапа нельзя делать merge/deploy production, произвольные write QA в D1/Neon, менять cron/секреты/платные квоты, удалять legacy или создавать дополнительные Workers. Результаты каждого важного прогона сохранять коммитом в документах и обновлять TODO только после проверок.
+## Как работать
 
-**Подробный шаблон, включая пример успешного и незавершённого отчёта:** [docs/REGIONAL_WATCH_RESPONSE_STYLE.md](docs/REGIONAL_WATCH_RESPONSE_STYLE.md).
+- Баг: сначала доказательство (код, лог, D1 SELECT), потом тест RED, потом фикс GREEN. Одна причина — одно изменение.
+- Тесты пиши поведенческие, через реальный entrypoint (`index.scheduled`/`fetch`), а не по подстрокам исходника.
+- Локально: `node frontend/scripts/build-site.mjs` и esbuild-бандлы (см. workflow) **до** `node --test tests/architecture/*.test.mjs frontend/tests/*.test.mjs backend/*/tests/*.test.mjs`. Без бандлов 9 тестов падают ожидаемо. Python: `python -m unittest discover -s scripts -p 'test_*.py'`.
+- Минимум агентов и токенов. Полноценная реализация, без MVP-заглушек.
+- После проверенного изменения обнови `docs/STATUS.md` (коротко, без истории).
+
+## Запреты без явного разрешения владельца
+
+Production merge/deploy · write в production D1/Neon (preview делит bindings) · cron/секреты/платные квоты/AI-лимиты · новые Workers · удаление legacy без доказательства · работа по блоку B (на паузе).

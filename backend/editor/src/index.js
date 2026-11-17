@@ -43,7 +43,9 @@ export default {
     // The analyst mirror refreshes hourly at :17 UTC. Run its editor at :30 UTC.
     // An hourly D1 run ID provides additional duplicate-run protection.
     if (new Date(event.scheduledTime).getUTCMinutes() === 30) {
-      ctx.waitUntil(analystService.scheduled(event, {DB: env.CORE_DB, AI: env.AI}));
+      // Keep the full env: the analysts cache reader needs CORE_DB and
+      // REGIONAL_EDITOR_CACHE_SOURCES, not only the queue DB alias (E-01).
+      ctx.waitUntil(analystService.scheduled(event, {...env, DB: env.CORE_DB}));
     }
   },
   async fetch(request, env) {

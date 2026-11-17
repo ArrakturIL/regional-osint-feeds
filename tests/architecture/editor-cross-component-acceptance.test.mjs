@@ -95,7 +95,9 @@ test('ARCH-03 Editor scheduled dispatch keeps independent source, translation, e
   'getUTCMinutes()%15===5',
   'ctx.waitUntil(enrichNewMonitorStories(env))',
   'getUTCMinutes() === 30',
-  'ctx.waitUntil(analystService.scheduled(event, {DB: env.CORE_DB, AI: env.AI}))'
+  // E-01: the analyst editor needs the full env (cache flag + CORE_DB);
+  // behaviour is covered by editor-entrypoint-analyst-wiring.test.mjs.
+  'ctx.waitUntil(analystService.scheduled(event, {...env, DB: env.CORE_DB}))'
  ];
  for(const mark of markers)assert.ok(entry.includes(mark),'Editor scheduled boundary drift: '+mark);
  assert.ok(!entry.includes('worker/live-editor'),'archived modules must not drive active cron');

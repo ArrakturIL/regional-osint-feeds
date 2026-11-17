@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 import io
 import unittest
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 from scripts import collect_gdelt as gdelt
@@ -70,17 +70,34 @@ class GdeltWatermarkSafety(unittest.TestCase):
                          "next cron must retry the missing 23:00 export")
         self.assertEqual(result[4]["batches"], [stamp(22, 45), stamp(23, 15)])
 
-    def test_backlog_over_eight_batches_fetches_oldest_pending_first(self):
+    def test_backlog_within_catch_up_budget_is_drained_oldest_first(self):
+        # GitHub cron really fires every 4-10 h, not hourly (E-02): a 15-batch
+        # backlog must be drained in one run, still strictly chronologically.
         previous = stamp(20, 0)
         code, seen, result = run_collector(previous, stamp(23, 45))
         self.assertEqual(code, 0)
-        self.assertEqual(seen, [
-            stamp(20, 15), stamp(20, 30), stamp(20, 45), stamp(21, 0),
-            stamp(21, 15), stamp(21, 30), stamp(21, 45), stamp(22, 0),
-        ], "hourly quota must drain backlog chronologically, never leapfrog older archives")
+        self.assertEqual(seen, sorted(seen), "never leapfrog older archives")
+        self.assertEqual(seen[0], stamp(20, 15))
+        self.assertEqual(seen[-1], stamp(23, 45))
+        self.assertEqual(len(seen), 15)
+        self.assertEqual(result[1], "ok")
+        self.assertEqual(result[4]["latest_batch"], stamp(23, 45))
+        self.assertEqual(result[4]["batch_count"], 15)
+        self.assertLessEqual(len(result[4]["batches"]), 8, "Monitor contract caps listed batches at 8")
+        self.assertEqual(result[4]["batches"][-1], stamp(23, 45))
+
+    def test_36h_backlog_advances_a_full_catch_up_budget_per_run(self):
+        latest = datetime(2026, 11, 16, 23, 45, tzinfo=timezone.utc)
+        previous = (latest - timedelta(hours=36)).strftime("%Y%m%d%H%M%S")
+        code, seen, result = run_collector(previous, latest.strftime("%Y%m%d%H%M%S"))
+        self.assertEqual(code, 0)
+        self.assertEqual(len(seen), gdelt.MAX_BATCHES)
+        self.assertGreaterEqual(gdelt.MAX_BATCHES, 96, "one run must cover >= 24 h of exports")
+        self.assertEqual(seen, sorted(seen))
         self.assertEqual(result[1], "partial")
-        self.assertEqual(result[4]["latest_batch"], stamp(22, 0))
-        self.assertEqual(result[4]["batch_count"], 8)
+        self.assertEqual(result[4]["latest_batch"], seen[-1])
+        self.assertEqual(result[4]["batch_count"], gdelt.MAX_BATCHES)
+        self.assertLessEqual(len(result[4]["batches"]), 8)
 
     def test_latest_export_failure_retries_it_after_earlier_successes(self):
         code, seen, result = run_collector(stamp(22, 30), stamp(23, 15), {stamp(23, 15)})
