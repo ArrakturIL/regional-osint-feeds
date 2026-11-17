@@ -147,6 +147,7 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
    legacy_worker_sources:report.worker.classifications.length,
    covered_by_historical_tests:report.worker.testReferenced.length,
    unverified_worker_candidates:report.worker.untestedCandidates.length,
+   unverified_worker_paths:report.worker.untestedCandidates,
    production_legacy_frontend_js:report.frontend.activeLegacyJS.length,
    production_legacy_frontend_css:report.frontend.activeLegacyCSS.length,
    frozen_editor_files:report.baselines.editor.length,
