@@ -76,7 +76,9 @@ jobs:
       - name: Validate loadable Worker exports and React bundle
         run: node --test tests/architecture/modern-bundles.test.mjs
       - name: Audit legacy dependency reachability before archive decisions
-        run: node --test tests/architecture/legacy-dependency-audit.test.mjs
+        run: |
+          node --test tests/architecture/legacy-dependency-audit.test.mjs
+          node scripts/audit_legacy_dependencies.mjs --summary
 
   pages-documents:
     runs-on: ubuntu-latest
