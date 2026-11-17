@@ -91,6 +91,8 @@ jobs:
         run: node --test backend/monitor/tests/provider-client-runtime.test.mjs
       - name: Verify live satellite catalogue metadata and provider failure semantics
         run: node --test backend/monitor/tests/geo-catalog-runtime.test.mjs
+      - name: Verify preserved Editor legacy translation and news invariants on modular source
+        run: node --test tests/architecture/legacy-editor-runtime-parity.test.mjs
 
   pages-documents:
     runs-on: ubuntu-latest
