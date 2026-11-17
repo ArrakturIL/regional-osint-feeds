@@ -67,3 +67,23 @@ test('Sentinel SQL breaks same-snapshot ties by acquisition time descending',asy
  await dataFromD1({DB:db},at);
  assert.ok(queries[2].includes("ORDER BY observed_at DESC,json_extract(payload,'$.acquired_at') DESC LIMIT 10"));
 });
+
+test('E-05: YES-token semantics respect outcomes order and are not a verified probability',()=>{
+ const mk=(id,outcomes,prices,more={})=>({observed_at:at,payload:JSON.stringify({
+  market_id:id,question:'Question '+id,outcomes,outcome_prices:prices,
+  volume_24h:20,liquidity:10,ends_at:future,url:'https://polymarket.com/event/'+id,...more
+ })});
+ const rows=[
+  mk('reversed',['No','Yes'],[0.8,0.2]),
+  mk('closed',['Yes','No'],[0.9,0.1],{closed:true}),
+  mk('inactive',['Yes','No'],[0.9,0.1],{active:false}),
+  mk('invalid',['No','Undecided'],[0.8,0.2]),
+  mk('null',['Yes','No'],[null,0.8]),
+ ];
+ const result=assembleData({marketRows:rows,nowMs:now}).markets;
+ assert.deepEqual(result.map(x=>x.id),['reversed']);
+ assert.equal(result[0].yes,0.2);
+ assert.equal(result[0].price_kind,'yes_token_price');
+ assert.equal(result[0].independent_probability,false);
+ assert.equal(result[0].market_status,'active');
+});
