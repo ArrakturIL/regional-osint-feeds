@@ -145,12 +145,12 @@ test('original v64 logic is exactly preserved, only relative import paths change
   // the frozen bytes by stripping ONLY those reviewed API additions, so all
   // unrelated v64 logic must still match exactly.
   let monitorActual=readFileSync(liveFile('api/monitor-changes.mjs'),'utf8');
-  const begin=monitorActual.indexOf(' const a=parse(latest.payload),b=parse(prior.payload);');
-  const end=monitorActual.indexOf(' const changedEvents=',begin);
+  const monitorEditStart=monitorActual.indexOf(' const a=parse(latest.payload),b=parse(prior.payload);');
+  const monitorEditEnd=monitorActual.indexOf(' const changedEvents=',monitorEditStart);
   const origBegin=monitorExpected.indexOf(' const a=parse(latest.payload),b=parse(prior.payload),oldS=');
   const origEnd=monitorExpected.indexOf(' const changedEvents=',origBegin);
-  assert.ok(begin>=0&&end>begin&&origBegin>=0&&origEnd>origBegin,'C-04 comparison edit boundaries');
-  monitorActual=monitorActual.slice(0,begin)+monitorExpected.slice(origBegin,origEnd)+monitorActual.slice(end);
+  assert.ok(monitorEditStart>=0&&monitorEditEnd>monitorEditStart&&origBegin>=0&&origEnd>origBegin,'C-04 comparison edit boundaries');
+  monitorActual=monitorActual.slice(0,monitorEditStart)+monitorExpected.slice(origBegin,origEnd)+monitorActual.slice(monitorEditEnd);
   const added='sourceChanges,sourceGaps,independentPrimarySources:null,';
   assert.ok(monitorActual.includes(added),'C-04 exact fields must remain present');
   monitorActual=monitorActual.replace(added,'');
