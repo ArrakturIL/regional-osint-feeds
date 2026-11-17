@@ -655,3 +655,32 @@
 - [ ] **Israel Hayom (ישראל היום) — резервный канал RSS через GitHub Actions / архив источника. ПРИОСТАНОВЛЕНО ПО РЕШЕНИЮ ВЛАДЕЛЬЦА.** Сейчас неактуально, держать **в самом конце TODO**, не включать в ближайшие E-02/ARCH-05 задачи. В Cloudflare Editor штатный RSS даёт HTTP403, хотя внешний shadow-run GitHub Actions видел доступный feed; прямой перенос на зеркало не согласован и требует проверки условий источника/прав и корректности передачи в существующую архитектуру, без обхода запрета доступа. Не внедрять fallback, не увеличивать частоту запросов и не тратить отдельные ресурсы на этот источник до нового поручения.
 
 **Важно:** это **приоритизация работы**, а не отключение уже существующего production feed и не переименование исторических фактов QA. Backend/Frontend/Workers/GitHub Actions/D1, расписания и текущая документация старых проверок не изменены.
+
+
+## 51. Аудит актуальности A–I и индекса QA (17.11.2026, после PR #91)
+
+**Проверено:** `main` GitHub, AGENTS.md, стиль ответов, все 57 уникальных пунктов §2, §§36–50, сохранённый [отчёт E-01](research/E_01_ANALYST_EDITOR_ACCEPTANCE_2026-11-17.md) и его новая повторная read-only запись; открытые PR #89 (реестр 7/12 feeds, не merged) и #35 (OSS trials, не merged), [CI #44120730249](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/44120730249) SUCCESS: 10 source checks, immutable build, coordinated Editor→Monitor→Pages deployment. Independent Cloudflare Pages production SHA `2d95654d` подтверждён в §48; desktop RU/HE фильтры проверены интерактивно, mobile/keyboard/fault injection нет.
+
+**Исправления статусов и незакрытые факты:**
+- **E-01 FAIL / OPEN:** [QA report](research/E_01_ANALYST_EDITOR_ACCEPTANCE_2026-11-17.md) включён в §4 и пункт матрицы. Последние CORE D1 штатные прогоны 13:30, 14:30, 15:30 UTC: `partial/mirror_missing_incomplete_or_stale`, `processed=0/published=0/pending=59`, хотя cache analysts `state=ok`, `checked_at=2026-11-17T12:33:12Z`. Причина fallback/guard не доказана. Прогон 15:30Z до последнего релиза PR #91 (16:01Z), который не менял E-01 логику.
+- **E-02 / GDELT OPEN:** CORE D1 cache `data.latest_batch=20261116014500`, `status.last_batch=20261117134500` — **36 часов** отставания; `source_status.gdelt_context=error` с `unexpected GDELT source batch date`. Предыдущие 28.5 часа в §47 — исторический срез. Не путать время `checked_at` с actual batch progress. ARCH-05 проверка назначена на 18.11, без ручного изменения cron/лимитов.
+- **C-06/F-07:** старое `PR #91 pending` в матрице исправлено: выпущен в production, desktop RU/HE Apply/Reset/priority/RTL live PASS. Full mobile/touch/keyboard и принудительная 409 recovery остаются partial.
+- **ARCH-07:** `[~]` в матрице исправлено на `[x]`, так как §36 ранее доказал merge+green full production CI+postcheck. **E-04** `[ ]` исправлено на `[~]` — draft PR #89 готов и протестирован, но **не** merged/deployed, source rights pending. **E-05** backend accepted: 114 RU/HE Polymarket markets, но frontend UI всё ещё pending, поэтому `[~]`.
+- **Условно приняты для продолжения планирования только ARCH-04/ARCH-05**, а не E-04/E-05; самостоятельный контроль на 20.11/18.11 обязателен. B полностью frozen, Israel Hayom остаётся последним низкоприоритетным пунктом §50, G OSS не внедрён целиком. Старые верхние checkpoint названия помечены историческими.
+
+**Состояние 57 уникальных пунктов основной матрицы (не включая исторические чекбоксы): 22 закрыто / 20 частично / 15 открыто.**
+
+| Блок | Всего | Завершено | Частично | Открыто |
+|---|---:|---:|---:|---:|
+| A — Релизы/архитектурные контракты | 4 | 4 | 0 | 0 |
+| B — Переводы (пауза) | 5 | 0 | 4 | 1 |
+| C — Новостная лента | 6 | 0 | 6 | 0 |
+| D — Neon/D1/сборщики | 7 | 7 | 0 | 0 |
+| E — Источники/аналитики/API | 6 | 2 | 2 | 2 |
+| F — UI и взаимодействия | 7 | 1 | 2 | 4 |
+| G — OSS эксперименты | 11 | 3 | 2 | 6 |
+| H — Сквозная интеграция/QA | 4 | 0 | 2 | 2 |
+| I — ARCH технические задачи | 7 | 5 | 2 | 0 |
+| **Итого** | **57** | **22** | **20** | **15** |
+
+**Граница:** только документация и read-only GitHub/CORE D1; никаких new production deployments, D1/Neon writes, новых AI запусков, cron/secrets/платных quota изменений. Это audit checkpoint, не завершение глобальной пользовательской приёмки.
