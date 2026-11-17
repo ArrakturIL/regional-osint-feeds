@@ -184,7 +184,7 @@ test('C-01/C-03/C-05: event update time, original publication and assertions are
  const report={...events[0],event_id:'chronology-claim',id:'o1',source:'BBC Middle East',
   published_ms:old,last_seen_ms:latest,verification_status:'multi_outlet_reporting',
   source_count:2,origin_count:2,sources_json:JSON.stringify(sourceClaims)};
- const db={prepare(){return{bind(){return this},all:async()=>({results:[report]})}}};
+ const db={prepare(sql){return{bind(){return this},all:async()=>({results:sql.includes('FROM news_event_groups e JOIN news_items n')?[report]:[]}),first:async()=>null}}};
  const data=[];
  for(const lang of ['ru','he']){
   const response=await readNewsEvents(new Request('https://rw.example/api/news?lang='+lang+'&sort=latest'),{NEWS_DB:db});
