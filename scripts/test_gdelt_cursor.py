@@ -1,6 +1,10 @@
 """ARCH-05: realistic GDELT export-gap and backlog regression (offline)."""
 import contextlib
 import hashlib
+import json
+import tempfile
+import os
+from pathlib import Path
 import io
 import unittest
 from datetime import datetime, timezone
@@ -87,6 +91,46 @@ class GdeltWatermarkSafety(unittest.TestCase):
         self.assertEqual(seen, [stamp(22, 45), stamp(23, 0), stamp(23, 15)])
         self.assertEqual(result[4]["latest_batch"], stamp(23, 15))
         self.assertEqual(result[1], "ok")
+
+
+    def test_neon_primary_checkpoint_advances_beyond_old_git_fallback(self):
+        with tempfile.TemporaryDirectory() as temp:
+            git_file = Path(temp) / "gdelt-context.json"
+            git_file.write_text(json.dumps({"source": "gdelt_context",
+                                             "latest_batch": "20261115174500"}))
+            with patch.object(gdelt, "SNAP", git_file), \
+                 patch.dict(os.environ, {"NEON_DATABASE_URL": "postgresql://private-neon"}, clear=True), \
+                 patch.object(gdelt, "_load_neon_checkpoint", create=True,
+                              return_value={"source": "gdelt_context",
+                                            "latest_batch": "20261115194500"}):
+                self.assertEqual(gdelt.load_previous()["latest_batch"], "20261115194500",
+                                 "Neon-primary must not start each hourly catch-up from stale GitHub JSON")
+
+    def test_neon_checkpoint_failure_does_not_silently_fall_back_to_stale_github(self):
+        with tempfile.TemporaryDirectory() as temp:
+            git_file = Path(temp) / "gdelt-context.json"
+            git_file.write_text(json.dumps({"source": "gdelt_context",
+                                             "latest_batch": "20261115174500"}))
+            with patch.object(gdelt, "SNAP", git_file), \
+                 patch.dict(os.environ, {"NEON_DATABASE_URL": "postgresql://private-neon"}, clear=True), \
+                 patch.object(gdelt, "_load_neon_checkpoint", create=True,
+                              side_effect=OSError("postgresql://sensitive-password")):
+                with self.assertRaisesRegex(RuntimeError, "Neon checkpoint unavailable") as error:
+                    gdelt.load_previous()
+                self.assertNotIn("sensitive-password", str(error.exception))
+
+    def test_newer_github_checkpoint_preserved_if_neon_snapshot_is_older(self):
+        with tempfile.TemporaryDirectory() as temp:
+            git_file = Path(temp) / "gdelt-context.json"
+            git_file.write_text(json.dumps({"source": "gdelt_context",
+                                             "latest_batch": "20261116194500"}))
+            with patch.object(gdelt, "SNAP", git_file), \
+                 patch.dict(os.environ, {"NEON_DATABASE_URL": "postgresql://private-neon"}, clear=True), \
+                 patch.object(gdelt, "_load_neon_checkpoint", create=True,
+                              return_value={"source": "gdelt_context",
+                                            "latest_batch": "20261115194500"}):
+                self.assertEqual(gdelt.load_previous()["latest_batch"], "20261116194500")
+
 
 
 if __name__ == "__main__":
