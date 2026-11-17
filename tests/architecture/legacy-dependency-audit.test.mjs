@@ -60,3 +60,21 @@ test('audit report is deterministic and purely derived from repository source',(
  assert.ok(a.worker.classifications.every(x=>x.decision!=='delete'));
  assert.ok(a.worker.classifications.every(x=>x.reasons.length>0));
 });
+
+test('four unverified live-editor files remain a connected historical rollback subtree',()=>{
+ const report=audit();
+ const expected=[
+  'worker/live-editor/analysts-editor.mjs',
+  'worker/live-editor/analysts-translation.mjs',
+  'worker/live-editor/regional-watch-editor.js',
+  'worker/live-editor/story-enrichment.mjs'
+ ];
+ assert.deepEqual(report.worker.untestedCandidates,expected,
+  'These files are untested historical runtime modules, not proven removable');
+ const pairs=new Set(report.graph.edges.map(({from,to})=>from+' -> '+to));
+ for(const edge of [
+  'worker/live-editor/regional-watch-editor.js -> worker/live-editor/analysts-editor.mjs',
+  'worker/live-editor/regional-watch-editor.js -> worker/live-editor/story-enrichment.mjs',
+  'worker/live-editor/analysts-editor.mjs -> worker/live-editor/analysts-translation.mjs'
+ ])assert.ok(pairs.has(edge),'Retained historical dependency must be reviewed: '+edge);
+});
