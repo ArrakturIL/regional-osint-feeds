@@ -18,6 +18,11 @@ export async function readNewsEvents(request,env){
  if(limit===null||limit<1||offset===null)return respond({error:'invalid_pagination'},400);
  const sort=url.searchParams.get('sort')||'latest';
  if(sort!=='latest'&&sort!=='priority')return respond({error:'invalid_sort'},400);
+ // Offset-based continuation is safe only while the ordered event IDs remain
+ // unchanged. Existing clients may omit this optional guard.
+ const expectedOrderHash=url.searchParams.get('expected_order_hash');
+ if(expectedOrderHash!==null&&!/^[a-f0-9]{64}$/i.test(expectedOrderHash))
+  return respond({error:'invalid_order_hash'},400);
  const requestedReadyOnly=['1','true'].includes(url.searchParams.get('ready_only'));
  // Main feed is locale-invariant; never hide events because translation is pending.
  const readyOnly=false;
@@ -50,6 +55,9 @@ export async function readNewsEvents(request,env){
  const orderData=new TextEncoder().encode(visible.map(x=>x.event_id).join('|'));
  const digest=await crypto.subtle.digest('SHA-256',orderData);
  const feed_order_hash=Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join('');
+ if(expectedOrderHash!==null&&expectedOrderHash.toLowerCase()!==feed_order_hash)
+  return Response.json({error:'feed_changed',feed_order_hash,restart_offset:0,sort},
+    {status:409,headers:{...HEADERS,'Cache-Control':'no-store'}});
  const pageRows=visible.slice(offset,offset+limit).map(x=>x.row);
  // A native Hebrew source is already translated; do not require Workers AI
  // translation for its appearance in the Hebrew edition.
@@ -89,6 +97,9 @@ export async function readNewsEvents(request,env){
   const representativePublished=Number.isSafeInteger(row.published_ms)&&row.published_ms>0?row.published_ms:null;
   const firstSeen=publishedTimes.length?Math.min(...publishedTimes):representativePublished;
   const latestSeen=Number.isSafeInteger(r.last_seen_ms)&&r.last_seen_ms>0?r.last_seen_ms:null;
+  const collectedTimes=sources.map(s=>s.collected_ms).filter(t=>Number.isSafeInteger(t)&&t>0);
+  const firstCollected=collectedTimes.length?Math.min(...collectedTimes):null;
+  const lastCollected=collectedTimes.length?Math.max(...collectedTimes):null;
   const sourceAssertions=sources.map(s=>({article_id:s.article_id,source:s.source,
     claimed_by:s.claimed_by,source_assertion:s.source_assertion||'not_reported'}));
   // Immutable original article provenance, independent from a translated
@@ -110,6 +121,10 @@ export async function readNewsEvents(request,env){
   };
   return{event_id:r.event_id,id:r.id,canonical_article_id:r.id,display_article_id:row.id,source:row.source,
    event_first_seen_ms:firstSeen,event_last_seen_ms:latestSeen,representative_published_ms:representativePublished,
+   event_earliest_published_ms:firstSeen,event_latest_published_ms:latestSeen,
+   event_first_collected_ms:firstCollected,event_last_collected_ms:lastCollected,
+   event_at_ms:null,event_first_seen_basis:'source_publication',
+   event_last_seen_basis:'source_publication',event_collection_basis:'first_ingestion_observation',
    sort_basis:'event_last_seen_ms',independent_verification:'not_established',
    source_assertions:sourceAssertions,original_language:t.source_language,
    original_headline:originalHeadline,original_summary:originalSummary,source_hash:sourceHash,
