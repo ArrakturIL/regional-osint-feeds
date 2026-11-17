@@ -38,6 +38,7 @@ jobs:
         run: |
           python -m py_compile scripts/collect_gdelt.py
           python scripts/test_gdelt.py
+          python -m unittest scripts.test_gdelt_cursor -v
       - name: Read recent public GDELT Project event exports
         run: python scripts/collect_gdelt.py
       - name: Shadow-write paired GDELT JSON to Neon (nonfatal until verified cutover)
