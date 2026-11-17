@@ -91,10 +91,29 @@ export async function readNewsEvents(request,env){
   const latestSeen=Number.isSafeInteger(r.last_seen_ms)&&r.last_seen_ms>0?r.last_seen_ms:null;
   const sourceAssertions=sources.map(s=>({article_id:s.article_id,source:s.source,
     claimed_by:s.claimed_by,source_assertion:s.source_assertion||'not_reported'}));
+  // Immutable original article provenance, independent from a translated
+  // display headline and from the Hebrew i18n cache's source hash.
+  const originalHeadline=String(row.headline||'').trim(),originalSummary=String(row.summary||'').trim();
+  const sourceHashBytes=new Uint8Array(await crypto.subtle.digest('SHA-256',
+    new TextEncoder().encode(JSON.stringify([originalHeadline,originalSummary]))));
+  const sourceHash=Array.from(sourceHashBytes,x=>x.toString(16).padStart(2,'0')).join('');
+  const fieldState=(original,shown)=>{
+    if(!original&&!shown)return 'not_applicable';
+    if(t.source_language===lang&&shown===original)return 'source';
+    if(t.content_language!==lang)return state==='needs_review'?'needs_review':'pending';
+    if(shown===original&&t.source_language!==lang)return 'pending';
+    return state==='translated'?'available':state==='original'?'source':state;
+  };
+  const fieldTranslationStatus={
+    headline:fieldState(originalHeadline,t.title),
+    summary:fieldState(originalSummary,t.body)
+  };
   return{event_id:r.event_id,id:r.id,canonical_article_id:r.id,display_article_id:row.id,source:row.source,
    event_first_seen_ms:firstSeen,event_last_seen_ms:latestSeen,representative_published_ms:representativePublished,
    sort_basis:'event_last_seen_ms',independent_verification:'not_established',
-   source_assertions:sourceAssertions,
+   source_assertions:sourceAssertions,original_language:t.source_language,
+   original_headline:originalHeadline,original_summary:originalSummary,source_hash:sourceHash,
+   field_translation_status:fieldTranslationStatus,
    headline:t.title,summary:t.body,comment:t.comment,url:row.url,
    published_ms:r.last_seen_ms,priority:r.event_priority,category:r.topic,
    content_language:t.content_language,source_language:t.source_language,translation_status:t.translation_status,
