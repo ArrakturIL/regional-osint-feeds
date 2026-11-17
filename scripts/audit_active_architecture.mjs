@@ -120,7 +120,7 @@ export function auditActiveArchitecture(root){
  for(const [label,src,needles] of [
   ['Neon source manifest',sourceFile,['canonical_hash','READBACK_SQL','data_sha256','status_sha256','checked_at']],
   ['Neon -> D1',d1Module,['READ_D1_SQL','UPSERT_D1_SQL','canonical_hash','_validate_d1_row']],
-  ['private reconciliation',syncModule,['data_sha256','status_sha256']]
+  ['private reconciliation',syncModule,['read_stored_snapshot','mirror_source','_validate_d1_row','verify_d1_last_good','SOURCE_FILES']]
  ])for(const needle of needles)if(!src.includes(needle))integrityGaps.push(label+': '+needle);
  const dynamicImportReview=[];
  for(const path of candidates){
