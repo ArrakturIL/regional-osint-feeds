@@ -83,6 +83,8 @@ jobs:
         run: node --test backend/monitor/tests/summary-runtime.test.mjs
       - name: Verify live provider cooldown and AvioADSB quota policy on modern source
         run: node --test backend/monitor/tests/provider-recovery-runtime.test.mjs
+      - name: Verify production provider client backoff and D1 quota safety
+        run: node --test backend/monitor/tests/provider-client-runtime.test.mjs
 
   pages-documents:
     runs-on: ubuntu-latest
