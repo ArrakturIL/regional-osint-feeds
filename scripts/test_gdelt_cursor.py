@@ -4,6 +4,10 @@ import hashlib
 import json
 import tempfile
 import os
+import re
+import shlex
+import subprocess
+import sys
 from pathlib import Path
 import io
 import unittest
@@ -131,6 +135,33 @@ class GdeltWatermarkSafety(unittest.TestCase):
                                             "latest_batch": "20261115194500"}):
                 self.assertEqual(gdelt.load_previous()["latest_batch"], "20261116194500")
 
+
+
+    def test_actual_actions_entrypoint_can_import_verified_neon_reader(self):
+        # Execute the actual command recorded in gdelt.yml in a subprocess,
+        # with a fake Neon connector. It must reach psycopg.connect; executing
+        # scripts/collect_gdelt.py as a file hides the root scripts package.
+        root = Path(__file__).resolve().parents[1]
+        workflow = (root / ".github/workflows/gdelt.yml").read_text(encoding="utf8")
+        match = re.search(r"^\\s+run: (python (?:-m )?scripts[./]collect_gdelt(?:\\.py)?)\\s*$", workflow, re.M)
+        self.assertIsNotNone(match, "GDELT action must expose its actual collector command")
+        with tempfile.TemporaryDirectory() as temp:
+            (Path(temp) / "psycopg.py").write_text(
+                'def connect(*args, **kwargs):\\n'
+                '    print("GDELT_CHECKPOINT_READER_REACHED")\\n'
+                '    raise OSError("synthetic database failure")\\n',
+                encoding="utf8",
+            )
+            env = dict(os.environ)
+            env["NEON_DATABASE_URL"] = "postgresql://test-only"
+            env["PYTHONPATH"] = temp
+            command = [sys.executable] + shlex.split(match.group(1))[1:]
+            result = subprocess.run(command, cwd=root, env=env,
+                                    capture_output=True, text=True, timeout=15)
+            self.assertNotEqual(result.returncode, 0, "fake connection must fail closed")
+            self.assertIn("GDELT_CHECKPOINT_READER_REACHED", result.stdout,
+                          "collector must import scripts.neon_mirror and reach private checkpoint reader")
+            self.assertIn("Neon checkpoint unavailable", result.stderr)
 
 
 if __name__ == "__main__":
