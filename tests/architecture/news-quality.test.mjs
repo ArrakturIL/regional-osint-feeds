@@ -231,3 +231,61 @@ test('B-03 preserves original headline/summary/hash and per-field translation st
  assert.equal(he.articles[0].field_translation_status.headline,'pending');
  assert.equal(he.articles[0].field_translation_status.summary,'pending');
 });
+
+
+test('C-02 live-source platform restriction must not become a military strike from a background church attack',()=>{
+ const docs=[
+  article('jo-aj','Al Jazeera','Jordan bans Telegram over national security concerns',
+   "The measure comes amid a security crackdown after last month's deadly attack on a Greek Orthodox church.",0),
+  article('jo-toi','Times of Israel','Jordan blocks Telegram messaging app over ‘national security’ concerns',
+   "Kingdom says move safeguards citizens against 'attempts to spread extremism and radicalization'; block comes just weeks after terror attack on Jordanian church killed 9",20)
+ ];
+ for(const doc of docs) {
+  const parsed=analyze(doc);
+  assert.equal(parsed.topic,'governance','a policy ban is not a new attack: '+doc.source);
+  assert.equal(parsed.policy,'candidate');
+  assert.equal(parsed.claim_about_death,'not_reported','prior church attack is historical context, not deaths from this ban');
+ }
+ const g=group(docs);
+ assert.equal(g.groups.length,1,'two publishers cover one regulatory event');
+ assert.equal(g.groups[0].members.length,2);
+});
+
+test('C-02 source-declared opinion and syndicated copies cannot inflate factual news grouping',()=>{
+ const originals=[
+  {...article('op-jns','JNS','Why the negotiating table won’t work with the Iranian regime',
+   'An agreement is only as reliable as the willingness of the parties to honor it.',0),
+   url:'https://www.jns.org/opinion/gerald-platt/why-the-negotiating-table-wont-work-with-the-iranian-regime'},
+  article('op-arutz','Arutz Sheva','Why the negotiating table won’t work with the Iranian regime',
+   'An agreement is only as reliable as the willingness of the parties to honor it. Opinion.',50)
+ ];
+ const g=group(originals);
+ assert.equal(g.groups.length,0);
+ assert.deepEqual(g.held.map(x=>x.type),['opinion','opinion']);
+});
+
+test('C-02 distinct political actors deciding on Netanyahu unity government are different events',()=>{
+ const decisions=[
+  article('golan','Jerusalem Post / Israel','Golan rules out unity government with Netanyahu, warns of new Iran war by caretaker government',
+   'The Democrats chairman said the opposition must form a government quickly, warning that history will judge us if it fails to prevent another war.',0),
+  article('liberman','Jerusalem Post / Israel',"Liberman's party rules out Netanyahu unity government as Eisenkot faces growing coalition pressure",
+   'Yisrael Beytenu MK Yulia Malinovsky ruled out joining a Netanyahu-led unity government as Eisenkot struggles to secure a majority amid negotiations with Likud and haredi parties.',360)
+ ];
+ const g=group(decisions);
+ assert.equal(g.held.length,0);
+ assert.equal(g.groups.length,2);
+});
+
+test('C-02 protect two independent outlets reporting the same attributed statement',()=>{
+ const pair=[
+  article('eu-1','Arutz Sheva',"Netanyahu warns Europe: 'You are a target' as he Meets Czech PM in Jerusalem",
+    'Netanyahu warned Europe about the Iranian threat during the Czech prime minister visit.',0),
+  article('eu-2','Jerusalem Post / Israel',"'Europe is a target': Netanyahu warns of Iranian threat during Czech PM's Israel visit",
+    'Prime Minister Netanyahu told his Czech counterpart Iran is a threat to Europe.',120)
+ ];
+ const g=group(pair);
+ assert.equal(g.held.length,0);
+ assert.equal(g.groups.length,1);
+ assert.equal(g.groups[0].members.length,2);
+ assert.equal(new Set(g.groups[0].members.map(x=>x.owner)).size,2);
+});
