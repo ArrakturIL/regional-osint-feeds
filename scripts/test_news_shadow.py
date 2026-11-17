@@ -100,4 +100,38 @@ class Tests(unittest.TestCase):
         self.assertEqual(result["source_count"],0)
         self.assertEqual(result["ok_sources"],0)
 
+
+    def test_registry_identifies_current_production_feeds_without_licensing_claim(self):
+        """Shadow metadata must describe the existing live feed list, not grant rights."""
+        import json
+        import re
+        from pathlib import Path
+        root=Path(__file__).resolve().parents[1]
+        registry=json.loads((root/"config/news-source-registry.json").read_text(encoding="utf-8"))
+        editor=(root/"backend/editor/src/news/events.mjs").read_text(encoding="utf-8")
+        match=re.search(r'export const FEEDS=(\\[.*?\\]);',editor)
+        self.assertIsNotNone(match,"active Editor feeds contract missing")
+        feeds=json.loads(match.group(1))
+        self.assertEqual(len(feeds),12)
+        by_url={s.get("feed_url"):s for s in registry["sources"] if s.get("feed_url")}
+        active_urls={entry[1] for entry in feeds}
+        self.assertEqual(len(active_urls),len(feeds),"duplicate active feed URLs")
+        for name,url,*_ in feeds:
+            with self.subTest(active=name):
+                self.assertIn(url,by_url)
+                registered=by_url[url]
+                self.assertEqual(registered["origin"],"existing_production")
+                self.assertIs(registered["public_enabled"],True)
+        for entry in registry["sources"]:
+            if entry.get("feed_url") not in active_urls:
+                with self.subTest(candidate=entry["id"]):
+                    self.assertIs(entry["public_enabled"],False)
+        # Existing runtime use is not a terms-of-service / copyright approval.
+        unreviewed={"israel-hayom-he","maariv-he","arutz-sheva-en",
+                    "jns","al-monitor","france24","guardian-israel"}
+        actual={s["id"]:s for s in registry["sources"]}
+        for name in unreviewed:
+            with self.subTest(license=name):
+                self.assertEqual(actual[name]["license_status"],"pending_terms_review")
+
 if __name__=="__main__":unittest.main()
