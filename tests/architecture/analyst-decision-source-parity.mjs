@@ -29,7 +29,7 @@ export function reconstructAnalystDecisionEditor(){
  const guard=functions.slice(guardStart,guardEnd);
  if(!guard.includes('const certainty=')||!guard.includes('for(const m of d.headline.matchAll(certainty))'))
   throw Error('E-06 Unicode guard contract changed');
- const historicLine='  if (/\\b(?:подтвержден[оы]|доказан[оы]|официально установлено)\\b/i.test(d.headline)) return null;\\n';
+ const historicLine='  if (/\\b(?:подтвержден[оы]|доказан[оы]|официально установлено)\\b/i.test(d.headline)) return null;\n';
  const historical=functions.slice(0,guardStart)+historicLine+functions.slice(guardEnd);
  return editor.replace(addedImport,'').replace(call,historical);
 }
