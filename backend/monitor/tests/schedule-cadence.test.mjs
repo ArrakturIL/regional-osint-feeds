@@ -46,3 +46,89 @@ test('automatic eligibility is data-only and never skips the real high-priority 
   assert.ok(scheduler.scheduledSourceNames(2).includes('ioda'));
   assert.deepEqual(scheduler.scheduledSourceNames(-1+1440),scheduler.scheduledSourceNames(1439));
 });
+
+function fakeManualDatabase(wanted,slot,seed=[]){
+  const statuses=new Map(seed.map(row=>[row.source,row]));
+  let finish=null;
+  const db={
+    prepare(sql){
+      const stmt=(args=[])=>({
+        sql,args,
+        bind(...next){return stmt(next);},
+        async first(){
+          if(sql.includes("FROM worker_manual_runs WHERE status='pending'"))
+            return{id:'manual-qa',sources_json:JSON.stringify(wanted)};
+          if(sql.includes('FROM worker_provider_state'))
+            return{failures:0,next_allowed_at:0,lease_until:0};
+          throw Error('Unexpected SELECT first: '+sql);
+        },
+        async all(){
+          if(sql.includes('FROM source_status'))return{results:[...statuses.values()]};
+          throw Error('Unexpected SELECT all: '+sql);
+        },
+        async run(){
+          if(sql.includes("UPDATE worker_manual_runs SET status='running'"))
+            return{meta:{changes:1}};
+          if(sql.includes('UPDATE worker_manual_runs SET status=?')){
+            finish={status:args[0],report:JSON.parse(args[2])};
+            return{meta:{changes:1}};
+          }
+          if(sql.startsWith('INSERT INTO source_status')){
+            statuses.set(args[0],{source:args[0],attempted_at:args[1],state:args[3],detail:args[4]});
+            return{meta:{changes:1}};
+          }
+          throw Error('Unexpected D1 write: '+sql);
+        }
+      });
+      return stmt();
+    },
+    async batch(statements){
+      for(const statement of statements){
+        if(statement.sql.startsWith('INSERT INTO source_status')){
+          const a=statement.args;
+          statuses.set(a[0],{source:a[0],attempted_at:a[1],state:a[3],detail:a[4]});
+        }
+      }
+      return[];
+    },
+  };
+  return{db,get finish(){return finish;}};
+}
+
+test('manual source with partial upstream coverage is not reported as done',async()=>{
+  const slot=22*60_000;
+  const target=sources.find(s=>s.name==='adsb_alt');
+  const original=target.read;
+  const f=fakeManualDatabase(['adsb_alt'],slot);
+  target.read=async()=>({entries:[],missing:['quota'],detail:'Provider quota exhausted'});
+  try{
+    await scheduler.runSchedule({scheduledTime:slot},{DB:f.db});
+    assert.equal(f.finish.status,'partial');
+    assert.deepEqual(f.finish.report.rejected,[]);
+    assert.deepEqual(f.finish.report.observed.map(x=>x.state),['partial']);
+  }finally{target.read=original;}
+});
+
+test('manual source read error is not reported as done merely because collect caught it',async()=>{
+  const slot=22*60_000;
+  const target=sources.find(s=>s.name==='adsb_alt');
+  const original=target.read;
+  const f=fakeManualDatabase(['adsb_alt'],slot);
+  target.read=async()=>{throw Error('upstream HTTP 429');};
+  try{
+    await scheduler.runSchedule({scheduledTime:slot},{DB:f.db});
+    assert.equal(f.finish.status,'partial');
+    assert.deepEqual(f.finish.report.observed.map(x=>x.state),['error']);
+  }finally{target.read=original;}
+});
+
+test('missing manual secret cannot reuse stale source status as success',async()=>{
+  const slot=23*60_000;
+  const f=fakeManualDatabase(['ais'],slot,[{
+    source:'ais',state:'ok',detail:null,attempted_at:slot-5*60_000
+  }]);
+  await scheduler.runSchedule({scheduledTime:slot},{DB:f.db});
+  assert.equal(f.finish.status,'partial');
+  assert.deepEqual(f.finish.report.missing_secrets,['ais']);
+  assert.deepEqual(f.finish.report.observed,[],'only statuses for the current manual slot qualify');
+});

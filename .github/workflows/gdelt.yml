@@ -38,7 +38,9 @@ jobs:
         run: |
           python -m py_compile scripts/collect_gdelt.py
           python scripts/test_gdelt.py
+          python -m unittest scripts.test_gdelt_cursor -v
       - name: Read recent public GDELT Project event exports
+        id: collect
         run: python scripts/collect_gdelt.py
       - name: Shadow-write paired GDELT JSON to Neon (nonfatal until verified cutover)
         if: github.ref == 'refs/heads/main'
@@ -73,7 +75,7 @@ jobs:
           python -m scripts.publish_neon_mirror --source gdelt --mode required
           python -m scripts.neon_to_d1 --source gdelt --init-table
       - name: Commit only small bounded news-context metadata
-        if: always() && !((contains(format(',{0},', vars.REGIONAL_NEON_PRIMARY_SOURCES), ',gdelt,') || steps.rollout.outputs.enabled == 'true') && steps.neon_d1.outcome == 'success')
+        if: always() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && steps.collect.outcome == 'success' && !((contains(format(',{0},', vars.REGIONAL_NEON_PRIMARY_SOURCES), ',gdelt,') || steps.rollout.outputs.enabled == 'true') && steps.neon_d1.outcome == 'success')
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

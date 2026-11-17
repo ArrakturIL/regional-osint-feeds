@@ -156,11 +156,23 @@ def collect() -> int:
         if latest_dt > now + timedelta(minutes=30) or latest_dt < now - timedelta(hours=8):
             raise ValueError("GDELT latest batch timestamp implausible or stale")
         last_done = previous.get("latest_batch")
-        cursor = latest_dt
         stamps = []
-        while len(stamps) < MAX_BATCHES and (last_done is None or cursor.strftime("%Y%m%d%H%M%S") > last_done):
-            stamps.append(cursor.strftime("%Y%m%d%H%M%S"))
-            cursor -= timedelta(minutes=15)
+        if last_done is not None:
+            # Catch up oldest-first so an hourly run never skips an older
+            # export when more than MAX_BATCHES accumulated during downtime.
+            if not isinstance(last_done, str) or not re.fullmatch(r"\d{14}", last_done):
+                raise ValueError("GDELT previous checkpoint malformed")
+            cursor = datetime.strptime(last_done, "%Y%m%d%H%M%S").replace(tzinfo=timezone.utc) + timedelta(minutes=15)
+            while len(stamps) < MAX_BATCHES and cursor <= latest_dt:
+                stamps.append(cursor.strftime("%Y%m%d%H%M%S"))
+                cursor += timedelta(minutes=15)
+        else:
+            # No known checkpoint on first startup: inspect the latest bounded window.
+            cursor = latest_dt
+            while len(stamps) < MAX_BATCHES:
+                stamps.append(cursor.strftime("%Y%m%d%H%M%S"))
+                cursor -= timedelta(minutes=15)
+            stamps.reverse()
         if not stamps:
             emit(checked, "ok", "No new 15-minute export since previous successful collection", latest_stamp, None)
             return 0
@@ -168,7 +180,9 @@ def collect() -> int:
         downloaded = []
         misses = []
         total = 0
-        for stamp in reversed(stamps):
+        watermark = last_done
+        contiguous = True
+        for stamp in stamps:
             path = BASE + stamp + ".export.CSV.zip"
             try:
                 blob = request(path, limit=MAX_COMPRESSED)
@@ -178,7 +192,10 @@ def collect() -> int:
                 total += n
                 all_events.extend(events)
                 downloaded.append(stamp)
+                if contiguous:
+                    watermark = stamp
             except (ValueError, OSError, urllib.error.URLError, zipfile.BadZipFile, TimeoutError) as e:
+                contiguous = False
                 misses.append(stamp + ": " + type(e).__name__)
         if not downloaded:
             raise ValueError("No valid GDELT export in sampled window")
@@ -194,7 +211,9 @@ def collect() -> int:
         result = {
             "source": "gdelt_context",
             "created_at": checked,
-            "latest_batch": downloaded[-1],
+            # Advance only through the uninterrupted prefix of successful
+            # exports. Later successful batches never mask a missing archive.
+            "latest_batch": watermark,
             "batches": downloaded,
             "batch_count": len(downloaded),
             "coded_rows_total": total,
@@ -207,7 +226,7 @@ def collect() -> int:
             "attribution_url": "https://www.gdeltproject.org/",
             "limitations": "Machine-coded article signals only. NOT verified incidents, air/sea movements or independent corroboration; multiple sources may quote the same origin. Sample capped at 32.",
         }
-        complete = not misses and len(stamps) < MAX_BATCHES
+        complete = not misses and stamps[-1] == latest_stamp
         detail = None if complete else f"Partial export coverage: {len(misses)} unavailable batches; max {MAX_BATCHES} files per run"
         emit(checked, "ok" if complete else "partial", detail, latest_stamp, result)
         print(json.dumps({"state":"ok" if complete else "partial","batch_count":len(downloaded),"matched":len(matched),"domains":len(domains),"missing":len(misses),"latest":downloaded[-1]}))

@@ -266,7 +266,10 @@ def main():
         "errors": observation["quality"]["issues"][:8],
         "note": "Context imagery & natural events; not verification of attacks or military activity.",
     }
-    save_if_changed(STATUS_PATH, status, volatile_fields=("checked_at", "snapshot_changed"))
+    # The checked_at heartbeat must advance after each successful poll: Neon/D1
+    # use its timestamp to distinguish an active collector from a stale source.
+    # Snapshot-only changes remain ignored to avoid redundant metadata churn.
+    save_if_changed(STATUS_PATH, status, volatile_fields=("snapshot_changed",))
     print(json.dumps(status, sort_keys=True, ensure_ascii=False))
     return 0 if state != "error" else 1
 
