@@ -7,12 +7,12 @@ function validateDecision(d, original) {
   if (d.decision!=='publish') return {...d,decision:d.decision,reason:plain(d.reason,360)};
   if (!assertString(d.headline,18,145) || !assertString(d.summary,90,650)) return null;
   if (d.relevance<80 || d.novelty<60 || d.substance<70) return {decision:'skip',relevance:d.relevance,novelty:d.novelty,substance:d.substance,reason:'Авторская публикация недостаточно релевантна, нова или содержательна для выбранного редакционного порога.'};
-  // JavaScript \\b is ASCII-centric and misses whole Cyrillic claims.
+  // JavaScript \b is ASCII-centric and misses whole Cyrillic claims.
   // Negated wording (e.g. "не подтверждено") is not a categorical claim.
-  const certainty=/(?<![\\p{L}\\p{N}_])(?:подтвержден[оыа]|доказан[оыа]|официально\\s+установлен[оыа])(?![\\p{L}\\p{N}_])/giu;
+  const certainty=/(?<![\p{L}\p{N}_])(?:подтвержден[оыа]|доказан[оыа]|официально\s+установлен[оыа])(?![\p{L}\p{N}_])/giu;
   for(const m of d.headline.matchAll(certainty)){
     const before=d.headline.slice(Math.max(0,m.index-20),m.index);
-    if(!/(?:^|[\\s—–:,«(])не\\s*$/iu.test(before)) return null;
+    if(!/(?:^|[\s—–:,«(])не\s*$/iu.test(before)) return null;
   }
   let q=plain(d.quote || '',140);
   if (q && (bodyWords(q).length>18 || !original.includes(q))) q=''; // Drop invented/oversized quote without discarding independent analysis.
