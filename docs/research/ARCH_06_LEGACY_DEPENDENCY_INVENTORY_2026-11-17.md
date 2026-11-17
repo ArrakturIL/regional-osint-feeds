@@ -43,3 +43,21 @@
 - [ ] Приёмка ARCH-06 после повторной проверки манифеста и реальной production 3-компонентной сборки; только потом ARCH-07.
 
 **Не менять:** D1/Neon контент, crons, secrets, Workers, лимиты/сервисную топологию, scheduled tasks ARCH-04/05 и старые записи редакторского чата.
+
+## 2. Автоматизированная проверка ссылок — [PR #84](https://github.com/ArrakturIL/regional-osint-feeds/pull/84)
+
+Построен **консервативный статический граф**, который можно получить локально командой `node scripts/audit_legacy_dependencies.mjs` (JSON) либо `node scripts/audit_legacy_dependencies.mjs --summary` (краткая сводка). Работает без сети и БД: читает manifests frontend, исполняемые скрипты, относительные JS import/re-export/new URL/require, GitHub CI команды запуска старых тестов и frozen baselines. Любая неизвестная динамическая ссылка трактуется как **не доказано, что можно удалить**, а не как разрешение на чистку.
+
+**Фактические результаты GREEN прогона [CI #44000410768](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/44000410768), head `8395d77388c48436247927a3ea96605df34cc869`:** просканировано **223 source-файла и 505 разрешённых статических связей**; **14** исторических CI тестов `worker/test-*.mjs` являются roots; из **31** Worker JS/MJS модулей **13** достижимы из исторических тестов, **14** — сами тестовые runners, а у **4** связь с этими тестами не обнаружена:
+- `worker/live-editor/analysts-editor.mjs`
+- `worker/live-editor/analysts-translation.mjs`
+- `worker/live-editor/regional-watch-editor.js`
+- `worker/live-editor/story-enrichment.mjs`
+
+Эта четвёрка **НЕ признана мёртвой**: исторический live-editor entrypoint и дочерние модули могут быть rollback/reference-артефактом, отдельные CI workflow проверяют синтаксис и срабатывают на `worker/live-editor/**`. Их проверка не входит в модерный release bundle. Даже если в графе нет импортов из текущих тестовых roots, это недостаточно для удаления.
+
+Также подтверждены **7 реально включённых JS `frontend/src/legacy/**` и 2 CSS**; frozen baseline Editor (13 файлов) и Monitor (2 файла) имеют действующих test consumers. Отсутствующих разрешаемых ссылок в проверенных JS imports — 0; вычисляемые строки, SQL/HTTP runtime calls, внешние GitHub Actions и CSS/HTML селекторы в графе не эмулируются.
+
+**TDD и состояние:** [RED #43999930193](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/43999930193) — тест импортировал ещё отсутствующий analyzer; при первом implementation run [#44000053396](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/44000053396) нашли проблему обнаружения пути `editor-v64`, сконструированного по частям; исправлено без изменения production. [GREEN #44000410768](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/44000410768): **6/6 ARCH-06 contract tests**, полный application CI и immutable three-component bundle SUCCESS. Изменения живут в **отдельном PR #84, ещё не merged/deployed**; продакшен и базы данных не менялись.
+
+**Дальше:** проверить вручную и поведением 4 не покрытых старым CI файла, включая rollback значение; переносить только уникальные legacy-тесты на современные `backend/` модули; возможную архивацию делать отдельным TDD PR. Никакого автоматического удаления или переписывания старого Worker пока не делать.
