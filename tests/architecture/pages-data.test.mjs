@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {assembleData,dataFromD1} from '../../backend/pages/src/api/data.js';
 const at=1794679980000,now=1794680000000,future='2026-12-01T04:59:00Z',past='2026-11-08T20:29:00Z';
-const row=(market_id,observed_at,price,volume,ends_at=future)=>({observed_at,payload:JSON.stringify({market_id,question:'Market '+market_id,outcome_prices:[price,1-price],volume_24h:volume,liquidity:70,ends_at,url:'https://polymarket.com/event/'+market_id})});
+const row=(market_id,observed_at,price,volume,ends_at=future)=>({observed_at,payload:JSON.stringify({market_id,question:'Market '+market_id,outcomes:['Yes','No'],outcome_prices:[price,1-price],volume_24h:volume,liquidity:70,ends_at,url:'https://polymarket.com/event/'+market_id})});
 test('market snapshots are deduplicated, ordered, and expired markets excluded',()=>{
  const m=assembleData({nowMs:now,marketRows:[row('A',at-21600000,.05,40),row('A',at,.03,100),row('B',at,.4,20),row('OLD',at,.2,200,past),row('BAD',at,.3,90,'garbage')]}).markets;
  assert.deepEqual(m.map(x=>x.id),['A','B']);
@@ -66,4 +66,24 @@ test('Sentinel SQL breaks same-snapshot ties by acquisition time descending',asy
  }};
  await dataFromD1({DB:db},at);
  assert.ok(queries[2].includes("ORDER BY observed_at DESC,json_extract(payload,'$.acquired_at') DESC LIMIT 10"));
+});
+
+test('E-05: YES-token semantics respect outcomes order and are not a verified probability',()=>{
+ const mk=(id,outcomes,prices,more={})=>({observed_at:at,payload:JSON.stringify({
+  market_id:id,question:'Question '+id,outcomes,outcome_prices:prices,
+  volume_24h:20,liquidity:10,ends_at:future,url:'https://polymarket.com/event/'+id,...more
+ })});
+ const rows=[
+  mk('reversed',['No','Yes'],[0.8,0.2]),
+  mk('closed',['Yes','No'],[0.9,0.1],{closed:true}),
+  mk('inactive',['Yes','No'],[0.9,0.1],{active:false}),
+  mk('invalid',['No','Undecided'],[0.8,0.2]),
+  mk('null',['Yes','No'],[null,0.8]),
+ ];
+ const result=assembleData({marketRows:rows,nowMs:now}).markets;
+ assert.deepEqual(result.map(x=>x.id),['reversed']);
+ assert.equal(result[0].yes,0.2);
+ assert.equal(result[0].price_kind,'yes_token_price');
+ assert.equal(result[0].independent_probability,false);
+ assert.equal(result[0].market_status,'active');
 });

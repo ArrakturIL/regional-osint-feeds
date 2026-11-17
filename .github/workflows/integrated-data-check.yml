@@ -113,6 +113,8 @@ jobs:
         run: python -m unittest discover -s scripts -p 'test_translate_news_open_source.py' -v
       - name: Frontend bilingual layout and text tests
         run: node --test frontend/tests/ui-qa.test.mjs
+      - name: P1 analyst Unicode and market YES-price regression tests
+        run: node --test tests/architecture/editor-analyst-decision.test.mjs tests/architecture/pages-data.test.mjs
       - name: News grouping, attribution and chronology regression checks
         run: node --test tests/architecture/news-quality.test.mjs tests/architecture/news-localization-provenance.test.mjs
       - name: Collector fallback commit safety (offline)

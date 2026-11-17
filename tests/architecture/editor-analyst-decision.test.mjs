@@ -139,3 +139,22 @@ test('published analyst commentary preserves attribution, immutable source URL, 
  const statement=f.batches[0][1];
  assert.ok(statement,'publication statement committed in batch');
 });
+
+test('E-06: Cyrillic categorical confirmation is rejected but explicit negation remains attributable',()=>{
+ const {validateDecision}=make();
+ for(const headline of [
+  'По мнению аналитика, факт официально установлен',
+  'Аналитик считает, что произошедшее ДОКАЗАНО',
+  'Автор утверждает, что сообщение подтверждено',
+  'По оценке аналитика, выводы доказаны',
+ ]){
+  assert.equal(validateDecision({...valid,headline},report.body),null,'unsafe headline: '+headline);
+ }
+ for(const headline of [
+  'По мнению аналитика, информация не подтверждена',
+  'Автор объясняет, почему этот вывод не доказан',
+  'Аналитик обсуждает сообщения о подтверждении фактов',
+ ]){
+  assert.equal(validateDecision({...valid,headline},report.body)?.decision,'publish','attributed, non-categorical: '+headline);
+ }
+});
