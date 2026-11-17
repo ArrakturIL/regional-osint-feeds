@@ -145,6 +145,29 @@ test('original v64 logic is exactly preserved, only relative import paths change
   // the frozen bytes by stripping ONLY those reviewed API additions, so all
   // unrelated v64 logic must still match exactly.
   let monitorActual=readFileSync(liveFile('api/monitor-changes.mjs'),'utf8');
+  // C-04 now also reads a bounded set of hourly runs for source comparison,
+  // without changing the latest-two-run editorial journal. Its behavior is
+  // tested directly in editor-monitor-changes-api.test.mjs. Normalize only
+  // these explicitly reviewed additions before frozen v64 byte parity.
+  assert.ok(monitorActual.includes('generatedAt:new Date().toISOString()'),
+    'C-04 response generation timestamp required');
+  const monitorModuleStart=monitorActual.indexOf('export function buildDigest(rows,eventRows){');
+  assert.ok(monitorModuleStart>0&&monitorActual.includes('const SOURCE_CURSOR_FIELDS='),
+    'C-04 snapshot aliases must be declared outside the frozen digest');
+  monitorActual=monitorActual.slice(monitorModuleStart);
+  const queryBegin=monitorActual.indexOf('  // Keep the latest two runs for editorial outcome/journal comparison, but');
+  const queryEnd=monitorActual.indexOf('  const prev=Number(runs[1]?.started_at_ms||0)',queryBegin);
+  assert.ok(queryBegin>=0&&queryEnd>queryBegin&&monitorActual.slice(queryBegin,queryEnd).includes('LIMIT 12'),
+    'C-04 only broadens bounded source snapshot SELECT');
+  const originalMonitorQuery="  const result=await env.CORE_DB.prepare('SELECT run_id,started_at_ms,outcome,payload FROM monitor_runs ORDER BY started_at_ms DESC LIMIT 2').all();\\n  const runs=result.results||[];\\n".replaceAll('\\n','\\n');
+  monitorActual=monitorActual.slice(0,queryBegin)+originalMonitorQuery+monitorActual.slice(queryEnd);
+  const monitorFooterStart=monitorActual.indexOf('  const digest=buildDigest(runs,events);');
+  const monitorFooterEnd=monitorActual.indexOf(' }catch(e){',monitorFooterStart);
+  assert.ok(monitorFooterStart>=0&&monitorFooterEnd>monitorFooterStart&&
+    monitorActual.slice(monitorFooterStart,monitorFooterEnd).includes('sourceComparisonFrom'),
+    'C-04 source snapshot comparison is isolated from the existing journal query');
+  const frozenMonitorFooter="  const digest=buildDigest(runs,events);\\n  return Response.json({requested_language:lang,...digest},{status:200,headers});\\n".replaceAll('\\n','\\n');
+  monitorActual=monitorActual.slice(0,monitorFooterStart)+frozenMonitorFooter+monitorActual.slice(monitorFooterEnd);
   const monitorEditStart=monitorActual.indexOf(' const a=parse(latest.payload),b=parse(prior.payload);');
   const monitorEditEnd=monitorActual.indexOf(' const changedEvents=',monitorEditStart);
   const origBegin=monitorExpected.indexOf(' const a=parse(latest.payload),b=parse(prior.payload),oldS=');
@@ -154,10 +177,6 @@ test('original v64 logic is exactly preserved, only relative import paths change
   const added='sourceChanges,sourceGaps,sourceCoverage,independentPrimarySources:null,';
   assert.ok(monitorActual.includes(added),'C-04 exact fields must remain present');
   monitorActual=monitorActual.replace(added,'');
-  const oldReturn='return Response.json({requested_language:lang,...digest},{status:200,headers});';
-  const newReturn='return Response.json({requested_language:lang,generatedAt:new Date().toISOString(),...digest},{status:200,headers});';
-  assert.ok(monitorActual.includes(newReturn),'C-04 response generation timestamp required');
-  monitorActual=monitorActual.replace(newReturn,oldReturn);
   assert.equal(monitorActual,monitorExpected,
     'Only the explicit C-04 source comparison extension may differ from frozen monitor logic');
   assert.equal(readFileSync(liveFile('api/official-posts.mjs'),'utf8'),officialExpected,
