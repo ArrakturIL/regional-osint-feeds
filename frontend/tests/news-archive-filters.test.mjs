@@ -6,9 +6,11 @@ import {readFileSync} from 'node:fs';
 const src=readFileSync(new URL('../src/components/NewsArchive/NewsArchive.js',import.meta.url),'utf8')
  .replace(/^import\s+[^\n]+\n/gm,'')
  .replace(/^export\s+(?=(?:function|const)\s)/gm,'');
-const ctx={URLSearchParams,Date,RangeError,Error,Number,String,Array,Object,Set};
-function helpers(){return vm.runInNewContext(src+
- '\n({rwArchiveRequest,rwArchiveRange,rwArchiveValidatePayload})',ctx,{filename:'NewsArchive.js'});}
+function helpers(){
+ const ctx={URLSearchParams,Date,RangeError,Error,Number,String,Array,Object,Set};
+ return vm.runInNewContext(src+
+ '\n({rwArchiveRequest,rwArchiveRange,rwArchiveValidatePayload})',ctx,{filename:'NewsArchive.js'});
+}
 
 test('C-06 actual archive request includes all applied filters and exact stable continuation hash',()=>{
  const {rwArchiveRequest}=helpers();
