@@ -52,7 +52,7 @@ jobs:
         id: collect
         env:
           NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
-        run: python scripts/collect_gdelt.py
+        run: python -m scripts.collect_gdelt
       - name: Shadow-write paired GDELT JSON to Neon (nonfatal until verified cutover)
         if: github.ref == 'refs/heads/main'
         env:
