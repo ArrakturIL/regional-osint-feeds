@@ -289,3 +289,14 @@ test('C-02 protect two independent outlets reporting the same attributed stateme
  assert.equal(g.groups[0].members.length,2);
  assert.equal(new Set(g.groups[0].members.map(x=>x.owner)).size,2);
 });
+
+
+test('C-02 regulatory grouping requires the same restricted service, not only the same country and policy words',()=>{
+ const a=article('reg-a','BBC Middle East','Jordan bans Telegram over national security concerns',
+  'Government cites national security concerns for the service restriction.',0);
+ const b=article('reg-b','France 24','Jordan blocks Signal over national security concerns',
+  'Government cites national security concerns for the service restriction.',10);
+ const {groups,held}=group([a,b]);
+ assert.equal(held.length,0);
+ assert.equal(groups.length,2,'two distinct applications are not one regulatory event');
+});
