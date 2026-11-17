@@ -1,6 +1,8 @@
 # ARCH-07 — финальная техническая интеграционная приёмка, релизная граница
 
-**17.11.2026, состояние на независимый контроль 03:09 UTC.**
+**Текущий итог: ARCH-07 закрыт после релиза; подтверждения и версии — в §4 ниже.**
+
+**17.11.2026, исторический снимок до публикации на 03:09 UTC.**
 
 **Итог:** локальная техническая интеграционная приёмка **ПРОШЛА**; **production release и проверка после него ещё не выполнялись**. Не помечать полный ARCH-07 `DONE` до согласованного merge/deploy и независимого post-release postcheck. Отложенные ARCH-04/05 идут самостоятельно 20 и 18 ноября; готовность их реальных данных нельзя вывести из тестового CI.
 
@@ -37,3 +39,15 @@ Cloudflare read-only control plane, 17.11.2026 ~03:03 UTC:
 **Пока НЕ выполнено:** `PR #84 → main` merge, coordinated Pages+2 Workers publish, captured before/after version/deployment receipt, post-release live API + active production gate и rollback проверка фактической версии по необходимости. После явного согласования release выполнить корректный GitHub process без ручной выкладки и затем независимую проверку. Отдельную `ARCH-04/05` приёмку не менять и не дублировать.
 
 **Решение по TODO:** `ARCH-07 [~]` — техническая приёмка готова, ожидает контролируемого release/postcheck. Не писать `[x]` только на основании зелёного PR CI. Продуктовые B/C/E и глобальный frontend/browser QA остаются независимыми.
+
+## 4. ARCH-07 — согласованный release и независимый post-release postcheck (17.11.2026)
+
+**ARCH-07 официально закрыт.** ✅ Владелец прямо разрешил завершить этап и выпустить принятую ветку.
+
+- [PR #84](https://github.com/ArrakturIL/regional-osint-feeds/pull/84) squash-merged в `main`: **`94e38dd9f4e1dec04b0dddf486744876f6ecd351`**. PR содержал проверочные модули, CI и аудит-документы, без изменения runtime production source, миграций или удаления legacy.
+- [Coordinated production CI #44009574048](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/44009574048): **COMPLETED SUCCESS**, 10 source/component jobs + immutable `release-bundle` + coordinated `release-production` = **12 successful executed jobs**; preview skipped. Сборка и exact SHA verify прошли, live D1 preflight и capture rollback baseline прошли, Worker/Pages публикация и два binding postcheck прошли. Автоматический rollback skipped (не требовался); receipt `rw-coordinated-release-receipt` заархивирован в CI.
+- **Независимый Cloudflare control-plane postcheck:** Pages production `35e1ba63-4342-4672-8243-2817ae38ddfe`, `deploy=success`, source SHA `94e38dd9...`; Editor deployed `d47905a7-9280-4c5f-bef5-fb6d6cb627b7` **100%**; Monitor deployed `a618d86b-d63a-43b8-bd52-4c78e821fa7a` **100%**. Существующие cron `*/5` и `*/1` без изменений. Pages `EDITOR`/`MONITOR`, D1 `DB`/`NEWS_DB`, Worker AI/D1/vars/secret *presence* соответствуют контракту; `GEMINI_API_KEY` присутствует, но не активировался этим релизом. Значения секретов не запрашивались.
+- **Production HTTP после публикации:** GitHub release smoke подтвердил HTTP 200 для `/`, `/he/`, `/api/overview`. Независимый внешний GET подтвердил HTTP **200** и реальные JSON-ответы для `https://regional-watch.pages.dev/api/overview` и `https://regional-watch.pages.dev/api/news?lang=he&limit=5`. Это технический HTTP/API postcheck, **не** полный браузерный/UI/content QA.
+- **Граница:** Cloudflare Workers/Pages опубликованы согласованным workflow; D1 migrations/write QA, Neon, cron, настройки AI/квот, секреты и legacy source **не меняли**. ARCH-04 и ARCH-05 остаются отдельно назначенными независимыми приёмками (20 и 18 ноября соответственно); B/C/E и глобальный frontend QA также не закрыты этим релизом.
+
+**Вердикт:** критерии ARCH-07 (CI + coordinated release + exact active versions + independent live HTTP/control-plane postcheck) выполнены; `ARCH-07 [x]`.
