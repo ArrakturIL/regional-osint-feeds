@@ -7,6 +7,9 @@ import { Intro } from '../../components/PageIntro/Intro.js';
 import { SatelliteCatalog } from '../../components/SatelliteCatalog/SatelliteCatalog.js';
 import { Head } from '../../components/SectionHead/Head.js';
 import { classifyMarket } from '../../utils/classifyMarket.js';
+import { MarketSeriesCard } from '../../components/MarketCard/MarketSeriesCard.js';
+import { rwMarketSeries } from '../../utils/marketSeries.js';
+import { ruPlural } from '../../utils/ruPlural.js';
 export function DataRoomV2({
   visible,
   data,
@@ -42,8 +45,8 @@ export function DataRoomV2({
         officialNotices: 'הודעות רשמיות',
         idf: 'הודעות צה״ל האחרונות',
         marketsTitle: 'Polymarket: ציפיות המשתתפים',
-        marketSub: 'המחיר משקף מסחר בשוק ולא מוכיח שאירוע עתידי יתרחש.',
-        marketOriginal: 'כותרת המקור (אנגלית)',
+        marketSub:
+          'האחוזים הם מחיר חוזה ה״כן״ ב־Polymarket: כך משתתפי השוק מעריכים את הסיכוי. זו אינה תחזית של המערכת ואינה אישור שהאירוע יתרחש.',
         marketAll: 'הכול',
         marketPeace: 'הפסקת אש',
         marketTalks: 'משא ומתן',
@@ -51,8 +54,6 @@ export function DataRoomV2({
         more: 'הצגת שאר השווקים',
         less: 'הצגת פחות',
         noMarket: 'אין שווקים זמינים כרגע.',
-        yes: 'מחיר YES',
-        volume: 'נפח מסחר',
         aviation: 'תעופה והודעות רשמיות',
         satellite: 'מידע לווייני',
         meaningful: 'מוצגים רק ממצאים שעברו סינון ואישור לפרסום.',
@@ -94,8 +95,8 @@ export function DataRoomV2({
         officialNotices: 'Официальные сообщения',
         idf: 'Последние публикации ЦАХАЛ',
         marketsTitle: 'Polymarket: ожидания участников рынка',
-        marketSub: 'Цена YES — рыночная котировка, а не подтверждение будущего события.',
-        marketOriginal: 'Название рынка (оригинал)',
+        marketSub:
+          'Проценты — цена контракта «Да» на Polymarket: так участники рынка оценивают шансы. Это не прогноз редакции и не подтверждение события.',
         marketAll: 'Все',
         marketPeace: 'Прекращение огня',
         marketTalks: 'Переговоры',
@@ -103,8 +104,6 @@ export function DataRoomV2({
         more: 'Показать остальные',
         less: 'Свернуть',
         noMarket: 'Нет актуальных рынков.',
-        yes: 'Цена YES',
-        volume: 'Объём',
         aviation: 'Авиация и официальные сообщения',
         satellite: 'Спутниковые данные',
         meaningful: 'Показываются только сведения, разрешённые к публикации.',
@@ -132,7 +131,8 @@ export function DataRoomV2({
     markets = allMarkets
       .filter(x => filter === 'all' || classifyMarket(x.question) === filter)
       .sort((a, b) => (b.volume || 0) - (a.volume || 0)),
-    selected = showAll ? markets : markets.slice(0, 6);
+    marketCards = rwMarketSeries(markets),
+    selected = showAll ? marketCards : marketCards.slice(0, 6);
   const allSources = Array.isArray(data?.sources) ? data.sources : [],
     issues = allSources.filter(x => x.state === 'error' || x.state === 'partial');
   const official = (name, items) =>
@@ -302,7 +302,13 @@ export function DataRoomV2({
         title: L.marketsTitle,
         icon: 'database',
         sub: L.marketSub,
-        right: t('span', 'hint', allMarkets.length + ' Polymarket'),
+        right: t(
+          'span',
+          'hint',
+          allMarkets.length +
+            ' ' +
+            (isHe ? 'שווקים' : ruPlural(allMarkets.length, ['рынок', 'рынка', 'рынков'])),
+        ),
       }),
       h(
         'div',
@@ -333,60 +339,16 @@ export function DataRoomV2({
         ? h(
             'div',
             { className: 'data-grid' },
-            ...selected.map(m =>
-              h(
-                'article',
-                { className: 'market', key: m.id },
-                t('span', 'kicker', L.marketOriginal),
-                h('h3', { lang: 'en', dir: 'auto' }, m.question),
-                h(
-                  'div',
-                  { className: 'rw-market-metrics' },
-                  t(
-                    'strong',
-                    null,
-                    L.yes +
-                      ': ' +
-                      (Number.isFinite(Number(m.yes)) ? (Number(m.yes) * 100).toFixed(1) + '%' : '—'),
-                  ),
-                  h(
-                    'div',
-                    {
-                      className: 'bar rw-market-yes-bar',
-                      role: 'progressbar',
-                      'aria-label': L.yes,
-                      'aria-valuemin': 0,
-                      'aria-valuemax': 100,
-                      'aria-valuenow': Number.isFinite(Number(m.yes))
-                        ? Math.max(0, Math.min(100, Math.round(Number(m.yes) * 1000) / 10))
-                        : undefined,
-                    },
-                    h('i', { style: { width: Math.max(0, Math.min(100, Number(m.yes || 0) * 100)) + '%' } }),
-                  ),
-                  t(
-                    'span',
-                    null,
-                    L.volume +
-                      ': ' +
-                      new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(
-                        Number(m.volume) || 0,
-                      ) +
-                      ' USD',
-                  ),
-                ),
-                h(External, { url: m.url }, isHe ? 'שוק ומידע נוסף ↗' : 'Рынок и условия ↗'),
-              ),
-            ),
+            ...selected.map(series => h(MarketSeriesCard, { key: series.key, series, he: isHe })),
           )
         : t('p', 'hint', L.noMarket),
-      markets.length > 6
+      marketCards.length > 6
         ? h(
             'button',
             { type: 'button', className: 'more', onClick: () => setShowAll(!showAll) },
-            showAll ? L.less : L.more + ' (' + (markets.length - 6) + ')',
+            showAll ? L.less : L.more + ' (' + (marketCards.length - 6) + ')',
           )
         : null,
-      t('p', 'rw-fineprint', L.marketSub),
     ),
     panelNotice('aviation', L.aviation, aviation, aviationError, aviationPending),
     isHe ? localized(L.aviation, aviation) : h(AviationExplainedV2, { data }),

@@ -115,6 +115,27 @@ html[dir="rtl"] :is(.news-card,.rw-story-teaser,.rw-dossier,.rw-situation,.panel
 @keyframes rw7Scan{0%{transform:translateX(-200px);opacity:0}15%,85%{opacity:1}100%{transform:translateX(100vw);opacity:0}}
 @keyframes rw7Rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 @keyframes rw7Open{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+/* STATUS #10: Polymarket cards — one question per card, series as ranked rows. */
+.rw-market-card{display:flex;flex-direction:column;gap:12px}
+.rw-market-head h3{margin:6px 0 0;font-size:1rem;line-height:1.45}
+.rw-market-card .rw-market-metrics{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:0}
+.rw-market-figure strong{display:block;font-family:var(--rw7-display);font-weight:400;font-size:2rem;line-height:1;color:var(--rw7-mint)}
+.rw-market-figure span{font-family:var(--rw7-mono);font-size:.6875rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rw7-body)}
+.rw-market-delta{font-family:var(--rw7-mono);font-size:.75rem;color:var(--rw7-body);white-space:nowrap}
+.rw-market-delta--up{color:var(--rw7-mint)}
+.rw-market-delta--down{color:var(--rw7-urgent)}
+.rw-market-card .rw-market-yes-bar{margin:0}
+.rw-market-card .market-meta{display:flex;flex-wrap:wrap;gap:6px 14px;margin:0;font-size:.8125rem;color:var(--rw7-body)}
+.rw-market-rows{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.rw-market-row{display:grid;gap:5px}
+.rw-market-row-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.rw-market-row-head strong{font-family:var(--rw7-mono);font-size:.9375rem;color:var(--rw7-text)}
+.rw-market-row-label{color:var(--rw7-text);text-decoration:none;border-bottom:1px dotted var(--rw7-line-strong)}
+.rw-market-row-label:hover{color:var(--rw7-mint)}
+.rw-market-row .rw-market-yes-bar{height:6px}
+.rw-market-more summary{cursor:pointer;font-family:var(--rw7-mono);font-size:.75rem;letter-spacing:.06em;color:var(--rw7-mint);padding:6px 0}
+.rw-market-more[open] summary{margin-bottom:10px}
+
 /* QA #11/#12 (18.11): programmatic focus on route change, touch targets, digest. */
 #main-content:focus{outline:none}
 .rw-digest-item small{display:block;margin-top:8px}
