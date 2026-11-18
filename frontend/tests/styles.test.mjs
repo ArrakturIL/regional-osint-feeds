@@ -6,6 +6,8 @@ import {fileURLToPath} from 'node:url';
 import {assembleStyles} from '../scripts/build-styles.mjs';
 const frontend=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const source=(p)=>readFileSync(resolve(frontend,p),'utf8');
+// Formatting-insensitive view of JS source (#8a Prettier): no whitespace, one quote style, no trailing commas.
+const code=s=>String(s).replace(/\s+/g,'').replace(/'/g,'"').replace(/,([)\]}])/g,'$1');
 const parts=JSON.parse(source('styles-order.json')).order;
 const refined=source('src/styles/refinements.css');
 test('CSS has component and page owners; original 550-line monolith is not authored',()=>{
@@ -85,7 +87,7 @@ test('news order and sources count regression: stable grid and isolated LTR numb
  assert.match(layout,/@media\s*\(max-width:\s*640px\)/);
  assert.match(layout,/column-count:\s*1/);
  assert.doesNotMatch(layout,/grid-auto-rows:\s*auto/);
- const count=source('src/components/Header/Header.js');
+ const count=code(source('src/components/Header/Header.js'));
  assert.match(count,/h\("bdi",\{className:"rw-site-source-count",dir:"ltr"\},status\)/);
  assert.match(count,/h\("bdi",\{className:"rw-dlg-counter",dir:"ltr"\},status\)/);
  const countStyle=source('src/components/NewsArchive/NewsArchive.filters.css')+source('src/components/Header/Header.status.css')+source('src/components/Digest/Digest.qa.css');

@@ -8,6 +8,8 @@ import {ruPlural} from '../src/utils/ruPlural.js';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const source=p=>readFileSync(resolve(root,p),'utf8');
+// Formatting-insensitive view of JS source (#8a Prettier): no whitespace, one quote style, no trailing commas.
+const code=s=>String(s).replace(/\s+/g,'').replace(/'/g,'"').replace(/,([)\]}])/g,'$1');
 
 test('expanded news cards no longer force giant row-height gaps or reorder DOM',()=>{
  const js=source('src/components/NewsMasonry/NewsMasonry.js');
@@ -21,7 +23,7 @@ test('expanded news cards no longer force giant row-height gaps or reorder DOM',
 });
 
 test('Digest shows result and checked period, sources and time in one summary area',()=>{
- const js=source('src/components/Digest/Digest.js');
+ const js=code(source('src/components/Digest/Digest.js'));
  const css=assembleStyles();
  assert.match(js,/rw-digest-summary/);
  assert.match(js,/rw-digest-meta/);
@@ -37,7 +39,7 @@ test('Russian plural inflection handles 1, 2, 5, 11, 17, 21 and 112',()=>{
  const forms=['публикация','публикации','публикаций'];
  for(const [n,v] of [[1,'публикация'],[2,'публикации'],[5,'публикаций'],[11,'публикаций'],[17,'публикаций'],[21,'публикация'],[112,'публикаций']])
   assert.equal(ruPlural(n,forms),v,n);
- const card=source('src/components/NewsCard/NewsCard.js');
+ const card=code(source('src/components/NewsCard/NewsCard.js'));
  assert.match(card,/ruPlural\(related\.length\+1/);
 });
 

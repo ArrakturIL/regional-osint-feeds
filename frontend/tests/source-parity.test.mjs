@@ -8,21 +8,23 @@ import {fileURLToPath} from 'node:url';
 import {assemble} from '../scripts/build.mjs';
 const here=resolve(dirname(fileURLToPath(import.meta.url)),'..'),root=resolve(here,'..');
 const manifest=JSON.parse(readFileSync(resolve(here,'build-order.json'),'utf8'));
+// Formatting-insensitive view of JS source (#8a Prettier): no whitespace, one quote style, no trailing commas.
+const code=s=>String(s).replace(/\s+/g,'').replace(/'/g,'"').replace(/,([)\]}])/g,'$1');
 test('all ordered source modules exist',()=>{assert.equal(manifest.order.length,51);for(const p of manifest.order)assert.ok(existsSync(resolve(here,'src',p)),p+' is missing')});
 test('bundle preserves the frozen architecture baseline and contains intentional news/grid fixes',()=>{
  const baseline=readFileSync(resolve(root,'baselines/cloudflare/2026-11-14/pages-0f39f36e/app.js'),'utf8');
- const compiled=assemble();
+ const compiled=assemble(),C=code(compiled);
  assert.ok(baseline.length>=80000,'frozen reference preserved');
  assert.notEqual(compiled,baseline,'updated component JS must differ from original');
  assert.ok(compiled.startsWith(manifest.prefix));
- assert.ok(compiled.includes('function NewsMasonry('));
- assert.ok(compiled.includes('className:"rw-site-source-count",dir:"ltr"'));
+ assert.ok(C.includes(code('function NewsMasonry(')));
+ assert.ok(C.includes(code('className:"rw-site-source-count",dir:"ltr"')));
  assert.ok(!compiled.includes('gridRowEnd'));
 });
 test('CSS is identical to original production Pages CSS',()=>{const baseline=readFileSync(resolve(root,'baselines/cloudflare/2026-11-14/pages-0f39f36e/app.css'),'utf8');assert.equal(assembleStyles({includeRefinements:false}),baseline)});
 test('each frontend source parses as an ES module',()=>{for(const p of manifest.order){const r=spawnSync(process.execPath,['--check',resolve(here,'src',p)],{encoding:'utf8'});assert.equal(r.status,0,p+': '+r.stderr)}});
 test('each local module import points to an existing file',()=>{for(const p of manifest.order){const abs=resolve(here,'src',p),src=readFileSync(abs,'utf8');for(const m of src.matchAll(/^import \{ ([^}]+) \} from '([^']+)';$/gm)){const target=resolve(dirname(abs),m[2]);assert.ok(existsSync(target),p+' -> '+m[2]);const contents=readFileSync(target,'utf8');for(const symbol of m[1].split(',').map(s=>s.trim()))assert.ok(contents.includes(symbol),p+' imports '+symbol+' from '+m[2]);}}});
-test('single App tree serves both Russian and Hebrew',()=>{const app=readFileSync(resolve(here,'src/app/App.js'),'utf8');assert.ok(app.includes('function App()'));for(const path of ['/events','/data','/analysts'])assert.ok(app.includes('route==="'+path+'"'),path+' route missing');const runtime=readFileSync(resolve(here,'src/app/runtime.js'),'utf8');assert.ok(runtime.includes('const UI_HE='));assert.ok(existsSync(resolve(here,'src/i18n/meta.js')))});
+test('single App tree serves both Russian and Hebrew',()=>{const app=code(readFileSync(resolve(here,'src/app/App.js'),'utf8'));assert.ok(app.includes(code('function App()')));for(const path of ['/events','/data','/analysts'])assert.ok(app.includes(code('route==="'+path+'"')),path+' route missing');const runtime=code(readFileSync(resolve(here,'src/app/runtime.js'),'utf8'));assert.ok(runtime.includes(code('const UI_HE=')));assert.ok(existsSync(resolve(here,'src/i18n/meta.js')))});
 
 test('component-owned CSS sources replace the single authored stylesheet',()=>{
  assert.ok(!existsSync(resolve(here,'src/styles/app.css')),'legacy monolith is still authored');
