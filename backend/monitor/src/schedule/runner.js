@@ -2,6 +2,8 @@ import { AIS, HOUR, MINUTE } from '../config/constants.js';
 import { collect } from './collect.js';
 import { claimManualRun } from './manual.js';
 import { sources } from './sources.js';
+import { statusSql } from '../storage/sql.js';
+import { disabledSources } from '../storage/source-controls.js';
 export function scheduledSourceNames(minute) {
   // Each schedule has its own CPU budget. AIS must not delay HTTP collectors.
   const group =
@@ -67,6 +69,16 @@ export async function runSchedule(controller, env) {
       for (const name of autoAdsb) selected.delete(name);
     }
   }
+  // Operator kill switch (H-04): a disabled source makes no upstream request in either
+  // automatic or manual runs; its status says so instead of keeping a stale "ok".
+  const disabled = selected.size ? await disabledSources(env.DB, Date.now()) : new Map();
+  const blocked = [...selected].filter(name => disabled.has(name));
+  for (const name of blocked) selected.delete(name);
+  if (blocked.length) {
+    await env.DB.batch(
+      blocked.map(name => env.DB.prepare(statusSql).bind(name, slot, null, 'disabled', disabled.get(name))),
+    );
+  }
   const due = sources.filter(s => selected.has(s.name) && (!s.secret || env[s.secret]));
   const results = await Promise.allSettled(due.map(source => collect(env.DB, env, source, slot)));
   if (manual) {
@@ -79,11 +91,13 @@ export async function runSchedule(controller, env) {
       requested: manual.wanted,
       observed,
       rejected: results.map((x, i) => (x.status === 'rejected' ? due[i].name : null)).filter(Boolean),
-      missing_secrets: manual.wanted.filter(name => !due.some(x => x.name === name)),
+      disabled: manual.wanted.filter(name => disabled.has(name)),
+      missing_secrets: manual.wanted.filter(name => !disabled.has(name) && !due.some(x => x.name === name)),
     };
     const complete =
       manual.wanted.length > 0 &&
       report.rejected.length === 0 &&
+      report.disabled.length === 0 &&
       report.missing_secrets.length === 0 &&
       observed.length === manual.wanted.length &&
       observed.every(x => x.state === 'ok' || x.state === 'empty');

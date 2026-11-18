@@ -49,7 +49,7 @@ export const SOURCE_ATTRIBUTION = Object.freeze({
 export const ISO = ms =>
   Number.isFinite(Number(ms)) && Number(ms) > 0 ? new Date(Number(ms)).toISOString() : null;
 const text = x => (typeof x === 'string' ? x.trim() : '');
-const validStatus = new Set(['ok', 'partial', 'empty', 'error', 'retired', 'key_missing']);
+const validStatus = new Set(['ok', 'partial', 'empty', 'error', 'retired', 'key_missing', 'disabled']);
 export function assembleSources(statusRows = []) {
   return statusRows
     .filter(row => text(row.source) && row.state !== 'retired')

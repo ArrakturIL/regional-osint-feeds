@@ -1,8 +1,9 @@
 import { FEEDS as EVENT_FEEDS } from './events.mjs';
 import { canonicalNewsUrl, normalizedHeadline } from './normalization.mjs';
 import { load } from './rss.mjs';
+import { disabledPublishers } from './source-controls.mjs';
 
-const FEEDS = EVENT_FEEDS.map(x => [x[0], x[1], x[4], x[3]]);
+const FEEDS = EVENT_FEEDS.map(x => [x[0], x[1], x[4], x[3], x[2]]);
 async function digest(s) {
   const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
   return [...new Uint8Array(h)]
@@ -11,13 +12,20 @@ async function digest(s) {
     .join('');
 }
 export async function ingestNewsFeeds(env, now) {
-  const runs = await Promise.all(FEEDS.map(x => load(x, now))),
+  const off = await disabledPublishers(env.NEWS_DB, now);
+  const runs = await Promise.all(FEEDS.filter(x => !off.has(x[4])).map(x => load(x.slice(0, 4), now))),
     all = runs.flatMap(x => x.items);
   for (const r of runs)
     await env.NEWS_DB.prepare(
       'INSERT INTO feed_status(name,checked_ms,status,http_status,items_count,error) VALUES(?,?,?,?,?,?) ON CONFLICT(name) DO UPDATE SET checked_ms=excluded.checked_ms,status=excluded.status,http_status=excluded.http_status,items_count=excluded.items_count,error=excluded.error',
     )
       .bind(r.name, now, r.state, r.http, r.items.length, r.error)
+      .run();
+  for (const x of FEEDS.filter(f => off.has(f[4])))
+    await env.NEWS_DB.prepare(
+      'INSERT INTO feed_status(name,checked_ms,status,http_status,items_count,error) VALUES(?,?,?,?,?,?) ON CONFLICT(name) DO UPDATE SET checked_ms=excluded.checked_ms,status=excluded.status,http_status=excluded.http_status,items_count=excluded.items_count,error=excluded.error',
+    )
+      .bind(x[0], now, 'disabled', null, 0, 'disabled by operator')
       .run();
   all.sort((a, b) => b.score - a.score || b.pub - a.pub);
   // A canonical URL is one technical article identity, regardless of UTM order.

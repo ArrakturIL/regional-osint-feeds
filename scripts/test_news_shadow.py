@@ -108,10 +108,14 @@ class Tests(unittest.TestCase):
         from pathlib import Path
         root=Path(__file__).resolve().parents[1]
         registry=json.loads((root/"config/news-source-registry.json").read_text(encoding="utf-8"))
-        editor=(root/"backend/editor/src/news/events.mjs").read_text(encoding="utf-8")
-        match=re.search(r'export const FEEDS=(\[.*?\]);',editor)
-        self.assertIsNotNone(match,"active Editor feeds contract missing")
-        feeds=json.loads(match.group(1))
+        import subprocess
+        # Read the real module (formatting-independent since #8a Prettier), not a regex over source text.
+        events=(root/"backend/editor/src/news/events.mjs").as_uri()
+        out=subprocess.run(["node","--input-type=module","-e",
+            "const m=await import(process.argv[1]);process.stdout.write(JSON.stringify(m.FEEDS))",events],
+            capture_output=True,text=True,timeout=30)
+        self.assertEqual(out.returncode,0,"active Editor feeds contract missing: "+out.stderr[-300:])
+        feeds=json.loads(out.stdout)
         self.assertTrue(feeds,"Editor must define production feeds")
         by_url={s.get("feed_url"):s for s in registry["sources"] if s.get("feed_url")}
         self.assertEqual(len(by_url),sum(bool(s.get("feed_url")) for s in registry["sources"]),"duplicate registry feed URLs")

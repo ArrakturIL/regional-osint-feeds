@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "description": "H-04 per-source rollback. Keys must match Monitor sources.js names and Editor events.FEEDS publisher ids (checked by tests/architecture/source-controls.test.mjs).",
+  "components": {
+    "monitor": {
+      "database": "regional-osint",
+      "sources": [
+        "adsb",
+        "adsb_alt",
+        "aerial_archive",
+        "airbridge_context",
+        "ais",
+        "centcom_dvids",
+        "centcom_rss",
+        "copernicus_ems",
+        "easa",
+        "fcdo",
+        "firms",
+        "gdelt_context",
+        "gfw_sar",
+        "gfw_sar_baseline",
+        "gfw_token",
+        "idf_official",
+        "ioda",
+        "marad_official",
+        "mil_lol",
+        "mscio",
+        "polymarket",
+        "satellite_context",
+        "sentinel_catalog",
+        "state_dept",
+        "unosat_analysis",
+        "us_dod_rss"
+      ]
+    },
+    "editor": {
+      "database": "regional-watch-news",
+      "sources": [
+        "aljazeera",
+        "almonitor",
+        "arutzsheva",
+        "bbc",
+        "france24",
+        "guardian",
+        "israelhayom",
+        "jns",
+        "jpost",
+        "maariv",
+        "toi"
+      ]
+    }
+  }
+}

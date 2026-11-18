@@ -1,0 +1,61 @@
+name: Regional Watch source control (per-source rollback)
+
+# H-04: stop or resume ONE source without a release. Monitor and Editor read
+# D1 source_controls on every run; the change applies on the next cron tick.
+on:
+  workflow_dispatch:
+    inputs:
+      component:
+        description: 'monitor (OSINT collectors) or editor (news publishers)'
+        type: choice
+        options: [monitor, editor]
+        required: true
+      action:
+        type: choice
+        options: [list, disable, enable]
+        required: true
+      source:
+        description: 'key from config/source-controls.json (e.g. mil_lol, jns)'
+        required: false
+        default: ''
+      reason:
+        description: 'required for disable; shown in the source status'
+        required: false
+        default: ''
+      hours:
+        description: 'optional auto-expiry 1..720 h (empty = until enabled)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: regional-watch-source-control
+  cancel-in-progress: false
+
+jobs:
+  control:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest scripts.test_source_control -v
+      - name: Apply control to private D1
+        env:
+          CLOUDFLARE_D1_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          IN_COMPONENT: ${{ inputs.component }}
+          IN_ACTION: ${{ inputs.action }}
+          IN_SOURCE: ${{ inputs.source }}
+          IN_REASON: ${{ inputs.reason }}
+          IN_HOURS: ${{ inputs.hours }}
+        run: |
+          python -m scripts.source_control --component "$IN_COMPONENT" --action "$IN_ACTION" \
+            --source "$IN_SOURCE" --reason "$IN_REASON" --hours "$IN_HOURS" | tee -a "$GITHUB_STEP_SUMMARY"
