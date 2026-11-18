@@ -1,5 +1,5 @@
 // Event-card response compatible with the legacy /api/news articles DTO.
-import { eventRows, reconcile, hebrew, publisher, language } from './events.mjs';
+import { eventIndex, eventRowsByIds, reconcile, hebrew, publisher, language } from './events.mjs';
 import { localizeNewsRow } from '../localization/localization.mjs';
 import { displayForPage } from '../localization/display-policy.mjs';
 import { newsTier } from './tier.mjs';
@@ -91,14 +91,14 @@ export async function readNewsEvents(request, env) {
     () => null,
   );
   const offRead = disabledPublishers(env.NEWS_DB);
-  let rows = await eventRows(env.NEWS_DB, null);
+  let rows = await eventIndex(env.NEWS_DB, sources.length > 0);
   // Initialize the event index once on first public request, avoiding an empty
   // homepage during the first five-minute cron window after deployment.
   if (!rows.length) {
     const exists = await env.NEWS_DB.prepare('SELECT COUNT(*) n FROM news_event_groups').first();
     if (!(exists?.n || 0)) {
       await reconcile(env.NEWS_DB);
-      rows = await eventRows(env.NEWS_DB, null);
+      rows = await eventIndex(env.NEWS_DB, sources.length > 0);
     }
   }
   // Sort the complete raw event pool before doing any per-row i18n D1 reads.
@@ -168,7 +168,10 @@ export async function readNewsEvents(request, env) {
       { error: 'feed_changed', feed_order_hash, restart_offset: 0, sort },
       { status: 409, headers: { ...HEADERS, 'Cache-Control': 'no-store' } },
     );
-  const pageRows = visible.slice(offset, offset + limit).map(x => x.row);
+  const pageRows = await eventRowsByIds(
+    env.NEWS_DB,
+    visible.slice(offset, offset + limit).map(x => x.event_id),
+  );
   // A native Hebrew source is already translated; do not require Workers AI
   // translation for its appearance in the Hebrew edition.
   const substitutions = new Map();

@@ -69,3 +69,28 @@ test('F-06: event rows, source controls and SLA are read concurrently, not one a
   assert.equal(peak, 3, 'three independent D1 reads overlap');
   assert.deepEqual((await r.json()).translation_sla, {urgent: {met: 1}});
 });
+test('F-06: the 7-day pool is read without text columns; text is fetched only for the shown page', async () => {
+  const many = Array.from({length: 60}, (_, i) => row('e' + i, i % 2 ? 'BBC Middle East' : 'Times of Israel', 'Headline ' + i))
+    .map((r, i) => ({...r, last_seen_ms: now - i * 1000}));
+  const seen = [];
+  const NEWS_DB = {prepare(sql) {
+    const st = {bind(...p) { st.p = p; return st; }, first: async () => null};
+    st.all = async () => {
+      seen.push({sql, p: st.p});
+      if (sql.includes('FROM source_controls')) return {results: []};
+      if (sql.includes(' IN (')) return {results: many.filter(r => st.p.includes(r.event_id))};
+      if (sql.includes('news_event_groups')) return {results: many.map(({event_id, topic, event_priority, verification_status, last_seen_ms, source}) => ({event_id, topic, event_priority, verification_status, last_seen_ms, source}))};
+      return {results: []};
+    };
+    return st;
+  }};
+  const r = await readNewsEvents(new Request('https://rw.example/api/news?lang=ru&limit=10&sort=latest&offset=5'), {NEWS_DB});
+  assert.equal(r.status, 200);
+  const body = await r.json();
+  assert.deepEqual(body.articles.map(a => a.event_id), many.slice(5, 15).map(x => x.event_id), 'order and offset preserved');
+  assert.equal(body.articles[0].headline, 'Headline 5', 'page rows carry their text');
+  const pool = seen.find(x => x.sql.includes('news_event_groups') && !x.sql.includes(' IN ('));
+  assert.doesNotMatch(pool.sql, /headline|summary|t\.body|sources_json/, 'pool query is light');
+  const page = seen.find(x => x.sql.includes(' IN ('));
+  assert.equal(page.p.length, 10, 'text read for the 10 shown events only');
+});
