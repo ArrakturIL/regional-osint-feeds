@@ -22,7 +22,12 @@ test('all eight locale routes retain exact document HTML',()=>{
  assert.ok(existsSync(resolve(dest,route)));
  // F-06: only the asset version markers differ; each is the asset's own content hash.
  const out=load(route);
- assert.equal(out.replace(/\?v=[0-9a-f]{12}"/g,'?v=rw-editor-bottom-v16"'),source,route+' changed');
+ // F-06 #15: first-screen fonts are preloaded with the CSS; the URLs are the exact ones the CSS uses.
+ const css=load('assets/app.css'),pre=[...out.matchAll(/<link rel="preload" href="([^"]+)" as="font" type="font\/woff2" crossorigin>/g)].map(m=>m[1]);
+ assert.deepEqual(pre.map(u=>u.split('/').pop().split('?')[0]),lang==='he'?['rubik-hebrew.woff2']:['manrope-cyrillic.woff2','unbounded-cyrillic.woff2'],route+' preloads');
+ for(const u of pre)assert.ok(css.includes('url('+u+')'),route+' preload matches CSS '+u);
+ const bare=out.replace(/<link rel="preload"[^>]*>/g,'');
+ assert.equal(bare.replace(/\?v=[0-9a-f]{12}"/g,'?v=rw-editor-bottom-v16"'),source,route+' changed');
  for(const name of ['react.js','react-dom.js','app.js','app.css'])
   assert.ok(out.includes('/assets/'+name+'?v='+createHash('sha256').update(load('assets/'+name)).digest('hex').slice(0,12)+'"'),route+' '+name+' hash');
  }
