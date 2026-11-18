@@ -42,7 +42,7 @@ test('geminiChat sends system+user, JSON mode, key header; returns CF-shaped ans
   assert.match(req.url, /models\/gemini-3\.5-flash-lite:generateContent$/);
   assert.equal(req.init.headers['x-goog-api-key'], 'KEY');
   const body = JSON.parse(req.init.body);
-  assert.equal(body.systemInstruction.parts[0].text, 'SYS');
+  assert.match(body.systemInstruction.parts[0].text, /^SYS/);
   assert.equal(body.contents[0].parts[0].text, '{"t":1}');
   assert.equal(body.generationConfig.responseMimeType, 'application/json');
   assert.equal(body.generationConfig.maxOutputTokens, 500);
@@ -88,4 +88,21 @@ test('no key or spent daily Gemini cap goes straight to Cloudflare', async () =>
   await chat({NEWS_DB: db, AI: ai2, GEMINI_API_KEY: 'K'}, 'he_translate', input, {fetch: f.fn, now: () => 1e12});
   assert.equal(ai2.calls.length, 1);
   assert.ok(!f.seen.some(u => u.includes(':generateContent')), 'no Gemini call over the daily cap');
+});
+
+test('Gemini gets the JSON schema as text when the task asks for json_schema', async () => {
+  let body;
+  const schema = {type: 'object', properties: {decision: {type: 'string', enum: ['publish', 'skip']}}, required: ['decision']};
+  await geminiChat('K', 'm', {...input, response_format: {type: 'json_schema', json_schema: {name: 'd', schema}}}, async (u, init) => {
+    body = JSON.parse(init.body); return Response.json({candidates: [{content: {parts: [{text: '{}'}]}, finishReason: 'STOP'}]});
+  });
+  assert.match(body.systemInstruction.parts[0].text, /^SYS[\s\S]*"enum":\["publish","skip"\]/);
+});
+
+test('analyst tasks route Gemini-first and share the flash-lite daily cap', async () => {
+  for (const task of ['analyst_decision', 'analyst_translate']) {
+    assert.equal(ROUTES[task][0].provider, 'gemini');
+    assert.equal(ROUTES[task][0].family, ROUTES.he_translate[0].family);
+    assert.equal(ROUTES[task].at(-1).model, '@cf/zai-org/glm-4.7-flash');
+  }
 });

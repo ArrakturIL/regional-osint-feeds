@@ -3,7 +3,11 @@
 // Any provider error falls through to the next step in the same call.
 import {geminiChat, listModels, pickModel} from './providers/gemini.mjs';
 
+const GEMINI_LITE = {provider: 'gemini', family: 'flash-lite', dailyCap: 450}; // project quota 500 RPD, shared by all tasks
+const GLM = {provider: 'cloudflare', model: '@cf/zai-org/glm-4.7-flash'};
 export const ROUTES = {
+  analyst_decision: [GEMINI_LITE, GLM], // B7
+  analyst_translate: [GEMINI_LITE, GLM], // B7
   he_translate: [
     {provider: 'gemini', family: 'flash-lite', dailyCap: 450}, // project quota 500 RPD
     {provider: 'cloudflare', model: '@cf/zai-org/glm-4.7-flash'},

@@ -1,3 +1,4 @@
+import {chat} from '../ai/router.mjs';
 export function createAnalystDecision({EDITOR_VERSION,MODEL,DAY,MAX_AI_PER_DAY,REGION,PROMO,isCommercialAd,plain,bodyWords,similarity,assertString,isoNow,translatedForEditorial}) {
 function validateDecision(d, original) {
   if (!d || !['publish','skip','needs_data'].includes(d.decision)) return null;
@@ -28,7 +29,7 @@ async function aiDecision(env, it, recent, translated=null) {
     ? "ЯЗЫК ОРИГИНАЛА: "+it.original_language+"\n<original_text>\n"+it.body+"\n</original_text>\n<translation_ru>\n"+translated.text+"\n</translation_ru>\nПеревод только для редакционного чтения, не пересказывай дословно."
     : it.body.slice(0,5500);
   const user=`АВТОР: ${plain(it.analyst_name || it.analyst_id, 100)}\nПУБЛИКАЦИЯ: ${it.canonical_url}\nДата оригинала UTC: ${isoNow(it.source_published_at_ms)}\nНЕДАВНИЕ ЗАГОЛОВКИ (НЕ ДУБЛИРОВАТЬ):\n${prior || 'нет'}\nОРИГИНАЛ ТЕКСТА:\n<source_text>\n${sourceText}\n</source_text>`;
-  const result=await env.AI.run(MODEL,{
+  const result=await chat(env,'analyst_decision',{ // B7: Gemini-first, glm fallback
     messages:[{role:'system',content:system},{role:'user',content:user}],
     response_format:{type:'json_schema',json_schema:{name:'editorial_decision',strict:true,schema:{type:'object',properties:{decision:{type:'string',enum:['publish','skip','needs_data']},relevance:{type:'integer'},novelty:{type:'integer'},substance:{type:'integer'},reason:{type:'string'},headline:{type:'string'},summary:{type:'string'},quote:{type:'string'}},required:['decision','relevance','novelty','substance','reason','headline','summary','quote'],additionalProperties:false}}},chat_template_kwargs:{enable_thinking:false},
     max_tokens:750,temperature:0.1,
