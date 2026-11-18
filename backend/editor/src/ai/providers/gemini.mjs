@@ -29,7 +29,10 @@ export async function listModels(key, doFetch = fetch) {
 
 export async function geminiChat(key, model, input, doFetch = fetch) {
   const msgs = input?.messages || [];
-  const system = msgs.filter(m => m.role === 'system').map(m => m.content).join('\n\n');
+  let system = msgs.filter(m => m.role === 'system').map(m => m.content).join('\n\n');
+  // Gemini gets JSON mode only; spell out the Cloudflare json_schema so field names match.
+  const schema = input?.response_format?.json_schema?.schema;
+  if (schema) system += '\n\nReturn only JSON matching this JSON Schema:\n' + JSON.stringify(schema);
   const contents = msgs.filter(m => m.role !== 'system')
     .map(m => ({role: m.role === 'assistant' ? 'model' : 'user', parts: [{text: String(m.content)}]}));
   const generationConfig = {temperature: input?.temperature ?? 0};
