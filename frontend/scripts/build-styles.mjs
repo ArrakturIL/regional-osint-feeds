@@ -34,7 +34,7 @@ export function assembleStyles({includeRefinements=true}={}){
 export const FONT_DIR=resolve(frontendRoot,'vendor/fonts');
 export function fontFiles(){return readdirSync(FONT_DIR).filter(f=>f.endsWith('.woff2')).sort();}
 export function fontUrl(file){return '/assets/fonts/'+file+'?v='+createHash('sha256').update(readFileSync(resolve(FONT_DIR,file))).digest('hex').slice(0,12);}
-function themeWithFonts(){
+export function themeWithFonts(){
  const css=readFileSync(resolve(frontendRoot,'src/styles/theme-2077.css'),'utf8');
  const out=css.replace(/__FONT_([a-z0-9-]+)__/g,(m,name)=>fontUrl(name+'.woff2'));
  if(/__FONT_/.test(out))throw Error('unresolved font placeholder');
