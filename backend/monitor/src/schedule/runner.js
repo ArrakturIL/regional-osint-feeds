@@ -43,7 +43,8 @@ export async function runSchedule(controller, env) {
   // Shared adsb.lol quota: skip redundant automatic attempts during cooldown.
   // While recovering, reserve the first successful probe for the Tehran-priority collector,
   // not for the broad /mil endpoint. Explicit manual requests still report their result.
-  const autoAdsb = ["adsb", "mil_lol"].filter(name =>
+  // mil_lol is not gated here: it picks adsb.lol only when healthy, else adsb.fi.
+  const autoAdsb = ["adsb"].filter(name =>
     selected.has(name) && !(manual?.wanted || []).includes(name));
   if (autoAdsb.length) {
     const health = await env.DB.prepare(
@@ -52,8 +53,6 @@ export async function runSchedule(controller, env) {
     const now = Date.now();
     if ((health?.next_allowed_at || 0) > now || (health?.lease_until || 0) > now) {
       for (const name of autoAdsb) selected.delete(name);
-    } else if ((health?.failures || 0) > 0 && autoAdsb.includes("mil_lol")) {
-      selected.delete("mil_lol");
     }
   }
   const due = sources.filter(s => selected.has(s.name) && (!s.secret || env[s.secret]));

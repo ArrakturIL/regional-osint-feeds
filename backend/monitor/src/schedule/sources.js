@@ -1,7 +1,7 @@
 import { aviation } from '../collectors/aviation/adsb.js';
 import { airbridgeContext } from '../collectors/aviation/airbridge.js';
 import { aviationAlternative } from '../collectors/aviation/alternatives.js';
-import { militaryLol } from '../collectors/aviation/military.js';
+import { militaryWithFallback } from '../collectors/aviation/military.js';
 import { vessels } from '../collectors/maritime/ais.js';
 import { gfwSarBaseline } from '../collectors/maritime/gfw-baseline.js';
 import { gfwAuth, gfwSar } from '../collectors/maritime/gfw.js';
@@ -40,7 +40,7 @@ export const sources = [
   { name: "idf_official", every: 120, read: idfReleases },
   { name: "polymarket", every: 360, read: polymarketSnapshots },
   { name: "state_dept", every: 480, read: stateTravelAdvisories },
-  { name: "mil_lol", every: 60, read: militaryLol },
+  { name: "mil_lol", every: 60, read: militaryWithFallback }, // adsb.lol, else adsb.fi
   { name: "adsb", every: 15, read: aviation },
   { name: "adsb_alt", every: 30, read: aviationAlternative },
   { name: "airbridge_context", every: 60, read: airbridgeContext },

@@ -155,3 +155,10 @@ test('every source status has a Hebrew label without Cyrillic', async () => {
     assert.ok(!CYRILLIC.test(s.label_he), s.id + ': ' + s.label_he);
   }
 });
+
+test('adsb.fi terms: military ADS-B source carries a citation with a link to adsb.fi', async () => {
+  const {assembleSources} = await import('../../backend/pages/src/api/sources.js');
+  const [mil] = assembleSources([{source: 'mil_lol', state: 'ok', attempted_at: now}]);
+  assert.equal(mil.label_he, 'ADS-B צבאי');
+  assert.ok(mil.attribution.some(a => a.name === 'adsb.fi' && a.url === 'https://adsb.fi'));
+});
