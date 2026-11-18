@@ -1,8 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {webcrypto,createHash} from 'node:crypto';
+import {webcrypto} from 'node:crypto';
 import {translateScheduled} from '../../backend/editor/src/localization/scheduled.mjs';
-import {reconstructPreBudgetScheduler} from './localization-budget-source-parity.mjs';
 if(!globalThis.crypto)globalThis.crypto=webcrypto;
 
 const BASE=Date.parse('2026-11-16T03:00:00Z');
@@ -50,7 +49,6 @@ function makeEnv({budget={attempts:0,estimated_neurons:0},rows=[sample],response
  }},events,ai};
 }
 const saved=(events,sql)=>events.filter(e=>e.method==='run'&&e.sql.includes(sql));
-const blobSha=text=>{const b=Buffer.from(text,'utf8');return createHash('sha1').update(Buffer.from('blob '+b.length,'utf8')).update(Buffer.from([0])).update(b).digest('hex');};
 
 
 test('moderate allowance permits 97th paid HE attempt but blocks at the 300 ceiling (B1), keeping 4/run and 6000-neuron guard',async()=>{

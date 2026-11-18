@@ -1,9 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createHash} from 'node:crypto';
 import {createAnalystDecision} from '../../backend/editor/src/analysts/editorial-decision.mjs';
 import analystService,{testHooks} from '../../backend/editor/src/analysts/editor.mjs';
-import {reconstructAnalystDecisionEditor} from './analyst-decision-source-parity.mjs';
 
 const DAY=86400000,MODEL='@cf/zai-org/glm-4.7-flash',EDITOR_VERSION='analyst-editor-v1.1.2-translation';
 const now=Date.parse('2026-11-16T03:00:00Z');
@@ -29,7 +27,6 @@ const valid={
  summary:'По оценке автора, изменения в безопасности региона требуют осторожной оценки, поскольку отдельные утверждения остаются только мнением и не подтверждены независимо.',
  quote:''
 };
-const gitBlob=text=>{const b=Buffer.from(text,'utf8');return createHash('sha1').update(Buffer.from('blob '+b.length,'utf8')).update(Buffer.from([0])).update(b).digest('hex')};
 
 
 test('validation keeps original thresholds and rejects fabricated or copied claims',()=>{

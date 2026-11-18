@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import {webcrypto,createHash} from 'node:crypto';
 import {createSourceIngestion} from '../../backend/editor/src/analysts/source-ingestion.mjs';
 import analystService,{testHooks} from '../../backend/editor/src/analysts/editor.mjs';
-import {reconstructAnalystIngestionEditor} from './analyst-source-ingestion-parity.mjs';
 if(!globalThis.crypto)globalThis.crypto=webcrypto;
 
 const HOUR=3_600_000,DAY=24*HOUR,now=Date.parse('2026-11-16T02:00:00Z');
@@ -17,10 +16,6 @@ function item(overrides={}){
  canonical_url:'https://t.me/analyst_one/123',type:'telegram_post',published_at:new Date(now-30_000).toISOString(),
  language:'ru',text_status:'full_text',title:'Оригинальный заголовок',body:'Точный оригинальный текст публикации',
  content_hash:'a'.repeat(64),...overrides};
-}
-function gitSha(str){
- const bytes=Buffer.from(str,'utf8');
- return createHash('sha1').update(Buffer.from('blob '+bytes.length,'utf8')).update(Buffer.from([0])).update(bytes).digest('hex');
 }
 test('strict Telegram source validation retains original text, author and UTC date',()=>{
  const {validateInput}=create();

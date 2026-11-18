@@ -1,5 +1,4 @@
 import test from 'node:test';
-import {reconstructOriginalRuTranslator} from './ru-translation-selection-parity.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';

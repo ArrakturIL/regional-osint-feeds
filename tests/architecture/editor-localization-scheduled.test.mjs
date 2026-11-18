@@ -2,8 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {webcrypto,createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
-import {reconstructReaderFacade} from './localization-source-parity.mjs';
-import {reconstructPreBudgetScheduler} from './localization-budget-source-parity.mjs';
 import {translateScheduled} from '../../backend/editor/src/localization/scheduled.mjs';
 import {sourceText,fingerprint} from '../../backend/editor/src/localization/shared.mjs';
 import {fingerprint as publicFingerprint} from '../../backend/editor/src/localization/localization.mjs';

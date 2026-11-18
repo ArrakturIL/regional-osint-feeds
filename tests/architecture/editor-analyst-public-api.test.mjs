@@ -1,9 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createHash} from 'node:crypto';
 import {readApi} from '../../backend/editor/src/analysts/public-api.mjs';
 import analystService,{testHooks} from '../../backend/editor/src/analysts/editor.mjs';
-import {reconstructAnalystEditor} from './analyst-editor-source-parity.mjs';
 
 const EDITOR_VERSION='analyst-editor-v1.1.2-translation';
 const request=(path,method='GET')=>new Request('https://regional-watch.pages.dev'+path,{method});
@@ -37,10 +35,6 @@ function makeDb({health=null,analysts=[],posts=[]}={}){
  };
  return{env:{DB:db},calls};
 }
-const shaGit=text=>{
- const buf=Buffer.from(text,'utf8');
- return createHash('sha1').update(Buffer.from('blob '+buf.length,'utf8')).update(Buffer.from([0])).update(buf).digest('hex');
-};
 
 
 test('health returns last run with same version and CORS; delegation is equivalent',async()=>{
