@@ -31,7 +31,7 @@
 
 ## 2. Потом — frontend и сквозной QA (после пункта 1)
 
-Редизайн: владелец 18.11 выбрал направление «2077» — [design/redesign-2077.md](design/redesign-2077.md).
+Редизайн: владелец 18.11 выбрал направление «2077» — [design/redesign-2077.md](design/redesign-2077.md). **Перенесён на сайт** ([PR #147](https://github.com/ArrakturIL/regional-osint-feeds/pull/147)): тема-слой, self-hosted шрифты, сдержанные анимации, reduced-motion. Следом — QA #11/#12/#16 в новой теме.
 
 | # | Задача | Статус |
 |---|---|---|
