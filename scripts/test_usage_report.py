@@ -37,6 +37,14 @@ class UsageReport(unittest.TestCase):
         self.assertIsNone(rows["workers_cpu_ms"]["budget"])  # informational
         self.assertIn("⚠️", markdown(date(2026, 11, 17), list(rows.values()), BUDGETS["app_guards"]))
 
+    def test_per_metric_warn_ratio_overrides_default(self):
+        # D1 is a hard daily cap since 2026-09-01: warn early (60%) for rows read.
+        budgets = {"warn_ratio": 0.8, "warn_ratio_by_metric": {"d1_rows_read": 0.6},
+                   "daily": {"d1_rows_read": 100, "d1_rows_written": 100}}
+        rows = evaluate([{"metric": "d1_rows_read", "value": 65},
+                                      {"metric": "d1_rows_written", "value": 65}], budgets)
+        self.assertEqual([r["warn"] for r in rows], [True, False])
+
     def test_empty_account_is_zero_not_crash(self):
         rows = evaluate(cloudflare_metrics({}), BUDGETS)
         self.assertTrue(all(r["value"] == 0 and not r["warn"] for r in rows))

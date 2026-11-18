@@ -321,6 +321,7 @@ test('C-05 reconcile preserves measured discovery timestamp per attributed sourc
      reads.push(sql);
      if(sql.includes('FROM news_items n LEFT JOIN regional_i18n'))return {results:[source]};
      if(sql.includes('SELECT article_id,event_id FROM news_event_members'))return {results:[]};
+     if(sql.startsWith('SELECT event_id,representative_id,priority,signature,sources_json FROM news_event_groups'))return {results:[]};
      throw Error('unexpected SELECT '+sql);
     },async run(){return {meta:{changes:1}}}};
    stmt.sql=sql;return stmt;
@@ -498,4 +499,70 @@ test('C-03 current fatalities are not erased by unrelated historical context in 
   'The restriction follows last month\'s attack on a church that killed nine people.',0);
  assert.equal(analyze(current).claim_about_death,'reported_death');
  assert.equal(analyze(background).claim_about_death,'not_reported','historical death is context, not current policy casualties');
+});
+
+// D1 budget (19.11): reconcile ran ~730 no-op upserts + a full DELETE scan every 5 minutes.
+// A second pass over an unchanged pool must send no writes; a real change writes only that group.
+function reconcileDb(pool, state) {
+ const writes = [], runs = [];
+ const db = {
+  prepare(sql) {
+   const stmt = { sql, args: [], bind(...a) { this.args = a; return this; },
+    async all() {
+     if (sql.includes('FROM news_items n LEFT JOIN regional_i18n')) return { results: pool };
+     if (sql.startsWith('SELECT article_id,event_id FROM news_event_members')) return { results: [...state.members].map(([article_id, event_id]) => ({ article_id, event_id })) };
+     if (sql.startsWith('SELECT event_id,representative_id,priority,signature,sources_json FROM news_event_groups')) return { results: [...state.groups.values()] };
+     throw Error('unexpected SELECT ' + sql);
+    },
+    async run() { runs.push(sql); return { meta: { changes: 0 } }; } };
+   return stmt;
+  },
+  async batch(items) {
+   for (const w of items) {
+    writes.push(w);
+    if (w.sql.startsWith('INSERT INTO news_event_groups(')) {
+     const [event_id, representative_id, , priority, , , , , , , sources_json, signature] = w.args;
+     state.groups.set(event_id, { event_id, representative_id, priority, signature, sources_json });
+    } else if (w.sql.startsWith('INSERT INTO news_event_members(')) state.members.set(w.args[0], w.args[1]);
+   }
+   return [];
+  },
+ };
+ return { db, writes, runs };
+}
+test('D1 budget: reconcile over an unchanged pool sends no writes and skips the orphan scan', async () => {
+ const { reconcile } = await import('../../backend/editor/src/news/events.mjs');
+ const pool = [
+  article('d1-a', 'BBC Middle East', 'Israel and Iran hold regional security talks', 'Diplomats held talks.', 0),
+  article('d1-b', 'Reuters', 'Lebanon border shelling reported overnight', 'Shelling near the border.', 10),
+ ];
+ const state = { members: new Map(), groups: new Map() };
+ const offHour = when + 20 * 60000; // not in the first 5 minutes of an hour
+ const first = reconcileDb(pool, state);
+ await reconcile(first.db, offHour);
+ assert.ok(first.writes.length >= 4, 'first pass materializes groups and members');
+ const second = reconcileDb(pool, state);
+ await reconcile(second.db, offHour + 300000);
+ assert.equal(second.writes.length, 0, 'unchanged pool: no group/member upserts');
+ assert.ok(!second.runs.some(s => s.includes('NOT EXISTS')), 'no orphan DELETE scan when nothing changed');
+});
+test('D1 budget: a changed group is rewritten alone; hourly safety pass still runs the orphan scan', async () => {
+ const { reconcile } = await import('../../backend/editor/src/news/events.mjs');
+ const a = article('d1-c', 'BBC Middle East', 'Israel and Iran hold regional security talks', 'Diplomats held talks.', 0);
+ const b = article('d1-d', 'Reuters', 'Lebanon border shelling reported overnight', 'Shelling near the border.', 10);
+ const state = { members: new Map(), groups: new Map() };
+ const t = when + 20 * 60000;
+ await reconcile(reconcileDb([a, b], state).db, t);
+ const later = article('d1-e', 'Reuters', 'Lebanon border shelling reported overnight', 'Shelling near the border, again.', 20);
+ const third = reconcileDb([a, b, later], state);
+ await reconcile(third.db, t + 300000);
+ const groupWrites = third.writes.filter(w => w.sql.startsWith('INSERT INTO news_event_groups('));
+ const memberWrites = third.writes.filter(w => w.sql.startsWith('INSERT INTO news_event_members('));
+ assert.ok(groupWrites.length >= 1, 'the changed group is written');
+ assert.ok(!memberWrites.some(w => w.args[0] === 'd1-c'), 'untouched member of another group is not rewritten');
+ assert.ok(memberWrites.some(w => w.args[0] === 'd1-e'), 'the new member is written');
+ const hourly = reconcileDb([a, b, later], state);
+ const topOfHour = Math.floor((t + 3600000) / 3600000) * 3600000 + 60000;
+ await reconcile(hourly.db, topOfHour);
+ assert.ok(hourly.runs.some(s => s.includes('NOT EXISTS')), 'hourly safety pass keeps orphan cleanup');
 });
