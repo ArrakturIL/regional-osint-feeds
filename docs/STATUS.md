@@ -4,11 +4,11 @@
 >
 > Статусы: ✅ закрыто · ◐ частично / ждёт приёмки · ○ открыто · ⏸ пауза · ❓ ждёт решения владельца. `код есть` ≠ `CI green` ≠ `merged` ≠ `production` ≠ `live QA принят`.
 
-**Обновлено:** 2026-11-18 01:45 IL.
+**Обновлено:** 2026-11-18 02:05 IL.
 
 ## Production
 
-`f7c1c5ce` ([PR #99](https://github.com/ArrakturIL/regional-osint-feeds/pull/99), B1), [release #44199844399](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/44199844399) SUCCESS; live `/`, `/he/`, `/api/news`, `/api/overview`, `/api/data` отвечают HTTP 200. Merge в `main` по путям приложения запускает coordinated release. `docs/` и данные сборщиков релиз не запускают.
+`a7bf24e5` ([PR #101](https://github.com/ArrakturIL/regional-osint-feeds/pull/101), B2), [release #44202774873](https://github.com/ArrakturIL/regional-osint-feeds/actions/runs/44202774873) SUCCESS; live `/`, `/he/`, `/api/news`, `/api/overview`, `/api/data` отвечают HTTP 200. Merge в `main` по путям приложения запускает coordinated release. `docs/` и данные сборщиков релиз не запускают.
 
 ## 1. Сейчас — backend надёжность
 
@@ -26,7 +26,7 @@
 
 ## 1b. Рефакторинг переводов и AI (блок B, снят с паузы 18.11)
 
-План и решения владельца: [architecture/translation-refactor-plan.md](architecture/translation-refactor-plan.md). **B1 ✅ в production (PR #99):** общий дневной пул Workers AI 8 500 нейронов, атомарный учёт `ai_daily_neurons`; прежние лимиты стали потолками (RU 48, ЦАХАЛ 24, HE 300, аналитики 60). Live: RU прошёл 21-й пакет, ЦАХАЛ — 13-й. Проверить через сутки: расход Cloudflare GraphQL ≥ 80% и ≤ 10 000. Следующий этап — B2 (router + Gemini). Этапы B1–B8: общий учёт квот → router + Gemini → единый verify + глоссарий → аналитики → правила показа по языку страницы → уровни важности и SLA → слепое A/B моделей → перепроверка архива. Главный факт аудита: конвейеры каждый день упираются в свои лимиты, хотя тратится только 40–55% бесплатного пула Cloudflare AI, а Gemini не используется вовсе.
+План и решения владельца: [architecture/translation-refactor-plan.md](architecture/translation-refactor-plan.md). **B1 ✅ в production (PR #99):** общий дневной пул Workers AI 8 500 нейронов, атомарный учёт `ai_daily_neurons`; прежние лимиты стали потолками (RU 48, ЦАХАЛ 24, HE 300, аналитики 60). Live: RU прошёл 21-й пакет, ЦАХАЛ — 13-й. Проверить через сутки: расход Cloudflare GraphQL ≥ 80% и ≤ 10 000. **B2 ✅ в production (PR #101):** маршрутизатор `ai/router.mjs` + провайдер Gemini (модель выбирается через ListModels, лимит 450/сутки, cooldown на 429/5xx). Иврит идёт сначала через Gemini, при ошибке — через glm. Live 18.11 00:00Z: выбрана `gemini-3.5-flash-lite`, 4 перевода, проверки смысла продолжают отсекать ошибки. Следующий этап — B3 (единый verify + глоссарий). Этапы B1–B8: общий учёт квот → router + Gemini → единый verify + глоссарий → аналитики → правила показа по языку страницы → уровни важности и SLA → слепое A/B моделей → перепроверка архива. Главный факт аудита: конвейеры каждый день упираются в свои лимиты, хотя тратится только 40–55% бесплатного пула Cloudflare AI, а Gemini не используется вовсе.
 
 ## 2. Потом — frontend и сквозной QA (после пункта 1)
 
@@ -48,8 +48,13 @@
 
 ## 4. Пауза / бэклог
 
+- ○ **Новые OSINT API (не срочно, владелец 18.11):** AirLabs (≈1 000 запросов/мес, авиация, точечное обогащение рейсов) и UCDP (Uppsala Conflict Data Program, данные о конфликтах; токен запрашивался ранее). Подключить через Monitor-адаптеры со своими квотами.
 - ⏸ Israel Hayom RSS (HTTP 403): низкий приоритет.
 - ○ OSS-внедрения (G-02…G-08, G-10): исследование есть, внедрять только при измеренной пользе и в пределах бесплатных лимитов.
+
+## Плановые проверки (облако, без компьютера)
+
+18.11 18:45 IL — отчёт GPT по ARCH-05 из Crosswalk · 19.11 02:30 IL — сутки B1/B2/SYS-01 · 20.11 09:45 IL — отчёт GPT по ARCH-04.
 
 ## Закрыто (не переделывать без новой регрессии)
 
