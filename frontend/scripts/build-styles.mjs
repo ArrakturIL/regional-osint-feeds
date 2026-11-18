@@ -1,4 +1,5 @@
-import {readFileSync} from 'node:fs';
+import {readFileSync,readdirSync} from 'node:fs';
+import {createHash} from 'node:crypto';
 import {dirname,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 const frontendRoot=resolve(dirname(fileURLToPath(import.meta.url)),'..');
@@ -23,6 +24,19 @@ export function assembleStyles({includeRefinements=true}={}){
   css+=readFileSync(resolve(frontendRoot,'src/components/Header/Header.status.css'),'utf8');
   css+=readFileSync(resolve(frontendRoot,'src/components/Digest/Digest.qa.css'),'utf8');
   css+=readFileSync(resolve(frontendRoot,'src/components/FeedState/FeedState.css'),'utf8'); // F-04
+  css+=themeWithFonts(); // redesign «2077», must stay last
  }
  return css;
+}
+
+// Self-hosted variable fonts (OFL, frontend/vendor/fonts): each URL carries a
+// hash of the file, so Pages serves it immutable like the other assets.
+export const FONT_DIR=resolve(frontendRoot,'vendor/fonts');
+export function fontFiles(){return readdirSync(FONT_DIR).filter(f=>f.endsWith('.woff2')).sort();}
+export function fontUrl(file){return '/assets/fonts/'+file+'?v='+createHash('sha256').update(readFileSync(resolve(FONT_DIR,file))).digest('hex').slice(0,12);}
+export function themeWithFonts(){
+ const css=readFileSync(resolve(frontendRoot,'src/styles/theme-2077.css'),'utf8');
+ const out=css.replace(/__FONT_([a-z0-9-]+)__/g,(m,name)=>fontUrl(name+'.woff2'));
+ if(/__FONT_/.test(out))throw Error('unresolved font placeholder');
+ return out;
 }

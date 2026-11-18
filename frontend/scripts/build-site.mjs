@@ -5,6 +5,7 @@ import { gunzipSync } from 'node:zlib';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { assemble } from './build.mjs';
+import { fontFiles, FONT_DIR } from './build-styles.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const dest=resolve(root,'dist');
 const write=(file,bytes)=>{const p=resolve(dest,file);mkdirSync(dirname(p),{recursive:true});writeFileSync(p,bytes)};
@@ -18,6 +19,7 @@ if(dom.length!==131835 || !dom.includes('18.3.1-next-f1338f8080-20240426'))throw
 const assetsOut={'react.js':vendor,'react-dom.js':dom,'app.js':assemble(),'app.css':assembleStyles()};
 const hashes={};
 for(const [name,body] of Object.entries(assetsOut)){write('assets/'+name,body);hashes[name]=createHash('sha256').update(body).digest('hex').slice(0,12);}
+for(const f of fontFiles())write('assets/fonts/'+f,readFileSync(resolve(FONT_DIR,f)));
 export function versionDocument(html,map=hashes){
  return html.replace(/\/assets\/(react\.js|react-dom\.js|app\.js|app\.css)\?v=[A-Za-z0-9._-]+/g,(m,name)=>'/assets/'+name+'?v='+map[name]);
 }

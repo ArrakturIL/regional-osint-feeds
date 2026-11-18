@@ -33,3 +33,15 @@ test('frontend CSS and JS exactly match their current modular assemblers',()=>{
  assert.equal(load('assets/app.css'),assembleStyles());
  assert.ok(load('assets/app.css').startsWith(readFileSync(resolve(baseline,'app.css'),'utf8')));
 });
+test('2077 theme: every self-hosted font URL resolves to a built file with a matching content hash; reduced motion is honoured', () => {
+ const css=load('assets/app.css');
+ const urls=[...css.matchAll(/url\((\/assets\/fonts\/([a-z0-9-]+\.woff2)\?v=([0-9a-f]{12}))\)/g)];
+ assert.equal(urls.length,8,'eight @font-face sources');
+ for(const [,,file,hash] of urls){
+  const bytes=readFileSync(resolve(dest,'assets/fonts',file));
+  assert.equal(createHash('sha256').update(bytes).digest('hex').slice(0,12),hash,file);
+ }
+ assert.doesNotMatch(css,/__FONT_/);
+ assert.match(css,/@media \(prefers-reduced-motion:reduce\)\{[^]*\.page-intro::after\{display:none\}/);
+ assert.ok(existsSync(resolve(root,'vendor/fonts/LICENSE-rubik.txt')),'OFL notices kept with the fonts');
+});
