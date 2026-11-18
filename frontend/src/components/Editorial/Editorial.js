@@ -42,6 +42,15 @@ export function Editorial({ notes }) {
             ? 'אין כרגע טור מערכת מאושר בעברית.'
             : 'Пока нет опубликованной редакционной реплики.',
       ),
+      // #14: what the editor checked, only when it exists in the page language.
+      note?.verifiedNote && note.verifiedLanguage === (UI_HE ? 'he' : 'ru')
+        ? h(
+            'p',
+            { className: 'rw-editorial-check', dir: 'auto' },
+            t('strong', null, UI_HE ? 'מה נבדק: ' : 'Что проверено: '),
+            note.verifiedNote,
+          )
+        : null,
       note?.sourceUrl || note?.url
         ? h(External, { url: note.sourceUrl || note.url }, UI_HE ? 'למקור ↗' : 'Читать источник ↗')
         : null,

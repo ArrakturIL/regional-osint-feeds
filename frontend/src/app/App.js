@@ -121,6 +121,8 @@ export function App() {
         author: x.author,
         content_language: x.content_language,
         translation_status: x.translation_status,
+        verifiedNote: x.verified_note || '',
+        verifiedLanguage: x.field_languages?.verified_note || x.content_language,
       }))
     : [];
   const normalizedNews =

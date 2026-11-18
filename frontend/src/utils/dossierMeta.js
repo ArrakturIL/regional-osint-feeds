@@ -39,3 +39,21 @@ export function originalLanguageNote(lang, he) {
   if (he) return (name ? 'המקור ' + name : 'המקור בשפה אחרת') + ' · התרגום ממתין';
   return (name ? 'Оригинал на ' + name : 'Оригинал на другом языке') + ' · перевод ожидается';
 }
+
+// #14: the badge says what the dossier actually has, instead of one text for all.
+export function dossierStatus(count, he) {
+  const n = Math.max(0, Math.trunc(Number(count) || 0));
+  if (n === 0)
+    return { level: 'none', text: he ? 'אין מקור ראשוני שניתן לבדוק' : 'Нет проверяемого первоисточника' };
+  if (n === 1)
+    return {
+      level: 'single',
+      text: he ? 'מקור יחיד — ללא אימות עצמאי' : 'Один источник — без независимого подтверждения',
+    };
+  return {
+    level: 'multi',
+    text: he
+      ? 'כמה מקורות — אין זה אימות עצמאי של כל טענה'
+      : 'Несколько источников — это не независимая проверка каждого утверждения',
+  };
+}
