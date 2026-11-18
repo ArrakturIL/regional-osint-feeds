@@ -22,12 +22,6 @@ function gitSha(str){
  const bytes=Buffer.from(str,'utf8');
  return createHash('sha1').update(Buffer.from('blob '+bytes.length,'utf8')).update(Buffer.from([0])).update(bytes).digest('hex');
 }
-test.skip('[RETIRED 18.11, B1: byte-parity with a pre-split blob blocks any change; behaviour is covered by runtime tests] source-ingestion modules reconstruct identical Analyst Editor pre-split Git source',()=>{
- assert.equal(gitSha(reconstructAnalystIngestionEditor()),'29623aa4f01a3cdb1b85820a0471763ae0811f88');
- assert.equal(typeof analystService.fetch,'function');
- assert.equal(typeof analystService.scheduled,'function');
- assert.equal(typeof testHooks.validateInput,'function');
-});
 test('strict Telegram source validation retains original text, author and UTC date',()=>{
  const {validateInput}=create();
  const got=validateInput(item(),source,analyst,now);
