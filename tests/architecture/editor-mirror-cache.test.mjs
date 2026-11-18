@@ -106,9 +106,11 @@ test('existing analyst and translation pipelines are wired to the shared editor 
  const analyst=readFileSync(new URL('../../backend/editor/src/analysts/editor.mjs',import.meta.url),'utf8');
  const analystQueue=readFileSync(new URL('../../backend/editor/src/analysts/queue-runner.mjs',import.meta.url),'utf8');
  const translation=readFileSync(new URL('../../backend/editor/src/translations/news-mirror.mjs',import.meta.url),'utf8');
- assert.match(analystQueue,/readEditorCachedPair\(env,\s*'analysts'/);
- assert.match(analyst,/createAnalystQueue\(\{[^\n]*readEditorCachedPair/);
- assert.match(translation,/readEditorCachedPair\(env,\s*'news_translation'/);
- assert.match(analystQueue,/readMirror\('analyst-source-items\.json'\)/);
- assert.match(translation,/MIRROR\+'\?bucket='/);
+ // #8a: whitespace/quote-insensitive, so source formatting does not break wiring checks.
+ const code=x=>x.replace(/\s+/g,'').replace(/"/g,"'");
+ assert.match(code(analystQueue),/readEditorCachedPair\(env,'analysts'/);
+ assert.match(code(analyst),/createAnalystQueue\(\{[^}]*readEditorCachedPair/);
+ assert.match(code(translation),/readEditorCachedPair\(env,'news_translation'/);
+ assert.match(code(analystQueue),/readMirror\('analyst-source-items\.json'\)/);
+ assert.match(code(translation),/MIRROR\+'\?bucket='/);
 });

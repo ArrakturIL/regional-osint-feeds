@@ -1,5 +1,5 @@
-import {ENTITIES} from './glossary.mjs';
-import {translationIssue} from './verify.mjs';
+import { ENTITIES } from './glossary.mjs';
+import { translationIssue } from './verify.mjs';
 /**
  * Deterministic fact-integrity gate for {title,body,comment} translations.
  *
@@ -15,7 +15,9 @@ export function factualTranslationIssue(original, candidate) {
   for (const field of FIELDS) {
     const src = String(original[field] || '');
     if (!src) continue;
-    const translated = String(candidate[field] ?? candidate[field === 'comment' ? 'commentary' : field] ?? '');
+    const translated = String(
+      candidate[field] ?? candidate[field === 'comment' ? 'commentary' : field] ?? '',
+    );
     const issue = translationIssue(src, translated);
     if (issue) return field + ':' + issue;
   }
