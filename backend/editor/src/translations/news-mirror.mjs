@@ -4,7 +4,7 @@
 import {eventRows,hebrew,language} from '../news/events.mjs';
 import {fingerprint} from '../localization/localization.mjs';
 import {factualTranslationIssue} from './fact-guard.mjs';
-import {militaryStrikeMisread} from './semantic-meaning.mjs';
+import {translationIssue} from './verify.mjs';
 import {readEditorCachedPair} from '../mirrors/collector-cache.mjs';
 const MIRROR='https://raw.githubusercontent.com/ArrakturIL/regional-osint-feeds/main/data/news-localization-mirror.json';
 const HEADERS={'Access-Control-Allow-Origin':'*','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
@@ -23,40 +23,8 @@ export function validateCandidate(input,result,lang){
  if(lang==='ru'&&!hasRu(translated))return false;
  if(JSON.stringify(numbers(source))!==JSON.stringify(numbers(translated)))return false;
  if(/&(?:quot|amp|lt|gt);|(?:\.\s*){6,}/iu.test(translated))return false;
- if(/\bballistic\b|баллистическ/iu.test(source)){
-  if(lang==='he'&&!/בליסט/iu.test(translated))return false;
-  if(lang==='ru'&&!/баллист/iu.test(translated))return false;
- }
- if(/\bshared[\s\w-]{0,50}posts?\b/iu.test(source)){
-  if(lang==='he'&&!/פוסטים|פרסומ|שיתפ/iu.test(translated))return false;
-  if(lang==='ru'&&!/пост|публикац|делилс/iu.test(translated))return false;
- }
- if(/(?:\bKatz\b|Ка[цз])/iu.test(source)){
-  if(lang==='he'&&!/כץ/.test(translated))return false;
-  if(lang==='ru'&&!/Кац/.test(translated))return false;
- }
- if(/(?:\bIRGC\b|КСИР)/iu.test(source)){
-  if(lang==='he'&&!/משמרות?\s+המהפכה|IRGC/iu.test(translated))return false;
-  if(lang==='ru'&&!/КСИР|Корпус\s+страж/iu.test(translated))return false;
- }
- if(/(?:\bIDF\b|ЦАХАЛ)/iu.test(source)){
-  if(lang==='he'&&!/צה[״"']?ל|צבא ההגנה|IDF/.test(translated))return false;
-  if(lang==='ru'&&!/ЦАХАЛ|армии\s+Израил/iu.test(translated))return false;
- }
- if(/RAF\s+Fairford/iu.test(source)&&lang==='he'&&!/RAF|חיל האוויר המלכותי/.test(translated))return false;
-
- // Never replace Iran/Iranian with Jordan/Jordanian without source support.
- if(/\bIran(?:ian)?\b|Иран[\p{L}]*/iu.test(source)&&
-    !/\bJordan(?:ian)?\b|Иордан[\p{L}]*/iu.test(source)&&
-    (lang==='he'?/ירד(?:ן|נ[\p{L}]*)/iu:/Иордан[\p{L}]*/iu).test(translated))return false;
- if(militaryStrikeMisread(source,translated))return false;
- // In a military report, "strike" never means a labour stoppage.
- if(/(?:\b(?:Israeli|IDF|Gaza|Hamas|military|air)\b.{0,90}\bstrike\b|\bstrike\b.{0,90}\b(?:Gaza|Hamas|hospital|killed|IDF)\b|(?:удар|авиаудар|обстрел)[\p{L}]*)/iu.test(source)&&
-    (lang==='he'?/שבית[\p{L}]*/iu:/забастовк[\p{L}]*/iu).test(translated))return false;
- // Do not invert the responsibility/negation in highly consequential claims.
- if(/\bfully\s+responsible\b|\bfull\s+responsibility\b/iu.test(source)&&
-    (lang==='he'?/(?:לא|אינו|אינה|אינם)\s+[^.]{0,35}(?:אחראי|אחריות|נושא)/iu:/(?:не\s+(?:нес[её]т|несёт|отвеча[\p{L}]*)\s+[^.]{0,35}ответствен|не\s+нес[её]т\s+полн[\p{L}]*\s+ответствен)/iu).test(translated))return false;
-
+ // B3: entity and meaning rules come from the shared verify, per target language.
+ if(translationIssue(source,translated,lang))return false;
  return true;
 }
 export async function translationQueue(env,request){

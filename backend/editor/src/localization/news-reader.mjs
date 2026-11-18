@@ -1,3 +1,4 @@
+import {translationIssue} from '../translations/verify.mjs';
 import {semanticMeaningIssue} from '../translations/semantic-meaning.mjs';
 import {shouldSuppressComment,safePublishedComment} from '../editorial/comment-policy.mjs';
 import {DAY,val,sourceText} from './shared.mjs';
@@ -20,8 +21,10 @@ export async function localizeNewsRow(db,row,lang){
     if(!title||!/[\u0400-\u04ff]/u.test(title)||(sourceBody&&!body))
       return{...original,content_language:originalLanguage,
         source_language:originalLanguage,translation_status:'pending'};
-    const issue=semanticMeaningIssue(sourceTitle,title)||
-      (sourceBody&&body?semanticMeaningIssue(sourceBody,body):null);
+    // RU summaries are often abridged, so an entity from a later source
+    // sentence may be legitimately absent: the body gets meaning rules only.
+    const issue=translationIssue(sourceTitle,title,'ru')||
+      (sourceBody&&body?semanticMeaningIssue(sourceBody,body,'ru'):null);
     if(issue)return{...original,content_language:originalLanguage,
       source_language:originalLanguage,translation_status:'needs_review',review_reason:issue};
     return{...original,title,body:body||sourceBody,content_language:'ru',
@@ -34,8 +37,8 @@ export async function localizeNewsRow(db,row,lang){
     commentary:row.he_comment,quality_score:row.he_quality}:null;
   const result=await localized(db,'news',row.id,sourceText('news',row),lang,cached);
   const issue=lang==='he'&&result.translation_status==='available'?
-    semanticMeaningIssue(sourceTitle,result.title)||
-    (sourceBody&&result.body?semanticMeaningIssue(sourceBody,result.body):null):null;
+    translationIssue(sourceTitle,result.title,'he')||
+    (sourceBody&&result.body?translationIssue(sourceBody,result.body,'he'):null):null;
   if(issue)return{...original,content_language:originalLanguage,
     source_language:originalLanguage,translation_status:'needs_review',review_reason:issue};
   return {...(shouldSuppressComment(row)?{...result,comment:''}:result),
