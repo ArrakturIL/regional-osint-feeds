@@ -1,6 +1,7 @@
 // Event-card response compatible with the legacy /api/news articles DTO.
 import {eventRows,reconcile,hebrew,publisher,language} from './events.mjs';
 import {localizeNewsRow} from '../localization/localization.mjs';
+import {displayForPage} from '../localization/display-policy.mjs';
 const HEADERS={'Access-Control-Allow-Origin':'*','Cache-Control':'public,max-age=60',
                'X-Content-Type-Options':'nosniff'};
 const respond=(body,status=200)=>Response.json(body,{status,headers:HEADERS});
@@ -125,7 +126,9 @@ export async function readNewsEvents(request,env){
  const translated=await Promise.all(pageRows.map(async r=>{
   const alternative=substitutions.get(r.event_id);
   const row=alternative?{...r,...alternative,he_hash:null,he_title:null,he_body:null,he_comment:null,he_quality:null}:r;
-  const t=await localizeNewsRow(env.NEWS_DB,row,lang);
+  // B4: page language rules; null = withheld from this page until translated.
+  const t=displayForPage(row,await localizeNewsRow(env.NEWS_DB,row,lang),lang);
+  if(!t)return null;
   const native=lang==='he'&&hebrew(row.headline)&&t.content_language==='he';
   const available=t.content_language===lang&&(t.translation_status==='source'||t.translation_status==='available');
   const state=available?(native||t.translation_status==='source'?'original':'translated'):
@@ -175,7 +178,7 @@ export async function readNewsEvents(request,env){
    field_translation_status:fieldTranslationStatus,
    headline:t.title,summary:t.body,comment:t.comment,url:row.url,
    published_ms:r.last_seen_ms,priority:r.event_priority,category:r.topic,
-   content_language:t.content_language,source_language:t.source_language,translation_status:t.translation_status,
+   content_language:t.content_language,language_shown:t.language_shown,source_language:t.source_language,translation_status:t.translation_status,
    translation_state:state,translation_label:label,translation_available:available,
    translation:{state,label,available,requested_language:lang,display_language:t.content_language},
    verification_status:r.verification_status,source_count:r.source_count,
@@ -183,10 +186,12 @@ export async function readNewsEvents(request,env){
    sources,reason_codes:JSON.parse(r.reason_codes||'[]'),
    _owner:publisher(r.source)};
  }));
- const output=translated.map(({_owner,...rest},i)=>({...rest,feed_rank:offset+i}));
+ // Ranks are positions in the feed, so a withheld item keeps the others' ranks stable.
+ const output=translated.map((x,i)=>{if(!x)return null;const{_owner,...rest}=x;return{...rest,feed_rank:offset+i};}).filter(Boolean);
+ const withheld_count=translated.length-output.length;
  return respond({requested_language:lang,articles:output,events:output,localized_count:output.filter(x=>x.content_language===lang).length,
   translation_summary:{available:output.filter(x=>x.translation_available).length,pending:output.filter(x=>x.translation_state==='pending').length,
     needs_review:output.filter(x=>x.translation_state==='needs_review').length},
-  limit,offset,total_events:visible.length,applied_filters,feed_order_hash,next_offset:visible.length>offset+limit?offset+limit:null,ready_only:readyOnly,requested_ready_only:requestedReadyOnly,
+  withheld_count,limit,offset,total_events:visible.length,applied_filters,feed_order_hash,next_offset:visible.length>offset+limit?offset+limit:null,ready_only:readyOnly,requested_ready_only:requestedReadyOnly,
   sort,grouping:'event_v1',status:'published',source_policy:'attributed_reporting_not_fact_verification'});
 }

@@ -129,8 +129,8 @@ test('ARCH-07: missing Pages service bindings return safe 503 JSON, not secrets 
 
 test('ARCH-07: release candidate contains exactly three active module owners and canonical D1/AI/service/cron linkage',()=>{
  const audit=auditActiveArchitecture(root);
- assert.equal(audit.graph.activeModuleCount,90); // +SYS-01, +B1 budget, +B2 router/gemini, +B3 glossary, +B3 verify
- assert.equal(audit.graph.activeImportEdges,230); // +5 B3 verify: verify→glossary, verify→semantic, semantic→glossary, analysts→verify, news-reader→semantic
+ assert.equal(audit.graph.activeModuleCount,91); // +SYS-01, +B1 budget, +B2 router/gemini, +B3 glossary, +B3 verify, +B4 display-policy
+ assert.equal(audit.graph.activeImportEdges,233); // +5 B3 verify (verify→glossary/semantic, semantic→glossary, analysts→verify, news-reader→semantic), +3 B4 (policy→shared, api→policy, news-reader→policy)
  assert.deepEqual(audit.graph.unreachableModules,[]);
  assert.deepEqual(audit.graph.unresolvedImports,[]);
  assert.deepEqual(audit.graph.crossWorkerSourceImports,[]);

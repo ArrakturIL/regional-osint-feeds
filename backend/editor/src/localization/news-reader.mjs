@@ -3,6 +3,7 @@ import {semanticMeaningIssue} from '../translations/semantic-meaning.mjs';
 import {shouldSuppressComment,safePublishedComment} from '../editorial/comment-policy.mjs';
 import {DAY,val,sourceText} from './shared.mjs';
 import {respond,localized} from './read-core.mjs';
+import {displayForPage} from './display-policy.mjs';
 
 /** One trusted localization contract for event and legacy news responses. */
 export async function localizeNewsRow(db,row,lang){
@@ -57,10 +58,12 @@ export async function readLocalizedNews(env,url,lang,lim,rawOffset){
     const rows=await env.NEWS_DB.prepare(sql).bind(Date.now()-7*DAY,lim,offset).all();
     const articles=await Promise.all((rows.results||[]).map(async n=>{
       const cache=lang==='he'?{source_hash:n.he_hash,title:n.he_title,body:n.he_body,commentary:n.he_comment,quality_score:n.he_quality}:null;
-      const t=await localizeNewsRow(env.NEWS_DB,n,lang);
-      return{id:n.id,source:n.source,headline:t.title,summary:t.body,comment:t.comment,url:n.url,published_ms:n.published_ms,priority:n.priority,content_language:t.content_language,translation_status:t.translation_status};
+      const t=displayForPage(n,await localizeNewsRow(env.NEWS_DB,n,lang),lang); // B4
+      if(!t)return null;
+      return{id:n.id,source:n.source,headline:t.title,summary:t.body,comment:t.comment,url:n.url,published_ms:n.published_ms,priority:n.priority,content_language:t.content_language,language_shown:t.language_shown,translation_status:t.translation_status};
     }));
-    const visible=readyOnly?articles.filter(x=>x.content_language==='he'&&x.translation_status==='available'):articles;
+    const shown=articles.filter(Boolean);
+    const visible=readyOnly?shown.filter(x=>x.content_language==='he'&&x.translation_status==='available'):shown;
     return respond({requested_language:lang,articles:visible,localized_count:visible.filter(x=>x.content_language===lang).length,
-      limit:lim,offset,next_offset:rows.results?.length===lim?offset+lim:null,ready_only:readyOnly});
+      withheld_count:articles.length-shown.length,limit:lim,offset,next_offset:rows.results?.length===lim?offset+lim:null,ready_only:readyOnly});
 }

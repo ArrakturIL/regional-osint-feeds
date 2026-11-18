@@ -48,11 +48,18 @@ const extractBody=(source,signature,label)=>{
 // B3 part 2 is an intentionally narrow change: news-reader calls the shared
 // verify (glossary + meaning rules, explicit target language) instead of the
 // meaning-only check. Reverse exactly these reviewed lines before rebuilding.
-const B3_VERIFY=[
+const B3_VERIFY=[ // B3 verify + B4 display policy
  ["import {translationIssue} from '../translations/verify.mjs';\n",""],
  ["    // RU summaries are often abridged, so an entity from a later source\n    // sentence may be legitimately absent: the body gets meaning rules only.\n",""],
  ["translationIssue(sourceTitle,title,'ru')","semanticMeaningIssue(sourceTitle,title)"],
  ["semanticMeaningIssue(sourceBody,body,'ru')","semanticMeaningIssue(sourceBody,body)"],
+ // B4: page language rules (display-policy.mjs) applied to each news row.
+ ["import {displayForPage} from './display-policy.mjs';\n",""],
+ ["      const t=displayForPage(n,await localizeNewsRow(env.NEWS_DB,n,lang),lang); // B4\n      if(!t)return null;\n","      const t=await localizeNewsRow(env.NEWS_DB,n,lang);\n"],
+ [",language_shown:t.language_shown,translation_status:t.translation_status};",",translation_status:t.translation_status};"],
+ ["    const shown=articles.filter(Boolean);\n",""],
+ ["shown.filter(x=>x.content_language==='he'&&x.translation_status==='available'):shown;","articles.filter(x=>x.content_language==='he'&&x.translation_status==='available'):articles;"],
+ ["withheld_count:articles.length-shown.length,limit:lim,","limit:lim,"],
  ["translationIssue(sourceTitle,result.title,'he')","semanticMeaningIssue(sourceTitle,result.title)"],
  ["translationIssue(sourceBody,result.body,'he')","semanticMeaningIssue(sourceBody,result.body)"],
 ];
