@@ -56,7 +56,11 @@ export function useFeed(endpoint, interval, enabled) {
       if (!document.hidden && Date.now() - cache.current.last >= interval) pull();
     };
     cache.current.pull = pull;
-    if (!cache.current.last || Date.now() - cache.current.last > Math.min(interval, 10000)) pull();
+    // The first load runs even in a background tab (a link opened with a middle
+    // click must not sit on "loading" until it is focused); only the periodic
+    // refresh pauses while the tab is hidden.
+    if (!cache.current.last) pull(true);
+    else if (Date.now() - cache.current.last > Math.min(interval, 10000)) pull();
     const timer = setInterval(tick, Math.min(interval, 30000));
     document.addEventListener('visibilitychange', tick);
     return () => {
