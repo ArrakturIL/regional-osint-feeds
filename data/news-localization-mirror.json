@@ -1,190 +1,76 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-15T17:41:10.098508+00:00",
+  "generated_at": "2026-11-18T18:18:53.121002+00:00",
   "source": "Helsinki-NLP/Opus-MT via GitHub Actions CPU (Apache-2.0)",
   "items": [
     {
-      "id": "10cf4fccf2a4ca0442fb2453",
-      "original_title": "אפי נוה מגיב לראשונה לגיוס התרומות של הדס שטייף: \"איזה אידיוט עושה את זה?\"",
+      "id": "3271ef8e63e8f2cc6bc3e980",
+      "original_title": "What has happened to the $18bn pledged to Trump’s Board of Peace for Gaza?",
+      "source_language": "en",
+      "source": "Al Jazeera",
+      "ru": {
+        "title": "Что случилось с объявленным 18 млрд. долл. США Совету мира Трампса для Газы?",
+        "summary": "С 2025 года, когда было объявлено о прекращении огня, для Газы были объявлены миллиарды, однако восстановление еще не началось и израильские нападения продолжаются.",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
+      }
+    },
+    {
+      "id": "635a7674b2182f1950eb6242",
+      "original_title": "Israel launches ground operation in central Gaza, dozens flee",
+      "source_language": "en",
+      "source": "Al-Monitor",
+      "ru": {
+        "title": "Израиль осуществляет наземную операцию в центральной части Газы, десятки людей убегают",
+        "summary": "Нидаль аль-Муграби и Махмуд Исса КАЙРО, 18 ноября (Рейтер) — десятки перемещенных палестинцев покинули свои палатки и убежища в центральной части Газы в среду после того, как Израиль совершил редкий наземный налет в районе, из которого он вышел в соответствии с прекращением огня 2025 года.",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
+      }
+    },
+    {
+      "id": "95eee17570902f6aa9023b66",
+      "original_title": "Saudis preparing for Yemen campaign to last well into 2027",
+      "source_language": "en",
+      "source": "Al-Monitor",
+      "ru": {
+        "title": "Саудовцы готовятся к кампании в Йемене, которая продлится до 2027 года",
+        "summary": "(Возвращается с датой 18 ноября, поправка от 17 ноября) Тимур Азари и Умейра Памук РИЯДХ, 18 ноября (Рейтер) - Саудовская Аравия готовится к войне против йеменского Хаутиса, которая продлится в следующем году, удваивая, несмотря на неудачи на поле боя в Йемене и нападения, нарушающие жизнь дома, говорит, что два западных чиновника кратко проинформировали",
+        "model": "Helsinki-NLP/opus-mt-en-ru"
+      },
+      "he": {
+        "title": "הסעודים מתכוננים לקמפיין בתימן עד שנת 2027.",
+        "summary": "(Refiles with Nov 18 dateline, correcting from Nov 17) by Timour Azhari and Humyra Pamuk RIYADH, Nov 18 (Rotters) - Sudio Abrib is preppearing for war against Timen's Houthis to surve well into next year, completing down though through thrances on the file in Tyman and atters diffecting life at home, אמר שני פקידים מערביים מתודרכו על ידי תימן.",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      }
+    },
+    {
+      "id": "921a806d18a6d2b214ebc05d",
+      "original_title": "Grapevine: On the diplomatic track",
+      "source_language": "en",
+      "source": "Jerusalem Post / Israel",
+      "he": {
+        "title": "על המסלול הדיפלומטי",
+        "summary": "מובילים ורעשנים בחברה הישראלית.",
+        "model": "Helsinki-NLP/opus-mt-en-he"
+      }
+    },
+    {
+      "id": "5c3efb485896861481e79740",
+      "original_title": "על רקע הפסגה בסין: טראמפ מתוסכל מביקורת ואנס על המלחמה באיראן | דיווח",
       "source_language": "he",
       "source": "Maariv",
       "ru": {
-        "title": "Эффи Ноа впервые отреагировала на сбор пожертвований Хаддас Саиф: \"Какой идиот это делает?\"",
-        "summary": "Эффи Ноа напал на Хадса Штифа из-за кампании по сбору 800 тысяч долларов после того, как получил компенсацию за нарушение частной жизни.",
+        "title": "На саммите в Китае: Трамп расстроен критикой Вэнса по поводу войны в Иране.",
+        "summary": "Согласно отчету в \"Нью-Йорк Таймс\", американский президент возмущен тем, что они организовали связь между войной в Иране и падением республиканцев, в то время как он хвалит Марко Рубио и намекает на его политическое будущее, которое он совершил в США.",
         "model": "Helsinki-NLP/opus-mt-he-ru"
-      }
-    },
-    {
-      "id": "15a5b4049d0d0fb6f0ff12cc",
-      "original_title": "UN ambassadors enter Gaza for first time, tour Hamas tunnel with Israeli envoy Danny Danon",
-      "source_language": "en",
-      "source": "Jerusalem Post / Israel",
-      "ru": {
-        "title": "Послы ООН впервые въезжают в Газу, путешествуют по туннелю ХАМАС с израильским посланником Дэнни Даноном",
-        "summary": "Визит начался в Киббуц-Кфар-Аза, одна из общин, опустошенных во время нападения ХАМАС 7 октября, и послам было показано, какие разрушения остались после резни, прежде чем пересечь границу в Газу.",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
-      "he": {
-        "title": "שגרירי האו\"ם נכנסו לעזה בפעם הראשונה, סיירו במנהרת חמאס עם השליח הישראלי דני דנון",
-        "summary": "הביקור החל בקיבוץ כפר עזה, אחת הקהילות נהרסה במהלך התקפת חמאס ב-7 באוקטובר.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "6c37d0194322ef4a31b97765",
-      "original_title": "Anti-Houthi forces retreat in Yemen as Iran strikes Bahrain",
-      "source_language": "en",
-      "source": "Al-Monitor",
-      "he": {
-        "title": "כוחות אנטי-הוטיים נסוגים בתימן בעוד איראן תוקפת בחריין.",
-        "summary": "על ידי מוחמד גובארי נוב 15 (Reuters) - איראן ובעלי בריתה הגבירו לחץ על ארצות הברית ועל מדינות המפרץ בעלות הברית בשתי חזיתות ביום ראשון, עם כוחות סעודיים נסוגים במאבקם נגד ההוטאים איראן שהוקמו בתימן ואיראן עצמה יורה מזל\"טים בבסיסים בארה\"ב בבחריין.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "b280762ad201930f85e809f9",
-      "original_title": "Israel kills senior member of Hamas's military wing in Gaza strike",
-      "source_language": "en",
-      "source": "France 24",
-      "he": {
-        "title": "ישראל הורגת חבר בכיר באגף הצבאי של חמאס בעזה.",
-        "summary": "הצבא הישראלי אמר שביום ראשון הרגו כוחותיו חבר בכיר באגף הצבאי של חמאס בעזה, והקבוצה הלוחמנית אישרה את מותו של סמיר אבו יונס, מפקד חטיבת הראפה, והוסיף שהוא מילא תפקיד חשוב בתכנון התקפות ה-7 באוקטובר 2023.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "db429bfd224cd0c0a32b74ee",
-      "original_title": "Will Israel's repeated strikes on Hamas's replacement commanders lead to lasting change? - analysis",
-      "source_language": "en",
-      "source": "Jerusalem Post / Israel",
-      "he": {
-        "title": "האם שביתות חוזרות ונשנות של בני ישראל על מפקדיו המחליפים של חמאס יובילו לשינוי מתמשך? (אנליזה)",
-        "summary": "על ידי מיקוד מפקדים חלופיים זמן קצר לאחר מינוים, ישראל עשויה לבקש למנוע את יכולתו של חמאס לבסס מחדש את פיקודה ואת שליטתה.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "2c2b597b05d337cb01488a76",
-      "original_title": "Iran still has up to 2,500 missiles, capable of major assault even after rounds of strikes - report",
-      "source_language": "en",
-      "source": "Jerusalem Post / Iran",
-      "he": {
-        "title": "לאיראן עדיין יש עד 2,500 טילים, המסוגלים לתקוף אפילו אחרי סיבובי שביתות.",
-        "summary": "הפקידים אמרו שזה היה קשה לעקוב אחר המספר המדויק של בעלי טילים איראן, כולל אלה באחסון ואלה מוכנים לשיגור מיידי.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "34b6a405b4b7c1a4f03486f9",
-      "original_title": "Iran can still produce 50 ballistic missiles a month, despite US-Israeli strikes - report",
-      "source_language": "en",
-      "source": "Jerusalem Post / Iran",
-      "he": {
-        "title": "איראן עדיין יכולה לייצר 50 טילים בליסטיים בחודש, למרות שביתות ארה\"ב-ישראלית - דו\"ח",
-        "summary": "למרות הנזק הגדול לתשתית הצבאית שלה, הרפובליקה האיסלאמית של איראן \"ככל הנראה יש לה לפחות 1,700 טילים בליסטיים שנותרו,\" והיא בונה יותר מדי יום, על פי דיווחים.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "b9f17645a9854785cdd06535",
-      "original_title": "Saudi-led coalition intercepts missiles towards Riyadh, drones in Eastern Province",
-      "source_language": "en",
-      "source": "Al-Monitor",
-      "he": {
-        "title": "הקואליציה הסעודית מיירטת טילים לכיוון ריאד, מזל\"טים במחוז המזרחי.",
-        "summary": "נוב 15 (רוטרס) - הקואליציה הסעודית שנלחמת באיראן אוטהיס אמר ביום ראשון שהיא יירטה שני טילים בליסטיים של אוטוהי ששוגרו לעבר הבירה הסעודית ריאד ושלושה בורגים במחוז המזרחי העשיר בנפט של הממלכה.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "add2104d56b9c4fed52b7e7d",
-      "original_title": "U.S. and Israeli defense chiefs to keynote MirYam Institute briefings in New York and Florida",
-      "source_language": "en",
-      "source": "JNS",
-      "ru": {
-        "title": "Вожди обороны США и Израиля на основных брифингах Института Мириам в Нью-Йорке и Флориде",
-        "summary": "Бывший министр обороны Израиля Йоав Галлант, отставной генерал США Эрик Курилья и бывший израильский посол Майкл Орен обсудят проблемы, стоящие перед Израилем, и будущее отношений между США и Израилем",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
-      "he": {
-        "title": "ראשי ההגנה של ארצות הברית וישראל לתדריכים המרכזיים של מכון מיראם בניו יורק ובפלורידה",
-        "summary": "שר ההגנה הישראלי לשעבר, יואב גאלנט, גנרל לשעבר, אריק קורילה, ושגריר ישראל לשעבר, מייקל אורן, ישוחחו על האתגרים הניצבים בפני ישראל ועל עתיד היחסים בין ארצות הברית לישראל.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "12cf3d3ebc4edf080e720501",
-      "original_title": "Yashar, Likud meet for unity talks as Eisenkot bloc moves to assert control over Knesset",
-      "source_language": "en",
-      "source": "Times of Israel",
-      "ru": {
-        "title": "Яшар, Ликуд встречаются для переговоров о единстве, когда блок Айсенкот пытается установить контроль над кнессетом",
-        "summary": "Антинетаньяхуский блок готовится заменить оратора в кнессете и приступить к пересмотру законодательства о судебной реформе, несмотря на то, что коалиционные переговоры по-прежнему зашли в тупик.",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
-      "he": {
-        "title": "ישאר, ליקוד נפגש לשיחות אחדות כמו Eisenkot גוש נע כדי להשתלט על Knesset",
-        "summary": "אנטי-נטניהו בלוק מתכונן להחליף את רמקול Knesset ולהתחיל להפוך חקיקה שיפוץ שיפוטית, אפילו כמו שיחות קואליציה להישאר מבוי סתום",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "1f1503fb989dcab7153343f5",
-      "original_title": "Iran Foreign Minister Araghchi to visit Oman for talks with counterpart",
-      "source_language": "en",
-      "source": "Jerusalem Post / Iran",
-      "ru": {
-        "title": "Министр иностранных дел Ирана Арахти посетить Оман для проведения переговоров с контрагентом",
-        "summary": "Иранское государственное агентство новостей IRNA сообщило о предстоящем визите Арахти, сославшись на пресс-секретаря министерства иностранных дел Эсмаила Багаеи",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      }
-    },
-    {
-      "id": "e8431b378cceef134c0d32da",
-      "original_title": "Negotiators from US, Iran and Qatar fear Netanyahu could torpedo talks to end the war",
-      "source_language": "en",
-      "source": "Times of Israel",
-      "he": {
-        "title": "מו\"מ מארה\"ב, איראן וקטאר חוששים שניטניהו יוכל לטרפד שיחות כדי לסיים את המלחמה.",
-        "summary": "גורמים רשמיים שמכירים את החומר אומרים לטול שכל הצדדים במשא ומתן מודאגים מאוד שראש הממשלה נוקטים בפעולה, עם או בלי אישורו של טראמפ, זה עלול לגרום ללחימה מחודשת.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "849f6bcfae3f010eff88f561",
-      "original_title": "Golan rules out unity government with Netanyahu, warns of new Iran war by caretaker government",
-      "source_language": "en",
-      "source": "Jerusalem Post / Israel",
-      "ru": {
-        "title": "Голаны исключают правительство единства с Нетаньяху, предупреждают о новой войне в Иране, которую ведет правительство-хранитель",
-        "summary": "Председатель демократов сказал, что оппозиция должна быстро сформировать правительство, предупредив, что история будет судить нас, если она не сможет предотвратить новую войну.",
-        "model": "Helsinki-NLP/opus-mt-en-ru"
-      },
-      "he": {
-        "title": "גולן פוסל את ממשלת האחדות עם נתניהו, מזהיר ממלחמת איראן חדשה על ידי הממשלה המטפלת",
-        "summary": "היו\"ר הדמוקרטי אמר שההתנגדות חייבת ליצור ממשלה במהירות, ולהזהיר שההיסטוריה תשפוט אותנו אם היא לא תצליח למנוע מלחמה נוספת.",
-        "model": "Helsinki-NLP/opus-mt-en-he"
-      }
-    },
-    {
-      "id": "caa5dac3fc71fcce87148813",
-      "original_title": "At Knesset unity tent, Eitam calls for compromise, warns against minority government",
-      "source_language": "en",
-      "source": "Arutz Sheva",
-      "he": {
-        "title": "באוהל אחדות Kenset, איטאם קורא לפשרה, מזהיר נגד ממשלת מיעוט",
-        "summary": "יו\"ר הפלג הציוני הדתי הצטרף לאוהל האחדות בקנסט וקרא לנטניהו ואייזנקוט להתחיל במשא ומתן,",
-        "model": "Helsinki-NLP/opus-mt-en-he"
       }
     }
   ],
   "quality": {
-    "accepted": 18,
-    "rejected": 53,
+    "accepted": 6,
+    "rejected": 16,
     "model_tasks": {
-      "Helsinki-NLP/opus-mt-he-ru": 5,
-      "Helsinki-NLP/opus-mt-en-ru": 37,
-      "Helsinki-NLP/opus-mt-en-he": 29
+      "Helsinki-NLP/opus-mt-en-ru": 17,
+      "Helsinki-NLP/opus-mt-en-he": 3,
+      "Helsinki-NLP/opus-mt-he-ru": 2
     }
   }
 }
