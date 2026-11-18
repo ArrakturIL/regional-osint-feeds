@@ -59,7 +59,9 @@ export function DataRoomV2({visible,data,error,aviation,satellite,aviationError,
   h("section",{className:"section",id:"diagnostics"},h(Head,{title:L.method,icon:"database",sub:L.methodSub}),
    h(Card,null,t("h3",null,L.sourceState),t("p",null,issues.length+" / "+allSources.length+" "+L.sources),
     h("details",{className:"rw-technical-details"},h("summary",null,L.sourceState),...allSources.map(s=>h("div",{className:"sources-row",key:s.id},t("span",null,(UI_HE?s.label_he:s.label)||s.id),t("span",null,s.state==="ok"?L.sourceOk:s.state==="partial"?L.sourcePartial:s.state==="error"?L.sourceError:s.state==="empty"?L.sourceEmpty:L.sourceUnknown)))),
-    t("p","rw-fineprint",L.methodInfo)))
+    t("p","rw-fineprint",L.methodInfo),
+    // Providers whose terms require a citation with a link (adsb.fi, AvioADSB).
+    (()=>{const seen=new Map();for(const s of allSources)for(const a of s.attribution||[])seen.set(a.name,a.url);return seen.size?h("p",{className:"rw-fineprint"},isHe?"נתוני ADS-B: ":"Данные ADS-B: ",...[...seen].flatMap(([name,url],i)=>[i?" · ":null,h(External,{url,key:name},name)]).filter(Boolean)):null;})()))
  );
 }
 

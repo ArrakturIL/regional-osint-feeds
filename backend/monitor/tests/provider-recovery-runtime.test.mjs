@@ -71,16 +71,36 @@ test('healthy adsb.lol preserves existing alternating context sample',async()=>{
  assert.notEqual(new URL(out.requests[0]).pathname,'/v2/point/35.7/51.4/100');
  assert.equal(out.batches.length,1);
 });
-test('partial adsb.lol recovery holds back the broad military query',async()=>{
+// 18.11: holding the military query back starved mil_lol for days (adsb.lol
+// 429 on shared Cloudflare egress). adsb.lol quota stays reserved for Tehran;
+// the military snapshot comes from adsb.fi instead.
+test('partial adsb.lol recovery sends the military query to adsb.fi, not adsb.lol',async()=>{
  const out=await exercise('04',{failures:3});
- assert.equal(out.requests.length,0);
- assert.equal(out.batches.length,0);
- assert.equal(out.writes.length,0);
+ assert.deepEqual(out.requests,['https://opendata.adsb.fi/api/v2/mil']);
+ assert.equal(out.batches.length,1);
+});
+test('adsb.lol cooldown does not silence the military snapshot',async()=>{
+ const out=await exercise('04',{failures:7,nextAllowed:Date.now()+3600000});
+ assert.deepEqual(out.requests.map(s=>new URL(s).host),['opendata.adsb.fi']);
+ assert.equal(out.batches.length,1);
 });
 test('healthy adsb.lol still polls the military endpoint on its scheduled hour',async()=>{
  const out=await exercise('04');
  assert.deepEqual(out.requests.map(s=>new URL(s).pathname),['/v2/mil']);
  assert.equal(out.batches.length,1);
+});
+test('healthy adsb.lol answering 429 falls back to adsb.fi in the same slot',async()=>{
+ const h=harness(),prior=globalThis.fetch;
+ globalThis.fetch=async(url)=>{
+  h.calls.requests.push(String(url));
+  if(String(url).includes('adsb.lol'))return new Response('',{status:429});
+  return Response.json({now:Date.now(),ac:[]});
+ };
+ try{await runSchedule({scheduledTime:at('04')},h.env);}
+ finally{globalThis.fetch=prior;}
+ assert.deepEqual(h.calls.requests.map(s=>new URL(s).host),['api.adsb.lol','opendata.adsb.fi']);
+ assert.equal(h.calls.batches.length,1);
+ assert.ok(h.calls.writes.some(w=>w.sql.includes('failures=?')&&w.params.includes(429)),'adsb.lol failure is still recorded');
 });
 test('shared AvioADSB quota at zero suppresses alternate sampler without a provider call',async()=>{
  const out=await exercise('22',{quota:{remaining:0,reset_at:Date.now()+3600000,checked_at:Date.now()}});

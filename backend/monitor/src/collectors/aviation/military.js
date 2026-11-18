@@ -54,5 +54,21 @@ export function militaryFeed(provider, url) {
 }
 
 export const militaryLol = militaryFeed("adsb.lol", "https://api.adsb.lol/v2/mil");
+// adsb.lol rate-limits shared Cloudflare egress (dynamic limits); since 16.11
+// its failure counter rarely returned to 0 and mil_lol was never scheduled.
+// adsb.fi open data serves the same ADSBx v2 /mil schema (1 req/s; personal,
+// non-commercial use; attribution with a link to adsb.fi is required).
+export const militaryAdsbFi = militaryFeed("adsb.fi", "https://opendata.adsb.fi/api/v2/mil");
 
-
+// adsb.lol only while it is fully healthy (its quota is reserved for the
+// Tehran collector); otherwise, or if that call fails, adsb.fi in the same slot.
+export async function militaryWithFallback(env, slot) {
+  const s = await env.DB.prepare("SELECT failures,next_allowed_at,lease_until FROM worker_provider_state WHERE provider=?")
+    .bind("adsb.lol").first().catch(() => null);
+  const now = Date.now();
+  const lolHealthy = !s || ((s.failures || 0) === 0 && (s.next_allowed_at || 0) <= now && (s.lease_until || 0) <= now);
+  if (lolHealthy) {
+    try { return await militaryLol(env, slot); } catch { /* recorded by providerGet; fall back */ }
+  }
+  return militaryAdsbFi(env, slot);
+}
