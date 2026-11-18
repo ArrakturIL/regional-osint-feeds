@@ -31,12 +31,6 @@ const valid={
 };
 const gitBlob=text=>{const b=Buffer.from(text,'utf8');return createHash('sha1').update(Buffer.from('blob '+b.length,'utf8')).update(Buffer.from([0])).update(b).digest('hex')};
 
-test.skip('[RETIRED 18.11, B1: byte-parity with a pre-split blob blocks any change; behaviour is covered by runtime tests] editorial decision extraction recreates exact pre-split Git blob and unchanged editor hooks',()=>{
- assert.equal(gitBlob(reconstructAnalystDecisionEditor()),'742091e2b6818d2cae585985dadb27401e1d02e5');
- for(const name of ['validateDecision','reserveAi','aiDecision']) assert.equal(typeof testHooks[name],'function');
- assert.equal(typeof analystService.fetch,'function');
- assert.equal(typeof analystService.scheduled,'function');
-});
 
 test('validation keeps original thresholds and rejects fabricated or copied claims',()=>{
  const {validateDecision}=make();

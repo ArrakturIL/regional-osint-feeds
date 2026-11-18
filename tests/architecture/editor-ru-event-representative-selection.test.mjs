@@ -63,9 +63,6 @@ function makeEnv({rows=[],events=[],budget={batches:0,estimated_neurons:0}}={}){
  return{env:{NEWS_DB,AI},sqls,calls,wrote};
 }
 const candidateSql=ops=>ops.find(e=>e.method==='all'&&e.sql.includes('FROM news_items'));
-test.skip('[RETIRED 18.11, B1: byte-parity with a pre-split blob blocks any change; behaviour is covered by runtime tests] exact prechange RU translation source remains reconstructable',()=>{
- assert.equal(blobSha(reconstructOriginalRuTranslator()),'2b3be8cff87ecb1c94e1ff1c1834e95ba9ef64c4');
-});
 test('recent low-priority displayed events translate; non-displayed low-priority articles do not',async()=>{
  const data=makeEnv({
   rows:[row('shown4',4,NOW-2*HOUR),row('shown5',5,NOW-3*HOUR),

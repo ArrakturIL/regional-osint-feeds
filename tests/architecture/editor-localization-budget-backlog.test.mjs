@@ -52,9 +52,6 @@ function makeEnv({budget={attempts:0,estimated_neurons:0},rows=[sample],response
 const saved=(events,sql)=>events.filter(e=>e.method==='run'&&e.sql.includes(sql));
 const blobSha=text=>{const b=Buffer.from(text,'utf8');return createHash('sha1').update(Buffer.from('blob '+b.length,'utf8')).update(Buffer.from([0])).update(b).digest('hex');};
 
-test.skip('[RETIRED 18.11, B1: byte-parity with a pre-split blob blocks any change; behaviour is covered by runtime tests] ARCH-04 documented changes reconstruct pre-change exact scheduler Git SHA',()=>{
- assert.equal(blobSha(reconstructPreBudgetScheduler()),'fb23350a8eb586b60cd30873ffac6c46eb161d99');
-});
 
 test('moderate allowance permits 97th paid HE attempt but blocks at the 300 ceiling (B1), keeping 4/run and 6000-neuron guard',async()=>{
  const f=makeEnv({budget:{attempts:96,estimated_neurons:100}});
