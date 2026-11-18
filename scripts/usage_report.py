@@ -144,12 +144,18 @@ def main(argv=None) -> int:
     day = date.fromisoformat(a.day) if a.day else (datetime.now(timezone.utc).date() - timedelta(days=1))
     budgets = json.loads(BUDGETS.read_text(encoding="utf8"))
     account_id = os.environ["CLOUDFLARE_ACCOUNT_ID"]
-    gql = _post_json(GRAPHQL, os.environ["CLOUDFLARE_API_TOKEN"],
-                     {"query": QUERY, "variables": {"acc": account_id, "d": day.isoformat()}})
-    if gql.get("errors"):
-        raise RuntimeError("Cloudflare GraphQL error: " + "; ".join(str(e.get("message"))[:120] for e in gql["errors"]))
-    account = gql["data"]["viewer"]["accounts"][0]
-    rows = cloudflare_metrics(account)
+    # GraphQL needs "Account Analytics: Read"; the deploy token may not have it.
+    token = os.environ.get("CLOUDFLARE_ANALYTICS_TOKEN") or os.environ.get("CLOUDFLARE_API_TOKEN", "")
+    cf_error = None
+    try:
+        gql = _post_json(GRAPHQL, token, {"query": QUERY, "variables": {"acc": account_id, "d": day.isoformat()}})
+        if gql.get("errors"):
+            raise RuntimeError("; ".join(str(e.get("message"))[:120] for e in gql["errors"]))
+        rows = cloudflare_metrics(gql["data"]["viewer"]["accounts"][0])
+    except RuntimeError as exc:
+        # Actions usage is still measured and stored; the run fails visibly below.
+        cf_error = "Cloudflare GraphQL unavailable: " + str(exc)
+        rows = []
     rows += actions_metrics(fetch_runs(os.environ["GITHUB_REPOSITORY"], os.environ["GITHUB_TOKEN"], day), day)
     rows = evaluate(rows, budgets)
     report = markdown(day, rows, budgets.get("app_guards", {}))
@@ -170,6 +176,9 @@ def main(argv=None) -> int:
     for r in rows:
         if r["warn"]:
             print(f"::warning::{r['metric']} at {r['ratio'] * 100:.0f}% of daily budget")
+    if cf_error:
+        print("::error::" + cf_error + " (grant Account Analytics: Read, or set CLOUDFLARE_ANALYTICS_TOKEN)")
+        return 1
     return 2 if any(r["warn"] for r in rows) else 0
 
 
