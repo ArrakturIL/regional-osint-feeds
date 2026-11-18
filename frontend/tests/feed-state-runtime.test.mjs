@@ -98,3 +98,13 @@ test('first load happens in a hidden (background) tab; nothing more until it is 
   assert.equal(m.calls.length, 1, 'first load not deferred');
   assert.deepEqual(m.render().value.articles, [1]);
 });
+
+test('news archive: failures render the classified reader text, never "HTTP 503" or parser output', async () => {
+  const {rwArchiveValidatePayload} = await import('../src/components/NewsArchive/NewsArchive.js').catch(() => ({}));
+  const src = readFileSync(new URL('../src/components/NewsArchive/NewsArchive.js', import.meta.url), 'utf8');
+  assert.match(src, /setError\(failureText\(classifyFailure\(e, e\?\.rwStatus\), !!label\)\)/);
+  assert.doesNotMatch(src, /loadError: '[^']*: '/, 'no "<label>: <raw error>" concatenation');
+  const invalid = (() => { try { (rwArchiveValidatePayload || (() => { throw Object.assign(Error('x'), {rwInvalid: true}); }))({}, 'ru', 0, 12); } catch (e) { return e; } })();
+  assert.equal(classifyFailure(invalid, undefined).kind, 'invalid');
+  assert.equal(failureText(classifyFailure(new Error('HTTP 503'), 503), false), 'Сервер временно недоступен.');
+});

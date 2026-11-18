@@ -1,3 +1,4 @@
+import { classifyFailure, failureText } from '../../utils/feedFailure.js';
 import { rwNormalizeNewsArticle } from '../../api/normalizeNewsArticle.js';
 import { UI_HE, h, t, useEffect, useRef, useState } from '../../app/runtime.js';
 import { Loading } from '../Loading/Loading.js';
@@ -83,7 +84,7 @@ export function rwArchiveValidatePayload(body, lang, offset, pageSize) {
     body.articles.every(
       (x, i) => x && typeof x.event_id === 'string' && x.event_id && x.feed_rank === offset + i,
     );
-  if (!valid) throw new Error('Invalid news page response');
+  if (!valid) throw Object.assign(new Error('Invalid news page response'), { rwInvalid: true });
   return body;
 }
 
@@ -142,7 +143,7 @@ export function NewsArchive() {
         badDate: 'טווח תאריכים לא תקין.',
         changed: 'הסדר השתנה. חזרנו לעמוד הראשון כדי למנוע כפילויות.',
         loading: 'טוענים עמוד חדשות…',
-        loadError: 'לא ניתן לטעון את עמוד החדשות: ',
+        loadError: 'לא ניתן לטעון את עמוד החדשות. ',
         retry: 'נסה שוב',
         empty: 'אין פרסומים התואמים למסננים.',
         prev: 'הקודם',
@@ -190,7 +191,7 @@ export function NewsArchive() {
         badDate: 'Некорректный диапазон дат.',
         changed: 'Лента изменилась. Перешли к первой странице, чтобы не дублировать новости.',
         loading: 'Загружаем страницу новостей…',
-        loadError: 'Не удалось загрузить страницу: ',
+        loadError: 'Не удалось загрузить страницу. ',
         retry: 'Повторить',
         empty: 'По выбранным фильтрам публикаций нет.',
         prev: 'Назад',
@@ -225,19 +226,21 @@ export function NewsArchive() {
           }
           return;
         }
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        const body = rwArchiveValidatePayload(
-          await resp.json(),
-          label ? 'he' : 'ru',
-          (page - 1) * pageSize,
-          pageSize,
-        );
+        if (!resp.ok) throw Object.assign(new Error('HTTP ' + resp.status), { rwStatus: resp.status });
+        let json;
+        try {
+          json = await resp.json();
+        } catch {
+          throw Object.assign(new Error('invalid JSON'), { rwInvalid: true });
+        }
+        const body = rwArchiveValidatePayload(json, label ? 'he' : 'ru', (page - 1) * pageSize, pageSize);
         if (alive) {
           if (page === 1) orderHash.current = body.feed_order_hash;
           setResult(body);
         }
       } catch (e) {
-        if (alive) setError(e?.name === 'AbortError' ? 'timeout' : String(e.message || e));
+        // F-04: reader-facing reason, never a raw "HTTP 503" or parser message.
+        if (alive) setError(failureText(classifyFailure(e, e?.rwStatus), !!label));
       } finally {
         clearTimeout(timer);
         if (alive) setLoading(false);
