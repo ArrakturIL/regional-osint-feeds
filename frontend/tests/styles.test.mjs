@@ -22,7 +22,7 @@ test('CSS has component and page owners; original 550-line monolith is not autho
 test('modularized baseline preserves every original CSS byte and cascade ordering',()=>{
  const baseline=source('../baselines/cloudflare/2026-11-14/pages-0f39f36e/app.css');
  assert.equal(assembleStyles({includeRefinements:false}),baseline);
- assert.equal(assembleStyles(),baseline+refined+source('src/styles/document-shell.css')+source('src/components/Header/Header.mobile.css')+source('src/components/NewsMasonry/NewsMasonry.layout.css')+source('src/components/NewsArchive/NewsArchive.filters.css')+source('src/components/Header/Header.status.css')+source('src/components/Digest/Digest.qa.css'));
+ assert.equal(assembleStyles(),baseline+refined+source('src/styles/document-shell.css')+source('src/components/Header/Header.mobile.css')+source('src/components/NewsMasonry/NewsMasonry.layout.css')+source('src/components/NewsArchive/NewsArchive.filters.css')+source('src/components/Header/Header.status.css')+source('src/components/Digest/Digest.qa.css')+source('src/components/FeedState/FeedState.css'));
 });
 test('both locales share one explicit rhythm for main sections',()=>{
  assert.match(refined,/#overview \.rw-digest \+ \.section\s*\{/);
@@ -64,7 +64,7 @@ test('eight RU/HE documents contain no duplicated inline CSS',()=>{
   assert.ok(html.includes('/assets/app.css'));
  }
  const baseline=source('../baselines/cloudflare/2026-11-14/pages-0f39f36e/app.css');
- assert.equal(assembleStyles(),baseline+refined+shared+source('src/components/Header/Header.mobile.css')+source('src/components/NewsMasonry/NewsMasonry.layout.css')+source('src/components/NewsArchive/NewsArchive.filters.css')+source('src/components/Header/Header.status.css')+source('src/components/Digest/Digest.qa.css'));
+ assert.equal(assembleStyles(),baseline+refined+shared+source('src/components/Header/Header.mobile.css')+source('src/components/NewsMasonry/NewsMasonry.layout.css')+source('src/components/NewsArchive/NewsArchive.filters.css')+source('src/components/Header/Header.status.css')+source('src/components/Digest/Digest.qa.css')+source('src/components/FeedState/FeedState.css'));
 });
 
 test('small screen navigation has two readable columns in both locales',()=>{
@@ -94,6 +94,6 @@ test('news order and sources count regression: stable grid and isolated LTR numb
  assert.match(countStyle,/\.rw-global-header\s+\.rw-site-source\s*\{[\s\S]*?display:\s*inline-flex/);
  assert.match(countStyle,/\.rw-global-header\s+\.rw-site-source-count\s*\{[\s\S]*?unicode-bidi:\s*isolate/);
  const bundle=assembleStyles();
- assert.ok(bundle.endsWith(countStyle),'bidi fix must take precedence after legacy header rules');
+ assert.ok(bundle.endsWith(countStyle+source('src/components/FeedState/FeedState.css')),'bidi fix must take precedence after legacy header rules (F-04 FeedState.css is the only later file)');
  assert.ok(bundle.includes(layout),'news grid must be present in emitted CSS');
 });

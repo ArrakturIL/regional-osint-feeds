@@ -5,10 +5,11 @@ import { Loading } from '../../components/Loading/Loading.js';
 import { GoLink } from '../../components/Navigation/GoLink.js';
 import { NewsMasonry } from '../../components/NewsMasonry/NewsMasonry.js';
 import { Intro } from '../../components/PageIntro/Intro.js';
+import { FeedState } from '../../components/FeedState/FeedState.js';
 import { Head } from '../../components/SectionHead/Head.js';
 import { StoryTeaser } from '../../components/StoryTeaser/StoryTeaser.js';
 import { UiIcon } from '../../components/UiIcon/UiIcon.js';
-export function HomeV2({ visible, overview, news, cases, go, errors }) {
+export function HomeV2({ visible, overview, news, cases, go, errors, feeds }) {
   const [expandedId, setExpandedId] = useState(null);
   const [read, setRead] = useState(() => {
     try {
@@ -58,7 +59,6 @@ export function HomeV2({ visible, overview, news, cases, go, errors }) {
         onAir: 'בשידור',
         onAirSub: 'עד שש ידיעות אחרונות בעברית. דיווח אינו אימות עצמאי לאירוע.',
         fullFeed: 'לכל העדכונים ←',
-        feedError: 'שגיאה בעדכון הידיעות: ',
         awaitNews: 'טוענים ידיעות בעברית…',
         noNews: 'אין כרגע ידיעות מוכנות בעברית.',
         fine: 'עדכון ה-RSS מתבצע מדי 5 דקות. זמן פרסום הידיעה שונה ממועד קליטתה במערכת.',
@@ -86,7 +86,6 @@ export function HomeV2({ visible, overview, news, cases, go, errors }) {
         onAirSub:
           'Свежие русскоязычные публикации. Комментарий добавляется лишь там, где помогает понять новость.',
         fullFeed: 'Вся лента →',
-        feedError: 'Сбой обновления RSS: ',
         awaitNews: 'Получаем свежие публикации…',
         noNews: 'Пока нет публикаций.',
         fine: 'Проверка RSS — каждые 5 минут. Дата публикации указана отдельно от времени, когда запись получила система.',
@@ -171,11 +170,7 @@ export function HomeV2({ visible, overview, news, cases, go, errors }) {
             ...featured.map(story => h(StoryTeaser, { key: story.id, story, go })),
           )
         : errors?.cases
-          ? h(
-              'p',
-              { className: 'error', role: 'alert' },
-              (UI_HE ? 'שגיאה בטעינת התיקים: ' : 'Ошибка загрузки досье: ') + errors.cases,
-            )
+          ? h(FeedState, { feed: feeds?.cases })
           : !cases
             ? h(Loading, { label: labels.awaitCases })
             : t('p', 'hint', UI_HE ? 'אין כרגע תיקי מעקב.' : 'Пока нет досье мониторинга.'),
@@ -192,7 +187,7 @@ export function HomeV2({ visible, overview, news, cases, go, errors }) {
           icon: 'pulse',
           right: h(GoLink, { to: toFeed, go, className: 'rw-more-link' }, labels.fullFeed),
         }),
-        errors?.news ? t('p', 'error', labels.feedError + errors.news) : null,
+        errors?.news ? h(FeedState, { feed: feeds?.news }) : null,
         stories.length
           ? h(NewsMasonry, { stories, expandedId, onToggle: setExpandedId, read, markRead: readIt })
           : errors?.news

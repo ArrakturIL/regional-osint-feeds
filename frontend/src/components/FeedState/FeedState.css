@@ -1,0 +1,5 @@
+.rw-feed-state{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:12px 0;padding:12px 16px;border-radius:10px;font-size:15px;line-height:1.5}
+.rw-feed-state--error{border:1px solid #b47462;background:rgba(180,116,98,.08)}
+.rw-feed-state--stale{border:1px dashed #466b54;color:#bcd4c3}
+.rw-feed-retry{cursor:pointer;min-height:44px;padding:0 16px;border-radius:8px;border:1px solid currentColor;background:transparent;color:inherit;font:inherit}
+.rw-feed-retry:focus-visible{outline:2px solid #9de8b7;outline-offset:2px}
