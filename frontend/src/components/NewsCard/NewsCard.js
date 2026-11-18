@@ -104,7 +104,7 @@ export function NewsCard({ item, open, onToggle, read, markRead }) {
                 ? (UI_HE ? 'סיפור · ' : 'История · ') +
                   (related.length + 1) +
                   (UI_HE
-                    ? ' מקורות'
+                    ? ' פרסומים'
                     : ' ' + ruPlural(related.length + 1, ['публикация', 'публикации', 'публикаций']))
                 : UI_HE
                   ? 'מה ידוע מהמקור'
