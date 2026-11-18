@@ -96,3 +96,41 @@ test('Monitor scheduled dispatches even when the D1 collector schedule fails', a
   }
   assert.ok(calls.some(u => u.endsWith('/analysts.yml/dispatches')), 'dispatch must not depend on D1 health');
 });
+
+// H-04: a rolled-back source's collector workflow is not dispatched.
+function controlsDb(rows, fail = false) {
+  return {prepare(sql) {
+    return {bind(...p) { this.p = p; return this; }, async all() {
+      assert.match(sql, /FROM source_controls/);
+      if (fail) throw Error('no such table: source_controls');
+      return {results: rows.filter(r => r.until_ms == null || r.until_ms > this.p[0])};
+    }};
+  }};
+}
+test('disabled source: its workflow is not dispatched, others in the slot still are', async () => {
+  const t = at(0, 13); // 00:13 UTC: copernicus-analytics.yml is due (13 */6)
+  const due = dueWorkflows(t);
+  assert.ok(due.includes('copernicus-analytics.yml'), due.join());
+  const f = fakeFetch();
+  const out = await dispatchDueWorkflows({GITHUB_DISPATCH_TOKEN: 't', DB: controlsDb([{source: 'copernicus_ems', reason: 'x', until_ms: null}])}, t, {fetch: f.fn, log() {}});
+  assert.deepEqual(out.disabled, ['copernicus-analytics.yml']);
+  assert.ok(!f.calls.some(c => c.url.includes('copernicus-analytics.yml')));
+  assert.equal(f.calls.length, due.length - 1);
+});
+test('control lookup failure fails open: every due workflow is dispatched', async () => {
+  const t = at(0, 13), f = fakeFetch();
+  const out = await dispatchDueWorkflows({GITHUB_DISPATCH_TOKEN: 't', DB: controlsDb([], true)}, t, {fetch: f.fn, log() {}});
+  assert.equal(out.disabled, undefined);
+  assert.equal(f.calls.length, dueWorkflows(t).length);
+});
+test('workflow→source map is the same in Monitor and the operator config', () => {
+  const cfg = JSON.parse(readFileSync(resolve(repo, 'config/source-controls.json'), 'utf8')).components.monitor;
+  const fromCadence = Object.fromEntries(WORKFLOW_CADENCE.filter(w => w.source).map(w => [w.workflow, w.source]));
+  assert.deepEqual(fromCadence, cfg.workflows);
+  for (const [wf, src] of Object.entries(cfg.workflows)) {
+    assert.ok(cfg.sources.includes(src), src);
+    const yml = readFileSync(resolve(repo, '.github/workflows', wf), 'utf8');
+    assert.match(yml, new RegExp('python3 -m scripts\\.source_gate --workflow ' + wf.replace('.', '\\.')), wf + ' has no source gate');
+    assert.match(yml, /if: needs\.source-gate\.outputs\.enabled == 'true'/, wf + ' collector job not gated');
+  }
+});

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "description": "H-04 per-source rollback. Keys must match Monitor sources.js names and Editor events.FEEDS publisher ids (checked by tests/architecture/source-controls.test.mjs).",
+  "description": "H-04 per-source rollback. Keys must match Monitor sources.js names and Editor events.FEEDS publisher ids (checked by tests/architecture/source-controls.test.mjs). monitor.workflows maps each GitHub collector workflow to the Monitor source it feeds; a disabled source also skips that workflow (scripts/source_gate.py) and Monitor's dispatch of it.",
   "components": {
     "monitor": {
       "database": "regional-osint",
@@ -31,7 +31,15 @@
         "state_dept",
         "unosat_analysis",
         "us_dod_rss"
-      ]
+      ],
+      "workflows": {
+        "centcom-test.yml": "centcom_dvids",
+        "copernicus-analytics.yml": "copernicus_ems",
+        "gdelt.yml": "gdelt_context",
+        "marad.yml": "marad_official",
+        "satellite.yml": "satellite_context",
+        "unosat-analyses.yml": "unosat_analysis"
+      }
     },
     "editor": {
       "database": "regional-watch-news",

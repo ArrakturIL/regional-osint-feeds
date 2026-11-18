@@ -1,19 +1,23 @@
+import { disabledSources } from '../storage/source-controls.js';
+
 // SYS-01: GitHub's own schedule fires collector workflows far less often than
 // declared (observed 17.11: analysts 4 of ~136 runs in 34 h). Monitor's
 // Cloudflare cron is reliable, so it dispatches each workflow on the cadence its
 // YAML declares. The YAML cron stays as a fallback; duplicate runs are safe
 // because every collector is idempotent and uses a concurrency group.
+// `source` (H-04): Monitor source fed by the workflow; a disabled source is not
+// dispatched (the workflow's own source-gate job also skips YAML-cron runs).
 // Cadence is UTC: minutes-since-epoch % every === offset (every divides 1440).
 export const WORKFLOW_CADENCE = [
   { workflow: 'analysts.yml', every: 15, offset: 7 }, // 7,22,37,52 * * * *
-  { workflow: 'centcom-test.yml', every: 15, offset: 0 }, // */15 * * * *
-  { workflow: 'gdelt.yml', every: 60, offset: 37 }, // 37 * * * *
+  { workflow: 'centcom-test.yml', source: 'centcom_dvids', every: 15, offset: 0 }, // */15 * * * *
+  { workflow: 'gdelt.yml', source: 'gdelt_context', every: 60, offset: 37 }, // 37 * * * *
   { workflow: 'news-open-source-translation.yml', every: 120, offset: 17 }, // 17 */2 * * *
   { workflow: 'collector-shadow-sync.yml', every: 120, offset: 23 }, // 23 */2 * * *
-  { workflow: 'copernicus-analytics.yml', every: 360, offset: 13 }, // 13 */6 * * *
-  { workflow: 'marad.yml', every: 360, offset: 87 }, // 27 1,7,13,19 * * *
-  { workflow: 'unosat-analyses.yml', every: 720, offset: 19 }, // 19 */12 * * *
-  { workflow: 'satellite.yml', every: 1440, offset: 197 }, // 17 3 * * *
+  { workflow: 'copernicus-analytics.yml', source: 'copernicus_ems', every: 360, offset: 13 }, // 13 */6 * * *
+  { workflow: 'marad.yml', source: 'marad_official', every: 360, offset: 87 }, // 27 1,7,13,19 * * *
+  { workflow: 'unosat-analyses.yml', source: 'unosat_analysis', every: 720, offset: 19 }, // 19 */12 * * *
+  { workflow: 'satellite.yml', source: 'satellite_context', every: 1440, offset: 197 }, // 17 3 * * *
 ];
 const REPO = 'ArrakturIL/regional-osint-feeds';
 const MINUTE_MS = 60_000;
@@ -25,10 +29,14 @@ export function dueWorkflows(timeMs) {
 
 // Never throws: collector dispatch must not affect Monitor's own schedule.
 export async function dispatchDueWorkflows(env, timeMs, opts = {}) {
-  const due = dueWorkflows(timeMs);
+  let due = dueWorkflows(timeMs);
   if (!due.length) return { due, dispatched: [], failed: [] };
   const token = env?.GITHUB_DISPATCH_TOKEN;
   if (!token) return { due, dispatched: [], failed: [], skipped: 'no_token' };
+  const sourceOf = new Map(WORKFLOW_CADENCE.map(w => [w.workflow, w.source]));
+  const off = due.some(w => sourceOf.get(w)) && env?.DB ? await disabledSources(env.DB, timeMs) : new Map();
+  const disabled = due.filter(w => off.has(sourceOf.get(w)));
+  due = due.filter(w => !disabled.includes(w));
   const doFetch = opts.fetch || fetch;
   const log = opts.log || (msg => console.warn(msg));
   const dispatched = [],
@@ -62,5 +70,5 @@ export async function dispatchDueWorkflows(env, timeMs, opts = {}) {
       }
     }),
   );
-  return { due, dispatched, failed };
+  return disabled.length ? { due, dispatched, failed, disabled } : { due, dispatched, failed };
 }
