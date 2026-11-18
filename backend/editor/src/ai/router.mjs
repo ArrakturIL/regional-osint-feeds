@@ -50,27 +50,39 @@ async function reserveCall(db, id, cap, now) {
   return r?.meta?.changes === 1;
 }
 
-export async function chat(env, task, input, deps = {}) {
+// One provider step, no fallback. Returns null when the step is unavailable
+// (no key, cooldown, daily cap); throws on a provider error. Used by chat()
+// and by the B6 blind evaluation, so both call models exactly the same way.
+export async function runStep(env, step, input, deps = {}) {
   const doFetch = deps.fetch || fetch, now = (deps.now || Date.now)();
+  if (step.provider === 'cloudflare') {
+    const out = await env.AI.run(step.model, input);
+    return {...out, model: step.model};
+  }
+  if (!env.GEMINI_API_KEY || !env.NEWS_DB) return null;
+  const id = 'gemini:' + step.family;
+  const until = Number(await stateGet(env.NEWS_DB, 'cooldown:' + id).catch(() => 0)) || 0;
+  if (until > now) return null;
+  if (!(await reserveCall(env.NEWS_DB, id, step.dailyCap, now))) return null;
+  try {
+    const model = await geminiModel(env, step.family, doFetch, now);
+    const out = await geminiChat(env.GEMINI_API_KEY, model, input, doFetch);
+    return {...out, model};
+  } catch (e) {
+    if (e.status === 429 || e.status >= 500)
+      await stateSet(env.NEWS_DB, 'cooldown:gemini:' + step.family, String(now + COOLDOWN_MS), now).catch(() => {});
+    throw e;
+  }
+}
+
+export async function chat(env, task, input, deps = {}) {
   let last = new Error('no_route_available');
   for (const step of ROUTES[task] || []) {
     try {
-      if (step.provider === 'cloudflare') {
-        const out = await env.AI.run(step.model, input);
-        return {...out, model: step.model};
-      }
-      if (!env.GEMINI_API_KEY || !env.NEWS_DB) continue;
-      const id = 'gemini:' + step.family;
-      const until = Number(await stateGet(env.NEWS_DB, 'cooldown:' + id).catch(() => 0)) || 0;
-      if (until > now) continue;
-      if (!(await reserveCall(env.NEWS_DB, id, step.dailyCap, now))) continue;
-      const model = await geminiModel(env, step.family, doFetch, now);
-      const out = await geminiChat(env.GEMINI_API_KEY, model, input, doFetch);
-      return {...out, model};
+      const out = await runStep(env, step, input, deps);
+      if (out) return out;
     } catch (e) {
       last = e;
-      if (step.provider === 'gemini' && (e.status === 429 || e.status >= 500))
-        await stateSet(env.NEWS_DB, 'cooldown:gemini:' + step.family, String(now + COOLDOWN_MS), now).catch(() => {});
     }
   }
   throw last;

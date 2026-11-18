@@ -1,4 +1,5 @@
 import {validateCandidate} from './news-mirror.mjs';
+import {RU_TITLES_MODEL,ruTitlesInput} from './prompts.mjs';
 import {newsTier,TIER_RANK} from '../news/tier.mjs';
 import {recordShown} from '../news/sla.mjs';
 
@@ -16,9 +17,8 @@ export async function translateTitles(env,now){
   if(!pending.length)return {translated:0,summaries:0};
   const claimed=await env.NEWS_DB.prepare("UPDATE news_translation_budget SET batches=batches+1,estimated_neurons=estimated_neurons+125,updated_ms=? WHERE day_utc=? AND batches<48 AND estimated_neurons<6000").bind(now,day).run();
   if(claimed.meta?.changes!==1)return {translated:0,summaries:0,budget:"limit"};
-  const system="Ты опытный русскоязычный редактор-переводчик. Переведи каждый английский или ивритский заголовок и короткую RSS-аннотацию на естественный, грамотный русский. Сохраняй все факты, числа, даты, имена, источники утверждений и вопросительные формы. Не превращай подозрения или заявления в доказанные факты, не добавляй ничего своего. Формат ответа: строго валидный JSON-массив объектов вида [{\"id\":\"исходный id\",\"title_ru\":\"русский заголовок\",\"summary_ru\":\"русская аннотация\"}]. Для каждого переданного id ровно один объект. Никаких пояснений, markdown или текста вне JSON. Rezaei — Резаи, Bessent — Бессент, Netanyahu — Нетаньяху, IRGC — КСИР, IDF — ЦАХАЛ.";
   const payload=pending.map(x=>({id:x.id,headline:x.headline,summary:x.summary||""}));
-  const out=await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast",{messages:[{role:"system",content:system},{role:"user",content:JSON.stringify(payload)}],temperature:0.1,max_tokens:1900});
+  const out=await env.AI.run(RU_TITLES_MODEL,ruTitlesInput(payload));
   const content=String(out?.choices?.[0]?.message?.content||(typeof out?.response==="string"?out.response:"")).trim();
   let decoded;try{decoded=JSON.parse(content)}catch(e){const fragment=content.match(/\[[\s\S]*\]/)||content.match(/\{[\s\S]*\}/);if(!fragment)throw Error("Translation response not JSON");decoded=JSON.parse(fragment[0]);}
   const map=new Map();
