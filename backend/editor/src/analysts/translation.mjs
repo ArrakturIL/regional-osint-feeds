@@ -1,4 +1,5 @@
 import {chat} from '../ai/router.mjs';
+import {translationIssue} from '../translations/verify.mjs';
 /** Editorial translation for the private processing pipeline; no public full-text republishing. */
 export const TRANSLATION_MODEL='@cf/zai-org/glm-4.7-flash';
 export const SUPPORTED_ORIGINAL_LANGUAGES=new Set(['ru','he','en']);
@@ -62,7 +63,8 @@ export function validateTranslation(original,d,language) {
   const value=d.translation.trim();
   if(value.length<Math.max(30,Math.floor(original.length*0.38))||
      value.length>original.length*4||!numbersPreserved(original,value)||
-     !negativeMeaningNotDropped(original,value,language))return null;
+     !negativeMeaningNotDropped(original,value,language)||
+     translationIssue(original,value,'ru'))return null; // B3: shared verify
   return {text:value,confidence};
 }
 async function translateChunk(env,source,language) {
@@ -89,6 +91,7 @@ async function translateChunk(env,source,language) {
     else if(!numbersPreserved(source,data.translation))reason='translation_numbers_not_preserved';
     else if(!negativeMeaningNotDropped(source,data.translation,language))reason='translation_negation_not_preserved';
     else if(data.translation.trim().length<Math.max(30,Math.floor(source.length*0.38)))reason='translation_too_short';
+    else if(translationIssue(source,data.translation,'ru'))reason='translation_'+translationIssue(source,data.translation,'ru');
     else if(data.translation.length>source.length*4)reason='translation_too_long';
     throw Error(reason);
   }

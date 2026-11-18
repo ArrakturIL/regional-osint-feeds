@@ -45,8 +45,24 @@ const extractBody=(source,signature,label)=>{
  return body;
 };
 
+// B3 part 2 is an intentionally narrow change: news-reader calls the shared
+// verify (glossary + meaning rules, explicit target language) instead of the
+// meaning-only check. Reverse exactly these reviewed lines before rebuilding.
+const B3_VERIFY=[
+ ["import {translationIssue} from '../translations/verify.mjs';\n",""],
+ ["    // RU summaries are often abridged, so an entity from a later source\n    // sentence may be legitimately absent: the body gets meaning rules only.\n",""],
+ ["translationIssue(sourceTitle,title,'ru')","semanticMeaningIssue(sourceTitle,title)"],
+ ["semanticMeaningIssue(sourceBody,body,'ru')","semanticMeaningIssue(sourceBody,body)"],
+ ["translationIssue(sourceTitle,result.title,'he')","semanticMeaningIssue(sourceTitle,result.title)"],
+ ["translationIssue(sourceBody,result.body,'he')","semanticMeaningIssue(sourceBody,result.body)"],
+];
+const revertB3=text=>B3_VERIFY.reduce((t,[now,was])=>{
+ if(!t.includes(now))throw Error('B3 verify boundary missing: '+now);
+ return t.split(now).join(was);
+},text);
+
 export function reconstructContentFacade(){
- const main=load('localization.mjs'),news=load('news-reader.mjs'),
+ const main=load('localization.mjs'),news=revertB3(load('news-reader.mjs')),
    editorial=load('editorial-reader.mjs'),stories=load('stories-reader.mjs');
  if(!main.startsWith(newHeader))throw Error('unexpected public content facade import contract');
  const newsHelper=before(news,'/** One trusted localization contract','export async function readLocalizedNews','news helper');

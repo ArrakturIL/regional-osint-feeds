@@ -4,25 +4,32 @@
 // are substrings so attached prefixes (ה/ו/ב/ל/מ/ש/כ) are accepted.
 // Adding an entity = adding one entry + a test case, no new code.
 // Legacy codes (first 7) are kept: D1 attempt history and tests refer to them.
+// RU forms (B3 part 2) were checked on 600 live RU translations. Reuters has no
+// RU form on purpose: RU summaries drop the "(Reuters) -" dateline, and the
+// article source is shown separately.
 const L = '(?<![\\p{L}])', R = '(?![\\p{L}])';
 const src = alts => new RegExp(L + '(?:' + alts + ')' + R, 'iu');
 
 export const ENTITIES = [
   {id: 'irgc', code: 'irgc_actor_missing',
     source: /(?<![\p{L}])(?:КСИР|IRGC)(?![\p{L}])|Islamic Revolutionary Guard(?:s| Corps)?|Revolutionary Guards/iu,
-    he: /(?:משמר(?:ות)?\s+(?:ה)?מהפכ[\p{L}]*|IRGC)/iu},
+    he: /(?:משמר(?:ות)?\s+(?:ה)?מהפכ[\p{L}]*|IRGC)/iu,
+    ru: /КСИР|Корпус\p{L}*\s+страж|Страж\p{L}*\s+(?:исламской\s+)?революци|Революционн\p{L}*\s+гварди|IRGC/iu},
   {id: 'katz', code: 'katz_name_corrupted',
-    source: /(?:^|[^\p{L}])(?:Кац|Katz)(?=$|[^\p{L}])/iu, he: /(?:כ[״׳"']?ץ|Katz)/iu},
+    source: /(?:^|[^\p{L}])(?:Кац|Katz)(?=$|[^\p{L}])/iu, he: /(?:כ[״׳"']?ץ|Katz)/iu, ru: /Кац|Katz/u},
   {id: 'allies', code: 'allies_relation_changed',
     source: /(?:^|[^\p{L}])(?:союзник[\p{L}]*|allies|allied\s+(?:states?|countries|governments?))(?=$|[^\p{L}])/iu,
-    he: /(?:בעל(?:י|ות)?\s+(?:ה)?ברית|בני\s+ברית|בנות\s+ברית|בעלות\s+הברית)/iu},
+    he: /(?:בעל(?:י|ות)?\s+(?:ה)?ברית|בני\s+ברית|בנות\s+ברית|בעלות\s+הברית)/iu,
+    ru: /союзни/iu},
   {id: 'idf', code: 'idf_actor_missing',
-    source: /(?:ЦАХАЛ|(?<![\p{L}])IDF(?![\p{L}]))/iu, he: /(?:צה[״"']?ל|IDF|צבא\s+ההגנה\s+לישראל)/iu},
-  {id: 'netanyahu', code: 'netanyahu_name_missing', source: /(?:Нетаньяху|Netanyahu)/iu, he: /(?:נתניהו|Netanyahu)/iu},
+    source: /(?:ЦАХАЛ|(?<![\p{L}])IDF(?![\p{L}]))/iu, he: /(?:צה[״"']?ל|IDF|צבא\s+ההגנה\s+לישראל)/iu,
+    ru: /ЦАХАЛ|Арми\p{L}*\s+(?:обороны\s+)?Израил|Израильск\p{L}*\s+(?:военн|арми)|Генштаб|IDF/iu},
+  {id: 'netanyahu', code: 'netanyahu_name_missing', source: /(?:Нетаньяху|Netanyahu)/iu, he: /(?:נתניהו|Netanyahu)/iu, ru: /Нетаньяху|Netanyahu/iu},
   {id: 'reuters', code: 'reuters_attribution_missing',
     source: /(?:^|[^\p{L}])(?:Reuters|Рейтерс)(?=$|[^\p{L}])/iu, he: /(?:רויטרס|Reuters)/iu},
   {id: 'raf_fairford', code: 'raf_misidentified',
-    source: /(?:RAF\s+Fairford|баз[аеуы]\s+RAF\s*Fairford)/iu, he: /(?:\bRAF\b|חיל\s+האוויר\s+המלכותי)/iu},
+    source: /(?:RAF\s+Fairford|баз[аеуы]\s+RAF\s*Fairford)/iu, he: /(?:\bRAF\b|חיל\s+האוויר\s+המלכותי)/iu,
+    ru: /RAF|Королевск\p{L}*\s+ВВС/iu},
   {id: 'hezbollah', code: 'hezbollah_name_missing',
     source: src('Hezbollah|Hizbullah|Hizballah|Хезболл\\p{L}{0,3}|Хизбалл\\p{L}{0,3}'), he: /חיזבאללה|חזבאללה|Hezbollah/iu, ru: /Хезболл|Хизбалл/iu},
   {id: 'hamas', code: 'hamas_name_missing', source: src('Hamas|ХАМАС\\p{L}{0,3}'), he: /חמאס|Hamas/iu, ru: /ХАМАС/iu},
