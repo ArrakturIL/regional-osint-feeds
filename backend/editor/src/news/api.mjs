@@ -2,6 +2,7 @@
 import {eventRows,reconcile,hebrew,publisher,language} from './events.mjs';
 import {localizeNewsRow} from '../localization/localization.mjs';
 import {displayForPage} from '../localization/display-policy.mjs';
+import {newsTier} from './tier.mjs';
 const HEADERS={'Access-Control-Allow-Origin':'*','Cache-Control':'public,max-age=60',
                'X-Content-Type-Options':'nosniff'};
 const respond=(body,status=200)=>Response.json(body,{status,headers:HEADERS});
@@ -178,6 +179,7 @@ export async function readNewsEvents(request,env){
    field_translation_status:fieldTranslationStatus,
    headline:t.title,summary:t.body,comment:t.comment,url:row.url,
    published_ms:r.last_seen_ms,priority:r.event_priority,category:r.topic,
+   ...(({tier,reason})=>({tier,tier_reason:reason}))(newsTier(row)),
    content_language:t.content_language,language_shown:t.language_shown,source_language:t.source_language,translation_status:t.translation_status,
    translation_state:state,translation_label:label,translation_available:available,
    translation:{state,label,available,requested_language:lang,display_language:t.content_language},
@@ -189,9 +191,12 @@ export async function readNewsEvents(request,env){
  // Ranks are positions in the feed, so a withheld item keeps the others' ranks stable.
  const output=translated.map((x,i)=>{if(!x)return null;const{_owner,...rest}=x;return{...rest,feed_rank:offset+i};}).filter(Boolean);
  const withheld_count=translated.length-output.length;
+ // B5: per-tier translation SLA, refreshed by the scheduled translator.
+ let translation_sla=null;
+ try{const x=await env.NEWS_DB.prepare("SELECT value FROM editor_state WHERE key='translation_sla'").first();translation_sla=x?.value?JSON.parse(x.value):null;}catch{}
  return respond({requested_language:lang,articles:output,events:output,localized_count:output.filter(x=>x.content_language===lang).length,
   translation_summary:{available:output.filter(x=>x.translation_available).length,pending:output.filter(x=>x.translation_state==='pending').length,
     needs_review:output.filter(x=>x.translation_state==='needs_review').length},
-  withheld_count,limit,offset,total_events:visible.length,applied_filters,feed_order_hash,next_offset:visible.length>offset+limit?offset+limit:null,ready_only:readyOnly,requested_ready_only:requestedReadyOnly,
+  withheld_count,translation_sla,limit,offset,total_events:visible.length,applied_filters,feed_order_hash,next_offset:visible.length>offset+limit?offset+limit:null,ready_only:readyOnly,requested_ready_only:requestedReadyOnly,
   sort,grouping:'event_v1',status:'published',source_policy:'attributed_reporting_not_fact_verification'});
 }

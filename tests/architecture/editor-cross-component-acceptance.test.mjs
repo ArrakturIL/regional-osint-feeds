@@ -108,11 +108,11 @@ test('ARCH-03 Editor scheduled dispatch keeps independent source, translation, e
   'analyst queue must retain explicit AI run budget');
 });
 
-test('ARCH-03 active Editor 40-module (+B1-B4 ai/glossary/verify/display-policy) graph is complete, D1/AI bindings match release and CI owns regression suites',()=>{
+test('ARCH-03 active Editor 42-module (+B1-B5 ai/glossary/verify/display-policy/tier/sla) graph is complete, D1/AI bindings match release and CI owns regression suites',()=>{
  const audit=auditActiveArchitecture(root);
  const active=audit.graph.components.find(c=>c.owner==='editor');
  assert.ok(active);
- assert.equal(active.sourceModuleCount,40);
+ assert.equal(active.sourceModuleCount,42);
  assert.deepEqual(active.unreachableModules,[]);
  assert.deepEqual(active.importedOutsideOwner,[]);
  assert.deepEqual(audit.release.editorD1,['CORE_DB','NEWS_DB']);
@@ -128,6 +128,6 @@ test('ARCH-03 active Editor 40-module (+B1-B4 ai/glossary/verify/display-policy)
   'editor-analyst-decision.test.mjs','editor-analyst-queue-runner.test.mjs',
   'editor-ai-comments.test.mjs','editor-scheduled-translations.test.mjs',
   'news-localization-provenance.test.mjs','translation-semantics.test.mjs',
-  'translation-verify.test.mjs','news-display-policy.test.mjs'
+  'translation-verify.test.mjs','news-display-policy.test.mjs','news-tier-sla.test.mjs'
  ]) assert.ok(workflow.includes(file),'current Editor CI parity/test gate missing '+file);
 });
