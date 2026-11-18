@@ -38,7 +38,16 @@ export async function handlePages(request, env) {
   if (request.method !== 'GET' && request.method !== 'HEAD') return jsonError('method_not_allowed', 405);
   try {
     if (route.kind === 'html') return await assets(request, env, route.asset);
-    if (route.kind === 'asset') return await assets(request, env);
+    if (route.kind === 'asset') {
+      const response = await assets(request, env);
+      // F-06: build-site stamps ?v=<12-hex content hash>; such a URL never changes
+      // its bytes, so browsers may keep it for a year. Other asset URLs keep the
+      // platform default (revalidate).
+      if (response.status !== 200 || !/^[0-9a-f]{12}$/.test(url.searchParams.get('v') || '')) return response;
+      const headers = new Headers(response.headers);
+      headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+      return new Response(response.body, { status: 200, headers });
+    }
     if (route.kind === 'editor')
       return await editor(request, env, route.upstream === path ? null : route.upstream);
     if (route.kind === 'monitor') return await monitorPublic(request, env, route);
