@@ -112,7 +112,7 @@ export function CasesPageV2({ visible, cases, error, feed }) {
           ),
         ),
       ),
-      error ? t('p', 'error', UI_HE ? 'שגיאה בטעינת אירועים: ' : 'Ошибка загрузки событий: ' + error) : null,
+      cases && error ? h(FeedState, { feed }) : null,
       id && cases && !all.some(s => s.id === id)
         ? h(
             'p',

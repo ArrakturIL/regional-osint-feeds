@@ -3,6 +3,7 @@ import { rwNormalizeNewsArticle } from '../api/normalizeNewsArticle.js';
 import { D, UI_HE, h, useEffect, useRef, useState } from './runtime.js';
 import { GlobalHeader } from '../components/Header/Header.js';
 import { useFeed } from '../hooks/useFeed.js';
+import { rwFocusMain, rwFollowInitialHash } from '../utils/routeFocus.js';
 import { HE_TEXT } from '../i18n/meta.js';
 import { AnalystShared } from '../pages/Analysts/Analysts.js';
 import { DataRoomV2 } from '../pages/DataRoom/DataRoom.js';
@@ -45,12 +46,14 @@ export function App() {
         : null;
       if (anchor) anchor.scrollIntoView({ block: 'start' });
       else window.scrollTo({ top: scrollPositions.current[target] || 0, behavior: 'instant' });
+      if (!fromPop && !anchor) rwFocusMain(document);
     });
   }
   function go(path) {
     if (document.startViewTransition) document.startViewTransition(() => switchRoute(path, false));
     else switchRoute(path, false);
   }
+  useEffect(() => rwFollowInitialHash(document, window), []);
   useEffect(() => {
     const pop = () => switchRoute(location.pathname + location.search + location.hash, true);
     window.addEventListener('popstate', pop);
@@ -153,7 +156,7 @@ export function App() {
     h(GlobalHeader, { active: route, overview: overview.value }),
     h(
       'main',
-      { id: 'main-content' },
+      { id: 'main-content', tabIndex: -1 },
       h(
         ErrorBoundary,
         { level: 'page', resetKey: route },

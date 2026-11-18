@@ -115,6 +115,17 @@ html[dir="rtl"] :is(.news-card,.rw-story-teaser,.rw-dossier,.rw-situation,.panel
 @keyframes rw7Scan{0%{transform:translateX(-200px);opacity:0}15%,85%{opacity:1}100%{transform:translateX(100vw);opacity:0}}
 @keyframes rw7Rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 @keyframes rw7Open{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+/* QA #11/#12 (18.11): programmatic focus on route change, touch targets, digest. */
+#main-content:focus{outline:none}
+.rw-digest-item small{display:block;margin-top:8px}
+.rw-digest-item a{display:inline-block;margin-top:2px}
+.rw-digest-item:nth-child(odd):nth-last-child(2){grid-column:1/-1}
+@media (pointer:coarse),(max-width:640px){
+  .rw-site-language a{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+  main button{min-height:44px}
+  :is(.rw-more-link,.rw-story-footer a,.news-actions a,.rw-editorial-panel a,.rw-digest-item a,.rw-official-row a,.market a,.rw-analyst-links a,.rw-analyst-controls :is(a,button),.rw-data-nav a,.filters :is(a,button),.links a,.section > a.more){display:inline-flex;align-items:center;min-height:44px}
+}
+
 @media (prefers-reduced-motion:reduce){
   .page-intro::before,.page-intro::after,#main-content>.rw-page>*,.rw-masonry>*,.rw-feature-grid>*,.rw-analyst-article,.market,:is(.news-detail,.rw-dossier-detail,.news-related){animation:none!important}
   .page-intro::after{display:none}
