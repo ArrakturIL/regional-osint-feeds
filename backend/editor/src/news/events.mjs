@@ -626,6 +626,43 @@ export async function reconcile(db, now = Date.now()) {
     .run();
   return state;
 }
+// F-06: /api/news orders and filters the whole 7-day pool but shows one page.
+// The pool needs only these light columns; text fields (~0.5 MB for ~360 events)
+// are read for the page rows alone via eventRowsByIds.
+const EVENT_FROM =
+  " FROM news_event_groups e JOIN news_items n ON n.id=e.representative_id LEFT JOIN regional_i18n t ON t.kind='news' AND t.item_id=n.id AND t.language='he'";
+const EVENT_FULL =
+  'SELECT e.event_id,e.topic,e.priority event_priority,e.member_count,e.source_count,e.origin_count,e.verification_status,e.reason_codes,e.sources_json,e.last_seen_ms,n.id,n.source,n.headline,n.headline_ru,n.summary,n.summary_ru,n.comment,n.url,n.published_ms,n.priority,t.source_hash he_hash,t.title he_title,t.body he_body,t.commentary he_comment,t.quality_score he_quality' +
+  EVENT_FROM;
+export async function eventIndex(db, withSources = false) {
+  const sql =
+    'SELECT e.event_id,e.topic,e.priority event_priority,e.verification_status,e.last_seen_ms,n.source' +
+    (withSources ? ',e.sources_json' : '') +
+    ' FROM news_event_groups e JOIN news_items n ON n.id=e.representative_id WHERE e.last_seen_ms>=? ORDER BY e.priority DESC,e.last_seen_ms DESC,e.event_id ASC';
+  return (
+    (
+      await db
+        .prepare(sql)
+        .bind(Date.now() - 7 * 86400000)
+        .all()
+    ).results || []
+  );
+}
+export async function eventRowsByIds(db, ids) {
+  if (!ids.length) return [];
+  const sql = EVENT_FULL + ' WHERE e.event_id IN (' + ids.map(() => '?').join(',') + ')';
+  const byId = new Map(
+    (
+      (
+        await db
+          .prepare(sql)
+          .bind(...ids)
+          .all()
+      ).results || []
+    ).map(r => [r.event_id, r]),
+  );
+  return ids.map(id => byId.get(id)).filter(Boolean);
+}
 export async function eventRows(db, limit = 180) {
   const sql =
     "SELECT e.event_id,e.topic,e.priority event_priority,e.member_count,e.source_count,e.origin_count,e.verification_status,e.reason_codes,e.sources_json,e.last_seen_ms,n.id,n.source,n.headline,n.headline_ru,n.summary,n.summary_ru,n.comment,n.url,n.published_ms,n.priority,t.source_hash he_hash,t.title he_title,t.body he_body,t.commentary he_comment,t.quality_score he_quality FROM news_event_groups e JOIN news_items n ON n.id=e.representative_id LEFT JOIN regional_i18n t ON t.kind='news' AND t.item_id=n.id AND t.language='he' WHERE e.last_seen_ms>=? ORDER BY e.priority DESC,e.last_seen_ms DESC,e.event_id ASC LIMIT ?";
