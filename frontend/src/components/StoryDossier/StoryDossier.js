@@ -2,12 +2,17 @@ import { UI_HE, fmtTime, h, t } from '../../app/runtime.js';
 import { External } from '../External/External.js';
 import { rwMeaningfulTimeline } from '../../utils/timeline.js';
 import { rwSpecificUnknown } from '../../utils/unknowns.js';
-import { eventDateLabel, originalLanguageNote, relatedCount, sourceCount } from '../../utils/dossierMeta.js';
+import {
+  dossierStatus,
+  eventDateLabel,
+  originalLanguageNote,
+  relatedCount,
+  sourceCount,
+} from '../../utils/dossierMeta.js';
 export function StoryDossier({ story, open, onToggle }) {
   const labels = UI_HE
     ? {
         updated: 'עודכן ',
-        status: 'דיווחי מקורות — אין אימות עצמאי לכל הטענות',
         notVerified: 'סטטוס האימות אינו ידוע',
         additional: 'פרטים נוספים',
         expand: 'פרטים ומקורות +',
@@ -22,7 +27,6 @@ export function StoryDossier({ story, open, onToggle }) {
       }
     : {
         updated: 'Обновлено ',
-        status: 'Сообщения источников — не независимое подтверждение каждого утверждения',
         notVerified: 'Статус подтверждения не установлен',
         additional: 'Дополнительные факты',
         expand: 'Подробности и источники +',
@@ -36,7 +40,8 @@ export function StoryDossier({ story, open, onToggle }) {
         recorded: 'В журнале: ',
       };
   const sources = Array.isArray(story.sources) ? story.sources : [],
-    date = story.eventDate || story.event_date;
+    date = story.eventDate || story.event_date,
+    status = dossierStatus(sources.length, UI_HE);
   return h(
     'article',
     { className: 'rw-dossier', id: 'case-' + story.id, tabIndex: -1 },
@@ -52,7 +57,7 @@ export function StoryDossier({ story, open, onToggle }) {
       h(
         'div',
         { className: 'rw-verification-tags' },
-        h('span', { className: 'rw-status-tag uncertain' }, labels.status),
+        h('span', { className: 'rw-status-tag uncertain rw-status-tag--' + status.level }, status.text),
       ),
       h('h3', { dir: 'auto', lang: story.content_language || undefined }, story.title),
       story.content_language && story.content_language !== (UI_HE ? 'he' : 'ru')

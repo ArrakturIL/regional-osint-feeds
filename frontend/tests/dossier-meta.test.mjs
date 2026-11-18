@@ -44,7 +44,7 @@ import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import * as meta from '../src/utils/dossierMeta.js';
 const dossierSrc = readFileSync(new URL('../src/components/StoryDossier/StoryDossier.js', import.meta.url), 'utf8')
-  .replace(/^import\s+[^\n]+\n/gm, '').replace(/^export /gm, '');
+  .replace(/^import\s[^;]*?from\s*['"][^'"]+['"];?\n/gm, '').replace(/^export /gm, '');
 function renderDossier(story, he) {
   const h = (type, props, ...children) => ({type, props, children: children.flat()});
   const ctx = {UI_HE: he, h, t: (tag, cls, ...c) => h(tag, {className: cls}, ...c), fmtTime: () => '18.11 20:00',
@@ -64,4 +64,17 @@ test('StoryDossier on live-shaped data: inflected counters, no "0 related", form
   assert.match(he, /מקור אחד/);
   assert.match(he, /המקור בערבית/);
   assert.doesNotMatch(he, /[А-Яа-яЁё]/, 'no Cyrillic on the Hebrew dossier');
+});
+
+// #14: the dossier status badge must match what the dossier actually has.
+test('dossier status follows the number of first-hand sources, RU and HE', async () => {
+  const { dossierStatus } = await import('../src/utils/dossierMeta.js');
+  assert.deepEqual(dossierStatus(0, false), { level: 'none', text: 'Нет проверяемого первоисточника' });
+  assert.deepEqual(dossierStatus(1, false), { level: 'single', text: 'Один источник — без независимого подтверждения' });
+  assert.deepEqual(dossierStatus(4, false), {
+    level: 'multi',
+    text: 'Несколько источников — это не независимая проверка каждого утверждения',
+  });
+  for (const n of [0, 1, 4]) assert.doesNotMatch(dossierStatus(n, true).text, /[Ѐ-ӿ]/);
+  assert.equal(dossierStatus(undefined, false).level, 'none');
 });

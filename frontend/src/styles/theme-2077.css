@@ -136,6 +136,10 @@ html[dir="rtl"] :is(.news-card,.rw-story-teaser,.rw-dossier,.rw-situation,.panel
 .rw-market-more summary{cursor:pointer;font-family:var(--rw7-mono);font-size:.75rem;letter-spacing:.06em;color:var(--rw7-mint);padding:6px 0}
 .rw-market-more[open] summary{margin-bottom:10px}
 
+.rw-status-tag--none{color:var(--rw7-important)!important;border-color:var(--rw7-important)!important}
+.rw-editorial-check{font-size:.8125rem;line-height:1.6;color:var(--rw7-body);border-inline-start:2px solid var(--rw7-line-strong);padding-inline-start:10px;margin:10px 0}
+.rw-editorial-check strong{color:var(--rw7-text);font-weight:600}
+
 /* QA #11/#12 (18.11): programmatic focus on route change, touch targets, digest. */
 #main-content:focus{outline:none}
 .rw-digest-item small{display:block;margin-top:8px}
