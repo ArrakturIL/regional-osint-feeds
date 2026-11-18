@@ -3,6 +3,7 @@
 // No paid inference or credentials; no AI output is treated as a verified fact.
 import {eventRows,hebrew,language} from '../news/events.mjs';
 import {fingerprint} from '../localization/localization.mjs';
+import {sourceText,newsHebrewSource} from '../localization/shared.mjs';
 import {factualTranslationIssue} from './fact-guard.mjs';
 import {translationIssue} from './verify.mjs';
 import {readEditorCachedPair} from '../mirrors/collector-cache.mjs';
@@ -41,7 +42,8 @@ export async function translationQueue(env,request){
   const nativeHebrew=sourceLanguage==='he'&&hasHe(origTitle);
   let hePending=!nativeHebrew;
   if(r.he_hash&&r.he_title){
-   const content={title:trunc(r.headline_ru||r.headline,260),body:trunc(r.summary_ru||r.summary,650),comment:trunc(r.comment,300)};
+   // HE source is the original; a legacy pivot translation stays (manual backlog).
+   const content=(await newsHebrewSource(r,r.he_hash)).text;
    const sha=await fingerprint(content);
    if(sha===r.he_hash&&!factualTranslationIssue(content,{title:r.he_title,body:r.he_body,comment:r.he_comment}))hePending=false;
   }
@@ -92,8 +94,7 @@ export async function importTranslationMirror(env,now=Date.now()){
    }else rejected++;
   }
   if(item.he&&!hasHe(row.headline)){
-   const base={title:trunc(row.headline_ru||row.headline,260),
-    body:trunc(row.summary_ru||row.summary,650),comment:trunc(row.comment,300)};
+   const base=sourceText('news',row); // HE is verified against the original, not headline_ru
    const translation={title:trunc(item.he.title,260),body:trunc(item.he.summary,650),comment:''};
    if(okPair({original_title:row.headline,original_summary:row.summary},item.he,'he')&&
      !factualTranslationIssue(base,translation)){

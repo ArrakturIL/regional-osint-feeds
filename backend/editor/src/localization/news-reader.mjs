@@ -1,7 +1,7 @@
 import {translationIssue} from '../translations/verify.mjs';
 import {semanticMeaningIssue} from '../translations/semantic-meaning.mjs';
 import {shouldSuppressComment,safePublishedComment} from '../editorial/comment-policy.mjs';
-import {DAY,val,sourceText} from './shared.mjs';
+import {DAY,val,sourceText,newsHebrewSource} from './shared.mjs';
 import {respond,localized} from './read-core.mjs';
 import {displayForPage} from './display-policy.mjs';
 
@@ -36,7 +36,8 @@ export async function localizeNewsRow(db,row,lang){
     return{...original,content_language:'he',source_language:'he',translation_status:'source'};
   const cached=row.he_hash?{source_hash:row.he_hash,title:row.he_title,body:row.he_body,
     commentary:row.he_comment,quality_score:row.he_quality}:null;
-  const result=await localized(db,'news',row.id,sourceText('news',row),lang,cached);
+  const heSource=await newsHebrewSource(row,row.he_hash); // original; legacy pivot only for the manual backlog
+  const result=await localized(db,'news',row.id,heSource.text,lang,cached);
   const issue=lang==='he'&&result.translation_status==='available'?
     translationIssue(sourceTitle,result.title,'he')||
     (sourceBody&&result.body?translationIssue(sourceBody,result.body,'he'):null):null;
