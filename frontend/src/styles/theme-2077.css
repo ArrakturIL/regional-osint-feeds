@@ -1,0 +1,107 @@
+/* Redesign «2077» (owner decision 18.11, docs/design/redesign-2077.md).
+   One final layer over the existing styles: tokens, type, HUD geometry and
+   restrained motion. prefers-reduced-motion switches every animation off. */
+@font-face{font-family:"Unbounded";font-style:normal;font-display:swap;font-weight:200 900;src:url(__FONT_unbounded-cyrillic__) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:"Unbounded";font-style:normal;font-display:swap;font-weight:200 900;src:url(__FONT_unbounded-latin__) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212}
+@font-face{font-family:"Manrope";font-style:normal;font-display:swap;font-weight:200 800;src:url(__FONT_manrope-cyrillic__) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:"Manrope";font-style:normal;font-display:swap;font-weight:200 800;src:url(__FONT_manrope-latin__) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212}
+@font-face{font-family:"JetBrains Mono";font-style:normal;font-display:swap;font-weight:100 800;src:url(__FONT_jetbrains-mono-cyrillic__) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:"JetBrains Mono";font-style:normal;font-display:swap;font-weight:100 800;src:url(__FONT_jetbrains-mono-latin__) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212}
+@font-face{font-family:"Rubik";font-style:normal;font-display:swap;font-weight:300 900;src:url(__FONT_rubik-hebrew__) format("woff2");unicode-range:U+0307-0308,U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F}
+@font-face{font-family:"Rubik";font-style:normal;font-display:swap;font-weight:300 900;src:url(__FONT_rubik-latin__) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212}
+
+:root{
+  --rw7-bg:#050b09;--rw7-panel:#08130f;--rw7-panel-2:#0b1813;--rw7-hover:#0e1d17;
+  --rw7-line:#1f4031;--rw7-line-strong:#2b5642;--rw7-mint:#9ff5c6;--rw7-mint-dim:#4d7a63;
+  --rw7-text:#e9fbf1;--rw7-text-2:#c4e0d0;--rw7-text-3:#8fb8a2;--rw7-urgent:#f3a59b;--rw7-important:#efd09a;
+  --rw7-display:"Unbounded","Manrope",system-ui,sans-serif;--rw7-body:"Manrope",system-ui,"Segoe UI",Arial,sans-serif;
+  --rw7-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;--rw7-cut:14px;
+  --rw7-ease:cubic-bezier(.2,.7,.2,1);
+  --bg:var(--rw7-bg);--surface:var(--rw7-panel);--surface2:var(--rw7-panel-2);--line:var(--rw7-line-strong);
+  --ink:var(--rw7-text);--muted:var(--rw7-text-2);--muted2:var(--rw7-text-3);--green:var(--rw7-mint);
+  --warm:var(--rw7-important);--red:var(--rw7-urgent);
+  --rw-ui-background:var(--rw7-bg);--rw-ui-surface:var(--rw7-panel);--rw-ui-surface-2:var(--rw7-panel);
+  --rw-ui-border:var(--rw7-line);--rw-ui-accent:var(--rw7-mint);--rw-ui-muted:var(--rw7-text-2);
+  --rw-ui-text:var(--rw7-text);--rw-ui-radius:0px
+}
+html[lang="he"]{--rw7-display:"Rubik",system-ui,sans-serif;--rw7-body:"Rubik",system-ui,"Segoe UI",Arial,sans-serif;--rw7-mono:"Rubik","JetBrains Mono",ui-monospace,monospace}
+
+body{background:radial-gradient(1100px 600px at 75% -120px,#0d2a1f 0%,rgba(5,11,9,0) 62%),var(--rw7-bg)!important;color:var(--rw7-text);font-family:var(--rw7-body)}
+a{color:var(--rw7-mint)}a:hover{color:#e0fff0}
+::selection{background:rgba(159,245,198,.28)}
+:where(a,button,[tabindex]):focus-visible{outline:2px solid var(--rw7-mint)!important;outline-offset:2px}
+
+/* Header: HUD bar, mono brand, cut-corner active item */
+.rw-global-header{border-bottom:1px solid var(--rw7-line)!important}
+.rw-global-header .brand strong{font-family:var(--rw7-mono);letter-spacing:.14em;font-weight:600}
+.rw-global-header .brand small{font-family:var(--rw7-mono);letter-spacing:.08em;color:var(--rw7-text-3)}
+.rw-site-links a{border-radius:0!important;font-family:var(--rw7-mono);letter-spacing:.08em;text-transform:uppercase;font-weight:500;color:var(--rw7-text-2);transition:color .2s ease,background-color .2s ease}
+html[lang="he"] .rw-site-links a{text-transform:none;letter-spacing:.02em}
+.rw-site-links a:hover{color:var(--rw7-text);background:rgba(159,245,198,.06)}
+.rw-site-links a.active,.rw-site-links a[aria-current="page"]{background:var(--rw7-mint)!important;color:#050b09!important;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%)}
+.rw-site-source,.rw-site-language a{border-radius:0!important;font-family:var(--rw7-mono);border-color:var(--rw7-line-strong)!important}
+.rw-site-language a.active{background:var(--rw7-mint)!important;color:#050b09!important}
+
+/* Kickers, badges, meta: mono labels */
+.kicker,.rw-situation .kicker,.section-head .kicker,.badge,.rw-importance-badge,.stamp span,.stamp small{font-family:var(--rw7-mono)!important;letter-spacing:.14em}
+html[lang="he"] :is(.kicker,.badge,.rw-importance-badge,.stamp span){letter-spacing:.04em}
+.badge,.rw-importance-badge{border-radius:0!important}
+
+/* Hero: dot grid, breathing contour field, slow scan beam (pure CSS, no markup) */
+.page-intro{position:relative;isolation:isolate;overflow:hidden}
+.page-intro::before{content:"";position:absolute;inset:-10% -5%;z-index:-1;pointer-events:none;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 400'%3E%3Cg fill='none' stroke='%239ff5c6'%3E%3Cellipse cx='560' cy='200' rx='330' ry='160' stroke-opacity='.10'/%3E%3Cellipse cx='560' cy='200' rx='250' ry='122' stroke-opacity='.14'/%3E%3Cellipse cx='560' cy='200' rx='170' ry='84' stroke-opacity='.19'/%3E%3Cellipse cx='560' cy='200' rx='95' ry='47' stroke-opacity='.25'/%3E%3C/g%3E%3C/svg%3E") right center/auto 100% no-repeat,
+    radial-gradient(circle,rgba(159,245,198,.10) 1px,transparent 1.2px) 0 0/24px 24px;
+  animation:rw7Field 14s ease-in-out infinite;transform-origin:70% 50%}
+html[dir="rtl"] .page-intro::before{background-position:left center,0 0}
+.page-intro::after{content:"";position:absolute;top:0;bottom:0;left:0;width:160px;z-index:-1;pointer-events:none;
+  background:linear-gradient(90deg,rgba(159,245,198,0),rgba(159,245,198,.12),rgba(159,245,198,0));animation:rw7Scan 8s cubic-bezier(.6,0,.4,1) infinite}
+.page-title{font-family:var(--rw7-display)!important;font-weight:300!important;letter-spacing:-.01em}
+.page-title em{font-style:normal;font-weight:700;color:var(--rw7-mint)}
+.page-intro .stamp{border-radius:0!important;border-color:var(--rw7-line-strong)!important;background:var(--rw7-panel)!important;clip-path:polygon(0 0,calc(100% - var(--rw7-cut)) 0,100% var(--rw7-cut),100% 100%,var(--rw7-cut) 100%,0 calc(100% - var(--rw7-cut)))}
+
+/* Section heads: display font, trailing rule */
+.section-head h2,.rw-situation h2{font-family:var(--rw7-display);font-weight:500;letter-spacing:-.005em}
+.section-head{border-bottom:1px solid var(--rw7-line)}
+
+/* Panels and cards: square, thin lines, cut corner, no gradients */
+:is(.panel,.card,.news-card,.rw-story-teaser,.rw-dossier,.rw-situation,.rw-digest-item,.rw-digest-summary,.rw-feed-state,.market-card){
+  border-radius:0!important;background:var(--rw7-panel)!important;border:1px solid var(--rw7-line)!important;box-shadow:none!important}
+:is(.news-card,.rw-story-teaser,.rw-dossier,.rw-situation,.panel){clip-path:polygon(0 0,calc(100% - var(--rw7-cut)) 0,100% var(--rw7-cut),100% 100%,0 100%)}
+html[dir="rtl"] :is(.news-card,.rw-story-teaser,.rw-dossier,.rw-situation,.panel){clip-path:polygon(0 0,100% 0,100% 100%,0 100%,0 var(--rw7-cut),var(--rw7-cut) 0)}
+:is(.news-card,.rw-story-teaser,.rw-dossier){transition:background-color .25s ease,border-color .25s ease,transform .25s var(--rw7-ease)}
+:is(.news-card,.rw-story-teaser,.rw-dossier):hover{background:var(--rw7-hover)!important;border-color:var(--rw7-line-strong)!important}
+.news-card h3,.rw-story-teaser h3,.rw-dossier h3{font-family:var(--rw7-body);font-weight:600;color:var(--rw7-text)}
+.rw-editorial-panel h3,.rw-editorial-panel h2{font-family:var(--rw7-display);font-weight:500}
+
+/* Buttons: square HUD controls */
+:is(.news-actions button,.rw-dossier-actions button,.rw-feed-retry,.rw-pagination button,.rw-more-link){border-radius:0!important;font-family:var(--rw7-mono);letter-spacing:.04em}
+.rw-more-link{position:relative}
+.rw-more-link::after{content:"";display:inline-block;width:12px;height:1px;background:currentColor;margin-inline-start:8px;vertical-align:middle;transition:width .3s var(--rw7-ease)}
+.rw-more-link:hover::after{width:28px}
+
+/* Urgency accents */
+.news-card:has(.rw-importance-badge[data-tier="urgent"]),.rw-situation:has(.badge.danger){border-color:#5a3430!important}
+
+/* Motion: page entrance, staggered sections, opening details */
+#main-content>.rw-page>*{animation:rw7Rise .7s var(--rw7-ease) both}
+#main-content>.rw-page>*:nth-child(2){animation-delay:.06s}
+#main-content>.rw-page>*:nth-child(3){animation-delay:.12s}
+#main-content>.rw-page>*:nth-child(4){animation-delay:.18s}
+#main-content>.rw-page>*:nth-child(n+5){animation-delay:.24s}
+:is(.news-detail,.rw-dossier-detail,.news-related){animation:rw7Open .38s var(--rw7-ease) both}
+.rw-masonry>*,.rw-feature-grid>*{animation:rw7Rise .6s var(--rw7-ease) both}
+.rw-masonry>*:nth-child(2),.rw-feature-grid>*:nth-child(2){animation-delay:.05s}
+.rw-masonry>*:nth-child(3),.rw-feature-grid>*:nth-child(3){animation-delay:.1s}
+.rw-masonry>*:nth-child(n+4){animation-delay:.15s}
+
+@keyframes rw7Field{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.03)}}
+@keyframes rw7Scan{0%{transform:translateX(-200px);opacity:0}15%,85%{opacity:1}100%{transform:translateX(100vw);opacity:0}}
+@keyframes rw7Rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes rw7Open{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){
+  .page-intro::before,.page-intro::after,#main-content>.rw-page>*,.rw-masonry>*,.rw-feature-grid>*,:is(.news-detail,.rw-dossier-detail,.news-related){animation:none!important}
+  .page-intro::after{display:none}
+  *{transition-duration:0s!important}
+}
