@@ -1,8 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createHash} from 'node:crypto';
 import {translateTitles} from '../../backend/editor/src/translations/scheduled.mjs';
-import {reconstructOriginalRuTranslator} from './ru-translation-selection-parity.mjs';
 
 const NOW=Date.parse('2026-11-16T10:00:00Z');
 const HOUR=3600000;
@@ -15,7 +13,6 @@ const row=(id,priority,published_ms=NOW-HOUR,extra={})=>({
  headline_ru:null,summary_ru:null,...extra
 });
 const event=(id,priority=5,last_seen_ms=NOW-HOUR)=>({representative_id:id,priority,last_seen_ms});
-const blobSha=s=>{const b=Buffer.from(s,'utf8');return createHash('sha1').update(Buffer.from('blob '+b.length,'utf8')).update(Buffer.from([0])).update(b).digest('hex');};
 function makeEnv({rows=[],events=[],budget={batches:0,estimated_neurons:0}}={}){
  const sqls=[],calls=[],wrote=[];
  const cutoff=NOW-36*HOUR;

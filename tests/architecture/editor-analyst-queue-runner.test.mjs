@@ -1,9 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createHash} from 'node:crypto';
 import {createAnalystQueue} from '../../backend/editor/src/analysts/queue-runner.mjs';
 import analystService,{testHooks} from '../../backend/editor/src/analysts/editor.mjs';
-import {reconstructAnalystQueueEditor} from './analyst-queue-source-parity.mjs';
 
 const EDITOR_VERSION='analyst-editor-v1.1.2-translation',HOUR=3600000,DAY=24*HOUR;
 const now=Date.parse('2026-11-16T03:15:00Z');
@@ -12,7 +10,6 @@ const health={state:'ok',checked_at:new Date(now).toISOString(),sources:[{source
 const baseMirror={schema_version:1,checked_at:new Date(now).toISOString(),items:[]};
 const enabled=[{id:'src-one',analyst_id:'analyst-one',type:'telegram_public',canonical_prefix:'https://t.me/source/',language:'ru',display_name:'Analyst',enabled:1}];
 const content={id:'src-one:10',analyst_id:'analyst-one',source_id:'src-one',body:'Original content',content_hash:'hash',text_status:'full_text',published_at_ms:now-10};
-const gitSha=text=>{const b=Buffer.from(text,'utf8');return createHash('sha1').update(Buffer.from('blob '+b.length,'utf8')).update(Buffer.from([0])).update(b).digest('hex')};
 function fakeDb({existingRun=false,sources=enabled,recent=[],pending=[],priorAi=null}={}){
  const statements=[],runs=[],selects=[];
  const db={prepare(sql){
