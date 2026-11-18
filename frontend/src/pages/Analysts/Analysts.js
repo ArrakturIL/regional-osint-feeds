@@ -190,7 +190,7 @@ export function AnalystShared({ hePosts, heProfiles }) {
               ? h(
                   'button',
                   { type: 'button', onClick: () => setRefresh(x => x + 1) },
-                  he ? 'נסה שוב' : 'Повторить',
+                  he ? 'נסו שוב' : 'Повторить',
                 )
               : null,
           )

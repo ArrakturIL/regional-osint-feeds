@@ -55,6 +55,7 @@
     "pages/Analysts/Analysts.js",
     "components/Header/Header.js",
     "components/ErrorBoundary/ErrorBoundary.js",
+    "utils/routeFocus.js",
     "app/App.js",
     "i18n/meta.js",
     "app/mount.js",
