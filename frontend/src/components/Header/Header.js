@@ -1,6 +1,6 @@
 import { UI_HE, h, t, useEffect, useRef, useState } from '../../app/runtime.js';
 import { UiIcon } from '../UiIcon/UiIcon.js';
-export function GlobalHeader({ active, overview }) {
+export function GlobalHeader({ active, overview, go }) {
   const [menu, setMenu] = useState(false),
     [panel, setPanel] = useState(false);
   const modalRef = useRef(null),
@@ -123,6 +123,12 @@ export function GlobalHeader({ active, overview }) {
           {
             key: slug,
             href: href(he ? 'he' : 'ru', slug, false),
+            onClick: e => {
+              if (!go || e.button || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+              e.preventDefault();
+              setMenu(false);
+              go(href(he ? 'he' : 'ru', slug, false));
+            },
             className: section === slug ? 'active' : undefined,
             'aria-current': section === slug ? 'page' : undefined,
           },
