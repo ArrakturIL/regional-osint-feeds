@@ -1,3 +1,4 @@
+import { ErrorBoundary } from '../components/ErrorBoundary/ErrorBoundary.js';
 import { rwNormalizeNewsArticle } from '../api/normalizeNewsArticle.js';
 import { D, UI_HE, h, useEffect, useRef, useState } from './runtime.js';
 import { GlobalHeader } from '../components/Header/Header.js';
@@ -153,42 +154,46 @@ export function App() {
     h(
       'main',
       { id: 'main-content' },
-      route === '/'
-        ? h(HomeV2, {
-            visible: true,
-            overview: overview.value,
-            news: normalizedNews,
-            cases: normalizedCases,
-            go,
-            errors: { news: news.error, cases: cases.error },
-            feeds: { news, cases },
-          })
-        : null,
-      route === '/events'
-        ? h(CasesPageV2, { visible: true, cases: normalizedCases, error: cases.error, feed: cases })
-        : null,
-      route === '/data'
-        ? h(DataRoomV2, {
-            visible: true,
-            data:
-              officialPosts.value?.items && data.value
-                ? { ...data.value, home: officialPosts.value.items }
-                : data.value,
-            error: data.error,
-            feed: data,
-            aviation: UI_HE ? heAviation.value : ruAviation.value,
-            satellite: UI_HE ? heSatellite.value : ruSatellite.value,
-            aviationError: UI_HE ? heAviation.error : ruAviation.error,
-            satelliteError: UI_HE ? heSatellite.error : ruSatellite.error,
-            aviationPending: UI_HE
-              ? !heAviation.value && !heAviation.error
-              : !ruAviation.value && !ruAviation.error,
-            satellitePending: UI_HE
-              ? !heSatellite.value && !heSatellite.error
-              : !ruSatellite.value && !ruSatellite.error,
-          })
-        : null,
-      route === '/analysts' ? h(AnalystShared, { hePosts, heProfiles }) : null,
+      h(
+        ErrorBoundary,
+        { level: 'page', resetKey: route },
+        route === '/'
+          ? h(HomeV2, {
+              visible: true,
+              overview: overview.value,
+              news: normalizedNews,
+              cases: normalizedCases,
+              go,
+              errors: { news: news.error, cases: cases.error },
+              feeds: { news, cases },
+            })
+          : null,
+        route === '/events'
+          ? h(CasesPageV2, { visible: true, cases: normalizedCases, error: cases.error, feed: cases })
+          : null,
+        route === '/data'
+          ? h(DataRoomV2, {
+              visible: true,
+              data:
+                officialPosts.value?.items && data.value
+                  ? { ...data.value, home: officialPosts.value.items }
+                  : data.value,
+              error: data.error,
+              feed: data,
+              aviation: UI_HE ? heAviation.value : ruAviation.value,
+              satellite: UI_HE ? heSatellite.value : ruSatellite.value,
+              aviationError: UI_HE ? heAviation.error : ruAviation.error,
+              satelliteError: UI_HE ? heSatellite.error : ruSatellite.error,
+              aviationPending: UI_HE
+                ? !heAviation.value && !heAviation.error
+                : !ruAviation.value && !ruAviation.error,
+              satellitePending: UI_HE
+                ? !heSatellite.value && !heSatellite.error
+                : !ruSatellite.value && !ruSatellite.error,
+            })
+          : null,
+        route === '/analysts' ? h(AnalystShared, { hePosts, heProfiles }) : null,
+      ),
     ),
   );
 }
