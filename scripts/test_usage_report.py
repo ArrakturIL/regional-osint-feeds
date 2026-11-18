@@ -70,5 +70,28 @@ class UsageReport(unittest.TestCase):
         self.assertIn("created=2026-11-17", seen[0])
 
 
+    def test_graphql_denied_still_stores_actions_and_fails_run(self):
+        import os
+        from unittest import mock
+        import scripts.usage_report as u
+        stored = []
+
+        class FakeD1:
+            def __init__(self, *a): self.database_id = None
+            def discover_database_id(self, name): return "id-" + name
+            def query(self, sql, params=()): stored.append((sql, params)); return []
+
+        env = {"CLOUDFLARE_ACCOUNT_ID": "acc", "CLOUDFLARE_API_TOKEN": "deploy", "CLOUDFLARE_D1_API_TOKEN": "d1",
+               "GITHUB_REPOSITORY": "o/r", "GITHUB_TOKEN": "gh"}
+        with mock.patch.dict(os.environ, env, clear=False), \
+             mock.patch.object(u, "_post_json", return_value={"errors": [{"message": "not authorized for that account"}]}), \
+             mock.patch.object(u, "fetch_runs", return_value=[]), mock.patch.object(u, "D1Client", FakeD1):
+            os.environ.pop("CLOUDFLARE_ANALYTICS_TOKEN", None)
+            os.environ.pop("GITHUB_STEP_SUMMARY", None)
+            self.assertEqual(u.main(["--day", "2026-11-17"]), 1)
+        metrics = [p[1] for s, p in stored if s.startswith("INSERT INTO usage_daily")]
+        self.assertEqual(metrics, ["actions_runs", "actions_wall_minutes"])
+
+
 if __name__ == "__main__":
     unittest.main()
