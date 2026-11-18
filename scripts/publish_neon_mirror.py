@@ -22,6 +22,25 @@ def _open_connection(url: str):
     return psycopg.connect(url, connect_timeout=10, autocommit=False)
 
 
+# Monotonic cursors: a snapshot may be newer by checked_at yet carry older data
+# (18.11: a fresh "no new export" status paired with the frozen repo copy of
+# gdelt-context.json moved latest_batch from 18.11 back to 15.11).
+CURSOR_FIELDS = {"gdelt": "latest_batch"}
+
+
+def _cursor_regression(connection, snapshot) -> bool:
+    field = CURSOR_FIELDS.get(snapshot.source_key)
+    if not field:
+        return False
+    new = snapshot.data.get(field) if isinstance(snapshot.data, dict) else None
+    if not isinstance(new, str):
+        return False  # no cursor to compare (seed or legacy shape)
+    stored = read_stored_snapshot(connection, snapshot.source_key)
+    old = stored.data.get(field) if stored is not None and isinstance(stored.data, dict) else None
+    # Fixed-width YYYYMMDDHHMMSS stamps compare correctly as strings.
+    return isinstance(old, str) and new < old
+
+
 def publish_one(
     source_key: str,
     root: Path | str,
@@ -34,6 +53,8 @@ def publish_one(
     snapshot = load_snapshot(source_key, root, now=now)
     connector = connector or _open_connection
     with connector(database_url) as connection:
+        if _cursor_regression(connection, snapshot):
+            raise RuntimeError("cursor regression: snapshot is older than the stored mirror")
         result = publish_snapshot(connection, snapshot)
         if result in ("written", "unchanged"):
             parity = verify_snapshot(connection, snapshot)

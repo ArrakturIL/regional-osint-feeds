@@ -59,6 +59,21 @@ def run_collector(previous_batch, latest_batch, failures=()):
 
 
 class GdeltWatermarkSafety(unittest.TestCase):
+    def test_no_new_export_pairs_fresh_status_with_the_checkpoint_data(self):
+        # 18.11 13:20Z: this branch wrote only the status; the frozen repo copy of
+        # gdelt-context.json (latest_batch 15.11) was then published as current.
+        code, seen, (checked, state, detail, batch, data) = run_collector(stamp(23, 45), stamp(23, 45))
+        self.assertEqual((code, state, seen), (0, "ok", []))
+        self.assertIsNotNone(data, "data file must be rewritten from the checkpoint")
+        self.assertEqual(data["latest_batch"], stamp(23, 45))
+
+    def test_upstream_failure_keeps_the_checkpoint_data_paired_with_error_status(self):
+        code, seen, (checked, state, detail, batch, data) = run_collector(
+            stamp(22, 0), stamp(23, 45), failures={stamp(h, m) for h in (22, 23) for m in (0, 15, 30, 45)})
+        if state == "error":
+            self.assertIsNotNone(data)
+            self.assertEqual(data["latest_batch"], stamp(22, 0))
+
     def test_failed_middle_export_does_not_advance_past_gap(self):
         previous = stamp(22, 30)
         lost = stamp(23, 0)

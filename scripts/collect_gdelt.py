@@ -188,6 +188,19 @@ def emit(checked_at: str, state: str, detail: str | None, batch_stamp: str | Non
         SNAP.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+def checkpoint_data(previous: dict) -> dict | None:
+    """The verified snapshot to re-emit when this run adds nothing.
+
+    emit() writes data and status as one pair that publish_neon_mirror ships
+    together. Leaving the data file untouched pairs a fresh status with whatever
+    copy the checkout holds (the frozen 15.11 JSON in git), which moved the
+    published cursor three days back on 18.11.
+    """
+    if isinstance(previous, dict) and previous.get("source") == "gdelt_context" and previous.get("latest_batch"):
+        return previous
+    return None
+
+
 def collect() -> int:
     now = utcnow()
     checked = iso(now)
@@ -217,7 +230,8 @@ def collect() -> int:
                 cursor -= timedelta(minutes=15)
             stamps.reverse()
         if not stamps:
-            emit(checked, "ok", "No new 15-minute export since previous successful collection", latest_stamp, None)
+            emit(checked, "ok", "No new 15-minute export since previous successful collection", latest_stamp,
+                 checkpoint_data(previous))
             return 0
         all_events = []
         downloaded = []
@@ -276,7 +290,8 @@ def collect() -> int:
         print(json.dumps({"state":"ok" if complete else "partial","batch_count":len(downloaded),"matched":len(matched),"domains":len(domains),"missing":len(misses),"latest":downloaded[-1]}))
         return 0
     except Exception as e:
-        emit(checked, "error", type(e).__name__ + ": " + str(e)[:160], previous.get("latest_batch"), None)
+        emit(checked, "error", type(e).__name__ + ": " + str(e)[:160], previous.get("latest_batch"),
+             checkpoint_data(previous))
         print("GDELT collection failed:", str(e), file=sys.stderr)
         return 1
 

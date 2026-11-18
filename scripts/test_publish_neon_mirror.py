@@ -120,3 +120,64 @@ class TestPublisher(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class UpsertConnection(FakeConnection):
+    """FakeConnection plus the real UPSERT rule: a newer checked_at replaces the row."""
+    def execute(self, statement, parameters):
+        if "INSERT" in statement and self.stored is not None and parameters[-1] > self.stored[1]:
+            self.stored = (parameters[0], parameters[-1], parameters[3], parameters[4])
+            self.data_payload = json.loads(parameters[1])
+            self.status_payload = json.loads(parameters[2])
+            self.statements.append((statement, parameters))
+            return FakeCursor(self.stored)
+        return super().execute(statement, parameters)
+
+
+class TestCursorRegressionGuard(unittest.TestCase):
+    """ARCH-05 18.11: a fresh status paired with the frozen repo copy of
+    gdelt-context.json moved Neon/D1 latest_batch three days back."""
+
+    def write(self, root, batch, checked):
+        data = Path(root) / "data"
+        data.mkdir(exist_ok=True)
+        (data / "gdelt-context.json").write_text(json.dumps({"source": "gdelt_context", "latest_batch": batch, "sample": []}))
+        (data / "gdelt-status.json").write_text(json.dumps({"source": "gdelt_context", "state": "ok", "checked_at": checked}))
+
+    def test_older_latest_batch_is_refused_even_with_newer_checked_at(self):
+        fake = UpsertConnection()
+        with tempfile.TemporaryDirectory() as root, contextlib.redirect_stdout(io.StringIO()):
+            self.write(root, "20261118124500", "2026-11-18T12:37:00Z")
+            publish_one("gdelt", root, "postgresql://x", connector=lambda url: fake,
+                        now=datetime(2026, 11, 18, 12, 40, tzinfo=timezone.utc))
+            inserts = sum("INSERT" in s for s, _ in fake.statements)
+            self.write(root, "20261115174500", "2026-11-18T13:20:00Z")
+            with self.assertRaisesRegex(RuntimeError, "cursor regression"):
+                publish_one("gdelt", root, "postgresql://x", connector=lambda url: fake,
+                            now=datetime(2026, 11, 18, 13, 21, tzinfo=timezone.utc))
+            self.assertEqual(sum("INSERT" in s for s, _ in fake.statements), inserts, "nothing written")
+            self.assertEqual(fake.data_payload["latest_batch"], "20261118124500")
+
+    def test_newer_batch_still_publishes(self):
+        fake = UpsertConnection()
+        with tempfile.TemporaryDirectory() as root, contextlib.redirect_stdout(io.StringIO()):
+            self.write(root, "20261118124500", "2026-11-18T12:37:00Z")
+            publish_one("gdelt", root, "postgresql://x", connector=lambda url: fake,
+                        now=datetime(2026, 11, 18, 12, 40, tzinfo=timezone.utc))
+            self.write(root, "20261118134500", "2026-11-18T13:37:00Z")
+            self.assertEqual(publish_one("gdelt", root, "postgresql://x", connector=lambda url: fake,
+                                         now=datetime(2026, 11, 18, 13, 40, tzinfo=timezone.utc))["result"], "written")
+            self.assertEqual(fake.data_payload["latest_batch"], "20261118134500")
+
+    def test_required_mode_fails_visibly_on_regression(self):
+        fake = UpsertConnection()
+        with tempfile.TemporaryDirectory() as root, contextlib.redirect_stdout(io.StringIO()), \
+                contextlib.redirect_stderr(io.StringIO()) as err:
+            self.write(root, "20261118124500", "2026-11-18T12:37:00Z")
+            publish_one("gdelt", root, "postgresql://x", connector=lambda url: fake,
+                        now=datetime(2026, 11, 18, 12, 40, tzinfo=timezone.utc))
+            self.write(root, "20261115174500", "2026-11-18T13:20:00Z")
+            with patch.dict(os.environ, {"NEON_DATABASE_URL": "postgresql://x"}), \
+                 patch("scripts.publish_neon_mirror._open_connection", lambda url: fake):
+                self.assertEqual(main(["--source", "gdelt", "--root", root, "--mode", "required"]), 1)
+            self.assertIn("mirror_write_error=RuntimeError", err.getvalue())
