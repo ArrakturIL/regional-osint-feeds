@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "description": "Read-only shadow feed audit. No candidate is published before source/rights and QA acceptance.",
-  "updated_date": "2026-11-12",
+  "description": "Read-only shadow feed audit. The production-origin flag records actual Editor use and is not a license or terms-of-service approval. No new candidate is published before source/rights and QA acceptance.",
+  "updated_date": "2026-11-18",
   "sources": [
     {
       "id": "bbc-middle-east",
@@ -75,10 +75,13 @@
       "publisher": "israelhayom",
       "language": "he",
       "feed_url": "https://www.israelhayom.co.il/rss.xml",
-      "origin": "candidate_unverified",
+      "origin": "existing_production",
       "probe": true,
-      "public_enabled": false,
-      "license_status": "pending_terms_review"
+      "public_enabled": true,
+      "license_status": "restrictive_written_permission_required",
+      "license_reviewed": "2026-11-18",
+      "license_note": "Terms p.13: no copying, distribution or use by others without prior written consent; p.27: no automated collection. No RSS clause.",
+      "license_evidence": "https://www.israelhayom.co.il/terms"
     },
     {
       "id": "maariv-he",
@@ -86,10 +89,12 @@
       "publisher": "maariv",
       "language": "he",
       "feed_url": "https://www.maariv.co.il/Rss/RssChadashot",
-      "origin": "candidate_unverified",
+      "origin": "existing_production",
       "probe": true,
-      "public_enabled": false,
-      "license_status": "pending_terms_review"
+      "public_enabled": true,
+      "license_status": "pending_terms_review",
+      "license_reviewed": "2026-11-18",
+      "license_note": "Terms page not located on 18.11; review open."
     },
     {
       "id": "arutz-sheva-en",
@@ -97,10 +102,13 @@
       "publisher": "arutzsheva",
       "language": "en",
       "feed_url": "https://www.israelnationalnews.com/Rss.aspx?act=.1",
-      "origin": "candidate_unverified",
+      "origin": "existing_production",
       "probe": true,
-      "public_enabled": false,
-      "license_status": "pending_terms_review"
+      "public_enabled": true,
+      "license_status": "restrictive_link_only_no_translation",
+      "license_reviewed": "2026-11-18",
+      "license_note": "Israel National News terms (Hebrew site, same company): no copying, translating or publishing without prior written consent; content may be shown elsewhere only via a link to the original page.",
+      "license_evidence": "https://inn.co.il/terms"
     },
     {
       "id": "i24-en",
@@ -130,10 +138,13 @@
       "publisher": "guardian",
       "language": "en",
       "feed_url": "https://www.theguardian.com/world/israel/rss",
-      "origin": "candidate_unverified",
+      "origin": "existing_production",
       "probe": true,
-      "public_enabled": false,
-      "license_status": "pending_terms_review"
+      "public_enabled": true,
+      "license_status": "personal_noncommercial_only",
+      "license_reviewed": "2026-11-18",
+      "license_note": "Site and RSS use is for personal, non-commercial use; other use needs Guardian permission (Open Platform / licensing).",
+      "license_evidence": "https://www.theguardian.com/help/terms-of-service"
     },
     {
       "id": "jns",
@@ -141,10 +152,13 @@
       "publisher": "jns",
       "language": "en",
       "feed_url": "https://www.jns.org/feed/",
-      "origin": "candidate_unverified",
+      "origin": "existing_production",
       "probe": true,
-      "public_enabled": false,
-      "license_status": "pending_terms_review"
+      "public_enabled": true,
+      "license_status": "restrictive_written_permission_required",
+      "license_reviewed": "2026-11-18",
+      "license_note": "Republishing requires express written permission; trial license via form.",
+      "license_evidence": "https://www.jns.org/republish-jns-content"
     },
     {
       "id": "al-monitor",
@@ -152,10 +166,13 @@
       "publisher": "almonitor",
       "language": "en",
       "feed_url": "https://www.al-monitor.com/rss",
-      "origin": "candidate_unverified",
+      "origin": "existing_production",
       "probe": true,
-      "public_enabled": false,
-      "license_status": "pending_terms_review"
+      "public_enabled": true,
+      "license_status": "personal_noncommercial_only",
+      "license_reviewed": "2026-11-18",
+      "license_note": "Visitor Agreement: personal, noncommercial use; licence to display on your own device only.",
+      "license_evidence": "https://www.al-monitor.com/visitor-agreement"
     },
     {
       "id": "france24",
@@ -163,10 +180,12 @@
       "publisher": "france24",
       "language": "en",
       "feed_url": "https://www.france24.com/en/middle-east/rss",
-      "origin": "candidate_unverified",
+      "origin": "existing_production",
       "probe": true,
-      "public_enabled": false,
-      "license_status": "pending_terms_review"
+      "public_enabled": true,
+      "license_status": "pending_terms_review",
+      "license_reviewed": "2026-11-18",
+      "license_note": "No RSS or reuse terms located on 18.11; review open."
     },
     {
       "id": "972mag",
@@ -311,5 +330,13 @@
       "public_enabled": false,
       "license_status": "pending_terms_review"
     }
-  ]
+  ],
+  "license_status_values": {
+    "current_use_keep": "reviewed earlier, keep",
+    "pending_terms_review": "terms not yet located/reviewed",
+    "personal_noncommercial_only": "terms allow personal non-commercial use only; site display not explicitly licensed",
+    "restrictive_written_permission_required": "copying/redistribution needs written permission",
+    "restrictive_link_only_no_translation": "display only as a link; no translation without permission",
+    "restrictive_terms_review_required": "restrictive terms, candidate only"
+  }
 }
