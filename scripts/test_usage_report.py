@@ -1,0 +1,74 @@
+import io
+import json
+import unittest
+from datetime import date
+
+from scripts.usage_report import actions_metrics, cloudflare_metrics, evaluate, fetch_runs, markdown
+
+ACCOUNT = {
+    "workers": [
+        {"dimensions": {"scriptName": "regional-watch-editor"}, "sum": {"requests": 528, "errors": 0, "cpuTimeUs": 2_000_000},
+         "quantiles": {"cpuTimeP99": 1_109_532}},
+        {"dimensions": {"scriptName": "regional-osint-monitor"}, "sum": {"requests": 1459, "errors": 1, "cpuTimeUs": 500_000},
+         "quantiles": {"cpuTimeP99": 20_301}},
+    ],
+    "d1": [{"dimensions": {"databaseId": "a"}, "sum": {"rowsRead": 1_307_277, "rowsWritten": 7755}},
+           {"dimensions": {"databaseId": "b"}, "sum": {"rowsRead": 1_133_696, "rowsWritten": 4387}}],
+    "ai": [{"dimensions": {"modelId": "glm"}, "count": 145, "sum": {"totalNeurons": 1708.34}},
+           {"dimensions": {"modelId": "llama"}, "count": 45, "sum": {"totalNeurons": 7000.0}}],
+}
+BUDGETS = json.load(open("config/usage-budgets.json"))
+
+
+class UsageReport(unittest.TestCase):
+    def test_cloudflare_totals_from_graphql(self):
+        m = {r["metric"]: r for r in cloudflare_metrics(ACCOUNT)}
+        self.assertEqual(m["workers_requests"]["value"], 1987)
+        self.assertEqual(m["workers_cpu_ms"]["value"], 2500.0)
+        self.assertEqual(m["workers_cpu_p99_ms"]["value"], 1109.5)
+        self.assertEqual(m["d1_rows_read"]["value"], 2_440_973)
+        self.assertEqual(m["d1_rows_written"]["value"], 12_142)
+        self.assertEqual(m["ai_neurons"]["value"], 8708.3)
+
+    def test_budget_warning_comes_from_config(self):
+        rows = {r["metric"]: r for r in evaluate(cloudflare_metrics(ACCOUNT), BUDGETS)}
+        self.assertTrue(rows["ai_neurons"]["warn"])          # 87% of 10 000
+        self.assertFalse(rows["d1_rows_read"]["warn"])       # 49% of 5M
+        self.assertIsNone(rows["workers_cpu_ms"]["budget"])  # informational
+        self.assertIn("⚠️", markdown(date(2026, 11, 17), list(rows.values()), BUDGETS["app_guards"]))
+
+    def test_empty_account_is_zero_not_crash(self):
+        rows = evaluate(cloudflare_metrics({}), BUDGETS)
+        self.assertTrue(all(r["value"] == 0 and not r["warn"] for r in rows))
+
+    def test_actions_counts_only_completed_runs_of_that_day(self):
+        runs = [
+            {"name": "Gdelt", "status": "completed", "created_at": "2026-11-17T01:00:00Z",
+             "run_started_at": "2026-11-17T01:00:10Z", "updated_at": "2026-11-17T01:03:10Z"},
+            {"name": "Gdelt", "status": "in_progress", "created_at": "2026-11-17T02:00:00Z"},
+            {"name": "Old", "status": "completed", "created_at": "2026-11-16T23:59:00Z",
+             "run_started_at": "2026-11-16T23:59:00Z", "updated_at": "2026-11-17T00:09:00Z"},
+        ]
+        m = {r["metric"]: r for r in actions_metrics(runs, date(2026, 11, 17))}
+        self.assertEqual(m["actions_runs"]["value"], 1)
+        self.assertEqual(m["actions_wall_minutes"]["value"], 3.0)
+
+    def test_fetch_runs_paginates_until_short_page(self):
+        pages = [[{"id": i} for i in range(100)], [{"id": 1}]]
+        seen = []
+
+        class R(io.BytesIO):
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+
+        def opener(req, timeout):
+            seen.append(req.full_url)
+            return R(json.dumps({"workflow_runs": pages[len(seen) - 1]}).encode())
+
+        self.assertEqual(len(fetch_runs("o/r", "t", date(2026, 11, 17), opener)), 101)
+        self.assertEqual(len(seen), 2)
+        self.assertIn("created=2026-11-17", seen[0])
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -37,6 +37,7 @@
     "collectors/maritime/gfw-baseline.js",
     "schedule/sources.js",
     "storage/sql.js",
+    "storage/source-controls.js",
     "schedule/collect.js",
     "schedule/manual.js",
     "schedule/runner.js",

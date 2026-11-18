@@ -1,0 +1,44 @@
+name: Regional Watch usage report (Workers / D1 / AI / Actions)
+
+# H-01: measured usage from Cloudflare GraphQL analytics and the Actions API,
+# compared with config/usage-budgets.json and stored in D1 usage_daily.
+# A budget at >= warn_ratio fails the run, so GitHub notifies the owner.
+on:
+  schedule:
+    - cron: '41 0 * * *'
+  workflow_dispatch:
+    inputs:
+      day:
+        description: 'UTC day YYYY-MM-DD (empty = yesterday)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: regional-watch-usage-report
+  cancel-in-progress: false
+
+jobs:
+  report:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest scripts.test_usage_report -v
+      - name: Measure, store and compare with budgets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_D1_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          GITHUB_TOKEN: ${{ github.token }}
+          IN_DAY: ${{ inputs.day }}
+        run: python -m scripts.usage_report --day "$IN_DAY"

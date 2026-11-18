@@ -3,6 +3,7 @@ import { eventRows, reconcile, hebrew, publisher, language } from './events.mjs'
 import { localizeNewsRow } from '../localization/localization.mjs';
 import { displayForPage } from '../localization/display-policy.mjs';
 import { newsTier } from './tier.mjs';
+import { disabledPublishers } from './source-controls.mjs';
 const HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Cache-Control': 'public,max-age=60',
@@ -99,7 +100,10 @@ export async function readNewsEvents(request, env) {
   const sourceNames = new Set(sources.map(x => x.toLowerCase()));
   const categoryNames = new Set(categories);
   const verificationNames = new Set(verifications);
+  const off = await disabledPublishers(env.NEWS_DB);
   const matching = rows.filter(row => {
+    // A rolled-back publisher's text must not stay public as an event representative.
+    if (off.size && off.has(publisher(row.source))) return false;
     if (fromMs !== null && Number(row.last_seen_ms) < fromMs) return false;
     if (toMs !== null && Number(row.last_seen_ms) > toMs) return false;
     if (minPriority !== null && Number(row.event_priority) < minPriority) return false;

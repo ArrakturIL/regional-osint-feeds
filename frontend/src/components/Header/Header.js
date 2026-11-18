@@ -25,7 +25,7 @@ export function GlobalHeader({active,overview}){
   panel?h("dialog",{ref:modalRef,className:"rw-dlg","aria-labelledby":"rw-dialog-title",onClose:()=>{setPanel(false);requestAnimationFrame(()=>triggerRef.current?.focus())}},
    h("div",{className:"rw-dlg-head"},h("h2",{id:"rw-dialog-title"},he?"מצב מקורות":"Состояние источников"),h("button",{type:"button",className:"rw-dlg-close",onClick:()=>{setPanel(false);requestAnimationFrame(()=>triggerRef.current?.focus())}},he?"סגירה":"Закрыть")),
    h("bdi",{className:"rw-dlg-counter",dir:"ltr"},status),
-   list.length?h("div",{className:"rw-dlg-items"},...list.map((x,i)=>h("div",{className:"rw-dlg-row",key:x.id||i},h("span",null,(UI_HE?x.label_he:x.label)||x.id||"—"),h("span",{className:"rw-dlg-state"},x.state==="ok"?(he?"תקין":"Работает"):x.state==="partial"?(he?"חלקי":"Частично"):x.state==="error"?(he?"שגיאה":"Ошибка"):x.state||"—")))):t("p","hint",he?"אין כרגע פרטי מקור זמינים.":"Список источников пока недоступен."),
+   list.length?h("div",{className:"rw-dlg-items"},...list.map((x,i)=>h("div",{className:"rw-dlg-row",key:x.id||i},h("span",null,(UI_HE?x.label_he:x.label)||x.id||"—"),h("span",{className:"rw-dlg-state"},x.state==="ok"?(he?"תקין":"Работает"):x.state==="partial"?(he?"חלקי":"Частично"):x.state==="error"?(he?"שגיאה":"Ошибка"):x.state==="disabled"?(he?"מושבת זמנית":"Временно отключён"):x.state||"—")))):t("p","hint",he?"אין כרגע פרטי מקור זמינים.":"Список источников пока недоступен."),
    h("a",{className:"rw-dlg-more",href:href(he?"he":"ru","data")},he?"פרטים ומגבלות נתונים":"Подробнее о данных и ограничениях")
   ):null
  );

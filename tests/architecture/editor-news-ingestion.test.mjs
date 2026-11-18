@@ -7,7 +7,7 @@ const NOW=Date.parse('2026-11-16T02:00:00Z');
 const WHEN=new Date(NOW-3600000).toUTCString();
 const item=(title,url,pub=WHEN)=>'<item><title>'+title+'</title><link>'+url+'</link><pubDate>'+pub+'</pubDate><description>Israel Iran regional security developments and diplomatic discussions</description></item>';
 const rss=(items=[])=>'<rss version="2.0"><channel>'+items.join('')+'</channel></rss>';
-const db=(knownUrls=[])=>{
+const db=(knownUrls=[],controls=null)=>{
   const queries=[],writes=[];
   const NEWS_DB={prepare(sql){
     const stmt=(args=[])=>({
@@ -15,6 +15,7 @@ const db=(knownUrls=[])=>{
       all:async()=>{
         queries.push({method:'all',sql,args});
         if(sql.includes('SELECT url FROM news_items'))return {results:knownUrls.map(url=>({url}))};
+        if(controls&&sql.includes('FROM source_controls'))return {results:controls.map(source=>({source}))};
         throw Error('Unexpected all query: '+sql);
       },
       run:async()=>{
@@ -111,4 +112,21 @@ test('failed source-status persistence stops ingestion before article writes',as
   });
   assert.equal(writes.length,1);
   assert.match(writes[0].sql,/INSERT INTO feed_status/);
+});
+
+// H-04: one publisher is rolled back through D1 source_controls, without a release.
+test('a disabled publisher is not fetched, gets status=disabled, and other feeds still ingest',async()=>{
+  const {NEWS_DB,writes}=db([],['jpost']);
+  const jpost=FEEDS.filter(f=>f[2]==='jpost').map(f=>f[1]);
+  assert.equal(jpost.length,2,'jpost has two feeds; one control covers both');
+  await withFeeds(url=>new Response(rss([item('Israel Iran security talks continue',url+'/a')]),{status:200}),async calls=>{
+    await ingestNewsFeeds({NEWS_DB},NOW);
+    assert.equal(calls.length,FEEDS.length-2);
+    assert.ok(!calls.some(u=>jpost.includes(u)));
+  });
+  const st=writes.filter(w=>w.sql.includes('INSERT INTO feed_status'));
+  assert.equal(st.length,FEEDS.length,'every feed still has a truthful status row');
+  for(const name of FEEDS.filter(f=>f[2]==='jpost').map(f=>f[0]))
+    assert.deepEqual(st.find(w=>w.args[0]===name).args.slice(2,5),['disabled',null,0]);
+  assert.ok(!writes.some(w=>w.sql.includes('INSERT OR IGNORE INTO news_items')&&String(w.args[1]).startsWith('Jerusalem Post')));
 });
