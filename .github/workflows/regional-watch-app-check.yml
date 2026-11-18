@@ -428,12 +428,14 @@ jobs:
             status=000
             # Newly published Pages deployments can return 404 briefly until
             # edge propagation. Retry only transient 404, 503 and no-response.
-            for attempt in 1 2 3 4 5 6; do
+            # 18.11 release of 93ec016: / was still 404 after 6x3 s and the whole
+            # release rolled back; the same URL served 200 a minute later. ~90 s budget.
+            for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
               status=$(curl --silent --show-error --max-time 20 --max-redirs 0 -o /dev/null -w '%{http_code}' "${DEPLOYMENT_URL%/}$path") || status=000
               echo "$path propagation attempt $attempt: HTTP $status"
               if [[ "$status" == 200 ]]; then break; fi
               if [[ "$status" != 404 && "$status" != 503 && "$status" != 000 ]]; then break; fi
-              if [[ "$attempt" != 6 ]]; then sleep 3; fi
+              if [[ "$attempt" != 12 ]]; then sleep 8; fi
             done
             test "$status" = 200 || { echo "::error::Release route $path HTTP $status"; exit 1; }
           done
