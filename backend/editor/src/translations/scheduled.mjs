@@ -1,4 +1,6 @@
 import {validateCandidate} from './news-mirror.mjs';
+import {newsTier,TIER_RANK} from '../news/tier.mjs';
+import {recordShown} from '../news/sla.mjs';
 
 export async function translateTitles(env,now){
  const day=new Date(now).toISOString().slice(0,10);
@@ -6,9 +8,11 @@ export async function translateTitles(env,now){
   await env.NEWS_DB.prepare("INSERT OR IGNORE INTO news_translation_budget(day_utc,batches,estimated_neurons,updated_ms) VALUES(?,0,0,?)").bind(day,now).run();
   const budget=await env.NEWS_DB.prepare("SELECT batches,estimated_neurons FROM news_translation_budget WHERE day_utc=?").bind(day).first();
   if((budget?.batches||0)>=48||(budget?.estimated_neurons||0)>=6000)return {translated:0,summaries:0,budget:"limit"};
-  const query="SELECT n.id,n.headline,n.summary,n.headline_ru FROM news_items n WHERE ((n.priority>=7 AND n.published_ms>?) OR n.id IN (SELECT g.representative_id FROM news_event_groups g WHERE g.priority>=4 AND g.last_seen_ms>?)) AND (n.headline_ru IS NULL OR (n.summary_ru IS NULL AND length(n.summary)>10)) ORDER BY n.published_ms DESC LIMIT 22";
+  const query="SELECT n.id,n.headline,n.summary,n.headline_ru,n.discovered_ms FROM news_items n WHERE ((n.priority>=7 AND n.published_ms>?) OR n.id IN (SELECT g.representative_id FROM news_event_groups g WHERE g.priority>=4 AND g.last_seen_ms>?)) AND (n.headline_ru IS NULL OR (n.summary_ru IS NULL AND length(n.summary)>10)) ORDER BY n.published_ms DESC LIMIT 60";
   const rows=(await env.NEWS_DB.prepare(query).bind(now-36*3600000,now-36*3600000).all()).results||[];
-  const pending=rows.filter(x=>!/sponsored content|winner cup|euroleague|fashion week|maccabi wins|hapoel tel aviv set to secure/i.test(x.headline)).slice(0,5);
+  const pending=rows.filter(x=>!/sponsored content|winner cup|euroleague|fashion week|maccabi wins|hapoel tel aviv set to secure/i.test(x.headline))
+    // B5: urgent > important > normal, newest first within a tier (stable sort).
+    .map(x=>({...x,tier:newsTier(x).tier})).sort((a,b)=>TIER_RANK[a.tier]-TIER_RANK[b.tier]).slice(0,5);
   if(!pending.length)return {translated:0,summaries:0};
   const claimed=await env.NEWS_DB.prepare("UPDATE news_translation_budget SET batches=batches+1,estimated_neurons=estimated_neurons+125,updated_ms=? WHERE day_utc=? AND batches<48 AND estimated_neurons<6000").bind(now,day).run();
   if(claimed.meta?.changes!==1)return {translated:0,summaries:0,budget:"limit"};
@@ -30,6 +34,8 @@ export async function translateTitles(env,now){
    if(!title&&!summary)continue;
    const write=await env.NEWS_DB.prepare("UPDATE news_items SET headline_ru=COALESCE(headline_ru,?),summary_ru=COALESCE(summary_ru,?) WHERE id=?").bind(title,summary,row.id).run();
    if(write.meta?.changes){if(title&&!row.headline_ru)translated++;if(summary)summaries++;}
+   if(write.meta?.changes&&title&&!row.headline_ru)
+    await recordShown(env.NEWS_DB,{id:row.id,language:'ru',tier:row.tier,discoveredMs:row.discovered_ms}).catch(()=>{});
   }
   const actual=Number(out?.usage?.neurons);
   if(Number.isFinite(actual)&&actual>0)await env.NEWS_DB.prepare("UPDATE news_translation_budget SET estimated_neurons=MAX(0,estimated_neurons+?),updated_ms=? WHERE day_utc=?").bind(actual-125,Date.now(),day).run();

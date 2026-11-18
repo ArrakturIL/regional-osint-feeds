@@ -39,7 +39,7 @@ function makeEnv({rows=[],events=[],budget={batches:0,estimated_neurons:0}}={}){
       sqls.push({method:'all',sql,args});
       if(!sql.includes('FROM news_items'))throw Error('Unexpected all SQL '+sql);
       if(sql.includes(' IN (SELECT g.representative_id')&&sql.includes('news_event_groups')){
-        return{results:rows.filter(eligible).sort((a,b)=>b.published_ms-a.published_ms).slice(0,22)};
+        return{results:rows.filter(eligible).sort((a,b)=>b.published_ms-a.published_ms).slice(0,60)};
       }
       // Precisely model the OLD >=7 selector so the test is RED before the code fix.
       return{results:rows.filter(r=>r.priority>=7&&r.published_ms>cutoff&&
@@ -78,7 +78,8 @@ test('recent low-priority displayed events translate; non-displayed low-priority
  assert.ok(!q.sql.includes('EXISTS'), 'representative lookup should be set-based');
  assert.match(q.sql,/g\.priority>=4/);
  assert.match(q.sql,/g\.last_seen_ms>\?/);
- assert.equal(q.sql.includes('ORDER BY n.published_ms DESC LIMIT 22'),true);
+ // B5: a wider pool (60) so urgent items are not cut by newer normal ones; tier order is applied in JS.
+ assert.equal(q.sql.includes('ORDER BY n.published_ms DESC LIMIT 60'),true);
  assert.deepEqual(q.args,[NOW-36*HOUR,NOW-36*HOUR]);
 });
 test('fresh high-priority source remains eligible independent of event grouping; old high-priority source is not',async()=>{

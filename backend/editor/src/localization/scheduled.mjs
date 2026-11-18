@@ -2,6 +2,8 @@ import {chat} from '../ai/router.mjs'; // B2: Gemini Flash-Lite first, Cloudflar
 import {factualTranslationIssue} from '../translations/fact-guard.mjs';
 import {DAY,sourceText,fingerprint} from './shared.mjs';
 import {eligibleHebrewRetry} from './retry-policy.mjs';
+import {newsTier,TIER_RANK} from '../news/tier.mjs';
+import {recordShown,slaSummary} from '../news/sla.mjs';
 
 const HE_MODEL='@cf/zai-org/glm-4.7-flash';
 const HE_DAILY_ATTEMPT_CAP=300; // B1: ceiling only; shared AI pool decides
@@ -26,7 +28,7 @@ function checkHebrew(original,translation){
 }
 async function localeCandidates(env,kind,now){
   let db=env.NEWS_DB,rows=[];
-  if(kind==='news')rows=(await db.prepare("SELECT n.id,n.headline,n.headline_ru,n.summary,n.summary_ru,n.comment,t.source_hash cached_he_hash FROM news_items n LEFT JOIN regional_i18n t ON t.kind='news' AND t.item_id=n.id AND t.language='he' WHERE ((n.priority>=7 AND n.published_ms>?) OR n.id IN (SELECT g.representative_id FROM news_event_groups g WHERE g.priority>=4 AND g.last_seen_ms>?)) ORDER BY (t.item_id IS NULL) DESC,n.published_ms DESC,n.priority DESC LIMIT 120").bind(now-7*DAY,now-36*3600000).all()).results||[];
+  if(kind==='news')rows=(await db.prepare("SELECT n.id,n.headline,n.headline_ru,n.summary,n.summary_ru,n.comment,n.discovered_ms,t.source_hash cached_he_hash FROM news_items n LEFT JOIN regional_i18n t ON t.kind='news' AND t.item_id=n.id AND t.language='he' WHERE ((n.priority>=7 AND n.published_ms>?) OR n.id IN (SELECT g.representative_id FROM news_event_groups g WHERE g.priority>=4 AND g.last_seen_ms>?)) ORDER BY (t.item_id IS NULL) DESC,n.published_ms DESC,n.priority DESC LIMIT 120").bind(now-7*DAY,now-36*3600000).all()).results||[];
   else if(kind==='editorial')rows=(await db.prepare("SELECT id,headline,text FROM editorial_notes WHERE published_ms>? ORDER BY published_ms DESC LIMIT 12").bind(now-28*DAY).all()).results||[];
   else if(kind==='analyst'){
     db=env.CORE_DB;
@@ -46,8 +48,11 @@ async function localeCandidates(env,kind,now){
     if(kind==='news'&&/[\u0590-\u05ff]/u.test(row.headline||'')&&
       (!row.summary||/[\u0590-\u05ff]/u.test(row.summary)))continue;
     let t;try{t=sourceText(kind,row);}catch{continue;}
-    if(t.title&&t.title.length>=4)result.push({db,kind,id:row.id,text:t,cachedSourceHash:kind==='news'?row.cached_he_hash:undefined});
+    if(t.title&&t.title.length>=4)result.push({db,kind,id:row.id,text:t,cachedSourceHash:kind==='news'?row.cached_he_hash:undefined,
+      ...(kind==='news'?{tier:newsTier(row).tier,discoveredMs:row.discovered_ms,missing:!row.cached_he_hash}:{})});
   }
+  // B5: untranslated first, then urgent > important > normal; SQL order stays the tiebreak.
+  if(kind==='news')result.sort((a,b)=>(b.missing-a.missing)||(TIER_RANK[a.tier]-TIER_RANK[b.tier]));
   return result;
 }
 
@@ -109,6 +114,7 @@ async function translateLocaleItem(env,item,day,now){
     await db.prepare("INSERT INTO regional_i18n(kind,item_id,language,source_hash,title,body,commentary,quality_score,model,created_at_ms) VALUES(?,?,'he',?,?,?,?,?,?,?) ON CONFLICT(kind,item_id,language) DO UPDATE SET source_hash=excluded.source_hash,title=excluded.title,body=excluded.body,commentary=excluded.commentary,quality_score=excluded.quality_score,model=excluded.model,created_at_ms=excluded.created_at_ms")
       .bind(kind,id,sha,value.title.trim(),value.body.trim(),value.comment.trim(),value.confidence,answer.model||HE_MODEL,Date.now()).run();
     state='ok';
+    if(kind==='news')await recordShown(env.NEWS_DB,{id,language:'he',tier:item.tier||'normal',discoveredMs:item.discoveredMs}).catch(()=>{});
   }catch(e){err=String(e?.message||e).slice(0,180);}
   await db.prepare("UPDATE regional_i18n_attempts SET state=?,error=? WHERE kind=? AND item_id=? AND source_hash=? AND day_utc=?").bind(state,err,kind,id,sha,day).run();
   if(neurons>0)await env.NEWS_DB.prepare("UPDATE regional_i18n_budget SET estimated_neurons=estimated_neurons+?,updated_at_ms=? WHERE day_utc=?").bind(neurons,Date.now(),day).run();
@@ -129,7 +135,9 @@ export async function translateScheduled(env,scheduledTime){
     }
     const cycle=['news','analyst','story','editorial','news','profile'];
     const kind=cycle[Math.floor(now/300000)%cycle.length];
-    const items=await localeCandidates(env,kind,now);
+    // B5: urgent/important news never waits for its turn in the kind cycle.
+    const lane=kind==='news'?[]:(await localeCandidates(env,'news',now)).filter(x=>x.missing&&x.tier!=='normal');
+    const items=[...lane.slice(0,2),...await localeCandidates(env,kind,now)];
     let attempted=0,translated=0,rejected=0,budgetHit=false;
     for(const item of items){
       if(attempted>=4)break;
@@ -139,7 +147,12 @@ export async function translateScheduled(env,scheduledTime){
       attempted++;
       if(result==='ok')translated++;else rejected++;
     }
-    const state={state:budgetHit?'budget':rejected?'partial':'ok',kind,attempted,translated,rejected,at:new Date().toISOString()};
+    const state={state:budgetHit?'budget':rejected?'partial':'ok',kind,lane:Math.min(lane.length,2),attempted,translated,rejected,at:new Date().toISOString()};
+    // B5: refresh the per-tier SLA picture (read by /api/news) once per tick.
+    try{
+      const sla=await slaSummary(env.NEWS_DB,now);
+      await env.NEWS_DB.prepare("INSERT INTO editor_state(key,value,updated_ms) VALUES('translation_sla',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_ms=excluded.updated_ms").bind(JSON.stringify(sla),Date.now()).run();
+    }catch{}
     await env.NEWS_DB.prepare("INSERT INTO editor_state(key,value,updated_ms) VALUES('last_he_localization',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_ms=excluded.updated_ms").bind(JSON.stringify(state),Date.now()).run();
     return state;
   }catch(e){
