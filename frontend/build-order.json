@@ -51,6 +51,8 @@
     "components/Aviation/AviationExplained.js",
     "components/MarketCard/MarketCard.js",
     "components/SatelliteCatalog/SatelliteCatalog.js",
+    "utils/marketSeries.js",
+    "components/MarketCard/MarketSeriesCard.js",
     "pages/DataRoom/DataRoom.js",
     "pages/Analysts/Analysts.js",
     "components/Header/Header.js",
