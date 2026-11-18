@@ -2,6 +2,7 @@ import { UI_HE, fmtTime, h, t } from '../../app/runtime.js';
 import { External } from '../External/External.js';
 import { rwMeaningfulTimeline } from '../../utils/timeline.js';
 import { rwSpecificUnknown } from '../../utils/unknowns.js';
+import { eventDateLabel, originalLanguageNote, relatedCount, sourceCount } from '../../utils/dossierMeta.js';
 export function StoryDossier({ story, open, onToggle }) {
   const labels = UI_HE
     ? {
@@ -45,7 +46,7 @@ export function StoryDossier({ story, open, onToggle }) {
       h(
         'div',
         { className: 'rw-story-meta' },
-        t('span', null, story.type),
+        story.type ? t('span', null, story.type) : null,
         t('span', null, labels.updated + fmtTime(story.observedAt)),
       ),
       h(
@@ -58,20 +59,14 @@ export function StoryDossier({ story, open, onToggle }) {
         ? h(
             'small',
             { className: 'rw-translation-state' },
-            UI_HE
-              ? story.content_language === 'en'
-                ? 'המקור באנגלית · התרגום ממתין'
-                : 'המקור ברוסית · התרגום ממתין'
-              : story.content_language === 'en'
-                ? 'Оригинал на английском · перевод ожидается'
-                : 'Оригинал на иврите · перевод ожидается',
+            originalLanguageNote(story.content_language, UI_HE),
           )
         : null,
       date
         ? t(
             'p',
             'rw-event-meta',
-            labels.event + String(date) + ' · ' + labels.recorded + fmtTime(story.observedAt),
+            labels.event + eventDateLabel(date, UI_HE) + ' · ' + labels.recorded + fmtTime(story.observedAt),
           )
         : null,
       t('p', null, story.summary || story.excerpt || ''),
@@ -94,7 +89,9 @@ export function StoryDossier({ story, open, onToggle }) {
         t(
           'span',
           null,
-          sources.length + ' ' + labels.sources + ' · ' + (story.related?.length || 0) + ' ' + labels.related,
+          [sourceCount(sources.length, UI_HE), relatedCount(story.related?.length, UI_HE)]
+            .filter(Boolean)
+            .join(' · '),
         ),
       ),
     ),

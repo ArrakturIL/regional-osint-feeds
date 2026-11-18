@@ -65,3 +65,11 @@ test('the real mount and App wrap pages in the boundary', () => {
   assert.match(mount, /h\(ErrorBoundary, \{ level: 'app' \}, h\(App\)\)/);
   assert.match(app, /ErrorBoundary,\s*\{ level: 'page', resetKey: route \}/);
 });
+
+test('the concatenated app.js parses: one shared scope, no duplicate top-level names, no stray export', async () => {
+  const {assemble} = await import('../scripts/build.mjs');
+  const code = assemble();
+  assert.doesNotThrow(() => new vm.Script(code, {filename: 'app.js'}));
+  const names = [...code.matchAll(/^(?:const|let|function|class) ([A-Za-z_$][\w$]*)/gm)].map(m => m[1]);
+  assert.deepEqual(names.filter((n, i) => names.indexOf(n) !== i), []);
+});

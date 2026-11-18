@@ -1,6 +1,6 @@
 import { R, UI_HE, h } from '../../app/runtime.js';
 
-const TEXT = UI_HE
+const CRASH_TEXT = UI_HE
   ? {
       page: 'לא הצלחנו להציג את העמוד בגלל שגיאה בדף.',
       app: 'האתר נתקל בשגיאה ולא הצליח להיטען.',
@@ -41,17 +41,17 @@ export class ErrorBoundary extends R.Component {
     return h(
       'section',
       { className: 'rw-crash', role: 'alert' },
-      h('h1', { className: 'rw-crash-title' }, root ? TEXT.app : TEXT.page),
-      h('p', null, TEXT.hint),
+      h('h1', { className: 'rw-crash-title' }, root ? CRASH_TEXT.app : CRASH_TEXT.page),
+      h('p', null, CRASH_TEXT.hint),
       h(
         'div',
         { className: 'rw-crash-actions' },
         h(
           'button',
           { type: 'button', className: 'rw-feed-retry', onClick: () => location.reload() },
-          TEXT.reload,
+          CRASH_TEXT.reload,
         ),
-        root ? null : h('a', { href: TEXT.homeHref, className: 'rw-crash-home' }, TEXT.home),
+        root ? null : h('a', { href: CRASH_TEXT.homeHref, className: 'rw-crash-home' }, CRASH_TEXT.home),
       ),
     );
   }

@@ -20,6 +20,7 @@
     "components/Summary/Summary.js",
     "components/Editorial/Editorial.js",
     "utils/ruPlural.js",
+    "utils/dossierMeta.js",
     "components/NewsCard/NewsCard.js",
     "legacy/Events.js",
     "legacy/SourceList.js",
