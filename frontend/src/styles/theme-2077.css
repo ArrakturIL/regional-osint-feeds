@@ -123,6 +123,8 @@ html[dir="rtl"] :is(.news-card,.rw-story-teaser,.rw-dossier,.rw-situation,.panel
 @media (pointer:coarse),(max-width:640px){
   .rw-site-language a{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
   main button{min-height:44px}
+  /* iOS zooms the page on focus when a field's text is under 16px. */
+  main :is(input,select,textarea){font-size:16px}
   :is(.rw-more-link,.rw-story-footer a,.news-actions a,.rw-editorial-panel a,.rw-digest-item a,.rw-official-row a,.market a,.rw-analyst-links a,.rw-analyst-controls :is(a,button),.rw-data-nav a,.filters :is(a,button),.links a,.section > a.more){display:inline-flex;align-items:center;min-height:44px}
 }
 
