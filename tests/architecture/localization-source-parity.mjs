@@ -1,5 +1,5 @@
 import {readFileSync} from 'node:fs';
-import {reconstructContentFacade} from './localization-content-parity.mjs';
+import {reconstructContentFacade,revertEdits,B4_ANALYSTS} from './localization-content-parity.mjs';
 
 const requirePart=(text,needle,label)=>{
  const start=text.indexOf(needle);
@@ -11,7 +11,9 @@ export function reconstructReaderFacade(){
  const root=new URL('../../backend/editor/src/localization/',import.meta.url);
  const main=reconstructContentFacade();
  const core=readFileSync(new URL('read-core.mjs',root),'utf8');
- const analyst=readFileSync(new URL('analyst-api.mjs',root),'utf8');
+ let analyst=revertEdits(readFileSync(new URL('analyst-api.mjs',root),'utf8'),B4_ANALYSTS);
+ // B4 helper appended after the original function: cut it before rebuilding.
+ analyst=analyst.slice(0,analyst.indexOf('\n// Author names on the HE page'));
  const readerImports="import {HEADERS,respond,fieldLocale,localized} from './read-core.mjs';\n"
    +"import {readLocalizedAnalysts} from './analyst-api.mjs';\n";
  const factImport="import {factualTranslationIssue} from '../translations/fact-guard.mjs';\n";

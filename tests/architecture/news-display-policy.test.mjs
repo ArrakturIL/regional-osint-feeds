@@ -105,3 +105,53 @@ test('fallback /api/news reader applies the same rules', async () => {
     }
   }
 });
+
+// B4 part 2 (live 18.11, rendered /he/ pages): Russian story dossiers,
+// a Russian analyst post, Russian analyst names and source labels.
+const coreDb = ({stories = [], profiles = []} = {}) => ({prepare(sql) {
+  const q = {bind() { return this; }, first: async () => null,
+    all: async () => ({results: sql.includes('FROM monitor_events') ? stories : sql.includes('FROM analysts a') ? profiles : []})};
+  return q;
+}});
+
+test('HE stories: Russian-only dossiers are withheld, RU page keeps them', async () => {
+  const {readLocalizedStories} = await import('../../backend/editor/src/localization/stories-reader.mjs');
+  const story = (id, title) => ({event_id: id, updated_at_ms: now, payload: JSON.stringify({title, summary: title + '.'})});
+  const env = {CORE_DB: coreDb({stories: [story('ru', 'Взрывы на острове Кешм'), story('en', 'Explosions on Qeshm island')]})};
+  const he = await (await readLocalizedStories(env, 'he', 10)).json();
+  assert.deepEqual(he.stories.map(x => x.id), ['en']);
+  const ru = await (await readLocalizedStories(env, 'ru', 10)).json();
+  assert.deepEqual(ru.stories.map(x => x.id).sort(), ['en', 'ru']);
+});
+
+test('HE analysts: Russian posts withheld, author names from Hebrew profiles', async () => {
+  const {readLocalizedAnalysts} = await import('../../backend/editor/src/localization/analyst-api.mjs');
+  const posts = [
+    {id: 'p-ru', analyst: 'Сергей Ауслендер', headline: 'Анализ: перемирие в Константиновке', summary: 'Текст анализа.', original_language: 'ru'},
+    {id: 'p-he', analyst: 'Амихай Штайн', headline: 'ניתוח: ממשלת אחדות', summary: 'טקסט הניתוח.', original_language: 'he'},
+  ];
+  const service = {fetch: async () => Response.json({posts})};
+  const env = {CORE_DB: coreDb({profiles: [{name: 'Амихай Штайн', he: 'אמיחי שטיין'}]})};
+  const req = new Request('https://rw.example/api/analyst-posts?lang=he');
+  const body = await (await readLocalizedAnalysts(req, env, service, 'he', '/api/analyst-posts')).json();
+  assert.deepEqual(body.posts.map(x => x.id), ['p-he']);
+  assert.equal(body.posts[0].analyst, 'אמיחי שטיין');
+  assert.equal(body.withheld_count, 1);
+  for (const x of body.posts) assert.ok(!CYRILLIC.test(JSON.stringify([x.analyst, x.headline, x.summary, x.short_quote])));
+  const detail = await readLocalizedAnalysts(new Request('https://rw.example/api/analyst-posts/p-ru?lang=he'),
+    env, {fetch: async () => Response.json(posts[0])}, 'he', '/api/analyst-posts/p-ru');
+  assert.equal(detail.status, 404);
+  const ru = await (await readLocalizedAnalysts(new Request('https://rw.example/api/analyst-posts?lang=ru'),
+    env, service, 'ru', '/api/analyst-posts')).json();
+  assert.deepEqual(ru.posts.map(x => x.id), ['p-ru', 'p-he']);
+  assert.equal(ru.posts[0].analyst, 'Сергей Ауслендер');
+});
+
+test('every source status has a Hebrew label without Cyrillic', async () => {
+  const {assembleSources, SOURCE_LABELS} = await import('../../backend/pages/src/api/sources.js');
+  const rows = Object.keys(SOURCE_LABELS).map(source => ({source, state: 'ok', attempted_at: now}));
+  for (const s of assembleSources(rows)) {
+    assert.ok(s.label_he, s.id);
+    assert.ok(!CYRILLIC.test(s.label_he), s.id + ': ' + s.label_he);
+  }
+});

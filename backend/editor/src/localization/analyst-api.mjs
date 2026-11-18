@@ -1,5 +1,6 @@
 import {localized,respond} from './read-core.mjs';
 import {sourceText} from './shared.mjs';
+import {allowedOnPage,scriptLanguage} from './display-policy.mjs';
 
 export async function readLocalizedAnalysts(request,env,analystService,lang,path){
     const r=await analystService.fetch(request,{DB:env.CORE_DB,AI:env.AI});
@@ -14,8 +15,11 @@ export async function readLocalizedAnalysts(request,env,analystService,lang,path
       const rows=await env.CORE_DB.prepare(sql).bind(kind,...ids).all();
       for(const t of rows.results||[])cached.set(t.item_id,t);
     }
-    const translated=await Promise.all(items.map(async item=>{
+    const names=lang==='he'&&!profiles?await hebrewAnalystNames(env.CORE_DB):null;
+    const shown=await Promise.all(items.map(async item=>{
       const t=await localized(env.CORE_DB,kind,item.id,sourceText(kind,item),lang,cached.get(item.id)||{});
+      // B4: RU/AR text is not shown on a page in another language until translated.
+      if(!allowedOnPage(lang,scriptLanguage(t.title)||t.content_language))return null;
       const displayLanguage=t.content_language;
       const native=displayLanguage===lang&&t.translation_status==='source';
       const state=native?'original':t.translation_status==='available'?'translated':
@@ -30,11 +34,13 @@ export async function readLocalizedAnalysts(request,env,analystService,lang,path
         requested_language:lang,source_language:item.original_language||'ru',
         translation:{state,label,available,requested_language:lang,display_language:displayLanguage,source_language:item.original_language||'ru'}};
       return profiles?{...item,display_name:t.title,description:t.body,...attrs}:
-        {...item,headline:t.title,summary:t.body,short_quote:t.comment,...attrs};
+        {...item,headline:t.title,summary:t.body,short_quote:t.comment,
+          ...(names?{analyst:names.get(item.analyst)||''}:{}),...attrs};
     }));
+    const translated=shown.filter(Boolean);
     if(profiles)return respond({requested_language:lang,analysts:translated});
-    if(detail)return respond(translated[0]);
-    return respond({requested_language:lang,posts:translated,post_count:translated.length,
+    if(detail)return translated[0]?respond(translated[0]):respond({error:'translation_pending'},404);
+    return respond({requested_language:lang,posts:translated,post_count:translated.length,withheld_count:shown.length-translated.length,
       localized_count:translated.filter(x=>x.content_language===lang).length,
       translation_summary:{available:translated.filter(x=>x.translation_available).length,
         pending:translated.filter(x=>x.translation_state==='pending').length,
@@ -43,4 +49,13 @@ export async function readLocalizedAnalysts(request,env,analystService,lang,path
         translated:translated.filter(x=>x.translation_state==='translated').length},
       disclaimer:lang==='he'?'פרשנויות הכותבים אינן בהכרח עובדות שאומתו באופן עצמאי.':
         'Авторские аналитические материалы, утверждения требуют независимой проверки.'});
+}
+
+// Author names on the HE page come from the translated analyst profiles
+// (keyed by the original display name, which posts carry).
+async function hebrewAnalystNames(db){
+  try{
+    const rows=await db.prepare("SELECT a.display_name name,t.title he FROM analysts a JOIN regional_i18n t ON t.kind='profile' AND t.item_id=a.id AND t.language='he' WHERE t.quality_score>=85").all();
+    return new Map((rows.results||[]).filter(x=>scriptLanguage(x.he)==='he').map(x=>[x.name,x.he]));
+  }catch{return new Map();}
 }
