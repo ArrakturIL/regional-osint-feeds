@@ -1,3 +1,4 @@
+import { ENTITIES, entityIssue } from './glossary.mjs';
 import { semanticMeaningIssue } from './semantic-meaning.mjs';
 /**
  * Deterministic fact-integrity gate for RU/EN -> HE translations.
@@ -9,43 +10,7 @@ import { semanticMeaningIssue } from './semantic-meaning.mjs';
  * Source and candidate are {title,body,comment} objects. All rules run per field
  * to prevent a name in the title masking an incorrect actor in the body.
  */
-const ENTITY_RULES=[
-  {
-    code:'irgc_actor_missing',
-    source:/(?<![\p{L}])(?:КСИР|IRGC)(?![\p{L}])|Islamic Revolutionary Guard(?:s| Corps)?|Revolutionary Guards/iu,
-    target:/(?:משמר(?:ות)?\s+(?:ה)?מהפכ[\p{L}]*|IRGC)/iu
-  },
-  {
-    code:'katz_name_corrupted',
-    source:/(?:^|[^\p{L}])(?:Кац|Katz)(?=$|[^\p{L}])/iu,
-    target:/(?:כ[״׳"']?ץ|Katz)/iu
-  },
-  {
-    code:'allies_relation_changed',
-    source:/(?:^|[^\p{L}])(?:союзник[\p{L}]*|allies|allied\s+(?:states?|countries|governments?))(?=$|[^\p{L}])/iu,
-    target:/(?:בעל(?:י|ות)?\s+(?:ה)?ברית|בני\s+ברית|בנות\s+ברית|בעלות\s+הברית)/iu
-  },
-  {
-    code:'idf_actor_missing',
-    source:/(?:ЦАХАЛ|(?<![\p{L}])IDF(?![\p{L}]))/iu,
-    target:/(?:צה[״"']?ל|IDF|צבא\s+ההגנה\s+לישראל)/iu
-  },
-  {
-    code:'netanyahu_name_missing',
-    source:/(?:Нетаньяху|Netanyahu)/iu,
-    target:/(?:נתניהו|Netanyahu)/iu
-  },
-  {
-    code:'reuters_attribution_missing',
-    source:/(?:^|[^\p{L}])(?:Reuters|Рейтерс)(?=$|[^\p{L}])/iu,
-    target:/(?:רויטרס|Reuters)/iu
-  },
-  {
-    code:'raf_misidentified',
-    source:/(?:RAF\s+Fairford|баз[аеуы]\s+RAF\s*Fairford)/iu,
-    target:/(?:\bRAF\b|חיל\s+האוויר\s+המלכותי)/iu
-  }
-];
+// B3: per-name rules moved to the shared entity glossary.
 const FIELDS=['title','body','comment'];
 
 export function factualTranslationIssue(original,candidate) {
@@ -54,10 +19,8 @@ export function factualTranslationIssue(original,candidate) {
     const src=String(original[field]||'');
     const translated=String(candidate[field]??candidate[field==='comment'?'commentary':field]??'');
     if(!src)continue;
-    for(const rule of ENTITY_RULES){
-      if(rule.source.test(src)&&!rule.target.test(translated))
-        return field+':'+rule.code;
-    }
+    const entity=entityIssue(src,translated);
+    if(entity)return field+':'+entity;
     const semanticIssue=semanticMeaningIssue(src,translated);
     if(semanticIssue)return field+':'+semanticIssue;
     // High-impact false-friend and entity substitutions seen in production.
@@ -87,4 +50,4 @@ export function factualTranslationIssue(original,candidate) {
   return null;
 }
 
-export const FACT_RULE_CODES=Object.freeze(ENTITY_RULES.map(x=>x.code));
+export const FACT_RULE_CODES=Object.freeze(ENTITIES.map(x=>x.code));

@@ -108,11 +108,11 @@ test('ARCH-03 Editor scheduled dispatch keeps independent source, translation, e
   'analyst queue must retain explicit AI run budget');
 });
 
-test('ARCH-03 active Editor 37-module (+ai budget/router/gemini B1-B2) graph is complete, D1/AI bindings match release and CI owns regression suites',()=>{
+test('ARCH-03 active Editor 38-module (+B1-B3 ai/glossary) graph is complete, D1/AI bindings match release and CI owns regression suites',()=>{
  const audit=auditActiveArchitecture(root);
  const active=audit.graph.components.find(c=>c.owner==='editor');
  assert.ok(active);
- assert.equal(active.sourceModuleCount,37);
+ assert.equal(active.sourceModuleCount,38);
  assert.deepEqual(active.unreachableModules,[]);
  assert.deepEqual(active.importedOutsideOwner,[]);
  assert.deepEqual(audit.release.editorD1,['CORE_DB','NEWS_DB']);
