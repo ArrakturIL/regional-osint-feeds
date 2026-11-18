@@ -53,3 +53,19 @@ test('Pages keeps the disabled state and reason instead of reporting unknown', a
   assert.equal(s.state, 'disabled');
   assert.equal(s.description, 'adsb.fi 403');
 });
+test('F-06: event rows, source controls and SLA are read concurrently, not one after another', async () => {
+  let inFlight = 0, peak = 0;
+  const slow = value => { inFlight++; peak = Math.max(peak, inFlight); return new Promise(r => setTimeout(() => { inFlight--; r(value); }, 20)); };
+  const NEWS_DB = {prepare(sql) {
+    const st = {bind() { return st; }};
+    if (sql.includes('FROM source_controls')) st.all = () => slow({results: []});
+    else if (sql.includes('editor_state')) st.first = () => slow({value: '{"urgent":{"met":1}}'});
+    else if (sql.includes('news_event_groups')) st.all = () => slow({results: ROWS});
+    else { st.all = async () => ({results: []}); st.first = async () => null; }
+    return st;
+  }};
+  const r = await readNewsEvents(new Request('https://rw.example/api/news?lang=ru&limit=10&sort=latest'), {NEWS_DB});
+  assert.equal(r.status, 200);
+  assert.equal(peak, 3, 'three independent D1 reads overlap');
+  assert.deepEqual((await r.json()).translation_sla, {urgent: {met: 1}});
+});

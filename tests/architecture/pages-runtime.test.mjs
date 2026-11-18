@@ -32,6 +32,15 @@ test('React vendors and JS/CSS files are served only as local assets',async()=>{
  const r=await pages.fetch(request('/assets/react-dom.js?v=original'),env);
  assert.equal(r.status,200);assert.equal(seen.assets.at(-1),'/assets/react-dom.js');
 });
+test('F-06: content-hashed asset URLs are immutable; unversioned ones keep revalidation',async()=>{
+ const{env}=mockEnv();
+ const hashed=await pages.fetch(request('/assets/app.js?v=0123456789ab'),env);
+ assert.equal(hashed.status,200);assert.equal(hashed.headers.get('Cache-Control'),'public, max-age=31536000, immutable');
+ for(const u of ['/assets/app.js','/assets/app.js?v=rw-editor-bottom-v16','/assets/app.js?v=0123456789abc']){
+  const r=await pages.fetch(request(u),env);assert.equal(r.status,200);
+  assert.notEqual(r.headers.get('Cache-Control'),'public, max-age=31536000, immutable',u);
+ }
+});
 test('Editor service binding forwards the public routes with original query',async()=>{
  const{env,seen}=mockEnv();
  for(const url of ['/api/news?lang=he&limit=40','/api/stories?lang=ru','/api/official-posts?lang=ru','/api/analyst-posts/post-123?lang=he']){

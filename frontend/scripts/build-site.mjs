@@ -2,6 +2,7 @@ import {assembleStyles} from './build-styles.mjs';
 import { readFileSync,writeFileSync,copyFileSync,mkdirSync } from 'node:fs';
 import { dirname,resolve } from 'node:path';
 import { gunzipSync } from 'node:zlib';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { assemble } from './build.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
@@ -11,13 +12,20 @@ const vendor=readFileSync(resolve(root,'vendor/react.production.min.js'),'utf8')
 const dom=gunzipSync(readFileSync(resolve(root,'vendor/react-dom.production.min.js.gz'))).toString('utf8');
 if(vendor.length!==10751 || !vendor.includes('c.version="18.3.1"'))throw Error('React production snapshot changed');
 if(dom.length!==131835 || !dom.includes('18.3.1-next-f1338f8080-20240426'))throw Error('ReactDOM production snapshot changed');
-write('assets/react.js',vendor);
-write('assets/react-dom.js',dom);
-write('assets/app.js',assemble());
-write('assets/app.css',assembleStyles());
+// F-06: each asset URL carries a hash of its own bytes (?v=<12 hex>), so Pages
+// can serve it immutable; the documents keep must-revalidate and pick up new
+// hashes on the next release. Source documents keep the legacy ?v= marker.
+const assetsOut={'react.js':vendor,'react-dom.js':dom,'app.js':assemble(),'app.css':assembleStyles()};
+const hashes={};
+for(const [name,body] of Object.entries(assetsOut)){write('assets/'+name,body);hashes[name]=createHash('sha256').update(body).digest('hex').slice(0,12);}
+export function versionDocument(html,map=hashes){
+ return html.replace(/\/assets\/(react\.js|react-dom\.js|app\.js|app\.css)\?v=[A-Za-z0-9._-]+/g,(m,name)=>'/assets/'+name+'?v='+map[name]);
+}
 for(const lang of ['ru','he'])for(const page of ['home','events','data','analysts']){
  const html=readFileSync(resolve(root,'documents',lang,page+'.html'),'utf8');
  const path=(lang==='he'?'he/':'')+(page==='home'?'':page+'/')+'index.html';
- write(path,html);
+ const out=versionDocument(html);
+ if(out===html||!/\?v=[0-9a-f]{12}"/.test(out))throw Error('asset version not applied: '+path);
+ write(path,out);
 }
 console.log('Built standalone static Pages payload: 8 locale routes + modular frontend assets.');

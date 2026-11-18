@@ -84,6 +84,13 @@ export async function readNewsEvents(request, env) {
   // Main feed is locale-invariant; never hide events because translation is pending.
   const readyOnly = false;
   // Paginate the complete eligible event pool, not a silently truncated first 200.
+  // F-06: the three independent reads go out together (they used to wait for
+  // each other: ~0.8 s of the /api/news response was D1 round trips, not SQL).
+  const slaRead = (async () =>
+    env.NEWS_DB.prepare("SELECT value FROM editor_state WHERE key='translation_sla'").first())().catch(
+    () => null,
+  );
+  const offRead = disabledPublishers(env.NEWS_DB);
   let rows = await eventRows(env.NEWS_DB, null);
   // Initialize the event index once on first public request, avoiding an empty
   // homepage during the first five-minute cron window after deployment.
@@ -100,7 +107,7 @@ export async function readNewsEvents(request, env) {
   const sourceNames = new Set(sources.map(x => x.toLowerCase()));
   const categoryNames = new Set(categories);
   const verificationNames = new Set(verifications);
-  const off = await disabledPublishers(env.NEWS_DB);
+  const off = await offRead;
   const matching = rows.filter(row => {
     // A rolled-back publisher's text must not stay public as an event representative.
     if (off.size && off.has(publisher(row.source))) return false;
@@ -342,7 +349,7 @@ export async function readNewsEvents(request, env) {
   // B5: per-tier translation SLA, refreshed by the scheduled translator.
   let translation_sla = null;
   try {
-    const x = await env.NEWS_DB.prepare("SELECT value FROM editor_state WHERE key='translation_sla'").first();
+    const x = await slaRead;
     translation_sla = x?.value ? JSON.parse(x.value) : null;
   } catch {}
   return respond({

@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync,existsSync } from 'node:fs';
 import { dirname,resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),dest=resolve(root,'dist');
 const load=s=>readFileSync(resolve(dest,s),'utf8');
 test('exact original vendor runtime scripts are retained',()=>{
@@ -19,7 +20,11 @@ test('all eight locale routes retain exact document HTML',()=>{
  const source=readFileSync(resolve(root,'documents',lang,page+'.html'),'utf8');
  const route=(lang==='he'?'he/':'')+(page==='home'?'':page+'/')+'index.html';
  assert.ok(existsSync(resolve(dest,route)));
- assert.equal(load(route),source,route+' changed');
+ // F-06: only the asset version markers differ; each is the asset's own content hash.
+ const out=load(route);
+ assert.equal(out.replace(/\?v=[0-9a-f]{12}"/g,'?v=rw-editor-bottom-v16"'),source,route+' changed');
+ for(const name of ['react.js','react-dom.js','app.js','app.css'])
+  assert.ok(out.includes('/assets/'+name+'?v='+createHash('sha256').update(load('assets/'+name)).digest('hex').slice(0,12)+'"'),route+' '+name+' hash');
  }
 });
 test('frontend CSS and JS exactly match their current modular assemblers',()=>{
