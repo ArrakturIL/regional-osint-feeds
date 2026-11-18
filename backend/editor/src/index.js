@@ -1,3 +1,4 @@
+import {runEvalTick} from './ai/eval.mjs';
 import {enrichNewMonitorStories} from './stories/enrichment.mjs';
 import analystService from './analysts/editor.mjs';
 import {meteredAI} from './ai/budget.mjs';
@@ -41,6 +42,8 @@ export default {
     ctx.waitUntil(scan(aiEnv));
     ctx.waitUntil(archiveExpiredPolymarket(env.CORE_DB,Date.now()));
     ctx.waitUntil(localization.scheduled(aiEnv,event.scheduledTime));
+    // B6: blind model A/B, only while an evaluation is requested (editor_state).
+    ctx.waitUntil(runEvalTick(aiEnv,event.scheduledTime).catch(()=>null));
     if(new Date(event.scheduledTime).getUTCMinutes()%15===0)ctx.waitUntil(importTranslationMirror(env));
     if(new Date(event.scheduledTime).getUTCMinutes()%15===5){ctx.waitUntil(enrichNewMonitorStories(aiEnv));}
     // The analyst mirror refreshes hourly at :17 UTC. Run its editor at :30 UTC.
