@@ -100,4 +100,41 @@ class Tests(unittest.TestCase):
         self.assertEqual(result["source_count"],0)
         self.assertEqual(result["ok_sources"],0)
 
+
+    def test_registry_identifies_current_production_feeds_without_licensing_claim(self):
+        """Shadow metadata must describe the existing live feed list, not grant rights (E-04)."""
+        import json
+        import re
+        from pathlib import Path
+        root=Path(__file__).resolve().parents[1]
+        registry=json.loads((root/"config/news-source-registry.json").read_text(encoding="utf-8"))
+        editor=(root/"backend/editor/src/news/events.mjs").read_text(encoding="utf-8")
+        match=re.search(r'export const FEEDS=(\[.*?\]);',editor)
+        self.assertIsNotNone(match,"active Editor feeds contract missing")
+        feeds=json.loads(match.group(1))
+        self.assertTrue(feeds,"Editor must define production feeds")
+        by_url={s.get("feed_url"):s for s in registry["sources"] if s.get("feed_url")}
+        self.assertEqual(len(by_url),sum(bool(s.get("feed_url")) for s in registry["sources"]),"duplicate registry feed URLs")
+        active_urls={entry[1] for entry in feeds}
+        self.assertEqual(len(active_urls),len(feeds),"duplicate active feed URLs")
+        for name,url,*_ in feeds:
+            with self.subTest(active=name):
+                self.assertIn(url,by_url)
+                registered=by_url[url]
+                self.assertEqual(registered["origin"],"existing_production")
+                self.assertIs(registered["public_enabled"],True)
+        for entry in registry["sources"]:
+            if entry.get("feed_url") not in active_urls:
+                with self.subTest(candidate=entry["id"]):
+                    self.assertIs(entry["public_enabled"],False)
+        # Runtime use is not a terms-of-service approval: every status is one of
+        # the documented values, and a restrictive or reviewed status cites its evidence.
+        allowed=set(registry["license_status_values"])
+        for entry in registry["sources"]:
+            with self.subTest(license=entry["id"]):
+                self.assertIn(entry["license_status"],allowed)
+                if entry["license_status"].startswith(("restrictive_written","restrictive_link","personal_")):
+                    self.assertTrue(entry.get("license_evidence","").startswith("https://"))
+                    self.assertEqual(entry.get("license_reviewed"),"2026-11-18")
+
 if __name__=="__main__":unittest.main()
