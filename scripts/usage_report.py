@@ -105,11 +105,13 @@ def evaluate(rows: list[dict], budgets: dict) -> list[dict]:
     """Attach budget/ratio/warn; budgets come only from config, never hardcoded here."""
     limits = {**budgets.get("daily", {}), **budgets.get("per_invocation", {})}
     warn = float(budgets.get("warn_ratio", 0.8))
+    by_metric = budgets.get("warn_ratio_by_metric", {})
     out = []
     for r in rows:
         b = limits.get(r["metric"])
         ratio = (r["value"] / b) if b else None
-        out.append({**r, "budget": b, "ratio": ratio, "warn": bool(ratio is not None and ratio >= warn)})
+        w = float(by_metric.get(r["metric"], warn))
+        out.append({**r, "budget": b, "ratio": ratio, "warn": bool(ratio is not None and ratio >= w)})
     return out
 
 

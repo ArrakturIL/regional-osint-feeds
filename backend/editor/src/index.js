@@ -66,7 +66,9 @@ export default {
     // B1: every AI pipeline draws from one shared daily neuron pool.
     const aiEnv = { ...env, AI: meteredAI(env.AI, env.NEWS_DB) };
     ctx.waitUntil(scan(aiEnv));
-    ctx.waitUntil(archiveExpiredPolymarket(env.CORE_DB, Date.now()));
+    // D1 budget: /api/data already hides expired markets; archiving hourly is enough.
+    if (new Date(event.scheduledTime).getUTCMinutes() === 20)
+      ctx.waitUntil(archiveExpiredPolymarket(env.CORE_DB, Date.now()));
     ctx.waitUntil(localization.scheduled(aiEnv, event.scheduledTime));
     // B6: blind model A/B, only while an evaluation is requested (editor_state).
     ctx.waitUntil(runEvalTick(aiEnv, event.scheduledTime).catch(() => null));

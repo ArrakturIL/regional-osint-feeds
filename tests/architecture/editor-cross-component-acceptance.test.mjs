@@ -90,7 +90,7 @@ test('ARCH-03 Editor scheduled dispatch keeps independent source, translation, e
  const entry=source('backend/editor/src/index.js');
  const markers=[
   'ctx.waitUntil(scan(aiEnv))',
-  'ctx.waitUntil(archiveExpiredPolymarket(env.CORE_DB,Date.now()))',
+  'getUTCMinutes()===20)ctx.waitUntil(archiveExpiredPolymarket(env.CORE_DB,Date.now()))',
   'ctx.waitUntil(localization.scheduled(aiEnv,event.scheduledTime))',
   'getUTCMinutes()%15===0',
   'ctx.waitUntil(importTranslationMirror(env))',

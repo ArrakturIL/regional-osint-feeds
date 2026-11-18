@@ -1,7 +1,11 @@
 {
   "schema_version": 1,
-  "description": "H-01 daily usage budgets. Deliberately the Workers Free daily limits even on a paid plan: the project rule is no paid overage. Sources: developers.cloudflare.com/workers/platform/limits, /d1/platform/pricing, /workers-ai/platform/pricing (10 000 neurons/day free).",
+  "description": "H-01 daily usage budgets. Deliberately the Workers Free daily limits even on a paid plan: the project rule is no paid overage. Sources: developers.cloudflare.com/workers/platform/limits, /d1/platform/pricing, /workers-ai/platform/pricing (10 000 neurons/day free). D1 Free limits are hard since 2026-09-01 (queries fail until 00:00 UTC), so D1 warns at 60%.",
   "warn_ratio": 0.8,
+  "warn_ratio_by_metric": {
+    "d1_rows_read": 0.6,
+    "d1_rows_written": 0.6
+  },
   "daily": {
     "workers_requests": 100000,
     "d1_rows_read": 5000000,

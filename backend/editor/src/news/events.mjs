@@ -505,6 +505,17 @@ export async function reconcile(db, now = Date.now()) {
   const previous =
     (await db.prepare('SELECT article_id,event_id FROM news_event_members').all()).results || [];
   const prior = new Map(previous.map(r => [r.article_id, r.event_id]));
+  // D1 budget: the upserts below only change a row when these fields differ (see
+  // their WHERE clauses), so unchanged rows are skipped here instead of being sent.
+  const storedGroups = new Map(
+    (
+      (
+        await db
+          .prepare('SELECT event_id,representative_id,priority,signature,sources_json FROM news_event_groups')
+          .all()
+      ).results || []
+    ).map(r => [r.event_id, r]),
+  );
   // A split can produce two groups pointing to the same old ID. Allocate
   // previous IDs *globally* by greatest overlap before any UPSERT; each old ID
   // can be inherited by at most one group. New IDs avoid historical ID reuse.
@@ -560,35 +571,46 @@ export async function reconcile(db, now = Date.now()) {
       .map(x => x.id)
       .sort()
       .join('|');
-    batch.push(
-      db
-        .prepare(
-          'INSERT INTO news_event_groups(event_id,representative_id,topic,priority,last_seen_ms,member_count,source_count,origin_count,verification_status,reason_codes,sources_json,signature,updated_ms) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(event_id) DO UPDATE SET representative_id=excluded.representative_id,topic=excluded.topic,priority=excluded.priority,last_seen_ms=excluded.last_seen_ms,member_count=excluded.member_count,source_count=excluded.source_count,origin_count=excluded.origin_count,verification_status=excluded.verification_status,reason_codes=excluded.reason_codes,sources_json=excluded.sources_json,signature=excluded.signature,updated_ms=excluded.updated_ms WHERE news_event_groups.signature!=excluded.signature OR news_event_groups.priority!=excluded.priority OR news_event_groups.representative_id!=excluded.representative_id OR news_event_groups.sources_json!=excluded.sources_json',
-        )
-        .bind(
-          eventId,
-          best.id,
-          best.topic,
-          Math.max(...members.map(m => m.score)),
-          Math.max(...members.map(m => m.time)),
-          members.length,
-          ownerCount,
-          originCount,
-          originCount > 1 ? 'multi_outlet_reporting' : 'single_origin_reporting',
-          JSON.stringify([...new Set(g.reasons)]),
-          JSON.stringify(sources),
-          signature,
-          now,
-        ),
-    );
-    for (const m of members)
+    const priority = Math.max(...members.map(m => m.score)),
+      sourcesJson = JSON.stringify(sources),
+      stored = storedGroups.get(eventId);
+    const groupUnchanged =
+      stored &&
+      stored.signature === signature &&
+      stored.priority === priority &&
+      stored.representative_id === best.id &&
+      stored.sources_json === sourcesJson;
+    if (!groupUnchanged)
       batch.push(
         db
           .prepare(
-            'INSERT INTO news_event_members(article_id,event_id,updated_ms) VALUES(?,?,?) ON CONFLICT(article_id) DO UPDATE SET event_id=excluded.event_id,updated_ms=excluded.updated_ms WHERE news_event_members.event_id!=excluded.event_id',
+            'INSERT INTO news_event_groups(event_id,representative_id,topic,priority,last_seen_ms,member_count,source_count,origin_count,verification_status,reason_codes,sources_json,signature,updated_ms) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(event_id) DO UPDATE SET representative_id=excluded.representative_id,topic=excluded.topic,priority=excluded.priority,last_seen_ms=excluded.last_seen_ms,member_count=excluded.member_count,source_count=excluded.source_count,origin_count=excluded.origin_count,verification_status=excluded.verification_status,reason_codes=excluded.reason_codes,sources_json=excluded.sources_json,signature=excluded.signature,updated_ms=excluded.updated_ms WHERE news_event_groups.signature!=excluded.signature OR news_event_groups.priority!=excluded.priority OR news_event_groups.representative_id!=excluded.representative_id OR news_event_groups.sources_json!=excluded.sources_json',
           )
-          .bind(m.id, eventId, now),
+          .bind(
+            eventId,
+            best.id,
+            best.topic,
+            priority,
+            Math.max(...members.map(m => m.time)),
+            members.length,
+            ownerCount,
+            originCount,
+            originCount > 1 ? 'multi_outlet_reporting' : 'single_origin_reporting',
+            JSON.stringify([...new Set(g.reasons)]),
+            sourcesJson,
+            signature,
+            now,
+          ),
       );
+    for (const m of members)
+      if (prior.get(m.id) !== eventId)
+        batch.push(
+          db
+            .prepare(
+              'INSERT INTO news_event_members(article_id,event_id,updated_ms) VALUES(?,?,?) ON CONFLICT(article_id) DO UPDATE SET event_id=excluded.event_id,updated_ms=excluded.updated_ms WHERE news_event_members.event_id!=excluded.event_id',
+            )
+            .bind(m.id, eventId, now),
+        );
   }
   for (let i = 0; i < batch.length; i += 80) await db.batch(batch.slice(i, i + 80));
   // Delete obsolete event heads after a former cluster has been re-assigned.
@@ -605,11 +627,14 @@ export async function reconcile(db, now = Date.now()) {
       .bind(...part)
       .run();
   }
-  await db
-    .prepare(
-      'DELETE FROM news_event_groups WHERE NOT EXISTS (SELECT 1 FROM news_event_members m WHERE m.article_id=news_event_groups.representative_id AND m.event_id=news_event_groups.event_id)',
-    )
-    .run();
+  // Orphan heads can only appear after a write or a retired member; an hourly pass
+  // (first 5 minutes of each UTC hour) also cleans up after any interrupted run.
+  if (batch.length || staleIds.length || now % 3600000 < 300000)
+    await db
+      .prepare(
+        'DELETE FROM news_event_groups WHERE NOT EXISTS (SELECT 1 FROM news_event_members m WHERE m.article_id=news_event_groups.representative_id AND m.event_id=news_event_groups.event_id)',
+      )
+      .run();
   const state = {
     time: new Date(now).toISOString(),
     input: rows.length,
