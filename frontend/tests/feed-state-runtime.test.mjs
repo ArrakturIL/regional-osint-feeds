@@ -9,13 +9,13 @@ import {classifyFailure, failureText} from '../src/utils/feedFailure.js';
 const strip = f => readFileSync(new URL(f, import.meta.url), 'utf8').replace(/^import\s+[^\n]+\n/gm, '').replace(/^export /gm, '');
 const hookSrc = strip('../src/hooks/useFeed.js');
 
-function mount(responses, {he = false} = {}) {
+function mount(responses, {he = false, hidden = false} = {}) {
   const state = [], effects = [], calls = [];
   let i = 0;
   const ctx = {
     UI_HE: he, classifyFailure, AbortController, Error, Object, Date, Math, Array, setTimeout, clearTimeout,
     setInterval: () => 0, clearInterval() {},
-    document: {hidden: false, addEventListener() {}, removeEventListener() {}},
+    document: {hidden, addEventListener() {}, removeEventListener() {}},
     useState(init) { const k = i++; if (!(k in state)) state[k] = init; return [state[k], v => { state[k] = v; }]; },
     useRef(init) { const k = i++; if (!(k in state)) state[k] = {current: init}; return state[k]; },
     useEffect(fn) { effects.push(fn); },
@@ -90,4 +90,11 @@ test('pages render FeedState instead of raw error text', () => {
     assert.match(src, /h\(FeedState, \{ feed/, name + ' uses FeedState');
   assert.doesNotMatch(home, /labels\.feedError \+ errors\.news|Ошибка загрузки досье: '\) \+ errors\.cases/);
   assert.doesNotMatch(events, /\? null\s*\n\s*: h\(Loading/, 'Events must not render nothing on error');
+});
+
+test('first load happens in a hidden (background) tab; nothing more until it is visible', async () => {
+  const m = mount([json({articles: [1]})], {hidden: true});
+  await m.settle();
+  assert.equal(m.calls.length, 1, 'first load not deferred');
+  assert.deepEqual(m.render().value.articles, [1]);
 });
