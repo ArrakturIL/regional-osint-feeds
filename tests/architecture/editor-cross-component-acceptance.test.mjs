@@ -54,6 +54,8 @@ test('ARCH-03 actual Pages->Editor dynamic analyst detail preserves language val
  for(const path of EDITOR_ENDPOINTS)assert.equal(ownership(path).kind,'editor',path);
 });
 
+// #8a: source formatting (Prettier) must not break these structural checks.
+const code=s=>String(s).replace(/\s+/g,'').replace(/"/g,"'");
 test('ARCH-03 actual modern facades retain scheduled and fetch delegates without importing any legacy Worker',()=>{
  assert.equal(typeof editor.scheduled,'function');
  assert.equal(typeof editor.fetch,'function');
@@ -64,7 +66,7 @@ test('ARCH-03 actual modern facades retain scheduled and fetch delegates without
  const scan=source('backend/editor/src/news/scan.mjs');
  for(const fragment of ['ingestNewsFeeds(env,now)','reconcile(env.NEWS_DB,now)',
   'translateTitles(env,now)','generateComments(env,now)','translateIDF(env,now)']){
-  assert.ok(scan.includes(fragment),'scan orchestration boundary missing '+fragment);
+  assert.ok(code(scan).includes(code(fragment)),'scan orchestration boundary missing '+fragment);
  }
  const analyst=source('backend/editor/src/analysts/editor.mjs');
  for(const module of ['source-ingestion.mjs','editorial-decision.mjs','queue-runner.mjs',
@@ -99,7 +101,7 @@ test('ARCH-03 Editor scheduled dispatch keeps independent source, translation, e
   // behaviour is covered by editor-entrypoint-analyst-wiring.test.mjs.
   'ctx.waitUntil(analystService.scheduled(event, {...aiEnv, DB: env.CORE_DB}))'
  ];
- for(const mark of markers)assert.ok(entry.includes(mark),'Editor scheduled boundary drift: '+mark);
+ for(const mark of markers)assert.ok(code(entry).includes(code(mark)),'Editor scheduled boundary drift: '+mark);
  assert.ok(!entry.includes('worker/live-editor'),'archived modules must not drive active cron');
  const analystQueue=source('backend/editor/src/analysts/queue-runner.mjs');
  assert.ok(analystQueue.includes('INSERT OR IGNORE INTO analyst_runs'),
