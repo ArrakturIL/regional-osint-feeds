@@ -61,7 +61,8 @@ test('shared source text and fingerprint retain public identity and never fabric
  const row={headline:'Israel reports 5 drones',headline_ru:'Израиль сообщает о 5 беспилотниках',
   summary:'A statement from the border',summary_ru:'Заявление с границы',comment:null};
  const original=sourceText('news',row);
- assert.deepEqual(original,{title:'Израиль сообщает о 5 беспилотниках',body:'Заявление с границы',comment:''});
+ // Owner 18.11: the Hebrew source is the original article, not headline_ru.
+ assert.deepEqual(original,{title:'Israel reports 5 drones',body:'A statement from the border',comment:''});
  assert.equal(await fingerprint(original),await publicFingerprint(original));
  assert.match(await fingerprint(original),/^[a-f0-9]{64}$/);
 });
@@ -186,4 +187,18 @@ test('Hebrew headline with untranslated English summary still needs a Hebrew tra
  const result=await translateScheduled(env,atKind('news'));
  assert.equal(result.attempted,1,'headline language alone does not make an English body ready for HE readers');
  assert.equal(ai.length,1);
+});
+
+test('legacy pivot translations stay visible and are excluded from automatic re-translation (manual backlog)',async()=>{
+ const {newsHebrewSource,legacyNewsPivotText}=await import('../../backend/editor/src/localization/shared.mjs');
+ const row={headline:'Israel reports 5 drones',headline_ru:'Израиль сообщает о 5 беспилотниках',
+  summary:'A statement from the border',summary_ru:'Заявление с границы',comment:null};
+ const legacy=await fingerprint(legacyNewsPivotText(row)),fresh=await fingerprint(sourceText('news',row));
+ assert.deepEqual(await newsHebrewSource(row,legacy),{text:legacyNewsPivotText(row),legacy:true});
+ assert.deepEqual(await newsHebrewSource(row,fresh),{text:sourceText('news',row),legacy:false});
+ assert.deepEqual(await newsHebrewSource(row,null),{text:sourceText('news',row),legacy:false});
+ assert.equal((await newsHebrewSource({...row,headline_ru:null,summary_ru:null},legacy)).legacy,false,'no pivot, nothing legacy');
+ const {env,events}=makeEnv({newsRows:[{...row,id:'legacy1',cached_he_hash:legacy,discovered_ms:Date.now()}]});
+ await translateScheduled(env,atKind('news'));
+ assert.equal(events.filter(e=>e.sql&&e.sql.includes('INSERT OR IGNORE INTO regional_i18n_attempts')).length,0,'legacy item is not auto re-translated');
 });

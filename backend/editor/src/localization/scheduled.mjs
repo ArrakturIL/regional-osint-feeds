@@ -1,6 +1,6 @@
 import {chat} from '../ai/router.mjs'; // B2: Gemini Flash-Lite first, Cloudflare fallback
 import {factualTranslationIssue} from '../translations/fact-guard.mjs';
-import {DAY,sourceText,fingerprint} from './shared.mjs';
+import {DAY,sourceText,fingerprint,newsHebrewSource} from './shared.mjs';
 import {eligibleHebrewRetry} from './retry-policy.mjs';
 import {newsTier,TIER_RANK} from '../news/tier.mjs';
 import {recordShown,slaSummary} from '../news/sla.mjs';
@@ -48,6 +48,8 @@ async function localeCandidates(env,kind,now){
     if(kind==='news'&&/[\u0590-\u05ff]/u.test(row.headline||'')&&
       (!row.summary||/[\u0590-\u05ff]/u.test(row.summary)))continue;
     let t;try{t=sourceText(kind,row);}catch{continue;}
+    // A pre-18.11 pivot translation is in the manual backlog: never re-translated automatically.
+    if(kind==='news'&&(await newsHebrewSource(row,row.cached_he_hash)).legacy)continue;
     if(t.title&&t.title.length>=4)result.push({db,kind,id:row.id,text:t,cachedSourceHash:kind==='news'?row.cached_he_hash:undefined,
       ...(kind==='news'?{tier:newsTier(row).tier,discoveredMs:row.discovered_ms,missing:!row.cached_he_hash}:{})});
   }

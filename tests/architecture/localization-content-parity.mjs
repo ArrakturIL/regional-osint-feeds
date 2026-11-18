@@ -53,6 +53,9 @@ const B3_VERIFY=[ // B3 verify + B4 display policy
  ["    // RU summaries are often abridged, so an entity from a later source\n    // sentence may be legitimately absent: the body gets meaning rules only.\n",""],
  ["translationIssue(sourceTitle,title,'ru')","semanticMeaningIssue(sourceTitle,title)"],
  ["semanticMeaningIssue(sourceBody,body,'ru')","semanticMeaningIssue(sourceBody,body)"],
+ // HE from the original (owner 18.11), legacy pivot kept for the manual backlog.
+ ["import {DAY,val,sourceText,newsHebrewSource} from './shared.mjs';","import {DAY,val,sourceText} from './shared.mjs';"],
+ ["  const heSource=await newsHebrewSource(row,row.he_hash); // original; legacy pivot only for the manual backlog\n  const result=await localized(db,'news',row.id,heSource.text,lang,cached);","  const result=await localized(db,'news',row.id,sourceText('news',row),lang,cached);"],
  // B4: page language rules (display-policy.mjs) applied to each news row.
  ["import {displayForPage} from './display-policy.mjs';\n",""],
  ["      const t=displayForPage(n,await localizeNewsRow(env.NEWS_DB,n,lang),lang); // B4\n      if(!t)return null;\n","      const t=await localizeNewsRow(env.NEWS_DB,n,lang);\n"],
