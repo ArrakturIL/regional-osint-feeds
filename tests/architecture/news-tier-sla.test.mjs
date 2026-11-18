@@ -136,3 +136,23 @@ test('/api/news exposes tier, reason and the stored SLA picture', async () => {
   assert.equal(body.articles[0].tier_reason, 'strike_core_region');
   assert.deepEqual(body.translation_sla, sla);
 });
+
+test('B5 retry: malformed model JSON may retry once, sooner for urgent/important', async () => {
+  const {eligibleHebrewRetry} = await import('../../backend/editor/src/localization/retry-policy.mjs');
+  const t = Date.parse('2026-11-18T03:00:00Z'), m = 60000;
+  const prev = (error, ago) => ({state: 'error', retry_count: 0, error, attempted_at_ms: t - ago * m});
+  const json = "Expected ',' or '}' after property value in JSON at position 812";
+  assert.equal(eligibleHebrewRetry(prev(json, 6), t, 'urgent'), true);
+  assert.equal(eligibleHebrewRetry(prev(json, 6), t, 'important'), false);
+  assert.equal(eligibleHebrewRetry(prev(json, 16), t, 'important'), true);
+  assert.equal(eligibleHebrewRetry(prev(json, 16), t), false, 'normal keeps the 30-min cooldown');
+  assert.equal(eligibleHebrewRetry(prev('body:allies_relation_changed', 120), t, 'urgent'), false, 'meaning verdicts never retry');
+  assert.equal(eligibleHebrewRetry({...prev(json, 60), retry_count: 1}, t, 'urgent'), false, 'still one retry per day');
+});
+
+test('SLA counts only displayed items (translator eligibility)', async () => {
+  let sql = '';
+  const db = {prepare(q) { if (q.includes('FROM news_items')) sql = q; const st = {bind() { return st; }, run: async () => ({}), all: async () => ({results: []})}; return st; }};
+  await slaSummary(db, Date.now());
+  assert.match(sql, /n\.priority>=7 OR n\.id IN \(SELECT g\.representative_id FROM news_event_groups g WHERE g\.priority>=4/);
+});

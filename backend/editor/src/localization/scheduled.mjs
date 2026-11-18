@@ -86,7 +86,7 @@ async function translateLocaleItem(env,item,day,now){
   const claimed=await db.prepare("INSERT OR IGNORE INTO regional_i18n_attempts(kind,item_id,language,source_hash,day_utc,attempted_at_ms,state) VALUES(?,?,'he',?,?,?,'running')").bind(kind,id,sha,day,now).run();
   if(claimed.meta?.changes!==1){
     const prev=await db.prepare("SELECT state,retry_count,error,attempted_at_ms FROM regional_i18n_attempts WHERE kind=? AND item_id=? AND language='he' AND source_hash=? AND day_utc=?").bind(kind,id,sha,day).first();
-    if(!eligibleHebrewRetry(prev,now))return'attempted';
+    if(!eligibleHebrewRetry(prev,now,item.tier))return'attempted';
     const retry=await db.prepare("UPDATE regional_i18n_attempts SET state='running',retry_count=retry_count+1,attempted_at_ms=?,error=NULL WHERE kind=? AND item_id=? AND language='he' AND source_hash=? AND day_utc=? AND state='error' AND retry_count<1").bind(now,kind,id,sha,day).run();
     if(retry.meta?.changes!==1)return'attempted';
   }

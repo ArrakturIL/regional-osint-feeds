@@ -33,8 +33,11 @@ export async function slaSummary(db, now = Date.now()) {
   const since = now - DAY;
   const shown = (await db.prepare('SELECT item_id,language,tier,discovered_ms,shown_ms FROM translation_latency WHERE kind=? AND discovered_ms>?')
     .bind('news', since).all()).results || [];
+  // Only items the site displays (the translators' own eligibility): fresh
+  // high-priority articles and current event representatives.
   const items = (await db.prepare("SELECT n.id,n.headline,n.summary,n.headline_ru,n.discovered_ms,t.item_id he_id FROM news_items n " +
-    "LEFT JOIN regional_i18n t ON t.kind='news' AND t.item_id=n.id AND t.language='he' WHERE n.discovered_ms>?").bind(since).all()).results || [];
+    "LEFT JOIN regional_i18n t ON t.kind='news' AND t.item_id=n.id AND t.language='he' WHERE n.discovered_ms>? AND (n.priority>=7 OR " +
+    "n.id IN (SELECT g.representative_id FROM news_event_groups g WHERE g.priority>=4 AND g.last_seen_ms>?))").bind(since, since).all()).results || [];
   const out = {generated_at: new Date(now).toISOString(), window_hours: 24, sla_minutes: TIER_SLA_MIN, languages: {}};
   for (const language of ['ru', 'he']) {
     const per = Object.fromEntries(TIERS.map(t => [t, {translated: 0, within_sla: 0, p50_min: null, p90_min: null, waiting: 0, overdue: 0}]));
