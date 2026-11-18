@@ -153,7 +153,7 @@ export function App() {
   return h(
     'div',
     { className: 'app-container' },
-    h(GlobalHeader, { active: route, overview: overview.value }),
+    h(GlobalHeader, { active: route, overview: overview.value, go }),
     h(
       'main',
       { id: 'main-content', tabIndex: -1 },
