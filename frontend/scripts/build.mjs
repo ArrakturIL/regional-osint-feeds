@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 export function assemble(){
  const m=JSON.parse(readFileSync(resolve(root,'build-order.json'),'utf8'));
- const strip=s=>s.replace(/^import\s+[^\n]+\n/gm,'').replace(/^export (?=(?:function|const) )/gm,'');
+ const strip=s=>s.replace(/^import\s+[^\n]+\n/gm,'').replace(/^export (?=(?:function|const|class) )/gm,'');
  let result=m.prefix;
  for(const p of m.order){
   if(p==='app/postlude.js')result+=m.closing;

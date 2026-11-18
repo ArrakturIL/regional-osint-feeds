@@ -7,7 +7,7 @@ export function classifyFailure(error, status) {
   return { kind: 'network', status: null };
 }
 
-const TEXT = {
+const FEED_TEXT = {
   ru: {
     timeout: 'Сервер долго не отвечает.',
     busy: 'Слишком много запросов. Попробуйте через минуту.',
@@ -35,7 +35,7 @@ const TEXT = {
 };
 
 export function failureText(failure, he) {
-  const L = TEXT[he ? 'he' : 'ru'];
+  const L = FEED_TEXT[he ? 'he' : 'ru'];
   if (!failure) return '';
   if (failure.kind === 'timeout') return L.timeout;
   if (failure.kind === 'invalid') return L.invalid;
@@ -46,5 +46,5 @@ export function failureText(failure, he) {
 }
 
 export function feedLabels(he) {
-  return TEXT[he ? 'he' : 'ru'];
+  return FEED_TEXT[he ? 'he' : 'ru'];
 }

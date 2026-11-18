@@ -3,3 +3,7 @@
 .rw-feed-state--stale{border:1px dashed #466b54;color:#bcd4c3}
 .rw-feed-retry{cursor:pointer;min-height:44px;padding:0 16px;border-radius:8px;border:1px solid currentColor;background:transparent;color:inherit;font:inherit}
 .rw-feed-retry:focus-visible{outline:2px solid #9de8b7;outline-offset:2px}
+.rw-crash{max-width:640px;margin:48px auto;padding:24px;border:1px solid #b47462;border-radius:12px;background:rgba(180,116,98,.08);line-height:1.6}
+.rw-crash-title{margin:0 0 8px;font-size:22px}
+.rw-crash-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.rw-crash-home{min-height:44px;display:inline-flex;align-items:center}

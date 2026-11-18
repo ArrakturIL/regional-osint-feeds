@@ -10,7 +10,7 @@ const here=resolve(dirname(fileURLToPath(import.meta.url)),'..'),root=resolve(he
 const manifest=JSON.parse(readFileSync(resolve(here,'build-order.json'),'utf8'));
 // Formatting-insensitive view of JS source (#8a Prettier): no whitespace, one quote style, no trailing commas.
 const code=s=>String(s).replace(/\s+/g,'').replace(/'/g,'"').replace(/,([)\]}])/g,'$1');
-test('all ordered source modules exist',()=>{assert.equal(manifest.order.length,53);for(const p of manifest.order)assert.ok(existsSync(resolve(here,'src',p)),p+' is missing')});
+test('all ordered source modules exist',()=>{assert.equal(manifest.order.length,55);for(const p of manifest.order)assert.ok(existsSync(resolve(here,'src',p)),p+' is missing')});
 test('bundle preserves the frozen architecture baseline and contains intentional news/grid fixes',()=>{
  const baseline=readFileSync(resolve(root,'baselines/cloudflare/2026-11-14/pages-0f39f36e/app.js'),'utf8');
  const compiled=assemble(),C=code(compiled);

@@ -22,7 +22,7 @@ function invokeApp(pathname){
    },
    h:(type,props,...children)=>({type,props,children}),
    HE_TEXT:{home:['Home'],events:['Events'],data:['Data'],analysts:['Analysts']},
-   GlobalHeader(){},HomeV2(){},CasesPageV2(){},DataRoomV2(){},AnalystShared(){},
+   GlobalHeader(){},HomeV2(){},CasesPageV2(){},DataRoomV2(){},AnalystShared(){},ErrorBoundary(){},
    rwNormalizeNewsArticle:article=>article,
    window:{scrollY:0,addEventListener(){}},
    history:{pushState(){}}
