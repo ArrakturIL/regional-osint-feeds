@@ -7,6 +7,8 @@
     "app/runtime.js",
     "components/SourceStatus/SourceDot.js",
     "components/External/External.js",
+    "utils/feedFailure.js",
+    "components/FeedState/FeedState.js",
     "hooks/useFeed.js",
     "components/Loading/Loading.js",
     "components/Card/Card.js",

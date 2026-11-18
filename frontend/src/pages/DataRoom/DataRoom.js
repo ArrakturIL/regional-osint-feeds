@@ -1,3 +1,4 @@
+import { FeedState } from '../../components/FeedState/FeedState.js';
 import { UI_HE, fmtTime, h, t, useState } from '../../app/runtime.js';
 import { AviationExplainedV2 } from '../../components/Aviation/AviationExplained.js';
 import { Card } from '../../components/Card/Card.js';
@@ -10,6 +11,7 @@ export function DataRoomV2({
   visible,
   data,
   error,
+  feed,
   aviation,
   satellite,
   aviationError,
@@ -71,7 +73,6 @@ export function DataRoomV2({
         methodSub: 'מה עשוי להגביל את המסקנות?',
         methodInfo:
           'היעדר אות, דיווח או מסלול טיסה אינו מוכיח שהאירוע לא התרחש. מידע חלקי אינו שווה למידע שגוי.',
-        reload: 'שגיאה בטעינת הנתונים',
         noData: 'טרם התקבלו נתונים. נסה לרענן.',
         publish: 'פורסם: ',
       }
@@ -124,7 +125,6 @@ export function DataRoomV2({
         methodSub: 'Что ограничивает выводы?',
         methodInfo:
           'Отсутствие сигнала, записи или воздушного трека не означает отсутствия реального события. Неполные сведения не доказывают обратное.',
-        reload: 'Ошибка загрузки данных',
         noData: 'Данные пока недоступны, попробуй обновить страницу.',
         publish: 'Опубликовано: ',
       };
@@ -273,7 +273,7 @@ export function DataRoomV2({
         ['#diagnostics', L.diagnostics],
       ].map(([href, label]) => h('a', { href, key: href }, label)),
     ),
-    error ? t('p', { className: 'error', role: 'alert' }, L.reload + ': ' + error) : null,
+    error ? h(FeedState, { feed }) : null,
     h(
       'section',
       { className: 'section', id: 'civil' },

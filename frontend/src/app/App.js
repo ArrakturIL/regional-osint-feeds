@@ -161,10 +161,11 @@ export function App() {
             cases: normalizedCases,
             go,
             errors: { news: news.error, cases: cases.error },
+            feeds: { news, cases },
           })
         : null,
       route === '/events'
-        ? h(CasesPageV2, { visible: true, cases: normalizedCases, error: cases.error })
+        ? h(CasesPageV2, { visible: true, cases: normalizedCases, error: cases.error, feed: cases })
         : null,
       route === '/data'
         ? h(DataRoomV2, {
@@ -174,6 +175,7 @@ export function App() {
                 ? { ...data.value, home: officialPosts.value.items }
                 : data.value,
             error: data.error,
+            feed: data,
             aviation: UI_HE ? heAviation.value : ruAviation.value,
             satellite: UI_HE ? heSatellite.value : ruSatellite.value,
             aviationError: UI_HE ? heAviation.error : ruAviation.error,

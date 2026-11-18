@@ -1,3 +1,4 @@
+import { FeedState } from '../../components/FeedState/FeedState.js';
 import { normalizeCase } from '../../api/normalizeCase.js';
 import { UI_HE, h, t, useEffect, useRef, useState } from '../../app/runtime.js';
 import { Loading } from '../../components/Loading/Loading.js';
@@ -5,7 +6,7 @@ import { NewsArchive } from '../../components/NewsArchive/NewsArchive.js';
 import { Intro } from '../../components/PageIntro/Intro.js';
 import { Head } from '../../components/SectionHead/Head.js';
 import { StoryDossier } from '../../components/StoryDossier/StoryDossier.js';
-export function CasesPageV2({ visible, cases, error }) {
+export function CasesPageV2({ visible, cases, error, feed }) {
   const [group, setGroup] = useState('all'),
     [expanded, setExpanded] = useState(null),
     deepLinkVisited = useRef(null);
@@ -131,7 +132,7 @@ export function CasesPageV2({ visible, cases, error }) {
             ),
           )
         : error
-          ? null
+          ? h(FeedState, { feed })
           : h(Loading, { label: strings.load }),
       cases && !filtered.length ? t('p', 'hint', strings.empty) : null,
     ),

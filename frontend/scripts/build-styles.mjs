@@ -22,6 +22,7 @@ export function assembleStyles({includeRefinements=true}={}){
   css+=readFileSync(resolve(frontendRoot,'src/components/NewsArchive/NewsArchive.filters.css'),'utf8');
   css+=readFileSync(resolve(frontendRoot,'src/components/Header/Header.status.css'),'utf8');
   css+=readFileSync(resolve(frontendRoot,'src/components/Digest/Digest.qa.css'),'utf8');
+  css+=readFileSync(resolve(frontendRoot,'src/components/FeedState/FeedState.css'),'utf8'); // F-04
  }
  return css;
 }
