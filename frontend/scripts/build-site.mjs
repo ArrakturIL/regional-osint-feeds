@@ -5,7 +5,7 @@ import { gunzipSync } from 'node:zlib';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { assemble } from './build.mjs';
-import { fontFiles, fontUrl, FONT_DIR } from './build-styles.mjs';
+import { fontFiles, FONT_DIR } from './build-styles.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const dest=resolve(root,'dist');
 const write=(file,bytes)=>{const p=resolve(dest,file);mkdirSync(dirname(p),{recursive:true});writeFileSync(p,bytes)};
@@ -23,19 +23,10 @@ for(const f of fontFiles())write('assets/fonts/'+f,readFileSync(resolve(FONT_DIR
 export function versionDocument(html,map=hashes){
  return html.replace(/\/assets\/(react\.js|react-dom\.js|app\.js|app\.css)\?v=[A-Za-z0-9._-]+/g,(m,name)=>'/assets/'+name+'?v='+map[name]);
 }
-// F-06 (#15): the first-screen text faces start downloading with the CSS instead
-// of after it is parsed and React has rendered (mobile LCP was the font swap).
-export const PRELOAD_FONTS={ru:['manrope-cyrillic','unbounded-cyrillic'],he:['rubik-hebrew']};
-export function preloadFonts(html,lang){
- const links=PRELOAD_FONTS[lang].map(n=>'<link rel="preload" href="'+fontUrl(n+'.woff2')+'" as="font" type="font/woff2" crossorigin>').join('');
- const out=html.replace('<link rel="stylesheet"',links+'<link rel="stylesheet"');
- if(out===html)throw Error('font preload not applied');
- return out;
-}
 for(const lang of ['ru','he'])for(const page of ['home','events','data','analysts']){
  const html=readFileSync(resolve(root,'documents',lang,page+'.html'),'utf8');
  const path=(lang==='he'?'he/':'')+(page==='home'?'':page+'/')+'index.html';
- const out=preloadFonts(versionDocument(html),lang);
+ const out=versionDocument(html);
  if(out===html||!/\?v=[0-9a-f]{12}"/.test(out))throw Error('asset version not applied: '+path);
  write(path,out);
 }
