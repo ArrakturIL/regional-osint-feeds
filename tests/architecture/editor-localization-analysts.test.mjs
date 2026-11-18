@@ -91,21 +91,22 @@ test('Hebrew cached analyst posts preserve source hash, quote and exact translat
  assert.equal(x.posts[0].short_quote,cache[0].commentary);
  assert.equal(x.posts[0].translation_state,'translated');
  assert.equal(x.posts[0].translation.source_language,'ru');
- assert.equal(f.calls.filter(x=>x.method==='all').length,1,'one D1 IN query, no per-post lookup');
+ // B4: +1 query for Hebrew author names; still no per-post lookup.
+ assert.equal(f.calls.filter(x=>x.method==='all').length,2,'one D1 IN query + one author-name query, no per-post lookup');
 });
 
-test('stale Hebrew cache is pending; never sold as complete translated text',async()=>{
+// B4 (owner, 18.11): a stale cache is never sold as a translation, and the
+// Russian original is not shown on the HE page either: the post is withheld.
+test('stale Hebrew cache is never sold as translated; the RU original is withheld on HE',async()=>{
  const item={id:'post-2',headline:'Обсуждение безопасности',summary:'Анализ ситуации',short_quote:'',original_language:'ru'};
  const f=fixture({data:{posts:[item]},cache:[{item_id:'post-2',source_hash:'0'.repeat(64),
   title:'מידע ישן',body:'טקסט ישן',commentary:'',quality_score:100}]});
  const res=await readLocalizedAnalysts(url('/api/analyst-posts','he'),f.env,f.analystService,'he','/api/analyst-posts');
  const x=await res.json();
- assert.equal(x.posts[0].translation_state,'pending');
- assert.equal(x.posts[0].content_language,'ru');
- assert.equal(x.posts[0].translation_available,false);
+ assert.deepEqual(x.posts,[]);
+ assert.equal(x.withheld_count,1);
  assert.equal(x.localized_count,0);
- assert.equal(x.translation_summary.pending,1);
- assert.equal(x.posts[0].headline,item.headline);
+ assert.ok(!JSON.stringify(x).includes('מידע ישן'),'stale text never shown');
 });
 
 test('detail route returns a single post object without collection wrapper',async()=>{

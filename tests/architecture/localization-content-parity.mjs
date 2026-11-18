@@ -63,6 +63,24 @@ const B3_VERIFY=[ // B3 verify + B4 display policy
  ["translationIssue(sourceTitle,result.title,'he')","semanticMeaningIssue(sourceTitle,result.title)"],
  ["translationIssue(sourceBody,result.body,'he')","semanticMeaningIssue(sourceBody,result.body)"],
 ];
+// B4 part 2: the same page rules in the stories and analyst readers.
+const B4_STORIES=[
+ ["import {allowedOnPage} from './display-policy.mjs';\n",""],
+ ["      if(!allowedOnPage(lang,t.content_language))return null; // B4: no RU/AR text without translation\n",""],
+];
+export const B4_ANALYSTS=[
+ ["import {allowedOnPage,scriptLanguage} from './display-policy.mjs';\n",""],
+ ["    const names=lang==='he'&&!profiles?await hebrewAnalystNames(env.CORE_DB):null;\n    const shown=await Promise.all(","    const translated=await Promise.all("],
+ ["      // B4: RU/AR text is not shown on a page in another language until translated.\n      if(!allowedOnPage(lang,scriptLanguage(t.title)||t.content_language))return null;\n",""],
+ ["short_quote:t.comment,\n          ...(names?{analyst:names.get(item.analyst)||''}:{}),...attrs};","short_quote:t.comment,...attrs};"],
+ ["    const translated=shown.filter(Boolean);\n",""],
+ ["translated[0]?respond(translated[0]):respond({error:'translation_pending'},404);","respond(translated[0]);"],
+ ["post_count:translated.length,withheld_count:shown.length-translated.length,","post_count:translated.length,"],
+];
+export const revertEdits=(text,edits)=>edits.reduce((t,[now,was])=>{
+ if(!t.includes(now))throw Error('B4 boundary missing: '+now);
+ return t.split(now).join(was);
+},text);
 const revertB3=text=>B3_VERIFY.reduce((t,[now,was])=>{
  if(!t.includes(now))throw Error('B3 verify boundary missing: '+now);
  return t.split(now).join(was);
@@ -70,7 +88,7 @@ const revertB3=text=>B3_VERIFY.reduce((t,[now,was])=>{
 
 export function reconstructContentFacade(){
  const main=load('localization.mjs'),news=revertB3(load('news-reader.mjs')),
-   editorial=load('editorial-reader.mjs'),stories=load('stories-reader.mjs');
+   editorial=load('editorial-reader.mjs'),stories=revertEdits(load('stories-reader.mjs'),B4_STORIES);
  if(!main.startsWith(newHeader))throw Error('unexpected public content facade import contract');
  const newsHelper=before(news,'/** One trusted localization contract','export async function readLocalizedNews','news helper');
  const storyHelper=before(stories,'/** Locale-invariant provenance','export async function readLocalizedStories','story helper');

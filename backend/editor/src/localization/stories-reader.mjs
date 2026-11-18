@@ -1,5 +1,6 @@
 import {DAY,sourceText} from './shared.mjs';
 import {respond,localized,fieldLocale} from './read-core.mjs';
+import {allowedOnPage} from './display-policy.mjs';
 
 /** Locale-invariant provenance. Never regenerate dates or source links by AI. */
 export function storyProvenance(data){
@@ -63,6 +64,7 @@ export async function readLocalizedStories(env,lang,lim){
       if(!original.title)return null;
       const cache=lang==='he'?{source_hash:n.he_hash,title:n.he_title,body:n.he_body,commentary:n.he_comment,quality_score:n.he_quality}:null;
       const t=await localized(env.CORE_DB,'story',n.event_id,original,lang,cache);
+      if(!allowedOnPage(lang,t.content_language))return null; // B4: no RU/AR text without translation
       const story={id:n.event_id,title:t.title,summary:t.body,
         ...storyProvenance(data),category:data.category||null,updated_at_ms:n.updated_at_ms,
         content_language:t.content_language};

@@ -58,7 +58,7 @@ export function DataRoomV2({visible,data,error,aviation,satellite,aviationError,
    h("div",{className:"data-grid-2"},official(L.marad,data?.marad),official(L.centcom,data?.centcom))),
   h("section",{className:"section",id:"diagnostics"},h(Head,{title:L.method,icon:"database",sub:L.methodSub}),
    h(Card,null,t("h3",null,L.sourceState),t("p",null,issues.length+" / "+allSources.length+" "+L.sources),
-    h("details",{className:"rw-technical-details"},h("summary",null,L.sourceState),...allSources.map(s=>h("div",{className:"sources-row",key:s.id},t("span",null,s.label||s.id),t("span",null,s.state==="ok"?L.sourceOk:s.state==="partial"?L.sourcePartial:s.state==="error"?L.sourceError:s.state==="empty"?L.sourceEmpty:L.sourceUnknown)))),
+    h("details",{className:"rw-technical-details"},h("summary",null,L.sourceState),...allSources.map(s=>h("div",{className:"sources-row",key:s.id},t("span",null,(UI_HE?s.label_he:s.label)||s.id),t("span",null,s.state==="ok"?L.sourceOk:s.state==="partial"?L.sourcePartial:s.state==="error"?L.sourceError:s.state==="empty"?L.sourceEmpty:L.sourceUnknown)))),
     t("p","rw-fineprint",L.methodInfo)))
  );
 }
