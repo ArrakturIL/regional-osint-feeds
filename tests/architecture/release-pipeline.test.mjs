@@ -328,7 +328,8 @@ test('production publish workflow cannot deploy Pages independently and requires
  assert.match(workflow,/verify\.mjs/);
  assert.match(workflow,/cloudflare-gate\.mjs/);
  const smoke=workflow.split('Production release technical smoke (routes and Pages environment only)')[1]?.split('Verify production service bindings after Pages publication')[0]||'';
- assert.match(smoke,/for attempt in 1 2 3 4 5 6/,'Pages edge propagation must be retried');
+ assert.match(smoke,/for attempt in 1 2 3 4 5 6 7 8 9 10 11 12;/,'Pages edge propagation must be retried (~90 s)');
+ assert.match(smoke,/sleep 8/);
  assert.match(smoke,/404/);
  assert.match(smoke,/503/);
  assert.match(smoke,/000/);
