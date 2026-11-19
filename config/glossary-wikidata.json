@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "description": "B11 part 1: entities whose RU/HE/EN names come from Wikidata (labels + aliases), keyed by English Wikipedia title. scripts/build_wikidata_glossary.py writes backend/editor/src/translations/glossary-wikidata.mjs. Entities with hand-tuned forms (IRGC, Katz, IDF, Netanyahu, Hezbollah, Hamas, Houthis, Hormuz, Isfahan, Khamenei, West Bank, Reuters) stay in glossary.mjs and are not listed here.",
+  "description": "B11 part 1: entities whose RU/HE/EN names come from Wikidata (labels + aliases), keyed by English Wikipedia title. scripts/build_wikidata_glossary.py writes backend/editor/src/translations/glossary-wikidata.mjs. Entities with hand-tuned forms (IRGC, Katz, IDF, Netanyahu, Hezbollah, Hamas, Houthis, Hormuz, Isfahan, Khamenei, West Bank, Reuters) stay in glossary.mjs and are not listed here. Israel is left out on purpose: Israeli sources name it implicitly (\"in the north of the country\"), live check 19.11.",
   "entities": [
-    ["israel", "Israel"], ["iran", "Iran"], ["lebanon", "Lebanon"], ["syria", "Syria"], ["iraq", "Iraq"],
+    ["iran", "Iran"], ["lebanon", "Lebanon"], ["syria", "Syria"], ["iraq", "Iraq"],
     ["jordan", "Jordan"], ["egypt", "Egypt"], ["saudi_arabia", "Saudi Arabia"], ["uae", "United Arab Emirates"],
     ["qatar", "Qatar"], ["yemen", "Yemen"], ["turkey", "Turkey"], ["russia", "Russia"], ["usa", "United States"],
     ["gaza_strip", "Gaza Strip"], ["bahrain", "Bahrain"], ["oman", "Oman"], ["kuwait", "Kuwait"], ["cyprus", "Cyprus"],

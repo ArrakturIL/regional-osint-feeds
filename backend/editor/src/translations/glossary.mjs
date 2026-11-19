@@ -121,14 +121,25 @@ export const ENTITIES = [
 // substrings. Target: its RU/HE forms or the original Latin form.
 const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const gap = '[-\\s\u2010-\u2014]+';
-const ruStem = w => (w.length > 4 && /[аяоеиыуюьй]$/iu.test(w) ? w.slice(0, -1) : w);
+// Case endings: drop up to two final vowels/й/ь, keep at least four letters
+// (Саудовская → Саудовск matches Саудовской, Израиль → Израил).
+const ruStem = w => {
+  const stem = w.replace(/[аяоеиыуюьй]{1,2}$/iu, '');
+  return stem.length >= 4 ? stem : w.length > 4 ? w.slice(0, -1) : w;
+};
 const ruForm = f =>
   f
     .split(/[-\s]+/u)
     .map(w => esc(ruStem(w)) + '\\p{L}{0,4}')
     .join(gap);
+// Final letters turn regular inside a longer word: איראן → איראנית.
+const FINAL = { ך: '[ךכ]', ם: '[םמ]', ן: '[ןנ]', ף: '[ףפ]', ץ: '[ץצ]' };
 const heForm = f =>
   esc(f)
+    .replace(/[ךםןףץ]/gu, c => FINAL[c])
+    // Spelling variants: doubled vav/yod (כווית / כוויית).
+    .replace(/ו+/gu, 'ו{1,2}')
+    .replace(/י+/gu, 'י{1,2}')
     .replace(/["״]/gu, '["״]?')
     .replace(/['׳]/gu, "['׳]?")
     .replace(/[-\s]+/gu, gap);
@@ -141,8 +152,11 @@ function fromWikidata(e) {
     words.length && new RegExp(L + '(?:' + words.map(latinForm).join('|') + ')' + R, 'iu'),
     acronyms.length && new RegExp(L + '(?:' + acronyms.join('|') + ')' + R, 'u'),
   ]);
+  // A translation may name a multi-word entity by its proper-noun part
+  // ("в Газе" for «сектор Газа», «Аравии» for «Саудовская Аравия»).
+  const ruParts = e.ru.flatMap(f => (/[\s-]/u.test(f) ? f.split(/[\s-]+/u).filter(w => /^\p{Lu}\p{L}{3,}$/u.test(w)) : []));
   const ruSource = new RegExp(L + '(?:' + e.ru.map(ruForm).join('|') + ')', 'iu'),
-    ruTarget = new RegExp(e.ru.map(ruForm).join('|'), 'iu'),
+    ruTarget = new RegExp([...e.ru, ...ruParts].map(ruForm).join('|'), 'iu'),
     he = new RegExp(e.he.map(heForm).join('|'), 'u');
   const either = (re, rest) => ({ test: t => re.test(t) || rest.some(r => r.test(t)) });
   return {
@@ -162,8 +176,13 @@ for (const e of WIKIDATA_ENTITIES) if (!HAND_IDS.has(e.id)) ENTITIES.push(fromWi
 // Target language follows the translation's script; Latin-only falls back to he (legacy).
 export const targetLanguage = text =>
   /\p{Script=Hebrew}/u.test(text) ? 'he' : /\p{Script=Cyrillic}/u.test(text) ? 'ru' : 'he';
+// Wikidata entities are checked on headline-length text only (≤ 300 chars):
+// summaries and bodies legitimately drop names (live check 19.11, B11).
+export const WIKIDATA_MAX_SOURCE = 300;
 export function entityIssue(source, translated, target = targetLanguage(translated)) {
+  const long = String(source).length > WIKIDATA_MAX_SOURCE;
   for (const e of ENTITIES) {
+    if (long && e.wikidata) continue;
     const want = e[target];
     if (want && e.source.test(source) && !want.test(translated)) return e.code;
   }

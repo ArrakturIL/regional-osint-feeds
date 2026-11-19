@@ -65,7 +65,8 @@ test('West Bank is not "western bank" (live Helsinki error 17.11)', () => {
 
 // B11 part 1: entities from Wikidata (glossary-wikidata.mjs).
 test('Wikidata entities: a swapped country, a dropped participant and a lost name are caught', () => {
-  assert.equal(entityIssue('Iran fires missiles at Israel', 'איראן שיגרה טילים לעבר ירדן', 'he'), 'israel_name_missing');
+  assert.equal(entityIssue('Iran fires missiles at Jordan', 'איראן שיגרה טילים לעבר ישראל', 'he'), 'jordan_name_missing');
+  assert.equal(entityIssue('x'.repeat(301) + ' Jordan', 'ישראל', 'he'), null, 'long bodies are not checked against Wikidata names');
   assert.equal(entityIssue('Trump meets Erdoğan in Ankara', 'Трамп встретился в Анкаре', 'ru'), 'erdogan_name_missing');
   assert.equal(entityIssue('IAEA inspectors return to Natanz', 'פקחי סבא"א חוזרים למתקן', 'he'), 'natanz_name_missing');
 });
@@ -75,5 +76,8 @@ test('Wikidata entities: case endings, Hebrew prefixes, acronyms and Latin origi
   assert.equal(entityIssue('Iran-backed militias', 'проиранские ополченцы', 'ru'), null);
   assert.equal(entityIssue('UNRWA staff detained', 'עובדי UNRWA נעצרו', 'he'), null);
   assert.equal(entityIssue('Let us talk', 'בואו נדבר', 'he'), null, 'lowercase "us" is not the US');
-  assert.equal(entityIssue('Israeli officials said', 'גורמים ישראליים אמרו', 'he'), null, 'an adjective does not demand the noun');
+  assert.equal(entityIssue('Iranian officials said', 'גורמים איראניים אמרו', 'he'), null, 'an adjective does not demand the noun');
+  assert.equal(entityIssue('Kuwait faces new Iran attacks', 'כוויית מתמודדת עם מתקפות איראניות', 'he'), null, 'final nun turns regular');
+  assert.equal(entityIssue('Saudi Arabia reports attacks', 'Саудовская Аравия сообщила; удары по Саудовской Аравии', 'ru'), null);
+  assert.equal(entityIssue('Israel steps up strikes in Gaza Strip', 'Израиль усиливает удары в Газе', 'ru'), null, 'proper-noun part of a multi-word name');
 });
