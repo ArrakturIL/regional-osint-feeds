@@ -9,6 +9,8 @@ on:
   push:
     paths:
       - "scripts/build_wikidata_glossary.py"
+      - "scripts/glossary-fp-report.mjs"
+      - "backend/editor/src/translations/glossary.mjs"
       - "config/glossary-wikidata.json"
       - ".github/workflows/wikidata-glossary.yml"
   workflow_dispatch:
@@ -40,6 +42,12 @@ jobs:
         run: python -m scripts.build_wikidata_glossary
       - name: Glossary checks on the generated file
         run: node --test tests/architecture/translation-glossary.test.mjs
+      - name: False-positive report on accepted translations (read-only D1)
+        if: github.event_name == 'push'
+        env:
+          CLOUDFLARE_D1_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: node scripts/glossary-fp-report.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: glossary-wikidata
