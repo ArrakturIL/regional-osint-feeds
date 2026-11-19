@@ -21,6 +21,15 @@ const fields = [
   'status',
   'source',
   'alert_status',
+  // Q8: keys the GPT monitor actually writes (live 18–19.11).
+  'details',
+  'assessment',
+  'change',
+  'significance',
+  'context',
+  'primary_source',
+  'published_at',
+  'publication_date',
 ];
 function normalizeNumber(s) {
   return String(s)
@@ -73,7 +82,11 @@ export async function enrichNewMonitorStories(env) {
         continue;
       }
       const facts = sourceFacts(original, row.event_id);
-      if (facts.length < 100 || !/(finding|headline|definition|what_changed|title)/.test(facts)) continue;
+      if (
+        facts.length < 100 ||
+        !/(finding|headline|definition|what_changed|title|details|assessment)/.test(facts)
+      )
+        continue;
       const sha = await hash(facts);
       const booked = await db
         .prepare(

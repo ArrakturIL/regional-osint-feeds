@@ -34,7 +34,21 @@ export function sourceText(kind, row) {
             .trim(),
         240,
       ),
-      body: val(p.summary_ru || p.description_ru || p.finding || p.what_changed, 1050),
+      // Q8: monitor dossiers without summary_ru carry their text in details,
+      // assessment or change; only strings count (some are objects).
+      body: val(
+        [
+          p.summary_ru,
+          p.description_ru,
+          p.event_summary_ru,
+          p.finding,
+          p.what_changed,
+          p.details,
+          p.assessment,
+          p.change,
+        ].find(x => typeof x === 'string' && x.trim()),
+        1050,
+      ),
       comment: '',
     };
   }
