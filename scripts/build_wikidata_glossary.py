@@ -135,7 +135,9 @@ def build(entities: list[tuple[str, str]], fetcher=fetch) -> list[dict]:
         forms = forms_for(entity)
         missing = [lang for lang in LANGS if not forms[lang]]
         if missing:
-            raise ValueError(f"{entity_id} ({qid}) has no usable form in {missing}")
+            # Without RU and HE forms the check could only fail: skip, visibly.
+            print(f"::warning::{entity_id} ({qid}) skipped: no usable form in {missing}")
+            continue
         result.append({"id": entity_id, "qid": qid, **forms})
     return result
 

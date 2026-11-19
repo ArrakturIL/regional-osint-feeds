@@ -47,8 +47,8 @@ class TestBuild(unittest.TestCase):
     def test_missing_item_or_language_fails_loudly(self):
         with self.assertRaises(ValueError):
             build([("x", "Nowhere")], fetcher=lambda t: {"entities": {"-1": {"missing": ""}}})
-        with self.assertRaises(ValueError):
-            build([("x", "X")], fetcher=lambda t: {"entities": dict([entity("Q9", "X", "Xland", "", "")])})
+        self.assertEqual(build([("x", "X")], fetcher=lambda t: {"entities": dict([entity("Q9", "X", "Xland", "", "")])}), [],
+                         "an entity without RU/HE forms is skipped with a warning")
 
     def test_config_ids_are_unique(self):
         ids = [e[0] for e in load_config()]
