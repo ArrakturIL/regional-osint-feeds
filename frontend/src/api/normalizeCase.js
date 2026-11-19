@@ -1,15 +1,79 @@
 import { UI_HE, safeLink } from '../app/runtime.js';
 import { HE_CATEGORY } from '../i18n/meta.js';
 import { rwSourceLabel } from '../utils/sourceLabel.js';
+// 19.11: groups by whole words of the monitor category, not substrings.
+// /militar/ sent "high_level_military_coordination" (CENTCOM–IDF–Mossad
+// meeting) to Aviation, and "air" matched inside other words. Air defence and
+// air campaigns are security; aircraft-carrier posture is maritime.
+const CASE_MARITIME = new Set([
+  'maritime',
+  'sea',
+  'ship',
+  'shipping',
+  'naval',
+  'navy',
+  'vessel',
+  'tanker',
+  'port',
+  'hormuz',
+  'carrier',
+]);
+const CASE_AVIATION = new Set([
+  'aviation',
+  'airspace',
+  'flight',
+  'flights',
+  'airline',
+  'airlines',
+  'airport',
+  'adsb',
+  'notam',
+]);
+const CASE_AIR_SECURITY = new Set(['defence', 'defense', 'campaign', 'strike', 'strikes', 'attack']);
+const CASE_SECURITY = new Set([
+  'military',
+  'security',
+  'defense',
+  'defence',
+  'strike',
+  'airstrike',
+  'attack',
+  'missile',
+  'interception',
+  'drone',
+  'campaign',
+  'plot',
+  'assassination',
+  'intelligence',
+  'threat',
+  'sanctions',
+  'coordination',
+  'preparation',
+  'readiness',
+  'protective',
+  'warning',
+  'israel',
+  'iran',
+  'proxy',
+  'gaza',
+  'war',
+  'nuclear',
+  'terror',
+]);
+export function caseGroup(category) {
+  const words = String(category || '')
+    .toLowerCase()
+    .split(/[^a-z]+/)
+    .filter(Boolean);
+  if (words.some(w => CASE_MARITIME.has(w))) return 'maritime';
+  if (words.some((w, i) => CASE_AVIATION.has(w) || (w === 'air' && !CASE_AIR_SECURITY.has(words[i + 1]))))
+    return 'aviation';
+  if (words.some(w => CASE_SECURITY.has(w))) return 'security';
+  return 'other';
+}
 export function normalizeCase(story) {
   const category = String(story.category || story.group || story.type || '').toLowerCase();
-  const group = /aviation|air|carrier|militar/.test(category)
-    ? 'aviation'
-    : /maritime|sea|ship|naval/.test(category)
-      ? 'maritime'
-      : /security|preparation|strike|israel|iran/.test(category)
-        ? 'security'
-        : 'other';
+  const group = caseGroup(category);
   const sources = Array.isArray(story.sources)
     ? story.sources
         .map((s, i) => {
