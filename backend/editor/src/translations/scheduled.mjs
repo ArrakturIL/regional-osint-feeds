@@ -1,11 +1,15 @@
 import { validateCandidate } from './news-mirror.mjs';
-import { RU_TITLES_MODEL, ruTitlesInput } from './prompts.mjs';
+import { ruTitlesInput } from './prompts.mjs';
+import { ROUTES, runStep } from '../ai/router.mjs';
 import { newsTier, TIER_RANK } from '../news/tier.mjs';
 import { recordShown } from '../news/sla.mjs';
 
 // Q3 (19.11): a news item the model answered badly is not sent to the same
 // model again the same UTC day; before, it was re-selected every 5 minutes.
 // Whole-call failures (malformed JSON, provider error) stay retryable.
+// Attempts are per provider chain: an item recorded here was rejected by every
+// provider of ROUTES.ru_titles that answered this tick.
+const RU_CHAIN = 'ru_titles_chain';
 let ruAttemptsReady = false;
 async function ensureRuAttempts(db) {
   if (ruAttemptsReady) return;
@@ -22,11 +26,33 @@ async function recordRuRejection(db, id, day, reason, now) {
       .prepare(
         'INSERT OR IGNORE INTO news_ru_attempts(item_id,day_utc,model,reason,attempted_at_ms) VALUES(?,?,?,?,?)',
       )
-      .bind(id, day, RU_TITLES_MODEL, reason, now)
+      .bind(id, day, RU_CHAIN, reason, now)
       .run();
   } catch {
     // Bookkeeping only: a failed write must not stop the batch.
   }
+}
+
+function decodeRuAnswer(out) {
+  const content = String(
+    out?.choices?.[0]?.message?.content || (typeof out?.response === 'string' ? out.response : ''),
+  ).trim();
+  let decoded;
+  try {
+    decoded = JSON.parse(content);
+  } catch (e) {
+    const fragment = content.match(/\[[\s\S]*\]/) || content.match(/\{[\s\S]*\}/);
+    if (!fragment) throw Error('Translation response not JSON');
+    decoded = JSON.parse(fragment[0]);
+  }
+  const map = new Map();
+  if (Array.isArray(decoded)) {
+    for (const item of decoded) if (item && typeof item.id === 'string') map.set(item.id, item);
+  } else if (decoded && typeof decoded === 'object') {
+    for (const [id, item] of Object.entries(decoded))
+      map.set(id, typeof item === 'string' ? { title_ru: item } : item);
+  }
+  return map;
 }
 
 export async function translateTitles(env, now) {
@@ -50,7 +76,7 @@ export async function translateTitles(env, now) {
     const rows =
       (
         await env.NEWS_DB.prepare(query)
-          .bind(now - 36 * 3600000, now - 36 * 3600000, day, RU_TITLES_MODEL)
+          .bind(now - 36 * 3600000, now - 36 * 3600000, day, RU_CHAIN)
           .all()
       ).results || [];
     const pending = rows
@@ -71,81 +97,90 @@ export async function translateTitles(env, now) {
       .bind(now, day)
       .run();
     if (claimed.meta?.changes !== 1) return { translated: 0, summaries: 0, budget: 'limit' };
-    const payload = pending.map(x => ({ id: x.id, headline: x.headline, summary: x.summary || '' }));
-    const out = await env.AI.run(RU_TITLES_MODEL, ruTitlesInput(payload));
-    const content = String(
-      out?.choices?.[0]?.message?.content || (typeof out?.response === 'string' ? out.response : ''),
-    ).trim();
-    let decoded;
-    try {
-      decoded = JSON.parse(content);
-    } catch (e) {
-      const fragment = content.match(/\[[\s\S]*\]/) || content.match(/\{[\s\S]*\}/);
-      if (!fragment) throw Error('Translation response not JSON');
-      decoded = JSON.parse(fragment[0]);
-    }
-    const map = new Map();
-    if (Array.isArray(decoded)) {
-      for (const item of decoded) {
-        if (item && typeof item.id === 'string') map.set(item.id, item);
-      }
-    } else if (decoded && typeof decoded === 'object') {
-      for (const [id, item] of Object.entries(decoded))
-        map.set(id, typeof item === 'string' ? { title_ru: item } : item);
-    }
     let translated = 0,
-      summaries = 0;
+      summaries = 0,
+      neurons = 0,
+      answered = false,
+      lastError = null,
+      remaining = pending;
+    const rejected = new Map();
     const valid = x =>
       typeof x === 'string' &&
       x.trim().length >= 9 &&
       x.length <= 550 &&
       /[А-Яа-яЁё]/.test(x) &&
       !/[<>]/.test(x);
-    for (const row of pending) {
-      const value = map.get(row.id);
-      if (!value || typeof value !== 'object') {
-        await recordRuRejection(env.NEWS_DB, row.id, day, 'missing_in_output', now);
+    // 19.11: one batch walks the provider chain; an item the gate rejects (or
+    // the model skipped) goes to the next provider in the same tick.
+    for (const step of ROUTES.ru_titles) {
+      if (!remaining.length) break;
+      let out, map;
+      try {
+        out = await runStep(
+          env,
+          step,
+          ruTitlesInput(remaining.map(x => ({ id: x.id, headline: x.headline, summary: x.summary || '' }))),
+        );
+        if (!out) continue;
+        neurons += Number(out?.usage?.neurons) || 0;
+        map = decodeRuAnswer(out);
+      } catch (e) {
+        lastError = e;
         continue;
       }
-      const title =
-        valid(value.title_ru) && validateCandidate(row.headline, value.title_ru, 'ru')
-          ? value.title_ru.trim().slice(0, 260)
-          : null;
-      const summary =
-        Boolean(row.summary) &&
-        valid(value.summary_ru) &&
-        validateCandidate(row.summary, value.summary_ru, 'ru')
-          ? value.summary_ru.trim().slice(0, 480)
-          : null;
-      if ((!title && !row.headline_ru) || (!title && !summary)) {
-        await recordRuRejection(env.NEWS_DB, row.id, day, value ? 'quality_gate' : 'missing_in_output', now);
-        continue;
+      answered = true;
+      const next = [];
+      for (const row of remaining) {
+        const value = map.get(row.id);
+        if (!value || typeof value !== 'object') {
+          rejected.set(row.id, 'missing_in_output');
+          next.push(row);
+          continue;
+        }
+        const title =
+          valid(value.title_ru) && validateCandidate(row.headline, value.title_ru, 'ru')
+            ? value.title_ru.trim().slice(0, 260)
+            : null;
+        const summary =
+          Boolean(row.summary) &&
+          valid(value.summary_ru) &&
+          validateCandidate(row.summary, value.summary_ru, 'ru')
+            ? value.summary_ru.trim().slice(0, 480)
+            : null;
+        if ((!title && !row.headline_ru) || (!title && !summary)) {
+          rejected.set(row.id, 'quality_gate');
+          next.push(row);
+          continue;
+        }
+        const write = await env.NEWS_DB.prepare(
+          'UPDATE news_items SET headline_ru=COALESCE(headline_ru,?),summary_ru=COALESCE(summary_ru,?) WHERE id=?',
+        )
+          .bind(title, summary, row.id)
+          .run();
+        if (write.meta?.changes) {
+          if (title && !row.headline_ru) translated++;
+          if (summary) summaries++;
+        }
+        if (write.meta?.changes && title && !row.headline_ru)
+          await recordShown(env.NEWS_DB, {
+            id: row.id,
+            language: 'ru',
+            tier: row.tier,
+            discoveredMs: row.discovered_ms,
+          }).catch(() => {});
       }
-      const write = await env.NEWS_DB.prepare(
-        'UPDATE news_items SET headline_ru=COALESCE(headline_ru,?),summary_ru=COALESCE(summary_ru,?) WHERE id=?',
-      )
-        .bind(title, summary, row.id)
-        .run();
-      if (write.meta?.changes) {
-        if (title && !row.headline_ru) translated++;
-        if (summary) summaries++;
-      }
-      if (write.meta?.changes && title && !row.headline_ru)
-        await recordShown(env.NEWS_DB, {
-          id: row.id,
-          language: 'ru',
-          tier: row.tier,
-          discoveredMs: row.discovered_ms,
-        }).catch(() => {});
+      remaining = next;
     }
-    const actual = Number(out?.usage?.neurons);
-    if (Number.isFinite(actual) && actual > 0)
-      await env.NEWS_DB.prepare(
-        'UPDATE news_translation_budget SET estimated_neurons=MAX(0,estimated_neurons+?),updated_ms=? WHERE day_utc=?',
-      )
-        .bind(actual - 125, Date.now(), day)
-        .run();
-    return { translated, summaries, neurons: Number.isFinite(actual) ? actual : null };
+    if (!answered) throw lastError || Error('no_route_available');
+    for (const row of remaining) await recordRuRejection(env.NEWS_DB, row.id, day, rejected.get(row.id), now);
+    // The batch reserved 125 estimated neurons; settle with what Workers AI
+    // really spent (Gemini spends none).
+    await env.NEWS_DB.prepare(
+      'UPDATE news_translation_budget SET estimated_neurons=MAX(0,estimated_neurons+?),updated_ms=? WHERE day_utc=?',
+    )
+      .bind(neurons - 125, Date.now(), day)
+      .run();
+    return { translated, summaries, neurons };
   } catch (e) {
     await env.NEWS_DB.prepare(
       "INSERT INTO editor_state(key,value,updated_ms) VALUES('last_translation_error',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_ms=excluded.updated_ms",

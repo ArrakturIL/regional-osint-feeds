@@ -126,7 +126,7 @@ test('IDF schedules only canonical Telegram source and writes accepted translati
   assert.ok(writes.some(w=>w.sql.includes('estimated_neurons=MAX(0,estimated_neurons+?)')));
 });
 
-test('Q3: an item the model answered badly is recorded and not re-sent to the same model today',async()=>{
+test('Q3: an item every provider answered badly is recorded and not re-sent today',async()=>{
   const runs=[];let select=null;
   const NEWS_DB=makeDb((method,sql,args)=>{
     if(method==='first')return{batches:0,estimated_neurons:0};
@@ -141,7 +141,7 @@ test('Q3: an item the model answered badly is recorded and not re-sent to the sa
   const result=await translateTitles({NEWS_DB,AI:{run:async()=>out}},NOW);
   assert.equal(result.translated,0);
   assert.match(select.sql,/NOT IN \(SELECT a\.item_id FROM news_ru_attempts a WHERE a\.day_utc=\? AND a\.model=\?\)/);
-  assert.deepEqual(select.args.slice(2),['2026-11-16','@cf/meta/llama-3.3-70b-instruct-fp8-fast']);
+  assert.deepEqual(select.args.slice(2),['2026-11-16','ru_titles_chain']);
   const rec=runs.filter(r=>r.sql.includes('INTO news_ru_attempts')).map(r=>[r.args[0],r.args[3]]);
   assert.deepEqual(rec.sort(),[['bad','quality_gate'],['lost','missing_in_output']]);
 });
@@ -156,4 +156,31 @@ test('Q3: a whole-call failure (malformed JSON) stays retryable, nothing recorde
   });
   await translateTitles({NEWS_DB,AI:{run:async()=>({response:'not json'})}},NOW);
   assert.ok(!runs.some(s=>s.includes('INTO news_ru_attempts')));
+});
+
+test('19.11: RU goes Gemini first; items Gemini fails go to llama in the same tick, per item',async()=>{
+  const writes=[];
+  const NEWS_DB=makeDb((method,sql,args)=>{
+    if(method==='first')return null;
+    if(method==='all')return{results:[
+      {id:'g',headline:'Israel and Iran release official statement',summary:'',headline_ru:null},
+      {id:'l',headline:'Hamas officials meet in Cairo',summary:'',headline_ru:null}]};
+    if(method==='run'){if(sql.includes('UPDATE news_items SET headline_ru'))writes.push(args);return{meta:{changes:1}};}
+    throw Error('Unexpected query: '+sql);
+  });
+  // Budget row: batches 0 (first() for the budget select returns {batches:0}).
+  NEWS_DB.prepare=(orig=>sql=>sql.startsWith('SELECT batches')?{bind:()=>({first:async()=>({batches:0,estimated_neurons:0})})}:orig(sql))(NEWS_DB.prepare);
+  const realFetch=globalThis.fetch;
+  globalThis.fetch=async url=>String(url).includes(':generateContent')
+    ? Response.json({candidates:[{content:{parts:[{text:JSON.stringify([{id:'g',title_ru:'Израиль и Иран выпустили официальное заявление'},{id:'l',title_ru:'Hamas officials meet in Cairo'}])}]},finishReason:'STOP'}]})
+    : Response.json({models:[{name:'models/gemini-3.5-flash-lite',supportedGenerationMethods:['generateContent']}]});
+  const aiCalls=[];
+  try{
+    const result=await translateTitles({NEWS_DB,GEMINI_API_KEY:'K',AI:{run:async(model,req)=>{aiCalls.push(JSON.parse(req.messages[1].content).map(x=>x.id));
+      return{response:JSON.stringify([{id:'l',title_ru:'Представители ХАМАС встретились в Каире'}]),usage:{neurons:40}};}}},NOW);
+    assert.equal(result.translated,2);
+    assert.equal(result.neurons,40,'only the llama fallback spends Workers AI neurons');
+  }finally{globalThis.fetch=realFetch;}
+  assert.deepEqual(aiCalls,[['l']],'llama gets only the item Gemini failed');
+  assert.deepEqual(writes.map(a=>a[2]).sort(),['g','l']);
 });

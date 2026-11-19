@@ -77,7 +77,7 @@ test('recent low-priority displayed events translate; non-displayed low-priority
  assert.match(q.sql,/g\.last_seen_ms>\?/);
  // B5: a wider pool (60) so urgent items are not cut by newer normal ones; tier order is applied in JS.
  assert.equal(q.sql.includes('ORDER BY n.published_ms DESC LIMIT 60'),true);
- assert.deepEqual(q.args,[NOW-36*HOUR,NOW-36*HOUR,new Date(NOW).toISOString().slice(0,10),'@cf/meta/llama-3.3-70b-instruct-fp8-fast']);
+ assert.deepEqual(q.args,[NOW-36*HOUR,NOW-36*HOUR,new Date(NOW).toISOString().slice(0,10),'ru_titles_chain']);
 });
 test('fresh high-priority source remains eligible independent of event grouping; old high-priority source is not',async()=>{
  const data=makeEnv({
