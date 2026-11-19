@@ -2,8 +2,9 @@ import { chat } from '../ai/router.mjs';
 import { heTranslateInput } from '../translations/prompts.mjs'; // B2: Gemini Flash-Lite first, Cloudflare fallback
 import { factualTranslationIssue } from '../translations/fact-guard.mjs';
 import { DAY, sourceText, fingerprint, newsHebrewSource } from './shared.mjs';
-import { eligibleHebrewRetry } from './retry-policy.mjs';
+import { isTransientFailure } from './retry-policy.mjs';
 import { newsTier, TIER_RANK } from '../news/tier.mjs';
+import { enqueueJobs, dueJobs, settleJob, normalAllowed } from '../translations/jobs.mjs';
 import { recordShown, slaSummary } from '../news/sla.mjs';
 
 const HE_MODEL = '@cf/zai-org/glm-4.7-flash';
@@ -56,7 +57,7 @@ async function localeCandidates(env, kind, now) {
       (
         await db
           .prepare(
-            "SELECT n.id,n.headline,n.headline_ru,n.summary,n.summary_ru,n.comment,n.discovered_ms,t.source_hash cached_he_hash FROM news_items n LEFT JOIN regional_i18n t ON t.kind='news' AND t.item_id=n.id AND t.language='he' WHERE ((n.priority>=7 AND n.published_ms>?) OR n.id IN (SELECT g.representative_id FROM news_event_groups g WHERE g.priority>=4 AND g.last_seen_ms>?)) ORDER BY (t.item_id IS NULL) DESC,n.published_ms DESC,n.priority DESC LIMIT 120",
+            "SELECT n.id,n.headline,n.headline_ru,n.summary,n.summary_ru,n.comment,n.discovered_ms,t.source_hash cached_he_hash,t.title he_title,t.body he_body,t.commentary he_comment FROM news_items n LEFT JOIN regional_i18n t ON t.kind='news' AND t.item_id=n.id AND t.language='he' WHERE ((n.priority>=7 AND n.published_ms>?) OR n.id IN (SELECT g.representative_id FROM news_event_groups g WHERE g.priority>=4 AND g.last_seen_ms>?)) ORDER BY (t.item_id IS NULL) DESC,n.published_ms DESC,n.priority DESC LIMIT 120",
           )
           .bind(now - 7 * DAY, now - 36 * 3600000)
           .all()
@@ -130,6 +131,15 @@ async function localeCandidates(env, kind, now) {
         id: row.id,
         text: t,
         cachedSourceHash: kind === 'news' ? row.cached_he_hash : undefined,
+        cached:
+          kind === 'news' && row.cached_he_hash
+            ? {
+                source_hash: row.cached_he_hash,
+                title: row.he_title,
+                body: row.he_body,
+                commentary: row.he_comment,
+              }
+            : undefined,
         ...(kind === 'news'
           ? { tier: newsTier(row).tier, discoveredMs: row.discovered_ms, missing: !row.cached_he_hash }
           : {}),
@@ -159,55 +169,78 @@ function hebrewQualityIssue(original, value) {
   }
   return factualTranslationIssue(original, value) || 'translation_quality_gate';
 }
-async function translateLocaleItem(env, item, day, now) {
-  const { db, kind, id, text, cachedSourceHash } = item;
-  const sha = await fingerprint(text);
-  const cached =
-    cachedSourceHash !== undefined
-      ? { source_hash: cachedSourceHash }
-      : await db
-          .prepare("SELECT source_hash FROM regional_i18n WHERE kind=? AND item_id=? AND language='he'")
-          .bind(kind, id)
-          .first();
-  if (cached?.source_hash === sha) {
-    const existing = await db
-      .prepare("SELECT title,body,commentary FROM regional_i18n WHERE kind=? AND item_id=? AND language='he'")
-      .bind(kind, id)
-      .first();
-    if (
-      existing &&
-      !factualTranslationIssue(text, {
-        title: existing.title,
-        body: existing.body,
-        comment: existing.commentary || '',
-      })
-    )
-      return 'cached';
-    // A previously approved translation is no longer trusted. Regenerate
-    // through the ordinary daily-budget/attempt gates, not an unbounded loop.
+const dbFor = (env, kind) => (['analyst', 'story', 'profile'].includes(kind) ? env.CORE_DB : env.NEWS_DB);
+const trusted = (text, cached) =>
+  cached?.title != null &&
+  !factualTranslationIssue(text, {
+    title: cached.title,
+    body: cached.body,
+    comment: cached.commentary || '',
+  });
+
+// B10: queue the items of one kind that need Hebrew. An accepted translation
+// of the same source that still passes the checks needs nothing; one that no
+// longer passes (e.g. Q1 script rule added later) is re-done.
+async function enqueueKind(env, kind, now) {
+  const items = await localeCandidates(env, kind, now);
+  if (!items.length) return 0;
+  let cachedById = new Map();
+  if (kind !== 'news') {
+    const db = items[0].db;
+    const rows =
+      (
+        await db
+          .prepare(
+            "SELECT item_id,source_hash,title,body,commentary FROM regional_i18n WHERE kind=? AND language='he' AND item_id IN (" +
+              items.map(() => '?').join(',') +
+              ')',
+          )
+          .bind(kind, ...items.map(x => String(x.id)))
+          .all()
+      ).results || [];
+    cachedById = new Map(rows.map(r => [String(r.item_id), r]));
   }
-  const claimed = await db
+  const jobs = [];
+  for (const item of items) {
+    const sha = await fingerprint(item.text);
+    const cached = kind === 'news' ? item.cached : cachedById.get(String(item.id));
+    const redo = cached?.source_hash === sha;
+    if (redo && trusted(item.text, cached)) continue;
+    jobs.push({
+      kind,
+      id: item.id,
+      language: 'he',
+      sourceHash: sha,
+      tier: item.tier || 'normal',
+      discoveredMs: item.discoveredMs,
+      payload: item.text,
+      redo,
+    });
+  }
+  return enqueueJobs(env.NEWS_DB, jobs, now);
+}
+
+// One paid Hebrew attempt for one queued job. Returns
+// { state: 'cached' | 'ok' | 'error' | 'budget', error?, model? }.
+async function translateLocaleItem(env, item, day, now) {
+  const { db, kind, id, text } = item;
+  const sha = await fingerprint(text);
+  if (sha !== item.sourceHash) return { state: 'stale' };
+  const cached = await db
     .prepare(
-      "INSERT OR IGNORE INTO regional_i18n_attempts(kind,item_id,language,source_hash,day_utc,attempted_at_ms,state) VALUES(?,?,'he',?,?,?,'running')",
+      "SELECT source_hash,title,body,commentary FROM regional_i18n WHERE kind=? AND item_id=? AND language='he'",
+    )
+    .bind(kind, id)
+    .first();
+  if (cached?.source_hash === sha && trusted(text, cached)) return { state: 'cached' };
+  // Attempt log (ops, audits); the queue decides whether to attempt at all.
+  await db
+    .prepare(
+      "INSERT INTO regional_i18n_attempts(kind,item_id,language,source_hash,day_utc,attempted_at_ms,state) VALUES(?,?,'he',?,?,?,'running') " +
+        "ON CONFLICT(kind,item_id,language,source_hash,day_utc) DO UPDATE SET state='running',error=NULL,retry_count=retry_count+1,attempted_at_ms=excluded.attempted_at_ms",
     )
     .bind(kind, id, sha, day, now)
     .run();
-  if (claimed.meta?.changes !== 1) {
-    const prev = await db
-      .prepare(
-        "SELECT state,retry_count,error,attempted_at_ms FROM regional_i18n_attempts WHERE kind=? AND item_id=? AND language='he' AND source_hash=? AND day_utc=?",
-      )
-      .bind(kind, id, sha, day)
-      .first();
-    if (!eligibleHebrewRetry(prev, now, item.tier)) return 'attempted';
-    const retry = await db
-      .prepare(
-        "UPDATE regional_i18n_attempts SET state='running',retry_count=retry_count+1,attempted_at_ms=?,error=NULL WHERE kind=? AND item_id=? AND language='he' AND source_hash=? AND day_utc=? AND state='error' AND retry_count<1",
-      )
-      .bind(now, kind, id, sha, day)
-      .run();
-    if (retry.meta?.changes !== 1) return 'attempted';
-  }
   const budget = await env.NEWS_DB.prepare(
     'UPDATE regional_i18n_budget SET attempts=attempts+1,updated_at_ms=? WHERE day_utc=? AND attempts<? AND estimated_neurons<6000',
   )
@@ -220,11 +253,12 @@ async function translateLocaleItem(env, item, day, now) {
       )
       .bind(kind, id, sha, day)
       .run();
-    return 'budget';
+    return { state: 'budget' };
   }
   let state = 'error',
     err = null,
-    neurons = 0;
+    neurons = 0,
+    model = null;
   try {
     // The same checks as below decide whether the next provider is tried.
     const answer = await chat(env, 'he_translate', heTranslateInput(kind, text), {}, out => {
@@ -247,6 +281,7 @@ async function translateLocaleItem(env, item, day, now) {
     if (typeof raw !== 'string' || raw.length > 9500) throw Error('model_invalid_response');
     const value = JSON.parse(raw);
     if (!checkHebrew(text, value)) throw Error(hebrewQualityIssue(text, value));
+    model = answer.model || HE_MODEL;
     await db
       .prepare(
         "INSERT INTO regional_i18n(kind,item_id,language,source_hash,title,body,commentary,quality_score,model,created_at_ms) VALUES(?,?,'he',?,?,?,?,?,?,?) ON CONFLICT(kind,item_id,language) DO UPDATE SET source_hash=excluded.source_hash,title=excluded.title,body=excluded.body,commentary=excluded.commentary,quality_score=excluded.quality_score,model=excluded.model,created_at_ms=excluded.created_at_ms",
@@ -259,7 +294,7 @@ async function translateLocaleItem(env, item, day, now) {
         value.body.trim(),
         value.comment.trim(),
         value.confidence,
-        answer.model || HE_MODEL,
+        model,
         Date.now(),
       )
       .run();
@@ -274,6 +309,7 @@ async function translateLocaleItem(env, item, day, now) {
   } catch (e) {
     err = String(e?.message || e).slice(0, 180);
     neurons += Number(e?.neurons) || 0;
+    model = e?.model || null;
   }
   await db
     .prepare(
@@ -287,7 +323,16 @@ async function translateLocaleItem(env, item, day, now) {
     )
       .bind(neurons, Date.now(), day)
       .run();
-  return state;
+  return { state, error: err, model };
+}
+
+const PER_TICK = 4; // paid attempts per 5-minute tick
+async function writeState(env, key, value) {
+  await env.NEWS_DB.prepare(
+    'INSERT INTO editor_state(key,value,updated_ms) VALUES(?,?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_ms=excluded.updated_ms',
+  )
+    .bind(key, typeof value === 'string' ? value : JSON.stringify(value), Date.now())
+    .run();
 }
 
 export async function translateScheduled(env, scheduledTime) {
@@ -305,75 +350,84 @@ export async function translateScheduled(env, scheduledTime) {
       .bind(day)
       .first();
     if ((budget?.attempts || 0) >= HE_DAILY_ATTEMPT_CAP || (budget?.estimated_neurons || 0) >= 6000) {
-      const blocked = {
+      await writeState(env, 'last_he_localization', {
         state: 'budget',
         attempts: budget?.attempts || 0,
         estimated_neurons: budget?.estimated_neurons || 0,
         limit: HE_DAILY_ATTEMPT_CAP,
-      };
-      await env.NEWS_DB.prepare(
-        "INSERT INTO editor_state(key,value,updated_ms) VALUES('last_he_localization',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_ms=excluded.updated_ms",
-      )
-        .bind(JSON.stringify(blocked), Date.now())
-        .run();
+      });
       return { state: 'budget' };
     }
+    // News is queued every tick (urgent must not wait); the other kinds take
+    // turns, as before, to bound D1 reads.
     const cycle = ['news', 'analyst', 'story', 'editorial', 'news', 'profile'];
     const kind = cycle[Math.floor(now / 300000) % cycle.length];
-    // B5: urgent/important news never waits for its turn in the kind cycle.
-    const lane =
-      kind === 'news'
-        ? []
-        : (await localeCandidates(env, 'news', now)).filter(x => x.missing && x.tier !== 'normal');
-    const items = [...lane.slice(0, 2), ...(await localeCandidates(env, kind, now))];
+    await enqueueKind(env, 'news', now);
+    if (kind !== 'news') await enqueueKind(env, kind, now);
+    const due = await dueJobs(env.NEWS_DB, 'he', now, PER_TICK * 3, {
+      allowNormal: await normalAllowed(env.NEWS_DB, now),
+    });
     let attempted = 0,
       translated = 0,
       rejected = 0,
+      deferred = 0,
       budgetHit = false;
-    for (const item of items) {
-      if (attempted >= 4) break;
+    for (const job of due) {
+      if (attempted >= PER_TICK) break;
+      if (!job.payload) {
+        await settleJob(env.NEWS_DB, job, 'done', { reason: 'no_payload' }, now);
+        continue;
+      }
+      const item = {
+        db: dbFor(env, job.kind),
+        kind: job.kind,
+        id: job.id,
+        text: job.payload,
+        sourceHash: job.sourceHash,
+        tier: job.tier,
+        discoveredMs: job.discoveredMs,
+      };
       const result = await translateLocaleItem(env, item, day, now);
-      if (result === 'cached' || result === 'attempted') continue;
-      if (result === 'budget') {
+      if (result.state === 'stale') continue;
+      if (result.state === 'cached') {
+        await settleJob(env.NEWS_DB, job, 'done', { reason: 'cached' }, now);
+        continue;
+      }
+      if (result.state === 'budget') {
         budgetHit = true;
         break;
       }
       attempted++;
-      if (result === 'ok') translated++;
-      else rejected++;
+      if (result.state === 'ok') {
+        translated++;
+        await settleJob(env.NEWS_DB, job, 'done', { model: result.model }, now);
+      } else if (isTransientFailure(result.error)) {
+        deferred++;
+        await settleJob(env.NEWS_DB, job, 'deferred', { reason: result.error, model: result.model }, now);
+      } else {
+        rejected++;
+        await settleJob(env.NEWS_DB, job, 'rejected', { reason: result.error, model: result.model }, now);
+      }
     }
     const state = {
-      state: budgetHit ? 'budget' : rejected ? 'partial' : 'ok',
+      state: budgetHit ? 'budget' : rejected || deferred ? 'partial' : 'ok',
       kind,
-      lane: Math.min(lane.length, 2),
+      due: due.length,
       attempted,
       translated,
       rejected,
+      deferred,
       at: new Date().toISOString(),
     };
     // B5: refresh the per-tier SLA picture (read by /api/news) once per tick.
     try {
-      const sla = await slaSummary(env.NEWS_DB, now);
-      await env.NEWS_DB.prepare(
-        "INSERT INTO editor_state(key,value,updated_ms) VALUES('translation_sla',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_ms=excluded.updated_ms",
-      )
-        .bind(JSON.stringify(sla), Date.now())
-        .run();
+      await writeState(env, 'translation_sla', await slaSummary(env.NEWS_DB, now));
     } catch {}
-    await env.NEWS_DB.prepare(
-      "INSERT INTO editor_state(key,value,updated_ms) VALUES('last_he_localization',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_ms=excluded.updated_ms",
-    )
-      .bind(JSON.stringify(state), Date.now())
-      .run();
+    await writeState(env, 'last_he_localization', state);
     return state;
   } catch (e) {
     const error = String(e?.message || e).slice(0, 260);
-    await env.NEWS_DB.prepare(
-      "INSERT INTO editor_state(key,value,updated_ms) VALUES('last_he_localization_error',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_ms=excluded.updated_ms",
-    )
-      .bind(error, Date.now())
-      .run()
-      .catch(() => {});
+    await writeState(env, 'last_he_localization_error', error).catch(() => {});
     return { state: 'error', error };
   }
 }

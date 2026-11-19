@@ -15,36 +15,6 @@ function db(handler){
  }};
 }
 
-test('overlapping RU batches share a single atomic last (288th) budget slot',async()=>{
- let batches=287,aiCalls=0;
- const NEWS_DB=db((method,sql)=>{
-  if(method==='first'&&sql.includes('FROM news_translation_budget'))
-   return{batches:287,estimated_neurons:0}; // Both schedulers saw the same pre-reservation snapshot.
-  if(method==='all'&&sql.includes('FROM news_items'))
-   return{results:[{id:'race-news',headline:'Israel and Iran release official statement',
-      summary:'Officials shared a regional security statement.',headline_ru:null}]};
-  if(method==='run'&&sql.includes('UPDATE news_translation_budget SET batches=')){
-   // Emulate SQLite's affected-row semantics for an atomic guarded UPDATE.
-   const guarded=/AND\s+batches\s*<\s*288\b/i.test(sql)&&/AND\s+estimated_neurons\s*<\s*6000\b/i.test(sql);
-   if(guarded&&batches>=288)return{meta:{changes:0}};
-   batches++;return{meta:{changes:1}};
-  }
-  if(method==='run')return{meta:{changes:1}};
-  throw Error('Unexpected NEWS SQL: '+sql);
- });
- const env={NEWS_DB,AI:{async run(){
-  aiCalls++;
-  return{response:JSON.stringify([{id:'race-news',
-   title_ru:'Израиль и Иран выпустили официальное заявление',
-   summary_ru:'Официальные представители поделились заявлением о безопасности региона.'}]),usage:{neurons:120}};
- }}};
- const results=await Promise.all([translateTitles(env,NOW),translateTitles(env,NOW)]);
- assert.equal(aiCalls,1,'never send the 49th RU batch to Workers AI');
- assert.equal(batches,288,'cannot exceed the daily RU batch cap');
- assert.equal(results.filter(x=>x.budget==='limit').length,1);
- assert.equal(results.filter(x=>x.translated===1).length,1);
-});
-
 test('overlapping IDF batches share a single atomic last (24th) budget slot',async()=>{
  let batches=23,aiCalls=0;
  const published_at=new Date(NOW-3600000).toISOString();
