@@ -31,7 +31,14 @@
 - Локально: `node frontend/scripts/build-site.mjs` и esbuild-бандлы (см. workflow) **до** `node --test tests/architecture/*.test.mjs frontend/tests/*.test.mjs backend/*/tests/*.test.mjs`. Без бандлов 9 тестов падают ожидаемо. Python: `python -m unittest discover -s scripts -p 'test_*.py'`.
 - Минимум агентов и токенов. Полноценная реализация, без MVP-заглушек.
 - Язык документов: то, что читает владелец (STATUS, планы, отчёты, AGENTS), пишется на русском. Служебное только для агентов (сжатые handoff-пакеты, машинные фикстуры) — на английском телеграфным стилем, он дешевле по токенам. Лимит: файл до 8 КБ, всё дерево до 60 КБ, без истории и логов.
-- После проверенного изменения обнови `docs/STATUS.md` (коротко, без истории).
+- После проверенного изменения обнови `docs/STATUS.md` (коротко, без истории; подробности — в PR).
+
+## Подводные камни
+
+- Новый тест-файл добавь в явный список в `.github/workflows/regional-watch-app-check.yml`, иначе CI его не запустит. Параллельные PR конфликтуют на этой строке.
+- Новый или удалённый модуль меняет счётчики: в `tests/architecture/arch07-integration-acceptance.test.mjs` (модули и import-рёбра, сейчас 99 и 256) и `editor-cross-component-acceptance`; Monitor — `backend/monitor/build-order.json` и `source-parity` (45); frontend — `frontend/build-order.json` и его `source-parity` (56).
+- Сборщик на GitHub без JSON в git (как ADS-B, Q12) добавляется в `scripts/neon_mirror.py` вне `GITHUB_JSON_SOURCES`, в `MIRROR_SOURCES` Monitor и в CHECK `source_key` обеих схем (Neon и D1); тест `collector-cache` держит их в синхроне.
+- D1 CORE: не используй `ALTER TABLE … RENAME` — триггеры `monitor_runs_link_events_*` валят проверку схемы. Таблицу пересоздавай копированием (пример: `storage/cloudflare/006`).
 
 ## Запреты без явного разрешения владельца
 

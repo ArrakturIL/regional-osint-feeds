@@ -5,7 +5,7 @@ Organization plan Free. Project regional-watch-data, ID weathered-resonance-7166
 
 ## Data
 Table public.regional_collector_snapshots contains an atomic pair of JSONB data_payload and status_payload per allowlisted collector, SHA256 hashes of canonical UTF-8 JSON, checked_at UTC and persisted_at UTC.
-Datasets: analysts, centcom, copernicus, gdelt, marad, satellite, unosat and news_translation (the latter synthesizes status from generated_at). Path mapping is fixed in scripts/neon_mirror.py; no arbitrary paths or database identifiers are taken from user inputs. Each JSON document is capped at 1 MiB. For unknown source, invalid JSON, invalid status, missing file, or timestamp more than 20 min in the future, the loader refuses the entire pair.
+Datasets: analysts, centcom, copernicus, gdelt, marad, satellite, unosat and news_translation (the latter synthesizes status from generated_at); since 19.11 also `adsb` and `adsb_mil` (Q12: JSON exists only in the Actions runner, never committed; schema CHECK widened by storage/neon/002). Path mapping is fixed in scripts/neon_mirror.py; no arbitrary paths or database identifiers are taken from user inputs. Each JSON document is capped at 1 MiB. For unknown source, invalid JSON, invalid status, missing file, or timestamp more than 20 min in the future, the loader refuses the entire pair.
 
 Upsert semantics: NEW record is accepted; newer checked_at replaces the entire pair; older run is rejected as stale; equal checked_at + identical hashes is idempotent unchanged; equal time + different hashes is conflict, never overwritten silently. The UPSERT time check is one PostgreSQL statement and therefore race-safe. No raw data is translated, inferred or converted into 'verified' by this storage layer.
 

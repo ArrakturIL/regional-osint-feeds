@@ -1,11 +1,14 @@
 # Aviation coverage and air-corridor context
 
-Regional Watch separates **what a receiver reported** from **what actually happened in the airspace**. This file documents the Cloudflare Worker collectors, not a claim that flight routes have been reconstructed.
+Regional Watch separates **what a receiver reported** from **what actually happened in the airspace**. This file documents the aviation collectors, not a claim that flight routes have been reconstructed.
+
+> **Since 19.11.2026 (Q12, PR #187):** adsb.lol and adsb.fi refuse Cloudflare Worker egress (429/403), so `adsb` and `mil_lol` are collected by GitHub Actions (`adsb.yml`, `adsb-mil.yml`, `scripts/collect_adsb.py`) and reach the Monitor through Neon → private D1 (`regional_collector_cache`, keys `adsb`, `adsb_mil`). The Monitor never calls these providers; each cached snapshot is accepted once. AvioADSB (`adsb_alt`, `airbridge_context`) is still called from the Worker.
 
 ## Priority 1: Tehran
 
 - Focus: Tehran, radius 100 nautical miles (NM), using community ADS-B snapshots.
-- `adsb.lol`: one request every 15 minutes, alternating Tehran and another regional sector. At most 48 focus + 48 context samples/day, subject to provider availability and backoff.
+- `adsb.lol`: the GitHub collector fetches Tehran and all five context regions every 15 minutes; the Monitor stores one sample per 15 minutes, alternating Tehran and a context region (48 focus + 48 context samples/day). A missed collector run is reported as missing data, never as a repeated sample.
+- `mil_lol`: one global military-tagged snapshot per hour (adsb.lol, adsb.fi fallback), counted in broad overlapping regional boxes.
 - AvioADSB: one request every 30 minutes; 32 focus + 16 context samples/day.
 - A successful zero-count snapshot is **`zero_in_sample`**, not empty Iranian airspace. An unavailable provider is **`source_unavailable`**; an old or missing Tehran sample is **`no_recent_sample`**.
 - Snapshot metadata includes observed aircraft count, type distribution, missing callsign count, database military-flagged count, and transport/tanker type hints. Missing callsigns, aircraft types and database flags **do not prove** government affiliation, intent or military status.
