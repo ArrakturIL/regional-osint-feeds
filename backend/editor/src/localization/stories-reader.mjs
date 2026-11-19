@@ -2,6 +2,8 @@ import { DAY, sourceText } from './shared.mjs';
 import { respond, localized, fieldLocale } from './read-core.mjs';
 import { allowedOnPage } from './display-policy.mjs';
 
+const DATE_PREFIX = /^\d{4}-\d{2}(?:-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?)?)?/;
+
 /** Locale-invariant provenance. Never regenerate dates or source links by AI. */
 export function storyProvenance(data) {
   const validUrl = value => {
@@ -30,34 +32,58 @@ export function storyProvenance(data) {
       seen.add(safe);
     }
   };
-  for (const item of Array.isArray(data.sources) ? data.sources : []) {
-    if (typeof item === 'string') add(item, 'source');
-    else if (item && typeof item === 'object') add(item.url, item.type);
-  }
-  // Include source_urls emitted by the monitor and retain HTTPS validation/dedup.
-  for (const item of Array.isArray(data.source_urls) ? data.source_urls : []) {
-    if (typeof item === 'string') add(item, 'listed_source');
-    else if (item && typeof item === 'object') add(item.url, item.type);
-  }
+  // Q8: the monitor writes links under many keys (primary_url, designation_url,
+  // secondary_url, primary_report, independent_reporting[], followup.url…).
+  // Every https link it wrote is a source: explicit lists first, then primary
+  // keys, then the classic fields, then everything else in payload order.
+  const addAny = (value, type) => {
+    if (typeof value === 'string') add(value, type);
+    else if (Array.isArray(value))
+      for (const item of value) {
+        if (typeof item === 'string') add(item, type);
+        else if (item && typeof item === 'object') add(item.url, item.type || type);
+      }
+    else if (value && typeof value === 'object') add(value.url, type);
+  };
+  addAny(data.sources, 'source');
+  addAny(data.source_urls, 'listed_source');
+  for (const [key, value] of Object.entries(data)) if (/primary/.test(key)) addAny(value, key);
   add(data.source, 'primary');
   add(data.source_url, 'primary');
   add(data.url, 'primary');
+  for (const [key, value] of Object.entries(data)) addAny(value, key);
   // Preserve partial dates like 2026-09; inventing a day would be worse.
-  const occurredAt =
-    data.occurred_at ||
-    data.incident_date ||
-    data.event_date ||
-    data.first_report_date ||
-    data.published_date ||
-    null;
+  // Free text after a date ("… approximate; …") is not part of it.
+  const date = value => {
+    const m = typeof value === 'string' && value.match(DATE_PREFIX);
+    return m ? m[0] : null;
+  };
+  const firstDate = keys => keys.map(k => date(data[k])).find(Boolean) || null;
+  const occurredAt = firstDate([
+    'occurred_at',
+    'incident_date',
+    'event_date',
+    'first_report_date',
+    'published_date',
+  ]);
   const announcedAt =
-    data.announced_at || (data.incident_date ? data.event_date : null) || data.first_report_date || null;
+    date(data.announced_at) ||
+    (data.incident_date ? date(data.event_date) : null) ||
+    date(data.first_report_date);
+  const publishedAt = firstDate([
+    'published_date',
+    'published_at',
+    'publication_date',
+    'publication_at',
+    'publication_time',
+    'first_publication',
+  ]);
   return {
     event_date: occurredAt,
     occurred_at: occurredAt,
     announced_at: announcedAt,
-    published_at: data.published_date || null,
-    source_date: data.first_report_date || null,
+    published_at: publishedAt,
+    source_date: date(data.first_report_date),
     collected_at: data.first_observed_by_monitor || data.first_verified_monitor_cycle || null,
     source: data.source || null,
     sources,
@@ -67,7 +93,7 @@ export function storyProvenance(data) {
 }
 
 export async function readLocalizedStories(env, lang, lim) {
-  const cols = 'SELECT n.event_id,n.payload,n.updated_at_ms';
+  const cols = 'SELECT n.event_id,n.category,n.payload,n.updated_at_ms';
   const joined =
     " FROM monitor_events n LEFT JOIN regional_i18n t ON t.kind='story' AND t.item_id=n.event_id AND t.language='he'";
   const ext =
@@ -106,7 +132,7 @@ export async function readLocalizedStories(env, lang, lim) {
         title: t.title,
         summary: t.body,
         ...storyProvenance(data),
-        category: data.category || null,
+        category: data.category || n.category || null,
         updated_at_ms: n.updated_at_ms,
         content_language: t.content_language,
       };
