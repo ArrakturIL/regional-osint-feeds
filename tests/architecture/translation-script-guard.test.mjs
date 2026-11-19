@@ -16,6 +16,8 @@ const CASES = [
    'הצבא הישראלי מסר כי כוחותיו תקפו תשתיות של חמאס מחוץ לאזורים שבהם ישראל שולטת ברצועة כדי "להסיר איומים."', 'he', 'mixed_script_word'],
   ['Его появление на публике', 'לקראת להופعתו בציבור', 'he', 'mixed_script_word'],
   ['Командиры Хизбаллы', 'מפקدي חיזבאללה', 'he', 'mixed_script_word'],
+  // Arabic shadda (U+0651, Script=Inherited) inside a Hebrew word (gemini, live).
+  ['Threats from Iran have increased substantially', 'האיום גדל, העוّל ממשיך', 'he', 'mixed_script_word'],
   // A whole Arabic word that the source does not contain.
   ['Iran warned the US', 'אيران הזהירה את ארה״ב', 'he', 'mixed_script_word'],
   ['Strikes like in Syria.', 'תקיפות כמו كسوريا.', 'he', 'foreign_script'],

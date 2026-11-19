@@ -15,7 +15,9 @@
 //                       complete translations ≥ 0.87 (p05 of all HE: 0.64).
 const SCRIPTS = {
   he: /\p{Script=Hebrew}/u,
-  ar: /\p{Script=Arabic}/u,
+  // Arabic blocks, not Script=Arabic: harakat such as shadda (U+0651) are
+  // Script=Inherited and slipped through (live 19.11: העוّל).
+  ar: /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/u,
   ru: /\p{Script=Cyrillic}/u,
 };
 const FOREIGN = { he: ['ar', 'ru'], ru: ['he', 'ar'] };
