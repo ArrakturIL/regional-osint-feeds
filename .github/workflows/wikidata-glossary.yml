@@ -1,0 +1,58 @@
+name: Wikidata glossary refresh (B11)
+
+# Regenerates backend/editor/src/translations/glossary-wikidata.mjs from
+# Wikidata labels/aliases (config/glossary-wikidata.json). On main the file is
+# committed when it changed; a GITHUB_TOKEN push does not start a release, so
+# the refresh ships with the next reviewed release. Branch pushes only upload
+# the generated file as an artifact for review.
+on:
+  push:
+    paths:
+      - "scripts/build_wikidata_glossary.py"
+      - "config/glossary-wikidata.json"
+      - ".github/workflows/wikidata-glossary.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "41 3 1 * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wikidata-glossary
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Offline generator checks
+        run: python -m unittest scripts.test_build_wikidata_glossary
+      - name: Build glossary from Wikidata
+        run: python -m scripts.build_wikidata_glossary
+      - name: Glossary checks on the generated file
+        run: node --test tests/architecture/translation-glossary.test.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: glossary-wikidata
+          path: backend/editor/src/translations/glossary-wikidata.mjs
+      - name: Commit the refreshed glossary (main only)
+        if: github.ref == 'refs/heads/main' && github.event_name != 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/editor/src/translations/glossary-wikidata.mjs
+          if ! git diff --cached --quiet; then
+            git commit -m "Refresh Wikidata glossary"
+            git push
+          else
+            echo "Glossary unchanged"
+          fi
