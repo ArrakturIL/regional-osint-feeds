@@ -5,6 +5,7 @@ import { DAY, sourceText, fingerprint, newsHebrewSource } from './shared.mjs';
 import { isTransientFailure } from './retry-policy.mjs';
 import { newsTier, TIER_RANK } from '../news/tier.mjs';
 import { enqueueJobs, dueJobs, settleJob, normalAllowed } from '../translations/jobs.mjs';
+import { meaningCheck } from '../translations/meaning-check.mjs';
 import { recordShown, slaSummary } from '../news/sla.mjs';
 
 const HE_MODEL = '@cf/zai-org/glm-4.7-flash';
@@ -258,10 +259,11 @@ async function translateLocaleItem(env, item, day, now) {
   let state = 'error',
     err = null,
     neurons = 0,
-    model = null;
+    model = null,
+    checkNeurons = 0;
   try {
     // The same checks as below decide whether the next provider is tried.
-    const answer = await chat(env, 'he_translate', heTranslateInput(kind, text), {}, out => {
+    const answer = await chat(env, 'he_translate', heTranslateInput(kind, text), {}, async out => {
       if (out?.choices?.[0]?.finish_reason && out.choices[0].finish_reason !== 'stop')
         return 'model_incomplete';
       const body = out?.choices?.[0]?.message?.content ?? out?.response;
@@ -272,9 +274,24 @@ async function translateLocaleItem(env, item, day, now) {
       } catch (e) {
         return String(e?.message || e);
       }
-      return checkHebrew(text, parsed) ? null : hebrewQualityIssue(text, parsed);
+      if (!checkHebrew(text, parsed)) return hebrewQualityIssue(text, parsed);
+      // B11 part 2: urgent/important — a second model checks who did what;
+      // a named meaning error sends the item to the next provider.
+      const second = await meaningCheck(
+        env,
+        {
+          original: text,
+          translation: { title: parsed.title, body: parsed.body, comment: parsed.comment },
+          language: 'he',
+          translatorModel: out.model,
+          tier: item.tier,
+        },
+        now,
+      );
+      checkNeurons += second.neurons;
+      return second.verdict === 'reject' ? second.code : null;
     });
-    neurons = (Number(answer?.usage?.neurons) || 0) + (Number(answer?.rejected_neurons) || 0);
+    neurons = (Number(answer?.usage?.neurons) || 0) + (Number(answer?.rejected_neurons) || 0) + checkNeurons;
     if (answer?.choices?.[0]?.finish_reason && answer.choices[0].finish_reason !== 'stop')
       throw Error('model_incomplete');
     const raw = answer?.choices?.[0]?.message?.content ?? answer?.response;
@@ -308,7 +325,7 @@ async function translateLocaleItem(env, item, day, now) {
       }).catch(() => {});
   } catch (e) {
     err = String(e?.message || e).slice(0, 180);
-    neurons += Number(e?.neurons) || 0;
+    neurons += (Number(e?.neurons) || 0) + checkNeurons;
     model = e?.model || null;
   }
   await db

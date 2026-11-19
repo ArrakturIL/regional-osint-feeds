@@ -196,7 +196,7 @@ test('RU: urgent before newer normal; at most 5 per batch; neurons settle to rea
   assert.equal(sent.length, 5);
   assert.deepEqual(db.one('SELECT batches,estimated_neurons FROM news_translation_budget'), {
     batches: 1,
-    estimated_neurons: 60,
+    estimated_neurons: 63, // 60 translation + 3 for the urgent item's meaning check (B11)
   });
   assert.equal(ruJob(db, 'u').state, 'done');
   assert.equal(ruJob(db, 'n5').state, 'pending', 'the sixth waits for the next tick');
@@ -314,7 +314,7 @@ test('RU: Gemini first, llama only for what Gemini got wrong, in the same tick',
   try {
     const out = await translateTitles({ NEWS_DB: db, AI: llama, GEMINI_API_KEY: 'K' }, NOW);
     assert.equal(out.translated, 2);
-    assert.equal(out.neurons, 60, 'only llama spends Workers AI neurons');
+    assert.equal(out.neurons, 66, 'Workers AI: llama 60 + two GLM meaning checks 2×3; Gemini spends none');
   } finally {
     globalThis.fetch = realFetch;
   }
@@ -494,4 +494,60 @@ test('HE: a source read failure is journaled and never reported as success', asy
   const out = await translateScheduled(heEnv(db, heAnswer()), atKind('news'));
   assert.equal(out.state, 'error');
   assert.match(db.one("SELECT value FROM editor_state WHERE key='last_he_localization_error'").value, /news_items/);
+});
+
+// ---------- B11 part 2: second opinion on who did what ----------
+test('RU: an urgent title the second model calls actor_swapped goes to the next provider, not to the site', async () => {
+  const db = newsDb();
+  addNews(db, { id: 'u', headline: URGENT, published_ms: NOW - HOUR });
+  addNews(db, { id: 'n', headline: NORMAL, published_ms: NOW - MIN });
+  const AI = ai(
+    (model, input) => ({
+      response: JSON.stringify(JSON.parse(input.messages[1].content).map(x => ({ id: x.id, title_ru: RU[x.headline] }))),
+      usage: { neurons: 60 },
+    }),
+    () => ({ same_meaning: false, error: 'actor_swapped', evidence: 'Lebanon launched, not Israel' }),
+  );
+  await translateTitles(ruEnv(db, AI), NOW);
+  assert.equal(db.one("SELECT headline_ru FROM news_items WHERE id='u'").headline_ru, null);
+  assert.deepEqual([ruJob(db, 'u').attempts, ruJob(db, 'u').last_reason], [1, 'meaning:actor_swapped']);
+  assert.equal(db.one("SELECT headline_ru FROM news_items WHERE id='n'").headline_ru, RU[NORMAL], 'normal tier is not second-checked');
+  assert.equal(AI.checks.length, 1);
+  assert.equal(AI.checks[0].model, '@cf/zai-org/glm-4.7-flash', 'checker differs from the llama translator');
+  assert.deepEqual(JSON.parse(db.one("SELECT value FROM editor_state WHERE key='meaning_check:2026-11-19'").value), { reject: 1 });
+});
+
+test('HE: important news — the checker is not the translating model; a meaning error is a rejection', async () => {
+  const db = newsDb();
+  const t = atKind('news');
+  addNews(db, { id: 'i', headline: IMPORTANT, published_ms: t - MIN });
+  const value = { title: 'ישראל ומנהיגים אזוריים דנים במשא ומתן ביטחוני', body: '', comment: '', confidence: 95 };
+  const AI = ai(
+    () => ({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(value) } }], usage: { neurons: 12 } }),
+    () => ({ same_meaning: false, error: 'participant_dropped', evidence: 'regional leaders missing' }),
+  );
+  await translateScheduled(heEnv(db, AI), t);
+  assert.equal(heJob(db, 'i').last_reason, 'meaning:participant_dropped');
+  assert.equal(db.one("SELECT count(*) n FROM regional_i18n WHERE item_id='i'").n, 0);
+  assert.deepEqual(AI.checks.map(c => c.model), ['@cf/meta/llama-3.3-70b-instruct-fp8-fast'], 'glm translated, so llama checks');
+  const ok = ai(() => ({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(value) } }], usage: { neurons: 12 } }));
+  await translateScheduled(heEnv(db, ok), heJob(db, 'i').next_at_ms);
+  assert.equal(heJob(db, 'i').state, 'done');
+});
+
+test('no checker available: the translation that passed every deterministic gate stands', async () => {
+  const db = newsDb();
+  addNews(db, { id: 'u', headline: URGENT, published_ms: NOW - HOUR });
+  const AI = ai(
+    (model, input) => ({
+      response: JSON.stringify(JSON.parse(input.messages[1].content).map(x => ({ id: x.id, title_ru: RU[x.headline] }))),
+      usage: { neurons: 60 },
+    }),
+    () => {
+      throw new Error('3040: capacity');
+    },
+  );
+  await translateTitles(ruEnv(db, AI), NOW);
+  assert.equal(db.one("SELECT headline_ru FROM news_items WHERE id='u'").headline_ru, RU[URGENT]);
+  assert.deepEqual(JSON.parse(db.one("SELECT value FROM editor_state WHERE key='meaning_check:2026-11-19'").value), { unavailable: 1 });
 });

@@ -5,6 +5,7 @@ import { newsTier } from '../news/tier.mjs';
 import { recordShown } from '../news/sla.mjs';
 import { enqueueJobs, dueJobs, settleJob, normalAllowed } from './jobs.mjs';
 import { fingerprint } from '../localization/shared.mjs';
+import { meaningCheck } from './meaning-check.mjs';
 
 // B10 (19.11): RU titles run through the shared translation job queue
 // (translations/jobs.mjs): urgent > important > normal, a rejected answer is
@@ -182,6 +183,24 @@ export async function translateTitles(env, now) {
             : null;
         if ((!title && !row.headline_ru) || (!title && !summary)) {
           rejected.set(row.id, 'quality_gate');
+          next.push(row);
+          continue;
+        }
+        // B11 part 2: urgent/important — a second model checks who did what.
+        const second = await meaningCheck(
+          env,
+          {
+            original: { title: row.headline, summary: summary ? row.summary : '' },
+            translation: { title: title || row.headline_ru, summary: summary || '' },
+            language: 'ru',
+            translatorModel: out.model,
+            tier: row.tier,
+          },
+          now,
+        );
+        neurons += second.neurons;
+        if (second.verdict === 'reject') {
+          rejected.set(row.id, second.code);
           next.push(row);
           continue;
         }
