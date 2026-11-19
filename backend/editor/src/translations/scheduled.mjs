@@ -1,42 +1,51 @@
 import { validateCandidate } from './news-mirror.mjs';
 import { ruTitlesInput } from './prompts.mjs';
 import { ROUTES, runStep } from '../ai/router.mjs';
-import { newsTier, TIER_RANK } from '../news/tier.mjs';
+import { newsTier } from '../news/tier.mjs';
 import { recordShown } from '../news/sla.mjs';
+import { enqueueJobs, dueJobs, settleJob, normalAllowed } from './jobs.mjs';
+import { fingerprint } from '../localization/shared.mjs';
 
-// Q3 (19.11): a news item the model answered badly is not sent to the same
-// model again the same UTC day; before, it was re-selected every 5 minutes.
-// Whole-call failures (malformed JSON, provider error) stay retryable.
-// 19.11: Workers AI spend is capped by real neurons (each batch reserves 125
-// and settles to what Workers AI actually spent; Gemini spends none). The old
-// 48-batch cap counted free Gemini batches too and stopped RU at 11:55Z, so
-// batches are now capped only at one per 5-minute tick.
+// B10 (19.11): RU titles run through the shared translation job queue
+// (translations/jobs.mjs): urgent > important > normal, a rejected answer is
+// retried after a back-off (not "tomorrow"), three rejections or 72 h go to
+// the manual queue, normal items keep a reserve of the free pools for urgent.
+// Workers AI spend is capped by real neurons (each batch reserves 125 and
+// settles to what Workers AI actually spent; Gemini spends none).
 const RU_DAILY_BATCHES = 288,
-  RU_DAILY_NEURONS = 6000;
-// Attempts are per provider chain: an item recorded here was rejected by every
-// provider of ROUTES.ru_titles that answered this tick.
-const RU_CHAIN = 'ru_titles_chain';
-let ruAttemptsReady = false;
-async function ensureRuAttempts(db) {
-  if (ruAttemptsReady) return;
-  await db
-    .prepare(
-      'CREATE TABLE IF NOT EXISTS news_ru_attempts(item_id TEXT NOT NULL,day_utc TEXT NOT NULL,model TEXT NOT NULL,reason TEXT NOT NULL,attempted_at_ms INTEGER NOT NULL,PRIMARY KEY(item_id,day_utc,model))',
-    )
-    .run();
-  ruAttemptsReady = true;
-}
-async function recordRuRejection(db, id, day, reason, now) {
-  try {
-    await db
-      .prepare(
-        'INSERT OR IGNORE INTO news_ru_attempts(item_id,day_utc,model,reason,attempted_at_ms) VALUES(?,?,?,?,?)',
-      )
-      .bind(id, day, RU_CHAIN, reason, now)
-      .run();
-  } catch {
-    // Bookkeeping only: a failed write must not stop the batch.
+  RU_DAILY_NEURONS = 6000,
+  RU_BATCH = 5;
+const SPAM =
+  /sponsored content|winner cup|euroleague|fashion week|maccabi wins|hapoel tel aviv set to secure/i;
+// The site shows fresh high-priority articles and current event
+// representatives; that is what gets a RU job. A job, once created, stays in
+// the queue after the item leaves this window (until done, manual or 72 h).
+const CANDIDATES =
+  'SELECT n.id,n.headline,n.summary,n.headline_ru,n.summary_ru,n.discovered_ms FROM news_items n WHERE ((n.priority>=7 AND n.published_ms>?) OR n.id IN (SELECT g.representative_id FROM news_event_groups g WHERE g.priority>=4 AND g.last_seen_ms>?)) AND (n.headline_ru IS NULL OR (n.summary_ru IS NULL AND length(n.summary)>10)) ORDER BY n.published_ms DESC LIMIT 60';
+const needsRu = r => !r.headline_ru || (!r.summary_ru && String(r.summary || '').length > 10);
+const ruHash = r => fingerprint({ title: r.headline, body: r.summary || '', comment: '' });
+
+export async function enqueueRuTitles(db, now) {
+  const rows =
+    (
+      await db
+        .prepare(CANDIDATES)
+        .bind(now - 36 * 3600000, now - 36 * 3600000)
+        .all()
+    ).results || [];
+  const jobs = [];
+  for (const r of rows) {
+    if (SPAM.test(r.headline) || !needsRu(r)) continue;
+    jobs.push({
+      kind: 'news',
+      id: r.id,
+      language: 'ru',
+      sourceHash: await ruHash(r),
+      tier: newsTier(r).tier,
+      discoveredMs: r.discovered_ms,
+    });
   }
+  return enqueueJobs(db, jobs, now);
 }
 
 function decodeRuAnswer(out) {
@@ -63,46 +72,61 @@ function decodeRuAnswer(out) {
 
 export async function translateTitles(env, now) {
   const day = new Date(now).toISOString().slice(0, 10);
+  const db = env.NEWS_DB;
   try {
-    await env.NEWS_DB.prepare(
-      'INSERT OR IGNORE INTO news_translation_budget(day_utc,batches,estimated_neurons,updated_ms) VALUES(?,0,0,?)',
-    )
+    await db
+      .prepare(
+        'INSERT OR IGNORE INTO news_translation_budget(day_utc,batches,estimated_neurons,updated_ms) VALUES(?,0,0,?)',
+      )
       .bind(day, now)
       .run();
-    const budget = await env.NEWS_DB.prepare(
-      'SELECT batches,estimated_neurons FROM news_translation_budget WHERE day_utc=?',
-    )
+    const budget = await db
+      .prepare('SELECT batches,estimated_neurons FROM news_translation_budget WHERE day_utc=?')
       .bind(day)
       .first();
     if ((budget?.batches || 0) >= RU_DAILY_BATCHES || (budget?.estimated_neurons || 0) >= RU_DAILY_NEURONS)
       return { translated: 0, summaries: 0, budget: 'limit' };
-    await ensureRuAttempts(env.NEWS_DB);
-    const query =
-      'SELECT n.id,n.headline,n.summary,n.headline_ru,n.discovered_ms FROM news_items n WHERE ((n.priority>=7 AND n.published_ms>?) OR n.id IN (SELECT g.representative_id FROM news_event_groups g WHERE g.priority>=4 AND g.last_seen_ms>?)) AND (n.headline_ru IS NULL OR (n.summary_ru IS NULL AND length(n.summary)>10)) AND n.id NOT IN (SELECT a.item_id FROM news_ru_attempts a WHERE a.day_utc=? AND a.model=?) ORDER BY n.published_ms DESC LIMIT 60';
-    const rows =
+    await enqueueRuTitles(db, now);
+    const due = await dueJobs(db, 'ru', now, RU_BATCH * 2, { allowNormal: await normalAllowed(db, now) });
+    if (!due.length) return { translated: 0, summaries: 0 };
+    // Current rows: the Helsinki mirror or a source edit may have changed them.
+    const current = new Map(
       (
-        await env.NEWS_DB.prepare(query)
-          .bind(now - 36 * 3600000, now - 36 * 3600000, day, RU_CHAIN)
-          .all()
-      ).results || [];
-    const pending = rows
-      .filter(
-        x =>
-          !/sponsored content|winner cup|euroleague|fashion week|maccabi wins|hapoel tel aviv set to secure/i.test(
-            x.headline,
-          ),
-      )
-      // B5: urgent > important > normal, newest first within a tier (stable sort).
-      .map(x => ({ ...x, tier: newsTier(x).tier }))
-      .sort((a, b) => TIER_RANK[a.tier] - TIER_RANK[b.tier])
-      .slice(0, 5);
+        (
+          await db
+            .prepare(
+              'SELECT id,headline,summary,headline_ru,summary_ru,discovered_ms FROM news_items WHERE id IN (' +
+                due.map(() => '?').join(',') +
+                ')',
+            )
+            .bind(...due.map(j => j.id))
+            .all()
+        ).results || []
+      ).map(r => [r.id, r]),
+    );
+    const pending = [];
+    for (const job of due) {
+      const row = current.get(job.id);
+      if (!row || !needsRu(row)) {
+        await settleJob(db, job, 'done', { reason: row ? 'already_translated' : 'item_gone' }, now);
+        continue;
+      }
+      const hash = await ruHash(row);
+      if (hash !== job.sourceHash) {
+        // The source text changed after the job was queued: restart it.
+        await enqueueJobs(db, [{ ...job, sourceHash: hash, discoveredMs: row.discovered_ms }], now);
+        continue;
+      }
+      if (pending.length < RU_BATCH) pending.push({ ...row, job, tier: job.tier });
+    }
     if (!pending.length) return { translated: 0, summaries: 0 };
-    const claimed = await env.NEWS_DB.prepare(
-      'UPDATE news_translation_budget SET batches=batches+1,estimated_neurons=estimated_neurons+125,updated_ms=? WHERE day_utc=? AND batches<' +
-        RU_DAILY_BATCHES +
-        ' AND estimated_neurons<' +
-        RU_DAILY_NEURONS,
-    )
+    const claimed = await db
+      .prepare(
+        'UPDATE news_translation_budget SET batches=batches+1,estimated_neurons=estimated_neurons+125,updated_ms=? WHERE day_utc=? AND batches<' +
+          RU_DAILY_BATCHES +
+          ' AND estimated_neurons<' +
+          RU_DAILY_NEURONS,
+      )
       .bind(now, day)
       .run();
     if (claimed.meta?.changes !== 1) return { translated: 0, summaries: 0, budget: 'limit' };
@@ -119,8 +143,8 @@ export async function translateTitles(env, now) {
       x.length <= 550 &&
       /[А-Яа-яЁё]/.test(x) &&
       !/[<>]/.test(x);
-    // 19.11: one batch walks the provider chain; an item the gate rejects (or
-    // the model skipped) goes to the next provider in the same tick.
+    // One batch walks the provider chain; an item the gate rejects (or the
+    // model skipped) goes to the next provider in the same tick.
     for (const step of ROUTES.ru_titles) {
       if (!remaining.length) break;
       let out, map;
@@ -161,17 +185,19 @@ export async function translateTitles(env, now) {
           next.push(row);
           continue;
         }
-        const write = await env.NEWS_DB.prepare(
-          'UPDATE news_items SET headline_ru=COALESCE(headline_ru,?),summary_ru=COALESCE(summary_ru,?) WHERE id=?',
-        )
+        const write = await db
+          .prepare(
+            'UPDATE news_items SET headline_ru=COALESCE(headline_ru,?),summary_ru=COALESCE(summary_ru,?) WHERE id=?',
+          )
           .bind(title, summary, row.id)
           .run();
         if (write.meta?.changes) {
           if (title && !row.headline_ru) translated++;
           if (summary) summaries++;
         }
+        await settleJob(db, row.job, 'done', { model: out.model || null }, now);
         if (write.meta?.changes && title && !row.headline_ru)
-          await recordShown(env.NEWS_DB, {
+          await recordShown(db, {
             id: row.id,
             language: 'ru',
             tier: row.tier,
@@ -180,20 +206,28 @@ export async function translateTitles(env, now) {
       }
       remaining = next;
     }
-    if (!answered) throw lastError || Error('no_route_available');
-    for (const row of remaining) await recordRuRejection(env.NEWS_DB, row.id, day, rejected.get(row.id), now);
+    if (!answered) {
+      // Nobody answered (provider errors, pools spent): defer, no attempt counted.
+      const reason = String(lastError?.message || 'no_route_available').slice(0, 120);
+      for (const row of remaining) await settleJob(db, row.job, 'deferred', { reason }, now);
+      throw lastError || Error('no_route_available');
+    }
+    for (const row of remaining)
+      await settleJob(db, row.job, 'rejected', { reason: rejected.get(row.id) }, now);
     // The batch reserved 125 estimated neurons; settle with what Workers AI
     // really spent (Gemini spends none).
-    await env.NEWS_DB.prepare(
-      'UPDATE news_translation_budget SET estimated_neurons=MAX(0,estimated_neurons+?),updated_ms=? WHERE day_utc=?',
-    )
+    await db
+      .prepare(
+        'UPDATE news_translation_budget SET estimated_neurons=MAX(0,estimated_neurons+?),updated_ms=? WHERE day_utc=?',
+      )
       .bind(neurons - 125, Date.now(), day)
       .run();
     return { translated, summaries, neurons };
   } catch (e) {
-    await env.NEWS_DB.prepare(
-      "INSERT INTO editor_state(key,value,updated_ms) VALUES('last_translation_error',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_ms=excluded.updated_ms",
-    )
+    await db
+      .prepare(
+        "INSERT INTO editor_state(key,value,updated_ms) VALUES('last_translation_error',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_ms=excluded.updated_ms",
+      )
       .bind(String(e).slice(0, 380), Date.now())
       .run();
     return { translated: 0, summaries: 0, error: true };

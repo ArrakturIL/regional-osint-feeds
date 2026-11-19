@@ -111,7 +111,11 @@ export async function opsFromD1(request, env, now = Date.now()) {
       'SELECT error,count(*) n FROM regional_i18n_attempts WHERE day_utc=? AND error IS NOT NULL GROUP BY error ORDER BY n DESC LIMIT 8',
       day,
     ),
-    one(news, 'SELECT count(*) n FROM news_ru_attempts WHERE day_utc=?', day),
+    // B10: one job queue for RU and HE (translations/jobs.mjs in Editor).
+    rows(
+      news,
+      "SELECT language,state,tier,count(*) n,min(created_ms) oldest_ms FROM translation_jobs WHERE state<>'done' GROUP BY language,state,tier",
+    ),
     one(
       news,
       'SELECT count(*) n FROM news_items WHERE discovered_ms>? AND priority>=7 AND headline_ru IS NULL',
@@ -147,7 +151,7 @@ export async function opsFromD1(request, env, now = Date.now()) {
     translations: {
       sla: sla ? { ...parse(sla.value), updated_ms: sla.updated_ms } : null,
       ru_last_error: ruError,
-      ru_rejected_today: ruRejected?.n ?? null,
+      queue: ruRejected,
       ru_missing_24h_priority7: ruPending?.n ?? null,
       he_errors_today: heErrors,
       gpt_translations_24h: gptToday,

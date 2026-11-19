@@ -114,7 +114,7 @@ test('ARCH-03 active Editor 45-module (+B1-B6 ai/glossary/verify/display-policy/
  const audit=auditActiveArchitecture(root);
  const active=audit.graph.components.find(c=>c.owner==='editor');
  assert.ok(active);
- assert.equal(active.sourceModuleCount,47); // +H-04 news/source-controls, +Q1 translations/script-guard
+ assert.equal(active.sourceModuleCount,48); // +H-04 news/source-controls, +Q1 translations/script-guard, +B10 translations/jobs
  assert.deepEqual(active.unreachableModules,[]);
  assert.deepEqual(active.importedOutsideOwner,[]);
  assert.deepEqual(audit.release.editorD1,['CORE_DB','NEWS_DB']);
@@ -130,6 +130,6 @@ test('ARCH-03 active Editor 45-module (+B1-B6 ai/glossary/verify/display-policy/
   'editor-analyst-decision.test.mjs','editor-analyst-queue-runner.test.mjs',
   'editor-ai-comments.test.mjs','editor-scheduled-translations.test.mjs',
   'news-localization-provenance.test.mjs','translation-semantics.test.mjs',
-  'translation-verify.test.mjs','news-display-policy.test.mjs','news-tier-sla.test.mjs','ai-eval.test.mjs'
+  'translation-verify.test.mjs','news-display-policy.test.mjs','news-tier-sla.test.mjs','ai-eval.test.mjs','editor-translation-queue.test.mjs'
  ]) assert.ok(workflow.includes(file),'current Editor CI parity/test gate missing '+file);
 });
