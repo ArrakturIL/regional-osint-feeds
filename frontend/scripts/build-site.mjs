@@ -30,4 +30,10 @@ for(const lang of ['ru','he'])for(const page of ['home','events','data','analyst
  if(out===html||!/\?v=[0-9a-f]{12}"/.test(out))throw Error('asset version not applied: '+path);
  write(path,out);
 }
-console.log('Built standalone static Pages payload: 8 locale routes + modular frontend assets.');
+// Owner service page (/ops): one self-contained document, not part of the SPA.
+{
+ const html=readFileSync(resolve(root,'documents','ops.html'),'utf8'), out=versionDocument(html);
+ if(out===html)throw Error('asset version not applied: ops/index.html');
+ write('ops/index.html',out);
+}
+console.log('Built standalone static Pages payload: 8 locale routes + /ops + modular frontend assets.');

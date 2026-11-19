@@ -2,6 +2,7 @@ import { ownership } from './routes.js';
 import { overviewFromD1 } from './api/overview.js';
 import { dataFromD1 } from './api/data.js';
 import { monitorPublic } from './api/monitor-public.js';
+import { opsFromD1 } from './api/ops.js';
 // Self-contained Cloudflare Pages advanced-mode Worker.
 const jsonError = (error, status) =>
   Response.json(
@@ -55,6 +56,7 @@ export async function handlePages(request, env) {
       if (Object.hasOwn(alias, route.upstream)) return await editor(request, env, alias[route.upstream]);
       if (route.upstream === '/api/overview') return Response.json(await overviewFromD1(env));
       if (route.upstream === '/api/data') return Response.json(await dataFromD1(env));
+      if (route.upstream === '/api/ops') return await opsFromD1(request, env);
     }
     if (path.startsWith('/api/') || path === '/summary') return jsonError('not_found', 404);
     return await assets(request, env);

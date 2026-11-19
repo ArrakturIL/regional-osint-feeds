@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ownership,PAGE_PATHS,EDITOR_ENDPOINTS,LOCAL_ENDPOINTS,MONITOR_ENDPOINTS} from '../../backend/pages/src/routes.js';
-test('all eight Pages routes use immutable local HTML assets',()=>{
- assert.equal(Object.keys(PAGE_PATHS).length,8);
+test('all nine Pages routes (8 locale + /ops) use immutable local HTML assets',()=>{
+ assert.equal(Object.keys(PAGE_PATHS).length,9);
  for(const [route,asset] of Object.entries(PAGE_PATHS)){
   assert.deepEqual(ownership(route),{kind:'html',asset:'/'+asset});
   if(route!=='/')assert.deepEqual(ownership(route+'/'),{kind:'html',asset:'/'+asset});

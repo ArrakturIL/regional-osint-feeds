@@ -16,6 +16,7 @@ export const LOCAL_ENDPOINTS = Object.freeze([
   '/api/data',
   '/api/rw-localized/analysts',
   '/api/rw-localized/profiles',
+  '/api/ops',
 ]);
 export const MONITOR_ENDPOINTS = Object.freeze({
   '/api/rw/aviation': { upstream: '/api/aviation-analysis', lang: 'ru' },
@@ -34,6 +35,7 @@ export const PAGE_PATHS = Object.freeze({
   '/he/data': 'he/data/index.html',
   '/analysts': 'analysts/index.html',
   '/he/analysts': 'he/analysts/index.html',
+  '/ops': 'ops/index.html',
 });
 const normalize = path => (path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path);
 export function ownership(pathname) {
