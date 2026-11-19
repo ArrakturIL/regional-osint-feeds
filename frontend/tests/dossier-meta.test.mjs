@@ -67,14 +67,32 @@ test('StoryDossier on live-shaped data: inflected counters, no "0 related", form
 });
 
 // #14: the dossier status badge must match what the dossier actually has.
-test('dossier status follows the number of first-hand sources, RU and HE', async () => {
-  const { dossierStatus } = await import('../src/utils/dossierMeta.js');
-  assert.deepEqual(dossierStatus(0, false), { level: 'none', text: 'Нет проверяемого первоисточника' });
-  assert.deepEqual(dossierStatus(1, false), { level: 'single', text: 'Один источник — без независимого подтверждения' });
-  assert.deepEqual(dossierStatus(4, false), {
-    level: 'multi',
-    text: 'Несколько источников — это не независимая проверка каждого утверждения',
-  });
-  for (const n of [0, 1, 4]) assert.doesNotMatch(dossierStatus(n, true).text, /[Ѐ-ӿ]/);
-  assert.equal(dossierStatus(undefined, false).level, 'none');
+test('19.11: the dossier badge says who says it, not what was not checked', async () => {
+  const { sourceAttribution } = await import('../src/utils/dossierMeta.js');
+  // IDF statement about its own meeting — official, no warning (owner screenshot).
+  assert.deepEqual(sourceAttribution([{ url: 'https://www.idf.il/en/articles/2026/x' }], false),
+    { level: 'official', warn: false, text: 'Официальное заявление: ЦАХАЛ' });
+  // Treasury designation + OFAC page — one official publisher, deduplicated.
+  assert.equal(sourceAttribution(['https://home.treasury.gov/news/press-releases/sb0692/', 'https://ofac.treasury.gov/recent-actions/20261118'], false).text,
+    'Официальное заявление: Минфин США');
+  // A single newspaper.
+  assert.deepEqual(sourceAttribution([{ url: 'https://www.timesofisrael.com/liveblog-1/' }], false),
+    { level: 'single', warn: false, text: 'Сообщение: timesofisrael.com' });
+  // The monitor may name the speaker: IDF statement carried by Times of Israel.
+  assert.equal(sourceAttribution([{ url: 'https://www.timesofisrael.com/x', kind: 'official', publisher: 'ЦАХАЛ' }], false).text,
+    'Официальное заявление: ЦАХАЛ');
+  // One side about another — the only warning.
+  const claim = sourceAttribution([{ url: 'https://www.tasnimnews.com/x', kind: 'party_claim', publisher: 'КСИР' }, 'https://www.reuters.com/x'], false);
+  assert.equal(claim.level, 'claim'); assert.equal(claim.warn, true); assert.equal(claim.text, 'Заявление стороны: КСИР');
+  // Several outlets.
+  assert.equal(sourceAttribution(['https://www.reuters.com/a', 'https://apnews.com/b', 'https://home.treasury.gov/c'], false).text,
+    'Источники: reuters.com, apnews.com, Минфин США');
+  assert.deepEqual(sourceAttribution([], false), { level: 'none', warn: true, text: 'Источник не указан' });
+  for (const x of [[], ['https://www.idf.il/a'], ['https://www.reuters.com/a', 'https://apnews.com/b']])
+    assert.doesNotMatch(sourceAttribution(x, true).text, /[Ѐ-ӿ]/);
+  // No leftover "not confirmed" boilerplate anywhere in the site sources.
+  const {readFileSync, readdirSync, statSync} = await import('node:fs');
+  const walk = d => readdirSync(d).flatMap(f => statSync(d + '/' + f).isDirectory() ? (f === 'legacy' ? [] : walk(d + '/' + f)) : [d + '/' + f]);
+  for (const f of walk(new URL('../src', import.meta.url).pathname).filter(f => f.endsWith('.js') && !f.endsWith('/utils/unknowns.js')))  // unknowns.js filters such placeholders out
+    assert.doesNotMatch(readFileSync(f, 'utf8'), /без независимого подтверждения|не независимое подтверждение|Статус подтверждения|не подтверждает (?:событие|факт)|ללא אימות עצמאי|אינו אימות עצמאי/, f);
 });

@@ -35,8 +35,6 @@
     "components/Navigation/GoLink.js",
     "components/Digest/Digest.js",
     "utils/editorialPending.js",
-    "utils/evidence.js",
-    "utils/uncertainty.js",
     "components/StoryTeaser/StoryTeaser.js",
     "pages/Home/Home.js",
     "api/normalizeNewsArticle.js",

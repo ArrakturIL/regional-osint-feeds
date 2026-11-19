@@ -40,20 +40,72 @@ export function originalLanguageNote(lang, he) {
   return (name ? 'Оригинал на ' + name : 'Оригинал на другом языке') + ' · перевод ожидается';
 }
 
-// #14: the badge says what the dossier actually has, instead of one text for all.
-export function dossierStatus(count, he) {
-  const n = Math.max(0, Math.trunc(Number(count) || 0));
-  if (n === 0)
-    return { level: 'none', text: he ? 'אין מקור ראשוני שניתן לבדוק' : 'Нет проверяемого первоисточника' };
-  if (n === 1)
+// 19.11 (owner): say who says it, not what we did not check. The old badges
+// counted links ("one source — no independent confirmation") and called an
+// IDF statement about its own meeting unconfirmed. Kinds: 'official' (the
+// actor's own channel), 'party_claim' (one side about another — the only
+// warning), 'media'. The monitor may set source.kind/publisher; otherwise
+// official channels are known by domain.
+const OFFICIAL_SOURCES = [
+  [/(^|\.)idf\.il$/, 'ЦАХАЛ', 'צה״ל'],
+  [/(^|\.)centcom\.mil$/, 'CENTCOM', 'CENTCOM'],
+  [/(^|\.)(defense|war)\.gov$/, 'Пентагон', 'הפנטגון'],
+  [/(^|\.)treasury\.gov$/, 'Минфин США', 'משרד האוצר האמריקאי'],
+  [/(^|\.)state\.gov$/, 'Госдеп США', 'מחלקת המדינה האמריקאית'],
+  [/(^|\.)whitehouse\.gov$/, 'Белый дом', 'הבית הלבן'],
+  [/(^|\.)justice\.gov$/, 'Минюст США', 'משרד המשפטים האמריקאי'],
+  [/(^|\.)dni\.gov$/, 'Разведсообщество США', 'קהילת המודיעין האמריקאית'],
+  [/(^|\.)gov\.il$/, 'Правительство Израиля', 'ממשלת ישראל'],
+  [/(^|\.)gov\.uk$/, 'Правительство Великобритании', 'ממשלת בריטניה'],
+  [/(^|\.)un\.org$/, 'ООН', 'האו״ם'],
+  [/(^|\.)iaea\.org$/, 'МАГАТЭ', 'סבא״א'],
+  [/(^|\.)ukmto\.org$/, 'UKMTO', 'UKMTO'],
+  [/(^|\.)easa\.europa\.eu$/, 'EASA', 'EASA'],
+  [/\.mil$/, 'Вооружённые силы США', 'צבא ארה״ב'],
+];
+function hostOf(url) {
+  try {
+    return new URL(url).hostname.toLowerCase().replace(/^www\./, '');
+  } catch {
+    return '';
+  }
+}
+export function sourceIdentity(source, he) {
+  const s = typeof source === 'string' ? { url: source } : source || {};
+  const host = hostOf(s.url || s.source_url || s.link);
+  const official = OFFICIAL_SOURCES.find(([re]) => re.test(host));
+  const named = typeof s.publisher === 'string' && s.publisher.trim() ? s.publisher.trim() : null;
+  const kind = ['official', 'party_claim', 'media'].includes(s.kind)
+    ? s.kind
+    : official
+      ? 'official'
+      : 'media';
+  const name = (named || (official ? official[he ? 2 : 1] : host) || '').slice(0, 60);
+  return { kind, name };
+}
+export function sourceAttribution(sources, he) {
+  const list = (Array.isArray(sources) ? sources : []).map(x => sourceIdentity(x, he)).filter(x => x.name);
+  const names = kind => [...new Set(list.filter(x => !kind || x.kind === kind).map(x => x.name))];
+  const join = arr => (arr.length > 3 ? arr.slice(0, 3).join(', ') + ' …' : arr.join(', '));
+  if (!list.length) return { level: 'none', warn: true, text: he ? 'לא צוין מקור' : 'Источник не указан' };
+  const claims = names('party_claim');
+  if (claims.length)
     return {
-      level: 'single',
-      text: he ? 'מקור יחיד — ללא אימות עצמאי' : 'Один источник — без независимого подтверждения',
+      level: 'claim',
+      warn: true,
+      text: (he ? 'טענת צד: ' : 'Заявление стороны: ') + join(claims),
+    };
+  const all = names(),
+    official = names('official');
+  if (official.length === all.length)
+    return {
+      level: 'official',
+      warn: false,
+      text: (he ? 'הודעה רשמית: ' : 'Официальное заявление: ') + join(all),
     };
   return {
-    level: 'multi',
-    text: he
-      ? 'כמה מקורות — אין זה אימות עצמאי של כל טענה'
-      : 'Несколько источников — это не независимая проверка каждого утверждения',
+    level: all.length > 1 ? 'multi' : 'single',
+    warn: false,
+    text: (all.length > 1 ? (he ? 'מקורות: ' : 'Источники: ') : he ? 'דיווח: ' : 'Сообщение: ') + join(all),
   };
 }

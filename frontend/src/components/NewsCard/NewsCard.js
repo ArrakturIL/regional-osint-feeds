@@ -1,6 +1,15 @@
 import { ruPlural } from '../../utils/ruPlural.js';
 import { UI_HE, fmtTime, h, safeLink, t } from '../../app/runtime.js';
 import { External } from '../External/External.js';
+function reportingOutlets(item) {
+  return [
+    ...new Set(
+      [item.source, ...(Array.isArray(item.related) ? item.related.map(r => r.title || r.source) : [])]
+        .map(x => String(x || '').trim())
+        .filter(Boolean),
+    ),
+  ].slice(0, 4);
+}
 export function NewsCard({ item, open, onToggle, read, markRead }) {
   const id = item.id || item.url || item.title;
   const related = Array.isArray(item.related)
@@ -69,17 +78,13 @@ export function NewsCard({ item, open, onToggle, read, markRead }) {
           t('p', null, item.comment),
         )
       : null,
-    item.verification_status
+    // 19.11: who reports it, not what was not checked; one outlet is already
+    // named on the card, so the line appears only for several outlets.
+    reportingOutlets(item).length > 1
       ? h(
           'p',
           { className: 'rw-reporting-origin' },
-          item.verification_status === 'multi_outlet_reporting'
-            ? UI_HE
-              ? 'סוקר בכמה כלי תקשורת — לא אימות עצמאי של האירוע'
-              : 'Освещалось несколькими редакциями — не независимое подтверждение фактов'
-            : UI_HE
-              ? 'קו דיווח אחד — ללא אימות עצמאי'
-              : 'Одна цепочка сообщений — без независимого подтверждения',
+          (UI_HE ? 'מדווחים: ' : 'Сообщают: ') + reportingOutlets(item).join(', '),
         )
       : null,
     h(
@@ -154,8 +159,8 @@ export function NewsCard({ item, open, onToggle, read, markRead }) {
             'small',
             'hint',
             UI_HE
-              ? 'תקציר מקור, ולא אימות מלא של כל טענה.'
-              : 'Краткий перевод RSS-аннотации, а не полный проверенный текст статьи.',
+              ? 'תקציר מתוך ה-RSS. הכתבה המלאה — בקישור.'
+              : 'Краткая аннотация из RSS. Полный текст — по ссылке.',
           ),
         )
       : null,

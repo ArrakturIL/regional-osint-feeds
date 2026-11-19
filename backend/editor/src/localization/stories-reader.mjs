@@ -25,10 +25,16 @@ export function storyProvenance(data) {
   };
   const sources = [];
   const seen = new Set();
-  const add = (url, type) => {
+  // 19.11: kind (official | party_claim | media) and publisher, when the
+  // monitor writes them, let the site say who said it.
+  const add = (url, type, meta = {}) => {
     const safe = validUrl(url);
     if (safe && !seen.has(safe)) {
-      sources.push({ url: safe, type: typeof type === 'string' ? type.slice(0, 100) : 'source' });
+      const entry = { url: safe, type: typeof type === 'string' ? type.slice(0, 100) : 'source' };
+      if (['official', 'party_claim', 'media'].includes(meta.kind)) entry.kind = meta.kind;
+      if (typeof meta.publisher === 'string' && meta.publisher.trim())
+        entry.publisher = meta.publisher.trim().slice(0, 80);
+      sources.push(entry);
       seen.add(safe);
     }
   };
@@ -41,7 +47,7 @@ export function storyProvenance(data) {
     else if (Array.isArray(value))
       for (const item of value) {
         if (typeof item === 'string') add(item, type);
-        else if (item && typeof item === 'object') add(item.url, item.type || type);
+        else if (item && typeof item === 'object') add(item.url, item.type || type, item);
       }
     else if (value && typeof value === 'object') add(value.url, type);
   };
