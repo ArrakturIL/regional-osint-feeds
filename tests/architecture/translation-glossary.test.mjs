@@ -1,7 +1,7 @@
 // B3: one entity glossary replaces hand-written per-name regex rules.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {ENTITIES, entityIssue} from '../../backend/editor/src/translations/glossary.mjs';
+import {ENTITIES, entityIssue, wikidataEntityIssue} from '../../backend/editor/src/translations/glossary.mjs';
 import {factualTranslationIssue} from '../../backend/editor/src/translations/fact-guard.mjs';
 
 const o = title => ({title, body: '', comment: ''});
@@ -11,7 +11,7 @@ test('every glossary entity has a stable code, a source form and a Hebrew target
   for (const e of ENTITIES) {
     assert.match(e.code, /^[a-z0-9_]+$/, e.id);
     assert.ok(!codes.has(e.code), 'duplicate code ' + e.code); codes.add(e.code);
-    assert.ok(e.source instanceof RegExp && e.he instanceof RegExp, e.id);
+    assert.ok(typeof e.source?.test === 'function' && typeof e.he?.test === 'function', e.id);
   }
   // Legacy codes stay stable: D1 attempt history and tests refer to them.
   for (const c of ['irgc_actor_missing', 'katz_name_corrupted', 'allies_relation_changed', 'idf_actor_missing',
@@ -61,4 +61,24 @@ test('West Bank is not "western bank" (live Helsinki error 17.11)', () => {
   assert.equal(entityIssue(src, 'משטרת הגבול עצרה חשודים בפשיטת בנק מערבי בלילה'), 'west_bank_name_missing');
   assert.equal(entityIssue(src, 'משטרת הגבול עצרה חשודים בפשיטה לילית בגדה המערבית'), null);
   assert.equal(entityIssue(src, 'Пограничная полиция задержала подозреваемых на Западном берегу'), null);
+});
+
+// B11 part 1: entities from Wikidata (glossary-wikidata.mjs).
+test('Wikidata entities: a swapped country, a dropped participant and a lost name are caught', () => {
+  assert.equal(wikidataEntityIssue('Iran fires missiles at Jordan', 'איראן שיגרה טילים לעבר ישראל', 'he'), 'jordan_name_missing');
+  assert.equal(wikidataEntityIssue('x'.repeat(161) + ' Jordan', 'ישראל', 'he'), null, 'long bodies are not checked against Wikidata names');
+  assert.equal(wikidataEntityIssue('Trump meets Erdoğan in Ankara', 'Трамп встретился в Анкаре', 'ru'), 'erdogan_name_missing');
+  assert.equal(wikidataEntityIssue('IAEA inspectors return to Natanz', 'פקחי סבא"א חוזרים למתקן', 'he'), 'natanz_name_missing');
+});
+test('Wikidata entities: case endings, Hebrew prefixes, acronyms and Latin originals are accepted', () => {
+  assert.equal(wikidataEntityIssue('Strikes near Damascus', 'Удары под Дамаском', 'ru'), null);
+  assert.equal(wikidataEntityIssue('Rubio visits Damascus', 'רוביו ביקר בדמשק', 'he'), null);
+  assert.equal(wikidataEntityIssue('Former Mossad official warns', 'בכיר לשעבר במוסד מזהיר', 'he'), null, 'article yields to a prefix');
+  assert.equal(wikidataEntityIssue('Iran-backed militias', 'проиранские ополченцы', 'ru'), null);
+  assert.equal(wikidataEntityIssue('UNRWA staff detained', 'עובדי UNRWA נעצרו', 'he'), null);
+  assert.equal(wikidataEntityIssue('Let us talk', 'בואו נדבר', 'he'), null, 'lowercase "us" is not the US');
+  assert.equal(wikidataEntityIssue('Iranian officials said', 'גורמים איראניים אמרו', 'he'), null, 'an adjective does not demand the noun');
+  assert.equal(wikidataEntityIssue('Kuwait faces new Iran attacks', 'כוויית מתמודדת עם מתקפות איראניות', 'he'), null, 'final nun turns regular');
+  assert.equal(wikidataEntityIssue('Saudi Arabia reports attacks', 'Саудовская Аравия сообщила; удары по Саудовской Аравии', 'ru'), null);
+  assert.equal(wikidataEntityIssue('Israel steps up strikes in Gaza Strip', 'Израиль усиливает удары в Газе', 'ru'), null, 'proper-noun part of a multi-word name');
 });
