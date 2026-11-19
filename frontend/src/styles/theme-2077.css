@@ -160,3 +160,7 @@ html[dir="rtl"] :is(.news-card,.rw-story-teaser,.rw-dossier,.rw-situation,.panel
   .page-intro::after{display:none}
   *{transition-duration:0s!important}
 }
+/* Owner service link (/ops): present on every page, nearly invisible. */
+.rw-site-footer{display:flex;justify-content:flex-end;padding:8px 12px 20px}
+.rw-ops-link{display:grid;place-items:center;width:44px;height:44px;color:var(--rw7-mint-dim,#4d7a63);opacity:.35;text-decoration:none;font-size:20px;transition:opacity .2s}
+.rw-ops-link:hover,.rw-ops-link:focus-visible{opacity:1}

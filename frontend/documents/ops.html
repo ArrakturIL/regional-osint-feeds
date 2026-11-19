@@ -1,0 +1,176 @@
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#050b09"><title>Пульт · REGIONAL WATCH</title><link rel="stylesheet" href="/assets/app.css?v=rw-ops">
+<style>
+:root{--bg:#050b09;--panel:#08130f;--panel2:#0b1813;--line:#1f4031;--line2:#2b5642;--mint:#9ff5c6;--mint2:#4d7a63;--text:#e9fbf1;--text2:#c4e0d0;--text3:#8fb8a2;--bad:#f3a59b;--warn:#efd09a;--mono:"JetBrains Mono",ui-monospace,monospace;--body:"Manrope",system-ui,sans-serif;--display:"Unbounded","Manrope",system-ui,sans-serif}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 var(--body)}
+body{background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:56px 56px;background-attachment:fixed}
+body::before{content:"";position:fixed;inset:0;background:radial-gradient(ellipse at top,rgba(5,11,9,.4),var(--bg) 70%);pointer-events:none;z-index:0}
+.wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:20px 16px 64px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+h1{font:600 22px/1.2 var(--display);margin:0;letter-spacing:.02em}h1 small{display:block;font:500 12px var(--mono);color:var(--text3);letter-spacing:.08em;margin-top:6px}
+h2{font:600 15px/1.3 var(--display);margin:0 0 4px;letter-spacing:.03em}
+.radar{width:40px;height:40px;border-radius:50%;border:1px solid var(--line2);position:relative;overflow:hidden;flex:none}
+.radar::after{content:"";position:absolute;inset:0;background:conic-gradient(from 0deg,rgba(159,245,198,.55),transparent 25%);animation:spin 3s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.brand{display:flex;gap:12px;align-items:center}
+.btn{font:600 13px var(--mono);color:var(--bg);background:var(--mint);border:0;padding:0 16px;min-height:44px;cursor:pointer;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.btn.ghost{background:transparent;color:var(--mint);border:1px solid var(--line2)}
+.meta{font:12px var(--mono);color:var(--text3)}
+.grid{display:grid;gap:14px}.g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}.g5{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);padding:16px;position:relative;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%)}
+.card>.explain{margin:6px 0 12px;color:var(--text3);font-size:13.5px}
+details.help{margin:4px 0 10px}details.help summary{cursor:pointer;color:var(--mint);font:12px var(--mono);list-style:none;min-height:28px}
+details.help summary::before{content:"? "}details.help p{margin:6px 0;color:var(--text2);font-size:13.5px}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.pill{border:1px solid var(--line);background:var(--panel);padding:12px;display:flex;gap:10px;align-items:center;min-height:64px}
+.dot{width:12px;height:12px;border-radius:50%;flex:none;background:var(--mint);box-shadow:0 0 0 0 rgba(159,245,198,.6);animation:pulse 2.4s infinite}
+.dot.warn{background:var(--warn);box-shadow:0 0 0 0 rgba(239,208,154,.6)}.dot.bad{background:var(--bad);box-shadow:0 0 0 0 rgba(243,165,155,.6)}.dot.off{background:var(--mint2);animation:none}
+@keyframes pulse{70%{box-shadow:0 0 0 9px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.pill b{display:block;font:600 18px var(--display)}.pill span{font-size:12.5px;color:var(--text3)}
+.ring{--p:0;--c:var(--mint);width:118px;height:118px;border-radius:50%;margin:6px auto 8px;display:grid;place-items:center;background:conic-gradient(var(--c) calc(var(--p)*1%),var(--line) 0);transition:--p .8s}
+.ring>div{width:92px;height:92px;border-radius:50%;background:var(--panel);display:grid;place-items:center;text-align:center}
+.ring b{font:600 20px var(--display)}.ring small{display:block;font:9.5px var(--mono);color:var(--text3);max-width:84px;margin:0 auto;line-height:1.25}
+.quota h3{font:600 13px var(--display);margin:0;text-align:center}.quota p{margin:4px 0 0;font-size:12.5px;color:var(--text3);text-align:center}
+table{width:100%;border-collapse:collapse;font-size:13.5px}.tw{overflow-x:auto;max-width:100%}.card{min-width:0}.kv dd{min-width:0;overflow-wrap:anywhere}th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 11px var(--mono);color:var(--text3);letter-spacing:.05em;text-transform:uppercase}
+td.num{font-family:var(--mono);white-space:nowrap}
+.row{display:flex;gap:10px;align-items:center;padding:9px 4px;border-bottom:1px solid var(--line);cursor:pointer;min-height:44px}
+.row:hover{background:var(--panel2)}.row .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .age{font:12px var(--mono);color:var(--text3);white-space:nowrap}
+.bar{height:6px;background:var(--line);margin-top:4px;position:relative;overflow:hidden}.bar i{position:absolute;inset:0 auto 0 0;background:var(--mint)}
+.detail{display:none;padding:8px 26px 12px;color:var(--text2);font-size:13px;border-bottom:1px solid var(--line);word-break:break-word}.detail.open{display:block}
+.tag{font:11px var(--mono);padding:2px 7px;border:1px solid var(--line2);color:var(--text2);white-space:nowrap}
+.tag.ok{color:var(--mint);border-color:var(--mint2)}.tag.warn{color:var(--warn);border-color:#99734e}.tag.bad{color:var(--bad);border-color:#a0574e}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 8px}.filters button{font:12px var(--mono);background:transparent;color:var(--text2);border:1px solid var(--line2);min-height:36px;padding:0 10px;cursor:pointer}
+.filters button[aria-pressed=true]{background:var(--mint);color:var(--bg);border-color:var(--mint)}
+.login{max-width:380px;margin:12vh auto}.login label{display:block;font:12px var(--mono);color:var(--text3);margin:12px 0 4px}
+.login input{width:100%;min-height:44px;background:var(--panel);border:1px solid var(--line2);color:var(--text);font:16px var(--body);padding:0 12px}
+.err{color:var(--bad);font-size:13px;min-height:20px;margin-top:8px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13.5px}.kv dt{color:var(--text3)}.kv dd{margin:0}
+@media (prefers-reduced-motion:reduce){.radar::after,.dot{animation:none}}
+</style></head><body><div class="wrap" id="app"></div>
+<script>
+(()=>{
+const $=s=>document.querySelector(s), app=$('#app');
+const KEY='rw-ops-auth';
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=n=>n==null?'—':Number(n).toLocaleString('ru-RU',{maximumFractionDigits:0});
+const ms=v=>{if(v==null||v==='')return null;if(typeof v==='number')return v<1e12?v*1000:v;const t=Date.parse(v);return isNaN(t)?null:t};
+const ago=v=>{const t=ms(v);if(!t)return 'никогда';const m=Math.round((Date.now()-t)/60000);if(m<1)return 'только что';if(m<60)return m+' мин назад';const h=Math.floor(m/60);if(h<48)return h+' ч '+(m%60)+' мин назад';return Math.floor(h/24)+' дн назад'};
+const help=(t,...ps)=>`<details class="help"><summary>${esc(t)}</summary>${ps.map(p=>`<p>${p}</p>`).join('')}</details>`;
+const RESET='Счётчик обнуляется в 02:00 по Израилю (полночь UTC).';
+
+function login(msg=''){
+ app.innerHTML=`<form class="login card" id="f"><div class="brand"><div class="radar"></div><h1>Пульт<small>служебная страница</small></h1></div>
+ <label for="u">Логин</label><input id="u" autocomplete="username" required>
+ <label for="p">Пароль</label><input id="p" type="password" autocomplete="current-password" required>
+ <div class="err" role="alert">${esc(msg)}</div><button class="btn" style="width:100%;margin-top:6px">Войти</button></form>`;
+ $('#f').onsubmit=e=>{e.preventDefault();sessionStorage.setItem(KEY,btoa(unescape(encodeURIComponent($('#u').value+':'+$('#p').value))));load()};
+ $('#u').focus();
+}
+let timer=null, srcFilter='all';
+async function load(){
+ const auth=sessionStorage.getItem(KEY); if(!auth)return login();
+ let r; try{r=await fetch('/api/ops',{headers:{Authorization:'Basic '+auth},cache:'no-store'})}catch{return render(null,'Сеть недоступна — повторю через минуту.')}
+ if(r.status===401){sessionStorage.removeItem(KEY);return login('Неверный логин или пароль.')}
+ if(!r.ok)return render(null,'Сервер ответил '+r.status+' — повторю через минуту.');
+ render(await r.json());
+}
+function ring(title,used,limit,desc,unit=''){
+ const p=limit?Math.min(100,Math.round((used||0)/limit*100)):0, c=p>=90?'var(--bad)':p>=70?'var(--warn)':'var(--mint)';
+ return `<div class="card quota"><h3>${esc(title)}</h3><div class="ring" style="--p:${p};--c:${c}"><div><span><b>${p}%</b><small>${fmt(used)} / ${fmt(limit)}${unit}</small></span></div></div><p>${desc}</p></div>`;
+}
+const stateTag=s=>{const k=/^(ok)$/.test(s)?'ok':/partial|stale|degraded/.test(s)?'warn':'bad';return `<span class="tag ${k}">${esc(s||'—')}</span>`};
+const COLLECTOR_MIN={analysts:15,centcom:15,gdelt:60,translation:120,shadow:120,copernicus:360,marad:360,unosat:720,satellite:1440};
+const expectMin=k=>{for(const[n,m]of Object.entries(COLLECTOR_MIN))if(String(k).includes(n))return m;return 120};
+
+function render(d,error){
+ if(!d){app.innerHTML=`<div class="card"><h2>Пульт</h2><p class="err">${esc(error)}</p></div>`;return}
+ const q=d.quotas||{}, L=d.limits||{}, t=d.translations||{}, sla=t.sla?.languages||{};
+ const gem=(q.providers||[]).find(x=>/gemini/.test(x.provider_model));
+ const srcs=d.sources||[], ok=srcs.filter(s=>s.state==='ok').length, part=srcs.filter(s=>s.state==='partial').length;
+ const cols=(d.collectors||[]).map(c=>({...c,age:(Date.now()-c.checked_at_ms)/60000,exp:expectMin(c.source_key)}));
+ const late=cols.filter(c=>c.age>2*c.exp);
+ const ruWait=(sla.ru?.urgent?.waiting||0)+(sla.ru?.important?.waiting||0), ruOver=(sla.ru?.urgent?.overdue||0)+(sla.ru?.important?.overdue||0);
+ const pool=q.pool?.neurons||0, poolP=Math.round(pool/(L.aiPool||1)*100);
+ const gpt=d.gpt||{}, gptAge=ms(gpt.last_monitor_run?.recorded_at_ms);
+ const lvl=(bad,warn)=>bad?'bad':warn?'warn':'';
+ const pills=[
+  [lvl(ok+part<srcs.length*0.6,ok+part<srcs.length),ok+part+' / '+srcs.length,'источников живы'],
+  [lvl(late.length>2,late.length>0),late.length?late.length+' отстают':'все в срок','сборщики GitHub'],
+  [lvl(ruOver>2,ruOver>0),ruOver?ruOver+' просрочено':'в срок','переводы RU (срочн./важн.)'],
+  [lvl(poolP>=95,poolP>=75),poolP+'%','пул нейронов AI'],
+  [lvl(!gptAge||Date.now()-gptAge>3*3600e3,Date.now()-gptAge>90*60e3),ago(gptAge),'GPT-монитор писал'],
+ ].map(([k,b,s])=>`<div class="pill"><span class="dot ${k}"></span><div><b>${esc(b)}</b><span>${esc(s)}</span></div></div>`).join('');
+
+ const slaRows=['ru','he'].flatMap(l=>['urgent','important','normal'].map(tier=>{const x=sla[l]?.[tier]||{};const p=x.translated?Math.round((x.within_sla||0)/x.translated*100):null;
+  return `<tr><td>${l==='ru'?'Русский':'Иврит'}</td><td>${{urgent:'срочно',important:'важно',normal:'обычно'}[tier]}</td><td class="num">${fmt(x.translated)}</td><td class="num">${p==null?'—':p+'%'}</td><td class="num">${fmt(x.p50_min)} / ${fmt(x.p90_min)} мин</td><td class="num">${fmt(x.waiting)} / ${x.overdue?`<span style="color:var(--bad)">${x.overdue}</span>`:'0'}</td></tr>`}));
+
+ const shown=srcs.filter(s=>srcFilter==='all'||(srcFilter==='problem'?s.state!=='ok':s.state==='ok'));
+ const srcRows=shown.map((s,i)=>`<div class="row" data-i="${i}" role="button" tabindex="0" aria-expanded="false"><span class="dot ${s.state==='ok'?'':s.state==='partial'?'warn':'bad'}"></span><span class="name">${esc(s.source)}</span>${stateTag(s.state)}<span class="age">✓ ${esc(ago(s.succeeded_at))}</span></div><div class="detail" id="sd${i}">Последняя попытка: ${esc(ago(s.attempted_at))}. Последний успех: ${esc(ago(s.succeeded_at))}.<br>${esc(s.detail||'Без подробностей.')}</div>`).join('');
+
+ const colRows=cols.map(c=>{const r=Math.min(100,c.age/(2*c.exp)*100), k=c.age>2*c.exp?'bad':c.age>c.exp*1.2?'warn':'';
+  return `<div style="padding:8px 4px;border-bottom:1px solid var(--line)"><div style="display:flex;gap:10px;align-items:center"><span class="dot ${k}"></span><span class="name" style="flex:1">${esc(c.source_key)}</span><span class="age">${esc(ago(c.checked_at_ms))} · норма ≤ ${c.exp<60?c.exp+' мин':c.exp/60+' ч'}</span></div><div class="bar"><i style="width:${r}%;background:${k==='bad'?'var(--bad)':k==='warn'?'var(--warn)':'var(--mint)'}"></i></div></div>`}).join('');
+
+ const an=d.analysts||{}, st=an.stats||{};
+ const heErr=(t.he_errors_today||[]).map(e=>`<tr><td>${esc(e.error)}</td><td class="num">${e.n}</td></tr>`).join('')||'<tr><td colspan="2">Ошибок сегодня нет.</td></tr>';
+ const gptTr=(t.gpt_translations_24h||[]).map(x=>`${esc(x.model)}: ${x.n}`).join(', ')||'нет';
+ const paused=(d.paused_feeds||[]).map(p=>`<tr><td>${esc(p.source)}</td><td>${esc(p.reason||'')}</td><td class="num">${p.until_ms?'до '+new Date(p.until_ms).toLocaleString('ru-RU'):'без срока'}</td></tr>`).join('')||'<tr><td colspan="3">Все ленты включены.</td></tr>';
+ const b6=d.b6;
+
+ app.innerHTML=`<header><div class="brand"><div class="radar" aria-hidden="true"></div><h1>Пульт<small>обновлено ${new Date(d.generated_at_ms).toLocaleTimeString('ru-RU')} · сам обновляется раз в минуту</small></h1></div>
+ <div style="display:flex;gap:8px"><button class="btn ghost" id="rf">Обновить</button><button class="btn ghost" id="lo">Выйти</button><a class="btn ghost" href="/" style="display:grid;place-items:center;text-decoration:none">На сайт</a></div></header>
+ <div class="summary">${pills}</div>
+ ${help('Как читать этот пульт','Зелёная точка — всё в норме, жёлтая — стоит присмотреться, красная — что-то стоит или сломано. Нажми на строку источника, чтобы увидеть подробности.','Все цифры — из базы сайта (D1) в момент открытия. Страница ничего не меняет, только читает.')}
+
+ <h2 style="margin:18px 0 8px">Квоты на сегодня</h2>
+ <div class="grid g5">
+ ${ring('Пул нейронов AI',pool,L.aiPool,'Общий дневной лимит бесплатного Cloudflare Workers AI на все модели (llama, glm, gemma). Когда кончается — аналитики и часть переводов встают до сброса. '+RESET)}
+ ${ring('Запросы Gemini',gem?.calls,L.gemini,'Бесплатный Google Gemini: переводы на иврит и русский, аналитики. Кончится — работа уходит на Cloudflare. '+RESET)}
+ ${ring('RU-заголовки, нейроны',Math.round(q.ru?.estimated_neurons||0),L.ruNeurons,'Сколько Cloudflare-нейронов ушло на русские переводы новостей (Gemini не считается — он бесплатный). Пакетов сегодня: '+fmt(q.ru?.batches)+' из '+fmt(L.ruBatches)+'. '+RESET)}
+ ${ring('Иврит, попытки',q.he?.attempts,L.heAttempts,'Сколько раз сегодня пытались перевести на иврит новости, досье, аналитиков и реплики. '+RESET)}
+ ${ring('ЦАХАЛ, пакеты',q.idf?.batches,L.idfBatches,'Переводы официальных постов ЦАХАЛ на русский. '+RESET)}
+ </div>
+
+ <div class="grid g2" style="margin-top:14px">
+ <div class="card"><h2>Переводы: успеваем ли</h2><p class="explain">Срочное должно появиться переведённым за 15 минут, важное — за час. Окно — последние сутки.</p>
+ ${help('Что значат колонки','«Переведено» — сколько новостей получили перевод за сутки. «В срок» — какая доля успела в норму. «Медиана / 90%» — половина переводов успела за первое число, 90% — за второе. «Ждут / просрочено» — сейчас без перевода; красное число — уже вышли за норму.','Таблицу пересчитывает Editor каждые 5 минут.')}
+ <div class="tw"><table><thead><tr><th>Язык</th><th>Уровень</th><th>Переведено</th><th>В срок</th><th>Медиана / 90%</th><th>Ждут / просроч.</th></tr></thead><tbody>${slaRows.join('')}</tbody></table></div>
+ <dl class="kv" style="margin-top:12px"><dt>RU без перевода (важные, сутки)</dt><dd>${fmt(t.ru_missing_24h_priority7)}</dd><dt>RU отклонено сегодня</dt><dd>${fmt(t.ru_rejected_today)} — все провайдеры дали плохой перевод, повтор завтра</dd><dt>Переводы GPT за сутки</dt><dd>${gptTr}</dd><dt>Последняя ошибка RU</dt><dd>${t.ru_last_error?esc(String(t.ru_last_error.value).slice(0,160))+' · '+ago(t.ru_last_error.updated_ms):'нет'}</dd></dl></div>
+
+ <div class="card"><h2>Почему иврит отклонён сегодня</h2><p class="explain">Каждый перевод проходит проверку: числа, имена, письменность. Здесь — причины отказов за сегодня.</p>
+ ${help('Расшифровка частых причин','mixed_script_word — внутри ивритского слова арабские буквы. foreign_script — кусок текста на чужом алфавите. truncated_hebrew — текст оборван посреди слова. numbers_changed — модель изменила число. entity_* — потеряна или искажена страна, организация, имя. model_invalid_json / Expected… — модель вернула сломанный ответ.','Отклонённый перевод не показывается: читатель видит оригинал, а перевод пробует следующий провайдер.')}
+ <div class="tw"><table><thead><tr><th>Причина</th><th>Сколько</th></tr></thead><tbody>${heErr}</tbody></table></div></div>
+ </div>
+
+ <div class="grid g2" style="margin-top:14px">
+ <div class="card"><h2>Источники данных</h2><p class="explain">Monitor раз в минуту опрашивает внешние API (самолёты, корабли, ведомства, рынки). Здесь — их состояние.</p>
+ ${help('Что значат статусы','ok — данные пришли. partial — пришли не все. error — запрос упал (403 — нас не пускают, 429 — превысили лимит, 5xx — у них сломалось). empty — ответ пустой. «✓ … назад» — когда в последний раз был успех.')}
+ <div class="filters" role="group" aria-label="Фильтр"><button data-f="all" aria-pressed="${srcFilter==='all'}">Все ${srcs.length}</button><button data-f="problem" aria-pressed="${srcFilter==='problem'}">С проблемами ${srcs.length-ok}</button><button data-f="ok" aria-pressed="${srcFilter==='ok'}">В норме ${ok}</button></div>
+ ${srcRows||'<p class="meta">Нет строк.</p>'}</div>
+
+ <div class="card"><h2>Сборщики на GitHub</h2><p class="explain">Отдельные скрипты (аналитики, GDELT, спутники и т. п.) запускаются по расписанию в GitHub Actions и складывают данные в базу. Полоска — сколько прошло с последней сборки относительно нормы.</p>
+ ${help('Как читать полоски','Полоска заполняется до конца, когда прошло вдвое больше нормы — тогда точка краснеет: сборщик, скорее всего, не запускается или падает. Норма — интервал расписания этого сборщика.')}
+ ${colRows||'<p class="meta">Нет данных.</p>'}</div>
+ </div>
+
+ <div class="grid g2" style="margin-top:14px">
+ <div class="card"><h2>GPT и аналитики</h2><p class="explain">GPT по расписанию раз в час пишет досье и анализ, переводит и чинит переводы. Аналитиков разбирает Editor.</p>
+ <dl class="kv"><dt>GPT-монитор, последний анализ</dt><dd>${esc(ago(gpt.last_monitor_run?.recorded_at_ms))} · итог: ${esc(gpt.last_monitor_run?.outcome||'—')}</dd>
+ <dt>Последнее досье</dt><dd>${esc(ago(gpt.last_dossier?.updated_at_ms))} · ${esc(gpt.last_dossier?.event_id||'—')}</dd>
+ <dt>Последняя реплика редактора</dt><dd>${esc(ago(gpt.last_editorial_note?.created_at_ms))}</dd>
+ <dt>Аналитики, последний прогон</dt><dd>${esc(ago(an.started_at_ms))} · ${esc(an.status||'—')}${an.error_message?' · '+esc(an.error_message):''}</dd>
+ <dt>Аналитики в очереди</dt><dd>${fmt(st.pending ?? st.pending_count)} (норма — меньше 10)</dd>
+ ${b6?`<dt>Сравнение моделей B6</dt><dd>${esc(b6.status||'—')} · ${esc(b6.run_id||'')}</dd>`:''}</dl>
+ ${help('Что значит «итог» анализа','no_alert — сравнил, тревоги нет. alert — сравнил, есть важное изменение. partial — часть источников сравнить не удалось. Если «последний анализ» старше двух часов — GPT-задача, скорее всего, не запускалась.')}</div>
+
+ <div class="card"><h2>Ленты на паузе</h2><p class="explain">RSS-ленты, которые выключены вручную (например, из-за условий использования).</p>
+ <div class="tw"><table><thead><tr><th>Лента</th><th>Почему</th><th>Срок</th></tr></thead><tbody>${paused}</tbody></table></div></div>
+ </div>`;
+ $('#rf').onclick=load; $('#lo').onclick=()=>{sessionStorage.removeItem(KEY);login()};
+ document.querySelectorAll('.filters button').forEach(b=>b.onclick=()=>{srcFilter=b.dataset.f;render(d)});
+ document.querySelectorAll('.row').forEach(r=>{const t=()=>{const el=$('#sd'+r.dataset.i);el.classList.toggle('open');r.setAttribute('aria-expanded',el.classList.contains('open'))};r.onclick=t;r.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();t()}}});
+}
+clearInterval(timer); timer=setInterval(()=>{if(sessionStorage.getItem(KEY))load()},60000);
+load();
+})();
+</script></body></html>
