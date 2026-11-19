@@ -26,6 +26,14 @@ const analysisSchema = Object.freeze({
     title: 'Изменения требуют дополнительной оценки',
     description: 'Не все сведения подтверждены. Проверяй первоисточники.',
   },
+  // Q4 (19.11): the GPT monitor writes 'partial' when only some sources could
+  // be compared; it was shown as "analysis unavailable".
+  partial: {
+    state: 'partial',
+    badge: 'АНАЛИЗ НЕПОЛНЫЙ',
+    title: 'Последний анализ выполнен частично',
+    description: 'Часть источников не удалось сравнить с прошлой проверкой. Проверяй первоисточники.',
+  },
 });
 export function assembleOverview({
   latestRun = null,
