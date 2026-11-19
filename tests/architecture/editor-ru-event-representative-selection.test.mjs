@@ -115,8 +115,8 @@ test('visible summary-only pending translates without overwriting existing Russi
  const q=data.sqls.find(x=>x.sql.includes('UPDATE news_items SET'));
  assert.match(q.sql,/headline_ru=COALESCE\(headline_ru,\?\)/);
 });
-test('RU 48 batch / 6000 neuron ceiling (B1) and 5 articles per request remain unchanged',async()=>{
- const blocked=makeEnv({budget:{batches:48,estimated_neurons:0},rows:[row('shown4',4)],events:[event('shown4',4)]});
+test('RU 288 batch (one per tick, 19.11) / 6000 neuron ceiling and 5 articles per request',async()=>{
+ const blocked=makeEnv({budget:{batches:288,estimated_neurons:0},rows:[row('shown4',4)],events:[event('shown4',4)]});
  assert.deepEqual(await translateTitles(blocked.env,NOW),{translated:0,summaries:0,budget:'limit'});
  assert.equal(blocked.calls.length,0);
  assert.equal(candidateSql(blocked.sqls),undefined);

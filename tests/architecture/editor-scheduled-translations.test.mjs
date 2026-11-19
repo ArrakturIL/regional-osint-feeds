@@ -19,7 +19,7 @@ test('daily news budget cap prevents source reads and AI calls',async()=>{
   let ai=0,queries=0;
   const NEWS_DB=makeDb((method,sql)=>{
     queries++;
-    if(method==='first'&&sql.includes('FROM news_translation_budget'))return{batches:48,estimated_neurons:0};
+    if(method==='first'&&sql.includes('FROM news_translation_budget'))return{batches:288,estimated_neurons:0};
     if(method==='run'&&sql.includes('INSERT OR IGNORE INTO news_translation_budget'))return{meta:{changes:0}};
     throw Error('Unexpected query after news budget cap: '+sql);
   });

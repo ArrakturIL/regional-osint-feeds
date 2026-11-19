@@ -7,6 +7,12 @@ import { recordShown } from '../news/sla.mjs';
 // Q3 (19.11): a news item the model answered badly is not sent to the same
 // model again the same UTC day; before, it was re-selected every 5 minutes.
 // Whole-call failures (malformed JSON, provider error) stay retryable.
+// 19.11: Workers AI spend is capped by real neurons (each batch reserves 125
+// and settles to what Workers AI actually spent; Gemini spends none). The old
+// 48-batch cap counted free Gemini batches too and stopped RU at 11:55Z, so
+// batches are now capped only at one per 5-minute tick.
+const RU_DAILY_BATCHES = 288,
+  RU_DAILY_NEURONS = 6000;
 // Attempts are per provider chain: an item recorded here was rejected by every
 // provider of ROUTES.ru_titles that answered this tick.
 const RU_CHAIN = 'ru_titles_chain';
@@ -68,7 +74,7 @@ export async function translateTitles(env, now) {
     )
       .bind(day)
       .first();
-    if ((budget?.batches || 0) >= 48 || (budget?.estimated_neurons || 0) >= 6000)
+    if ((budget?.batches || 0) >= RU_DAILY_BATCHES || (budget?.estimated_neurons || 0) >= RU_DAILY_NEURONS)
       return { translated: 0, summaries: 0, budget: 'limit' };
     await ensureRuAttempts(env.NEWS_DB);
     const query =
@@ -92,7 +98,10 @@ export async function translateTitles(env, now) {
       .slice(0, 5);
     if (!pending.length) return { translated: 0, summaries: 0 };
     const claimed = await env.NEWS_DB.prepare(
-      'UPDATE news_translation_budget SET batches=batches+1,estimated_neurons=estimated_neurons+125,updated_ms=? WHERE day_utc=? AND batches<48 AND estimated_neurons<6000',
+      'UPDATE news_translation_budget SET batches=batches+1,estimated_neurons=estimated_neurons+125,updated_ms=? WHERE day_utc=? AND batches<' +
+        RU_DAILY_BATCHES +
+        ' AND estimated_neurons<' +
+        RU_DAILY_NEURONS,
     )
       .bind(now, day)
       .run();
