@@ -1,6 +1,6 @@
 # Regional Watch — Neon to Cloudflare D1 collector cache
 
-Status: staged on feature/integrated-data-quality-neon-20261115, NOT ACTIVE IN PRODUCTION.
+Status (19.11.2026): **in production.** Eight GitHub-JSON sources (analysts, centcom, copernicus, gdelt, marad, satellite, unosat, news_translation) are graduated (`config/collector-rollout.json`). Since Q12 (#187) two Actions-only sources, `adsb` and `adsb_mil`, publish straight to Neon → D1 every run with no GitHub JSON at all (`neon_mirror.GITHUB_JSON_SOURCES` excludes them from shadow/replica/audit jobs). The history below is the original 15.11 rollout record.
 
 ## Storage and security
 GitHub Actions collects public source information, verifies it and writes to Neon PostgreSQL. A source-gated task projects the current fully validated Neon JSON data/status pair into the private Cloudflare D1 database regional-osint. Monitor has a DB binding to this D1; Editor has CORE_DB binding to the same D1. No public page or minute-by-minute Worker polls Neon directly. D1 remains an ephemeral read replica, Neon is the durable snapshot store, and GitHub stays a temporary fallback during cutover.

@@ -1,5 +1,7 @@
 # OpenSky and ADS-B Exchange: integration readiness (2026-11-11)
 
+> **Historical (legacy `worker/`).** Current ADS-B collection (adsb.lol, adsb.fi) runs in GitHub Actions since 19.11 — see [aviation-data-quality.md](aviation-data-quality.md) and STATUS Q12. Neither OpenSky nor ADS-B Exchange is enabled.
+
 **Status:** adapters and tests are in GitHub. **Neither provider is enabled in the production Cloudflare Worker**. Existing `adsb`, `adsb_alt` and `airbridge_context` schedules, D1 records, provider quotas and Pages site remain unchanged.
 
 AirLabs is deferred because registration is on a waitlist. Aviationstack is deferred because 100 monthly requests and civil flight-status emphasis do not justify another live collector.
