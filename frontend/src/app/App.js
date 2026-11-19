@@ -200,14 +200,14 @@ export function App() {
         route === '/analysts' ? h(AnalystShared, { hePosts, heProfiles }) : null,
       ),
     ),
-    // Owner's service page: a quiet dot at the very bottom of every page.
+    // Owner's service page: a small quiet link at the bottom of every page.
     h(
       'footer',
       { className: 'rw-site-footer' },
       h(
         'a',
-        { className: 'rw-ops-link', href: '/ops', title: 'Пульт', 'aria-label': 'Служебная страница' },
-        '·',
+        { className: 'rw-ops-link', href: '/ops', title: UI_HE ? 'לוח בקרה' : 'Служебный пульт' },
+        UI_HE ? '⌁ לוח בקרה' : '⌁ Пульт',
       ),
     ),
   );

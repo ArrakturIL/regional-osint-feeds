@@ -160,7 +160,12 @@ html[dir="rtl"] :is(.news-card,.rw-story-teaser,.rw-dossier,.rw-situation,.panel
   .page-intro::after{display:none}
   *{transition-duration:0s!important}
 }
-/* Owner service link (/ops): present on every page, nearly invisible. */
-.rw-site-footer{display:flex;justify-content:flex-end;padding:8px 12px 20px}
-.rw-ops-link{display:grid;place-items:center;width:44px;height:44px;color:var(--rw7-mint-dim,#4d7a63);opacity:.35;text-decoration:none;font-size:20px;transition:opacity .2s}
-.rw-ops-link:hover,.rw-ops-link:focus-visible{opacity:1}
+/* Owner service link (/ops): small, readable, quiet (owner 19.11). */
+.rw-site-footer{display:flex;justify-content:flex-end;padding:12px 16px 24px;border-top:1px solid var(--rw7-line,#1f4031);margin-top:24px}
+.rw-ops-link{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 12px;color:var(--rw7-text-3,#8fb8a2);font:12px var(--rw7-mono,monospace);letter-spacing:.06em;text-decoration:none;border:1px solid var(--rw7-line,#1f4031);transition:color .2s,border-color .2s}
+.rw-ops-link:hover,.rw-ops-link:focus-visible{color:var(--rw7-mint,#9ff5c6);border-color:var(--rw7-mint-dim,#4d7a63)}
+/* 19.11: one base look for every content button; component rules override it
+   (zero specificity). Unstyled buttons (analysts "Обновить") fell back to the
+   browser's grey. */
+main :where(button){background:transparent;color:var(--rw7-mint,#9ff5c6);border:1px solid var(--rw7-line-strong,#2b5642);font:600 13px var(--rw7-mono,monospace);letter-spacing:.04em;padding:0 16px;min-height:44px;cursor:pointer;transition:background .2s,border-color .2s}
+main :where(button):hover{background:var(--rw7-hover,#0e1d17);border-color:var(--rw7-mint-dim,#4d7a63)}
