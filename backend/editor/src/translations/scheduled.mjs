@@ -3,6 +3,32 @@ import { RU_TITLES_MODEL, ruTitlesInput } from './prompts.mjs';
 import { newsTier, TIER_RANK } from '../news/tier.mjs';
 import { recordShown } from '../news/sla.mjs';
 
+// Q3 (19.11): a news item the model answered badly is not sent to the same
+// model again the same UTC day; before, it was re-selected every 5 minutes.
+// Whole-call failures (malformed JSON, provider error) stay retryable.
+let ruAttemptsReady = false;
+async function ensureRuAttempts(db) {
+  if (ruAttemptsReady) return;
+  await db
+    .prepare(
+      'CREATE TABLE IF NOT EXISTS news_ru_attempts(item_id TEXT NOT NULL,day_utc TEXT NOT NULL,model TEXT NOT NULL,reason TEXT NOT NULL,attempted_at_ms INTEGER NOT NULL,PRIMARY KEY(item_id,day_utc,model))',
+    )
+    .run();
+  ruAttemptsReady = true;
+}
+async function recordRuRejection(db, id, day, reason, now) {
+  try {
+    await db
+      .prepare(
+        'INSERT OR IGNORE INTO news_ru_attempts(item_id,day_utc,model,reason,attempted_at_ms) VALUES(?,?,?,?,?)',
+      )
+      .bind(id, day, RU_TITLES_MODEL, reason, now)
+      .run();
+  } catch {
+    // Bookkeeping only: a failed write must not stop the batch.
+  }
+}
+
 export async function translateTitles(env, now) {
   const day = new Date(now).toISOString().slice(0, 10);
   try {
@@ -18,12 +44,13 @@ export async function translateTitles(env, now) {
       .first();
     if ((budget?.batches || 0) >= 48 || (budget?.estimated_neurons || 0) >= 6000)
       return { translated: 0, summaries: 0, budget: 'limit' };
+    await ensureRuAttempts(env.NEWS_DB);
     const query =
-      'SELECT n.id,n.headline,n.summary,n.headline_ru,n.discovered_ms FROM news_items n WHERE ((n.priority>=7 AND n.published_ms>?) OR n.id IN (SELECT g.representative_id FROM news_event_groups g WHERE g.priority>=4 AND g.last_seen_ms>?)) AND (n.headline_ru IS NULL OR (n.summary_ru IS NULL AND length(n.summary)>10)) ORDER BY n.published_ms DESC LIMIT 60';
+      'SELECT n.id,n.headline,n.summary,n.headline_ru,n.discovered_ms FROM news_items n WHERE ((n.priority>=7 AND n.published_ms>?) OR n.id IN (SELECT g.representative_id FROM news_event_groups g WHERE g.priority>=4 AND g.last_seen_ms>?)) AND (n.headline_ru IS NULL OR (n.summary_ru IS NULL AND length(n.summary)>10)) AND n.id NOT IN (SELECT a.item_id FROM news_ru_attempts a WHERE a.day_utc=? AND a.model=?) ORDER BY n.published_ms DESC LIMIT 60';
     const rows =
       (
         await env.NEWS_DB.prepare(query)
-          .bind(now - 36 * 3600000, now - 36 * 3600000)
+          .bind(now - 36 * 3600000, now - 36 * 3600000, day, RU_TITLES_MODEL)
           .all()
       ).results || [];
     const pending = rows
@@ -76,7 +103,10 @@ export async function translateTitles(env, now) {
       !/[<>]/.test(x);
     for (const row of pending) {
       const value = map.get(row.id);
-      if (!value || typeof value !== 'object') continue;
+      if (!value || typeof value !== 'object') {
+        await recordRuRejection(env.NEWS_DB, row.id, day, 'missing_in_output', now);
+        continue;
+      }
       const title =
         valid(value.title_ru) && validateCandidate(row.headline, value.title_ru, 'ru')
           ? value.title_ru.trim().slice(0, 260)
@@ -87,8 +117,10 @@ export async function translateTitles(env, now) {
         validateCandidate(row.summary, value.summary_ru, 'ru')
           ? value.summary_ru.trim().slice(0, 480)
           : null;
-      if (!title && !row.headline_ru) continue;
-      if (!title && !summary) continue;
+      if ((!title && !row.headline_ru) || (!title && !summary)) {
+        await recordRuRejection(env.NEWS_DB, row.id, day, value ? 'quality_gate' : 'missing_in_output', now);
+        continue;
+      }
       const write = await env.NEWS_DB.prepare(
         'UPDATE news_items SET headline_ru=COALESCE(headline_ru,?),summary_ru=COALESCE(summary_ru,?) WHERE id=?',
       )

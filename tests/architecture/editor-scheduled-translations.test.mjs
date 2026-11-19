@@ -125,3 +125,35 @@ test('IDF schedules only canonical Telegram source and writes accepted translati
   assert.equal(writes.filter(w=>w.sql.includes('INSERT OR IGNORE INTO official_translations')).length,1);
   assert.ok(writes.some(w=>w.sql.includes('estimated_neurons=MAX(0,estimated_neurons+?)')));
 });
+
+test('Q3: an item the model answered badly is recorded and not re-sent to the same model today',async()=>{
+  const runs=[];let select=null;
+  const NEWS_DB=makeDb((method,sql,args)=>{
+    if(method==='first')return{batches:0,estimated_neurons:0};
+    if(method==='all'){select={sql,args};return{results:[
+      {id:'bad',headline:'Israel and Iran release official statement',summary:'',headline_ru:null},
+      {id:'lost',headline:'IDF strikes in Lebanon',summary:'',headline_ru:null}]};}
+    if(method==='run'){runs.push({sql,args});return{meta:{changes:1}};}
+    throw Error('Unexpected query: '+sql);
+  });
+  // 'bad' comes back in Latin script (quality gate), 'lost' is missing from the answer.
+  const out={response:JSON.stringify([{id:'bad',title_ru:'Israel and Iran release official statement'}]),usage:{neurons:90}};
+  const result=await translateTitles({NEWS_DB,AI:{run:async()=>out}},NOW);
+  assert.equal(result.translated,0);
+  assert.match(select.sql,/NOT IN \(SELECT a\.item_id FROM news_ru_attempts a WHERE a\.day_utc=\? AND a\.model=\?\)/);
+  assert.deepEqual(select.args.slice(2),['2026-11-16','@cf/meta/llama-3.3-70b-instruct-fp8-fast']);
+  const rec=runs.filter(r=>r.sql.includes('INTO news_ru_attempts')).map(r=>[r.args[0],r.args[3]]);
+  assert.deepEqual(rec.sort(),[['bad','quality_gate'],['lost','missing_in_output']]);
+});
+
+test('Q3: a whole-call failure (malformed JSON) stays retryable, nothing recorded per item',async()=>{
+  const runs=[];
+  const NEWS_DB=makeDb((method,sql,args)=>{
+    if(method==='first')return{batches:0,estimated_neurons:0};
+    if(method==='all')return{results:[{id:'a',headline:'Israel issues security update',summary:'',headline_ru:null}]};
+    if(method==='run'){runs.push(sql);return{meta:{changes:1}};}
+    throw Error('Unexpected query: '+sql);
+  });
+  await translateTitles({NEWS_DB,AI:{run:async()=>({response:'not json'})}},NOW);
+  assert.ok(!runs.some(s=>s.includes('INTO news_ru_attempts')));
+});
