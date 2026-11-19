@@ -47,7 +47,10 @@ def load_config(path: Path = CONFIG) -> list[tuple[str, str]]:
 
 
 def fetch(titles: list[str], opener=urllib.request.urlopen) -> dict:
+    # One title: normalize=1 also resolves a moved/redirected article title.
+    extra = {"normalize": "1"} if len(titles) == 1 else {}
     query = urllib.parse.urlencode({
+        **extra,
         "action": "wbgetentities", "sites": "enwiki", "titles": "|".join(titles),
         "props": "labels|aliases|sitelinks", "sitefilter": "enwiki", "languages": "|".join(LANGS),
         "format": "json",
@@ -116,8 +119,14 @@ def build(entities: list[tuple[str, str]], fetcher=fetch) -> list[dict]:
             if title:
                 by_title[title] = (qid, entity)
         for _, title in chunk:
-            if normalized.get(title, title) not in by_title:
+            if normalized.get(title, title) in by_title:
+                continue
+            # Redirected title: ask for it alone, keep the item under the asked title.
+            single = fetcher([title])
+            found = [(q, e) for q, e in single.get("entities", {}).items() if q.startswith("Q")]
+            if len(found) != 1:
                 raise ValueError("no Wikidata item for enwiki title: " + title)
+            by_title[title] = found[0]
         if i + 50 < len(entities):
             time.sleep(1)
     result = []
