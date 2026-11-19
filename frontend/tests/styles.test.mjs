@@ -97,3 +97,16 @@ test('news order and sources count regression: stable grid and isolated LTR numb
  assert.ok(bundle.endsWith(countStyle+source('src/components/FeedState/FeedState.css')+themeWithFonts()),'bidi fix must take precedence after legacy header rules (only F-04 FeedState.css and the 2077 theme layer follow)');
  assert.ok(bundle.includes(layout),'news grid must be present in emitted CSS');
 });
+
+test('Q7: the 16px field floor on touch screens outranks component field rules',()=>{
+ // QA 19.11: .rw-archive-field input (0,1,1) beat main :is(input,select,textarea)
+ // (0,0,2): 14.56px on /events, 14px on /analysts, and iOS zoomed on focus.
+ const theme=source('src/styles/theme-2077.css');
+ const rule=theme.match(/main :is\(input,select,textarea\)([^{]*)\{font-size:16px\}/);
+ assert.ok(rule,'16px floor rule present');
+ const attrs=(rule[1].match(/\[[^\]]+\]/g)||[]).length;
+ assert.ok(attrs>=1,'floor rule must carry at least class-level specificity to beat .component input');
+ for(const file of ['src/components/NewsArchive/NewsArchive.filters.css','src/pages/Analysts/Analysts.css']){
+  assert.ok(!/#[\w-]+[^{]*\b(input|select)\b[^{]*\{[^}]*font-size/.test(source(file)),file+': an id selector would outrank the floor');
+ }
+});
