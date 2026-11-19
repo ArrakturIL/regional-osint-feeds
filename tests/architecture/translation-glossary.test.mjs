@@ -66,7 +66,7 @@ test('West Bank is not "western bank" (live Helsinki error 17.11)', () => {
 // B11 part 1: entities from Wikidata (glossary-wikidata.mjs).
 test('Wikidata entities: a swapped country, a dropped participant and a lost name are caught', () => {
   assert.equal(entityIssue('Iran fires missiles at Jordan', 'איראן שיגרה טילים לעבר ישראל', 'he'), 'jordan_name_missing');
-  assert.equal(entityIssue('x'.repeat(301) + ' Jordan', 'ישראל', 'he'), null, 'long bodies are not checked against Wikidata names');
+  assert.equal(entityIssue('x'.repeat(161) + ' Jordan', 'ישראל', 'he'), null, 'long bodies are not checked against Wikidata names');
   assert.equal(entityIssue('Trump meets Erdoğan in Ankara', 'Трамп встретился в Анкаре', 'ru'), 'erdogan_name_missing');
   assert.equal(entityIssue('IAEA inspectors return to Natanz', 'פקחי סבא"א חוזרים למתקן', 'he'), 'natanz_name_missing');
 });

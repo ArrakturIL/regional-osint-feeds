@@ -1,27 +1,293 @@
 {
   "schema_version": 1,
-  "description": "B11 part 1: entities whose RU/HE/EN names come from Wikidata (labels + aliases), keyed by English Wikipedia title. scripts/build_wikidata_glossary.py writes backend/editor/src/translations/glossary-wikidata.mjs. Entities with hand-tuned forms (IRGC, Katz, IDF, Netanyahu, Hezbollah, Hamas, Houthis, Hormuz, Isfahan, Khamenei, West Bank, Reuters) stay in glossary.mjs and are not listed here. Israel is left out on purpose: Israeli sources name it implicitly (\"in the north of the country\"), live check 19.11.",
+  "description": "B11 part 1: entities whose RU/HE/EN names come from Wikidata (labels + aliases), keyed by English Wikipedia title. scripts/build_wikidata_glossary.py writes backend/editor/src/translations/glossary-wikidata.mjs. Entities with hand-tuned forms (IRGC, Katz, IDF, Netanyahu, Hezbollah, Hamas, Houthis, Hormuz, Isfahan, Khamenei, West Bank, Reuters) stay in glossary.mjs and are not listed here. Israel is left out on purpose: Israeli sources name it implicitly (\"in the north of the country\"), live check 19.11. Left out after the live check of 19.11 (2 832 accepted translations): Jerusalem (metonym for the government), Amman (alias 'Philadelphia'), UN ('UN nuclear watchdog' = IAEA), Palestinian Authority (alias 'Palestine'). A third element lists forms to exclude (demonyms such as 'Saudi').",
   "entities": [
-    ["iran", "Iran"], ["lebanon", "Lebanon"], ["syria", "Syria"], ["iraq", "Iraq"],
-    ["jordan", "Jordan"], ["egypt", "Egypt"], ["saudi_arabia", "Saudi Arabia"], ["uae", "United Arab Emirates"],
-    ["qatar", "Qatar"], ["yemen", "Yemen"], ["turkey", "Turkey"], ["russia", "Russia"], ["usa", "United States"],
-    ["gaza_strip", "Gaza Strip"], ["bahrain", "Bahrain"], ["oman", "Oman"], ["kuwait", "Kuwait"], ["cyprus", "Cyprus"],
-    ["china", "China"], ["ukraine", "Ukraine"], ["pakistan", "Pakistan"],
-    ["tehran", "Tehran"], ["jerusalem", "Jerusalem"], ["tel_aviv", "Tel Aviv"], ["haifa", "Haifa"], ["beirut", "Beirut"],
-    ["damascus", "Damascus"], ["baghdad", "Baghdad"], ["sanaa", "Sanaa"], ["amman", "Amman"], ["cairo", "Cairo"],
-    ["riyadh", "Riyadh"], ["doha", "Doha"], ["eilat", "Eilat"], ["natanz", "Natanz"], ["fordow", "Fordow Fuel Enrichment Plant"],
-    ["bushehr", "Bushehr"], ["golan_heights", "Golan Heights"], ["sinai", "Sinai Peninsula"], ["red_sea", "Red Sea"],
-    ["persian_gulf", "Persian Gulf"],
-    ["un", "United Nations"], ["nato", "NATO"], ["iaea", "International Atomic Energy Agency"], ["eu", "European Union"],
-    ["unrwa", "UNRWA"], ["icc", "International Criminal Court"], ["mossad", "Mossad"], ["shin_bet", "Shin Bet"],
-    ["pij", "Palestinian Islamic Jihad"], ["palestinian_authority", "Palestinian Authority"],
-    ["isis", "Islamic State"], ["quds_force", "Quds Force"],
-    ["trump", "Donald Trump"], ["putin", "Vladimir Putin"], ["erdogan", "Recep Tayyip Erdoğan"],
-    ["pezeshkian", "Masoud Pezeshkian"], ["araghchi", "Abbas Araghchi"], ["herzog", "Isaac Herzog"],
-    ["zamir", "Eyal Zamir"], ["smotrich", "Bezalel Smotrich"], ["ben_gvir", "Itamar Ben-Gvir"], ["lapid", "Yair Lapid"],
-    ["gantz", "Benny Gantz"], ["ghalibaf", "Mohammad Bagher Ghalibaf"], ["abbas", "Mahmoud Abbas"],
-    ["rubio", "Marco Rubio"], ["witkoff", "Steve Witkoff"], ["macron", "Emmanuel Macron"], ["starmer", "Keir Starmer"],
-    ["mbs", "Mohammed bin Salman"], ["sisi", "Abdel Fattah el-Sisi"], ["sharaa", "Ahmed al-Sharaa"],
-    ["aoun", "Joseph Aoun"], ["qassem", "Naim Qassem"]
+    [
+      "iran",
+      "Iran"
+    ],
+    [
+      "lebanon",
+      "Lebanon"
+    ],
+    [
+      "syria",
+      "Syria"
+    ],
+    [
+      "iraq",
+      "Iraq"
+    ],
+    [
+      "jordan",
+      "Jordan"
+    ],
+    [
+      "egypt",
+      "Egypt"
+    ],
+    [
+      "saudi_arabia",
+      "Saudi Arabia",
+      [
+        "Saudi"
+      ]
+    ],
+    [
+      "uae",
+      "United Arab Emirates"
+    ],
+    [
+      "qatar",
+      "Qatar"
+    ],
+    [
+      "yemen",
+      "Yemen"
+    ],
+    [
+      "turkey",
+      "Turkey"
+    ],
+    [
+      "russia",
+      "Russia"
+    ],
+    [
+      "usa",
+      "United States"
+    ],
+    [
+      "gaza_strip",
+      "Gaza Strip"
+    ],
+    [
+      "bahrain",
+      "Bahrain"
+    ],
+    [
+      "oman",
+      "Oman"
+    ],
+    [
+      "kuwait",
+      "Kuwait"
+    ],
+    [
+      "cyprus",
+      "Cyprus"
+    ],
+    [
+      "china",
+      "China"
+    ],
+    [
+      "ukraine",
+      "Ukraine"
+    ],
+    [
+      "pakistan",
+      "Pakistan"
+    ],
+    [
+      "tehran",
+      "Tehran"
+    ],
+    [
+      "tel_aviv",
+      "Tel Aviv"
+    ],
+    [
+      "haifa",
+      "Haifa"
+    ],
+    [
+      "beirut",
+      "Beirut"
+    ],
+    [
+      "damascus",
+      "Damascus"
+    ],
+    [
+      "baghdad",
+      "Baghdad"
+    ],
+    [
+      "sanaa",
+      "Sanaa"
+    ],
+    [
+      "cairo",
+      "Cairo"
+    ],
+    [
+      "riyadh",
+      "Riyadh"
+    ],
+    [
+      "doha",
+      "Doha"
+    ],
+    [
+      "eilat",
+      "Eilat"
+    ],
+    [
+      "natanz",
+      "Natanz"
+    ],
+    [
+      "fordow",
+      "Fordow Fuel Enrichment Plant"
+    ],
+    [
+      "bushehr",
+      "Bushehr"
+    ],
+    [
+      "golan_heights",
+      "Golan Heights"
+    ],
+    [
+      "sinai",
+      "Sinai Peninsula"
+    ],
+    [
+      "red_sea",
+      "Red Sea"
+    ],
+    [
+      "persian_gulf",
+      "Persian Gulf"
+    ],
+    [
+      "nato",
+      "NATO"
+    ],
+    [
+      "iaea",
+      "International Atomic Energy Agency"
+    ],
+    [
+      "eu",
+      "European Union"
+    ],
+    [
+      "unrwa",
+      "UNRWA"
+    ],
+    [
+      "icc",
+      "International Criminal Court"
+    ],
+    [
+      "mossad",
+      "Mossad"
+    ],
+    [
+      "shin_bet",
+      "Shin Bet"
+    ],
+    [
+      "pij",
+      "Palestinian Islamic Jihad"
+    ],
+    [
+      "isis",
+      "Islamic State"
+    ],
+    [
+      "quds_force",
+      "Quds Force"
+    ],
+    [
+      "trump",
+      "Donald Trump"
+    ],
+    [
+      "putin",
+      "Vladimir Putin"
+    ],
+    [
+      "erdogan",
+      "Recep Tayyip Erdoğan"
+    ],
+    [
+      "pezeshkian",
+      "Masoud Pezeshkian"
+    ],
+    [
+      "araghchi",
+      "Abbas Araghchi"
+    ],
+    [
+      "herzog",
+      "Isaac Herzog"
+    ],
+    [
+      "zamir",
+      "Eyal Zamir"
+    ],
+    [
+      "smotrich",
+      "Bezalel Smotrich"
+    ],
+    [
+      "ben_gvir",
+      "Itamar Ben-Gvir"
+    ],
+    [
+      "lapid",
+      "Yair Lapid"
+    ],
+    [
+      "gantz",
+      "Benny Gantz"
+    ],
+    [
+      "ghalibaf",
+      "Mohammad Bagher Ghalibaf"
+    ],
+    [
+      "abbas",
+      "Mahmoud Abbas"
+    ],
+    [
+      "rubio",
+      "Marco Rubio"
+    ],
+    [
+      "witkoff",
+      "Steve Witkoff"
+    ],
+    [
+      "macron",
+      "Emmanuel Macron"
+    ],
+    [
+      "starmer",
+      "Keir Starmer"
+    ],
+    [
+      "mbs",
+      "Mohammed bin Salman"
+    ],
+    [
+      "sisi",
+      "Abdel Fattah el-Sisi"
+    ],
+    [
+      "sharaa",
+      "Ahmed al-Sharaa"
+    ],
+    [
+      "aoun",
+      "Joseph Aoun"
+    ],
+    [
+      "qassem",
+      "Naim Qassem"
+    ]
   ]
 }

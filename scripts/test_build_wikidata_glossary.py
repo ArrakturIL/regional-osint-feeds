@@ -39,15 +39,15 @@ class TestBuild(unittest.TestCase):
                 entity("Q801", "Israel", "Israel", "Израиль", "ישראל"),
             ])
             return {"entities": {q: e for q, e in items.items() if e["sitelinks"]["enwiki"]["title"] in titles}}
-        out = build([("israel", "Israel"), ("iran", "Iran")], fetcher=fetcher)
+        out = build([("israel", "Israel", ()), ("iran", "Iran", ("Islamic Republic of Iran",))], fetcher=fetcher)
         self.assertEqual([(e["id"], e["qid"]) for e in out], [("israel", "Q801"), ("iran", "Q794")])
-        self.assertEqual(out[1]["en"], ["Iran", "Islamic Republic of Iran"])
+        self.assertEqual(out[1]["en"], ["Iran"], "excluded forms dropped")
         self.assertIn("export const WIKIDATA_ENTITIES", render(out, "2026-11-19"))
 
     def test_missing_item_or_language_fails_loudly(self):
         with self.assertRaises(ValueError):
-            build([("x", "Nowhere")], fetcher=lambda t: {"entities": {"-1": {"missing": ""}}})
-        self.assertEqual(build([("x", "X")], fetcher=lambda t: {"entities": dict([entity("Q9", "X", "Xland", "", "")])}), [],
+            build([("x", "Nowhere", ())], fetcher=lambda t: {"entities": {"-1": {"missing": ""}}})
+        self.assertEqual(build([("x", "X", ())], fetcher=lambda t: {"entities": dict([entity("Q9", "X", "Xland", "", "")])}), [],
                          "an entity without RU/HE forms is skipped with a warning")
 
     def test_config_ids_are_unique(self):

@@ -39,7 +39,7 @@ def load_config(path: Path = CONFIG) -> list[tuple[str, str]]:
     cfg = json.loads(Path(path).read_text(encoding="utf8"))
     if cfg.get("schema_version") != 1:
         raise ValueError("invalid glossary config schema")
-    entities = [tuple(e) for e in cfg["entities"]]
+    entities = [(e[0], e[1], tuple(e[2]) if len(e) > 2 else ()) for e in cfg["entities"]]
     ids = [e[0] for e in entities]
     if len(set(ids)) != len(ids) or not all(re.fullmatch(r"[a-z][a-z0-9_]*", i) for i in ids):
         raise ValueError("entity ids must be unique snake_case")
@@ -104,11 +104,11 @@ def forms_for(entity: dict) -> dict[str, list[str]]:
     return out
 
 
-def build(entities: list[tuple[str, str]], fetcher=fetch) -> list[dict]:
+def build(entities: list[tuple], fetcher=fetch) -> list[dict]:
     by_title, normalized = {}, {}
     for i in range(0, len(entities), 50):
         chunk = entities[i:i + 50]
-        data = fetcher([t for _, t in chunk])
+        data = fetcher([t for _, t, _ in chunk])
         normalized.update({n["from"]: n["to"] for n in data.get("normalized", [])})
         if "error" in data:
             raise RuntimeError("Wikidata API error: " + str(data["error"].get("code")))
@@ -118,7 +118,7 @@ def build(entities: list[tuple[str, str]], fetcher=fetch) -> list[dict]:
             title = entity.get("sitelinks", {}).get("enwiki", {}).get("title")
             if title:
                 by_title[title] = (qid, entity)
-        for _, title in chunk:
+        for _, title, _ in chunk:
             if normalized.get(title, title) in by_title:
                 continue
             # Redirected title: ask for it alone, keep the item under the asked title.
@@ -130,9 +130,10 @@ def build(entities: list[tuple[str, str]], fetcher=fetch) -> list[dict]:
         if i + 50 < len(entities):
             time.sleep(1)
     result = []
-    for entity_id, title in entities:
+    for entity_id, title, exclude in entities:
         qid, entity = by_title[normalized.get(title, title)]
         forms = forms_for(entity)
+        forms = {lang: [f for f in v if f not in exclude] for lang, v in forms.items()}
         missing = [lang for lang in LANGS if not forms[lang]]
         if missing:
             # Without RU and HE forms the check could only fail: skip, visibly.

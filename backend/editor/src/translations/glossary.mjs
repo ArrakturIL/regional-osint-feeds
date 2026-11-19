@@ -151,7 +151,8 @@ function fromWikidata(e) {
     words = e.en.filter(f => !acronyms.includes(f));
   const any = list => list.filter(Boolean);
   const latin = any([
-    words.length && new RegExp(L + '(?:' + words.map(latinForm).join('|') + ')' + R, 'iu'),
+    // "Iran's Ghalibaf" → "Ghalibaf": a possessive does not demand the name.
+    words.length && new RegExp(L + '(?:' + words.map(latinForm).join('|') + ')' + R + "(?!['’]s)", 'iu'),
     acronyms.length && new RegExp(L + '(?:' + acronyms.join('|') + ')' + R, 'u'),
   ]);
   // A translation may name a multi-word entity by its proper-noun part
@@ -178,9 +179,9 @@ for (const e of WIKIDATA_ENTITIES) if (!HAND_IDS.has(e.id)) ENTITIES.push(fromWi
 // Target language follows the translation's script; Latin-only falls back to he (legacy).
 export const targetLanguage = text =>
   /\p{Script=Hebrew}/u.test(text) ? 'he' : /\p{Script=Cyrillic}/u.test(text) ? 'ru' : 'he';
-// Wikidata entities are checked on headline-length text only (≤ 300 chars):
+// Wikidata entities are checked on headline-length text only (≤ 160 chars):
 // summaries and bodies legitimately drop names (live check 19.11, B11).
-export const WIKIDATA_MAX_SOURCE = 300;
+export const WIKIDATA_MAX_SOURCE = 160;
 export function entityIssue(source, translated, target = targetLanguage(translated)) {
   const long = String(source).length > WIKIDATA_MAX_SOURCE;
   for (const e of ENTITIES) {
