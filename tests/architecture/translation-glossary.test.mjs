@@ -11,7 +11,7 @@ test('every glossary entity has a stable code, a source form and a Hebrew target
   for (const e of ENTITIES) {
     assert.match(e.code, /^[a-z0-9_]+$/, e.id);
     assert.ok(!codes.has(e.code), 'duplicate code ' + e.code); codes.add(e.code);
-    assert.ok(e.source instanceof RegExp && e.he instanceof RegExp, e.id);
+    assert.ok(typeof e.source?.test === 'function' && typeof e.he?.test === 'function', e.id);
   }
   // Legacy codes stay stable: D1 attempt history and tests refer to them.
   for (const c of ['irgc_actor_missing', 'katz_name_corrupted', 'allies_relation_changed', 'idf_actor_missing',
@@ -61,4 +61,19 @@ test('West Bank is not "western bank" (live Helsinki error 17.11)', () => {
   assert.equal(entityIssue(src, 'משטרת הגבול עצרה חשודים בפשיטת בנק מערבי בלילה'), 'west_bank_name_missing');
   assert.equal(entityIssue(src, 'משטרת הגבול עצרה חשודים בפשיטה לילית בגדה המערבית'), null);
   assert.equal(entityIssue(src, 'Пограничная полиция задержала подозреваемых на Западном берегу'), null);
+});
+
+// B11 part 1: entities from Wikidata (glossary-wikidata.mjs).
+test('Wikidata entities: a swapped country, a dropped participant and a lost name are caught', () => {
+  assert.equal(entityIssue('Iran fires missiles at Israel', 'איראן שיגרה טילים לעבר ירדן', 'he'), 'israel_name_missing');
+  assert.equal(entityIssue('Trump meets Erdoğan in Ankara', 'Трамп встретился в Анкаре', 'ru'), 'erdogan_name_missing');
+  assert.equal(entityIssue('IAEA inspectors return to Natanz', 'פקחי סבא"א חוזרים למתקן', 'he'), 'natanz_name_missing');
+});
+test('Wikidata entities: case endings, Hebrew prefixes, acronyms and Latin originals are accepted', () => {
+  assert.equal(entityIssue('Strikes near Damascus', 'Удары под Дамаском', 'ru'), null);
+  assert.equal(entityIssue('Rubio visits Jerusalem', 'רוביו ביקר בירושלים', 'he'), null);
+  assert.equal(entityIssue('Iran-backed militias', 'проиранские ополченцы', 'ru'), null);
+  assert.equal(entityIssue('UNRWA staff detained', 'עובדי UNRWA נעצרו', 'he'), null);
+  assert.equal(entityIssue('Let us talk', 'בואו נדבר', 'he'), null, 'lowercase "us" is not the US');
+  assert.equal(entityIssue('Israeli officials said', 'גורמים ישראליים אמרו', 'he'), null, 'an adjective does not demand the noun');
 });
