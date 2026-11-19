@@ -3,24 +3,6 @@
 // Generated 2026-11-19.
 export const WIKIDATA_ENTITIES = [
  {
-  "id": "israel",
-  "qid": "Q801",
-  "en": [
-   "Israel",
-   "ISR",
-   "State of Israel",
-   "Yisrael"
-  ],
-  "ru": [
-   "Израиль",
-   "Государство Израиль"
-  ],
-  "he": [
-   "ישראל",
-   "מדינת ישראל"
-  ]
- },
- {
   "id": "iran",
   "qid": "Q794",
   "en": [
@@ -137,8 +119,7 @@ export const WIKIDATA_ENTITIES = [
   "qid": "Q851",
   "en": [
    "Saudi Arabia",
-   "Kingdom of Saudi Arabia",
-   "Saudi"
+   "Kingdom of Saudi Arabia"
   ],
   "ru": [
    "Саудовская Аравия",
@@ -445,31 +426,6 @@ export const WIKIDATA_ENTITIES = [
   ]
  },
  {
-  "id": "jerusalem",
-  "qid": "Q1218",
-  "en": [
-   "Jerusalem",
-   "J'lem",
-   "Aelia Capitolina",
-   "Mint of Aelia Capitolina"
-  ],
-  "ru": [
-   "Иерусалим",
-   "Йерушала",
-   "аль-К̣удс",
-   "Уршалим",
-   "Уршалим-аль-К̣удс"
-  ],
-  "he": [
-   "ירושלים",
-   "ירושלם",
-   "הר המוריה",
-   "ציון",
-   "אריאל",
-   "עיר הקודש"
-  ]
- },
- {
   "id": "tel_aviv",
   "qid": "Q33935",
   "en": [
@@ -577,27 +533,6 @@ export const WIKIDATA_ENTITIES = [
   ],
   "he": [
    "צנעא"
-  ]
- },
- {
-  "id": "amman",
-  "qid": "Q3805",
-  "en": [
-   "Amman",
-   "Amman, Jordan",
-   "Philadelphia",
-   "Aman",
-   "Ammon",
-   "ʿAmmān",
-   "Mint of Philadelphia"
-  ],
-  "ru": [
-   "Амман",
-   "Филадельфия"
-  ],
-  "he": [
-   "עמאן",
-   "רבת עמון"
   ]
  },
  {
@@ -788,25 +723,6 @@ export const WIKIDATA_ENTITIES = [
   ]
  },
  {
-  "id": "un",
-  "qid": "Q1065",
-  "en": [
-   "United Nations",
-   "United Nations Organization",
-   "United Nations Organisation",
-   "UN"
-  ],
-  "ru": [
-   "Организация Объединённых Наций",
-   "ООН"
-  ],
-  "he": [
-   "האומות המאוחדות",
-   "האו\"ם",
-   "או\"ם"
-  ]
- },
- {
   "id": "nato",
   "qid": "Q7184",
   "en": [
@@ -978,31 +894,6 @@ export const WIKIDATA_ENTITIES = [
    "גא\"פ",
    "הגאפ",
    "גאפ"
-  ]
- },
- {
-  "id": "palestinian_authority",
-  "qid": "Q42620",
-  "en": [
-   "Palestinian National Authority",
-   "PNA",
-   "Palestine",
-   "PA"
-  ],
-  "ru": [
-   "Палестинская национальная администрация",
-   "Палестинская Автономия",
-   "ПНА",
-   "Палестина"
-  ],
-  "he": [
-   "הרשות הפלסטינית",
-   "הרש\"פ",
-   "רש\"פ",
-   "הרשות הפלשתינית",
-   "הרשות הלאומית הפלסטינית",
-   "הרשות הפלשתינאית",
-   "הרשות הפלסטינאית"
   ]
  },
  {
