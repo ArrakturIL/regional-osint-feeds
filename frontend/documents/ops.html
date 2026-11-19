@@ -79,6 +79,29 @@ function ring(title,used,limit,desc,unit=''){
  const p=limit?Math.min(100,Math.round((used||0)/limit*100)):0, c=p>=90?'var(--bad)':p>=70?'var(--warn)':'var(--mint)';
  return `<div class="card quota"><h3>${esc(title)}</h3><div class="ring" style="--p:${p};--c:${c}"><div><span><b>${p}%</b><small>${fmt(used)} / ${fmt(limit)}${unit}</small></span></div></div><p>${desc}</p></div>`;
 }
+// 19.11: plain-language groups instead of raw states. "partial" from context
+// sources and "empty" after a recent success are normal, not failures.
+const SRC_GROUPS=[
+ {k:'ok',c:'',t:'Работает',d:'Запрос прошёл, данные пришли.'},
+ {k:'context',c:'',t:'Работает, данные — только контекст',d:'Источник ответил, но по своей природе даёт неполную картину (выборка, архив, спутниковый каталог). Это не ошибка: пометка честно говорит, что делать выводы только по нему нельзя.'},
+ {k:'nonew',c:'',t:'Работает, новых данных нет',d:'Запрос прошёл, но источнику нечего сообщить: нет новых записей, нет перебоев, нет событий. Тревожно, только если так длится намного дольше обычного.'},
+ {k:'limited',c:'warn',t:'Ограничили частоту (429)',d:'Сервис отвечает «слишком много запросов». У нас запросы редкие, но Cloudflare Workers делят адреса с тысячами чужих сайтов, и лимит съедают они. Лечится переносом сбора на GitHub Actions.'},
+ {k:'blocked',c:'bad',t:'Доступ закрыт (403)',d:'Сервис отказывает нашему серверу. Обычно он блокирует все адреса Cloudflare целиком. Лечится переносом сбора на другой адрес (GitHub Actions) или заменой источника.'},
+ {k:'broken',c:'bad',t:'Сломан ответ',d:'Сервис ответил, но не тем, что мы ждём: пустая лента, другой формат, страница защиты вместо данных. Нужно разбирать по конкретному источнику.'},
+ {k:'stale',c:'warn',t:'Давно не было успеха',d:'Формально без ошибки, но удачного ответа не было больше суток.'},
+ {k:'retired',c:'off',t:'Отключён навсегда',d:'Источник выведен из работы, его заменил другой. Не опрашивается.'},
+];
+function srcGroup(s){
+ const st=String(s.state||''), d=String(s.detail||''), okAt=ms(s.succeeded_at), day=okAt&&Date.now()-okAt<86400e3;
+ if(st==='retired')return 'retired';
+ if(/\b429\b|rate limit|retry after/i.test(d))return 'limited';
+ if(/\b403\b|forbidden|blocked/i.test(d))return 'blocked';
+ if(st==='error')return 'broken';
+ if(st==='partial')return day?'context':'stale';
+ if(st==='empty')return day?'nonew':'stale';
+ if(st==='ok')return day?'ok':'stale';
+ return 'broken';
+}
 const stateTag=s=>{const k=/^(ok)$/.test(s)?'ok':/partial|stale|degraded/.test(s)?'warn':'bad';return `<span class="tag ${k}">${esc(s||'—')}</span>`};
 const COLLECTOR_MIN={analysts:15,centcom:15,gdelt:60,translation:120,shadow:120,copernicus:360,marad:360,unosat:720,satellite:1440};
 const expectMin=k=>{for(const[n,m]of Object.entries(COLLECTOR_MIN))if(String(k).includes(n))return m;return 120};
@@ -88,6 +111,7 @@ function render(d,error){
  const q=d.quotas||{}, L=d.limits||{}, t=d.translations||{}, sla=t.sla?.languages||{};
  const gem=(q.providers||[]).find(x=>/gemini/.test(x.provider_model));
  const srcs=d.sources||[], ok=srcs.filter(s=>s.state==='ok').length, part=srcs.filter(s=>s.state==='partial').length;
+ const problems=srcs.filter(x=>['limited','blocked','broken','stale'].includes(srcGroup(x)));
  const cols=(d.collectors||[]).map(c=>({...c,age:(Date.now()-c.checked_at_ms)/60000,exp:expectMin(c.source_key)}));
  const late=cols.filter(c=>c.age>2*c.exp);
  const ruWait=(sla.ru?.urgent?.waiting||0)+(sla.ru?.important?.waiting||0), ruOver=(sla.ru?.urgent?.overdue||0)+(sla.ru?.important?.overdue||0);
@@ -95,7 +119,7 @@ function render(d,error){
  const gpt=d.gpt||{}, gptAge=ms(gpt.last_monitor_run?.recorded_at_ms);
  const lvl=(bad,warn)=>bad?'bad':warn?'warn':'';
  const pills=[
-  [lvl(ok+part<srcs.length*0.6,ok+part<srcs.length),ok+part+' / '+srcs.length,'источников живы'],
+  [lvl(problems.length>3,problems.length>0),problems.length?problems.length+' с проблемой':'все в норме','источники данных'],
   [lvl(late.length>2,late.length>0),late.length?late.length+' отстают':'все в срок','сборщики GitHub'],
   [lvl(ruOver>2,ruOver>0),ruOver?ruOver+' просрочено':'в срок','переводы RU (срочн./важн.)'],
   [lvl(poolP>=95,poolP>=75),poolP+'%','пул нейронов AI'],
@@ -105,8 +129,9 @@ function render(d,error){
  const slaRows=['ru','he'].flatMap(l=>['urgent','important','normal'].map(tier=>{const x=sla[l]?.[tier]||{};const p=x.translated?Math.round((x.within_sla||0)/x.translated*100):null;
   return `<tr><td>${l==='ru'?'Русский':'Иврит'}</td><td>${{urgent:'срочно',important:'важно',normal:'обычно'}[tier]}</td><td class="num">${fmt(x.translated)}</td><td class="num">${p==null?'—':p+'%'}</td><td class="num">${fmt(x.p50_min)} / ${fmt(x.p90_min)} мин</td><td class="num">${fmt(x.waiting)} / ${x.overdue?`<span style="color:var(--bad)">${x.overdue}</span>`:'0'}</td></tr>`}));
 
- const shown=srcs.filter(s=>srcFilter==='all'||(srcFilter==='problem'?s.state!=='ok':s.state==='ok'));
- const srcRows=shown.map((s,i)=>`<div class="row" data-i="${i}" role="button" tabindex="0" aria-expanded="false"><span class="dot ${s.state==='ok'?'':s.state==='partial'?'warn':'bad'}"></span><span class="name">${esc(s.source)}</span>${stateTag(s.state)}<span class="age">✓ ${esc(ago(s.succeeded_at))}</span></div><div class="detail" id="sd${i}">Последняя попытка: ${esc(ago(s.attempted_at))}. Последний успех: ${esc(ago(s.succeeded_at))}.<br>${esc(s.detail||'Без подробностей.')}</div>`).join('');
+ const grouped=SRC_GROUPS.map(g=>({...g,items:srcs.filter(x=>srcGroup(x)===g.k)})).filter(g=>g.items.length);
+ let n=0;
+ const srcRows=grouped.filter(g=>srcFilter==='all'||(srcFilter==='problem'?['limited','blocked','broken','stale'].includes(g.k):!['limited','blocked','broken','stale'].includes(g.k))).map(g=>`<h3 style="font:600 12px var(--mono);letter-spacing:.06em;margin:14px 0 2px;display:flex;gap:8px;align-items:center"><span class="dot ${g.c}"></span>${esc(g.t)} · ${g.items.length}</h3><p class="meta" style="margin:0 0 4px">${esc(g.d)}</p>`+g.items.map(s=>{const i=n++;return `<div class="row" data-i="${i}" role="button" tabindex="0" aria-expanded="false"><span class="name">${esc(s.source)}</span>${stateTag(s.state)}<span class="age">✓ ${esc(ago(s.succeeded_at))}</span></div><div class="detail" id="sd${i}">Последняя попытка: ${esc(ago(s.attempted_at))}. Последний успех: ${esc(ago(s.succeeded_at))}.<br>${esc(s.detail||'Без подробностей.')}</div>`}).join('')).join('');
 
  const colRows=cols.map(c=>{const r=Math.min(100,c.age/(2*c.exp)*100), k=c.age>2*c.exp?'bad':c.age>c.exp*1.2?'warn':'';
   return `<div style="padding:8px 4px;border-bottom:1px solid var(--line)"><div style="display:flex;gap:10px;align-items:center"><span class="dot ${k}"></span><span class="name" style="flex:1">${esc(c.source_key)}</span><span class="age">${esc(ago(c.checked_at_ms))} · норма ≤ ${c.exp<60?c.exp+' мин':c.exp/60+' ч'}</span></div><div class="bar"><i style="width:${r}%;background:${k==='bad'?'var(--bad)':k==='warn'?'var(--warn)':'var(--mint)'}"></i></div></div>`}).join('');
@@ -144,8 +169,8 @@ function render(d,error){
 
  <div class="grid g2" style="margin-top:14px">
  <div class="card"><h2>Источники данных</h2><p class="explain">Monitor раз в минуту опрашивает внешние API (самолёты, корабли, ведомства, рынки). Здесь — их состояние.</p>
- ${help('Что значат статусы','ok — данные пришли. partial — пришли не все. error — запрос упал (403 — нас не пускают, 429 — превысили лимит, 5xx — у них сломалось). empty — ответ пустой. «✓ … назад» — когда в последний раз был успех.')}
- <div class="filters" role="group" aria-label="Фильтр"><button data-f="all" aria-pressed="${srcFilter==='all'}">Все ${srcs.length}</button><button data-f="problem" aria-pressed="${srcFilter==='problem'}">С проблемами ${srcs.length-ok}</button><button data-f="ok" aria-pressed="${srcFilter==='ok'}">В норме ${ok}</button></div>
+ ${help('Как читать группы','Источники разложены по смыслу, у каждой группы под заголовком — что это значит. Серая метка справа — сырое состояние из базы (ok, partial, empty, error, retired). «✓ … назад» — когда в последний раз был удачный ответ. Нажми на строку — увидишь точный текст ошибки.')}
+ <div class="filters" role="group" aria-label="Фильтр"><button data-f="all" aria-pressed="${srcFilter==='all'}">Все ${srcs.length}</button><button data-f="problem" aria-pressed="${srcFilter==='problem'}">С проблемами ${problems.length}</button><button data-f="ok" aria-pressed="${srcFilter==='ok'}">В норме ${srcs.length-problems.length}</button></div>
  ${srcRows||'<p class="meta">Нет строк.</p>'}</div>
 
  <div class="card"><h2>Сборщики на GitHub</h2><p class="explain">Отдельные скрипты (аналитики, GDELT, спутники и т. п.) запускаются по расписанию в GitHub Actions и складывают данные в базу. Полоска — сколько прошло с последней сборки относительно нормы.</p>
@@ -157,7 +182,7 @@ function render(d,error){
  <div class="card"><h2>GPT и аналитики</h2><p class="explain">GPT по расписанию раз в час пишет досье и анализ, переводит и чинит переводы. Аналитиков разбирает Editor.</p>
  <dl class="kv"><dt>GPT-монитор, последний анализ</dt><dd>${esc(ago(gpt.last_monitor_run?.recorded_at_ms))} · итог: ${esc(gpt.last_monitor_run?.outcome||'—')}</dd>
  <dt>Последнее досье</dt><dd>${esc(ago(gpt.last_dossier?.updated_at_ms))} · ${esc(gpt.last_dossier?.event_id||'—')}</dd>
- <dt>Последняя реплика редактора</dt><dd>${esc(ago(gpt.last_editorial_note?.created_at_ms))}</dd>
+ <dt>Последняя реплика редактора</dt><dd>${esc(ago(gpt.last_editorial_note?.created_ms))}</dd>
  <dt>Аналитики, последний прогон</dt><dd>${esc(ago(an.started_at_ms))} · ${esc(an.status||'—')}${an.error_message?' · '+esc(an.error_message):''}</dd>
  <dt>Аналитики в очереди</dt><dd>${fmt(st.pending ?? st.pending_count)} (норма — меньше 10)</dd>
  ${b6?`<dt>Сравнение моделей B6</dt><dd>${esc(b6.status||'—')} · ${esc(b6.run_id||'')}</dd>`:''}</dl>

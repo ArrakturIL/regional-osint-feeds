@@ -129,7 +129,7 @@ export async function opsFromD1(request, env, now = Date.now()) {
     rows(news, 'SELECT source,disabled,reason,until_ms,updated_ms FROM source_controls WHERE disabled=1'),
     one(core, 'SELECT outcome,recorded_at_ms FROM monitor_runs ORDER BY recorded_at_ms DESC LIMIT 1'),
     one(core, 'SELECT event_id,updated_at_ms FROM monitor_events ORDER BY updated_at_ms DESC LIMIT 1'),
-    one(news, 'SELECT id,created_at_ms FROM editorial_notes ORDER BY created_at_ms DESC LIMIT 1'),
+    one(news, 'SELECT id,created_ms FROM editorial_notes ORDER BY created_ms DESC LIMIT 1'),
     rows(
       news,
       "SELECT model,count(*) n FROM regional_i18n WHERE created_at_ms>? AND model LIKE 'gpt%' GROUP BY model",
