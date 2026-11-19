@@ -1,5 +1,14 @@
 import { UI_HE, h, t, useEffect, useRef, useState } from '../../app/runtime.js';
 import { UiIcon } from '../UiIcon/UiIcon.js';
+// Q6 (QA 19.11): the post id is the segment after "analysts", not the last
+// segment — "/he/analysts/" used to switch to "/analysts/analysts".
+export function analystPostSuffix(pathname) {
+  const parts = String(pathname || '')
+    .split('/')
+    .filter(Boolean);
+  const post = parts[parts.indexOf('analysts') + 1];
+  return parts.includes('analysts') && post ? '/' + encodeURIComponent(post) : '';
+}
 export function GlobalHeader({ active, overview, go }) {
   const [menu, setMenu] = useState(false),
     [panel, setPanel] = useState(false);
@@ -14,12 +23,7 @@ export function GlobalHeader({ active, overview, go }) {
           : active === '/analysts'
             ? 'analysts'
             : '';
-  const suffix =
-    section === 'analysts' &&
-    location.pathname.split('/').filter(Boolean).length > 1 &&
-    location.pathname.includes('/analysts/')
-      ? '/' + encodeURIComponent(location.pathname.split('/').filter(Boolean).pop())
-      : '';
+  const suffix = section === 'analysts' ? analystPostSuffix(location.pathname) : '';
   const href = (locale, slug = section, preserve = true) => {
     const path =
       (locale === 'he' ? '/he' : '') +
