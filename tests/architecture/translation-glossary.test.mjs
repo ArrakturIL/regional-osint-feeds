@@ -1,7 +1,7 @@
 // B3: one entity glossary replaces hand-written per-name regex rules.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {ENTITIES, entityIssue} from '../../backend/editor/src/translations/glossary.mjs';
+import {ENTITIES, entityIssue, wikidataEntityIssue} from '../../backend/editor/src/translations/glossary.mjs';
 import {factualTranslationIssue} from '../../backend/editor/src/translations/fact-guard.mjs';
 
 const o = title => ({title, body: '', comment: ''});
@@ -65,20 +65,20 @@ test('West Bank is not "western bank" (live Helsinki error 17.11)', () => {
 
 // B11 part 1: entities from Wikidata (glossary-wikidata.mjs).
 test('Wikidata entities: a swapped country, a dropped participant and a lost name are caught', () => {
-  assert.equal(entityIssue('Iran fires missiles at Jordan', 'איראן שיגרה טילים לעבר ישראל', 'he'), 'jordan_name_missing');
-  assert.equal(entityIssue('x'.repeat(161) + ' Jordan', 'ישראל', 'he'), null, 'long bodies are not checked against Wikidata names');
-  assert.equal(entityIssue('Trump meets Erdoğan in Ankara', 'Трамп встретился в Анкаре', 'ru'), 'erdogan_name_missing');
-  assert.equal(entityIssue('IAEA inspectors return to Natanz', 'פקחי סבא"א חוזרים למתקן', 'he'), 'natanz_name_missing');
+  assert.equal(wikidataEntityIssue('Iran fires missiles at Jordan', 'איראן שיגרה טילים לעבר ישראל', 'he'), 'jordan_name_missing');
+  assert.equal(wikidataEntityIssue('x'.repeat(161) + ' Jordan', 'ישראל', 'he'), null, 'long bodies are not checked against Wikidata names');
+  assert.equal(wikidataEntityIssue('Trump meets Erdoğan in Ankara', 'Трамп встретился в Анкаре', 'ru'), 'erdogan_name_missing');
+  assert.equal(wikidataEntityIssue('IAEA inspectors return to Natanz', 'פקחי סבא"א חוזרים למתקן', 'he'), 'natanz_name_missing');
 });
 test('Wikidata entities: case endings, Hebrew prefixes, acronyms and Latin originals are accepted', () => {
-  assert.equal(entityIssue('Strikes near Damascus', 'Удары под Дамаском', 'ru'), null);
-  assert.equal(entityIssue('Rubio visits Damascus', 'רוביו ביקר בדמשק', 'he'), null);
-  assert.equal(entityIssue('Former Mossad official warns', 'בכיר לשעבר במוסד מזהיר', 'he'), null, 'article yields to a prefix');
-  assert.equal(entityIssue('Iran-backed militias', 'проиранские ополченцы', 'ru'), null);
-  assert.equal(entityIssue('UNRWA staff detained', 'עובדי UNRWA נעצרו', 'he'), null);
-  assert.equal(entityIssue('Let us talk', 'בואו נדבר', 'he'), null, 'lowercase "us" is not the US');
-  assert.equal(entityIssue('Iranian officials said', 'גורמים איראניים אמרו', 'he'), null, 'an adjective does not demand the noun');
-  assert.equal(entityIssue('Kuwait faces new Iran attacks', 'כוויית מתמודדת עם מתקפות איראניות', 'he'), null, 'final nun turns regular');
-  assert.equal(entityIssue('Saudi Arabia reports attacks', 'Саудовская Аравия сообщила; удары по Саудовской Аравии', 'ru'), null);
-  assert.equal(entityIssue('Israel steps up strikes in Gaza Strip', 'Израиль усиливает удары в Газе', 'ru'), null, 'proper-noun part of a multi-word name');
+  assert.equal(wikidataEntityIssue('Strikes near Damascus', 'Удары под Дамаском', 'ru'), null);
+  assert.equal(wikidataEntityIssue('Rubio visits Damascus', 'רוביו ביקר בדמשק', 'he'), null);
+  assert.equal(wikidataEntityIssue('Former Mossad official warns', 'בכיר לשעבר במוסד מזהיר', 'he'), null, 'article yields to a prefix');
+  assert.equal(wikidataEntityIssue('Iran-backed militias', 'проиранские ополченцы', 'ru'), null);
+  assert.equal(wikidataEntityIssue('UNRWA staff detained', 'עובדי UNRWA נעצרו', 'he'), null);
+  assert.equal(wikidataEntityIssue('Let us talk', 'בואו נדבר', 'he'), null, 'lowercase "us" is not the US');
+  assert.equal(wikidataEntityIssue('Iranian officials said', 'גורמים איראניים אמרו', 'he'), null, 'an adjective does not demand the noun');
+  assert.equal(wikidataEntityIssue('Kuwait faces new Iran attacks', 'כוויית מתמודדת עם מתקפות איראניות', 'he'), null, 'final nun turns regular');
+  assert.equal(wikidataEntityIssue('Saudi Arabia reports attacks', 'Саудовская Аравия сообщила; удары по Саудовской Аравии', 'ru'), null);
+  assert.equal(wikidataEntityIssue('Israel steps up strikes in Gaza Strip', 'Израиль усиливает удары в Газе', 'ru'), null, 'proper-noun part of a multi-word name');
 });

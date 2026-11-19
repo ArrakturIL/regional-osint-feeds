@@ -114,7 +114,7 @@ test('ARCH-03 active Editor 45-module (+B1-B6 ai/glossary/verify/display-policy/
  const audit=auditActiveArchitecture(root);
  const active=audit.graph.components.find(c=>c.owner==='editor');
  assert.ok(active);
- assert.equal(active.sourceModuleCount,48); // +H-04 news/source-controls, +Q1 translations/script-guard, +B10 translations/jobs
+ assert.equal(active.sourceModuleCount,49); // +H-04 news/source-controls, +Q1 translations/script-guard, +B10 translations/jobs, +B11 translations/glossary-wikidata
  assert.deepEqual(active.unreachableModules,[]);
  assert.deepEqual(active.importedOutsideOwner,[]);
  assert.deepEqual(audit.release.editorD1,['CORE_DB','NEWS_DB']);

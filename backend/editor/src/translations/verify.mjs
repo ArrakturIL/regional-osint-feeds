@@ -7,7 +7,7 @@
 //   scriptIssue  — the output is written in the target script (Q1, 19.11).
 // Returns a stable code or null. Length and number checks stay with each
 // caller because their limits differ by text kind.
-import { entityIssue, targetLanguage } from './glossary.mjs';
+import { entityIssue, targetLanguage, wikidataEntityIssue } from './glossary.mjs';
 import { semanticMeaningIssue, MEANING_RULES } from './semantic-meaning.mjs';
 import { scriptIssue } from './script-guard.mjs';
 
@@ -17,5 +17,10 @@ export function translationIssue(source, translated, lang = targetLanguage(Strin
   const s = String(source || ''),
     t = String(translated || '');
   if (!s.trim()) return null;
-  return scriptIssue(s, t, lang) || entityIssue(s, t, lang) || semanticMeaningIssue(s, t, lang);
+  return (
+    scriptIssue(s, t, lang) ||
+    entityIssue(s, t, lang) ||
+    semanticMeaningIssue(s, t, lang) ||
+    wikidataEntityIssue(s, t, lang)
+  );
 }

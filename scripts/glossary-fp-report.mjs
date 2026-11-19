@@ -2,7 +2,7 @@
 // runs the glossary over accepted RU and HE news translations of the last
 // 7 days and lists what the Wikidata entities would newly reject.
 // Usage (Actions): CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_D1_API_TOKEN set.
-import { entityIssue } from '../backend/editor/src/translations/glossary.mjs';
+import { wikidataEntityIssue as entityIssue } from '../backend/editor/src/translations/glossary.mjs';
 import { WIKIDATA_ENTITIES } from '../backend/editor/src/translations/glossary-wikidata.mjs';
 
 const NEWS_DB = 'd9ba2c51-d551-4615-bbe2-37e76e2d668a';

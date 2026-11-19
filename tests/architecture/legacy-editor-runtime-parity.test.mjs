@@ -95,6 +95,6 @@ test('BE-02: RAF Fairford never becomes Hebrew prime-minister abbreviation',()=>
   'В сентябре планировалась атака на RAF Fairford.');
  assert.equal(factualTranslationIssue(source,localized('משרד המשפטים: תקיפה בבסיס רה״ם פיירפורד',
   'בספטמבר תוכננה תקיפה בבסיס רה״ם פיירפורד.')),'title:raf_misidentified');
- assert.equal(factualTranslationIssue(source,localized('משרד המשפטים: תקיפה בבסיס RAF פיירפורד',
+ assert.equal(factualTranslationIssue(source,localized('משרד המשפטים בארה״ב: תקיפה בבסיס RAF פיירפורד',
   'בספטמבר תוכננה תקיפה בבסיס RAF פיירפורד.')),null);
 });

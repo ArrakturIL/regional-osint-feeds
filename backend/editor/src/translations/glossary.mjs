@@ -137,8 +137,10 @@ const ruForm = f =>
 // Final letters turn regular inside a longer word: איראן → איראנית.
 const FINAL = { ך: '[ךכ]', ם: '[םמ]', ן: '[ןנ]', ף: '[ףפ]', ץ: '[ץצ]' };
 // A leading definite article yields to a prefix: המוסד → במוסד, המפרץ → במפרץ.
+// A final ה yields to the adjective: אמריקה → אמריקאית, סעודיה → סעודי.
 const heForm = f =>
   esc(f.length > 3 ? f.replace(/^ה(?=\p{L}{2})/u, '') : f)
+    .replace(/(\p{L}{2})ה(?=$|\s)/gu, '$1(?:ה|א|י)')
     .replace(/[ךםןףץ]/gu, c => FINAL[c])
     // Spelling variants: doubled vav/yod (כווית / כוויית).
     .replace(/ו+/gu, 'ו{1,2}')
@@ -158,17 +160,22 @@ function fromWikidata(e) {
   ]);
   // A translation may name a multi-word entity by its proper-noun part
   // ("в Газе" for «сектор Газа», «Аравии» for «Саудовская Аравия»).
-  const ruParts = e.ru.flatMap(f => (/[\s-]/u.test(f) ? f.split(/[\s-]+/u).filter(w => /^\p{Lu}\p{L}{3,}$/u.test(w)) : []));
+  const ruParts = e.ru.flatMap(f =>
+    /[\s-]/u.test(f) ? f.split(/[\s-]+/u).filter(w => /^\p{Lu}\p{L}{3,}$/u.test(w)) : [],
+  );
   const ruSource = new RegExp(L + '(?:' + e.ru.map(ruForm).join('|') + ')', 'iu'),
     ruTarget = new RegExp([...e.ru, ...ruParts].map(ruForm).join('|'), 'iu'),
-    he = new RegExp(e.he.map(heForm).join('|'), 'u');
+    he = new RegExp(e.he.map(heForm).join('|'), 'u'),
+    // Last word of a multi-word Hebrew name (דונלד טראמפ → טראמפ).
+    heParts = e.he.flatMap(f => (/\s/u.test(f) ? [f.split(/\s+/u).pop()] : [])).filter(w => w.length >= 3),
+    heTarget = heParts.length ? new RegExp([...e.he, ...heParts].map(heForm).join('|'), 'u') : he;
   const either = (re, rest) => ({ test: t => re.test(t) || rest.some(r => r.test(t)) });
   return {
     id: e.id,
     code: e.id + '_name_missing',
     wikidata: e.qid,
     source: { test: t => latin.some(r => r.test(t)) || ruSource.test(t) || he.test(t) },
-    he: either(he, latin),
+    he: either(heTarget, latin),
     ru: either(ruTarget, latin),
   };
 }
@@ -183,12 +190,19 @@ export const targetLanguage = text =>
 // Wikidata entities are checked on headline-length text only (≤ 160 chars):
 // summaries and bodies legitimately drop names (live check 19.11, B11).
 export const WIKIDATA_MAX_SOURCE = 160;
-export function entityIssue(source, translated, target = targetLanguage(translated)) {
-  const long = String(source).length > WIKIDATA_MAX_SOURCE;
+// Hand-tuned entities run before the semantic-meaning rules; Wikidata names
+// run after them (wikidataEntityIssue), so a specific verdict such as
+// iran_replaced_with_jordan is not masked by a generic name_missing.
+function firstMissing(source, translated, target, wikidata) {
+  if (wikidata && String(source).length > WIKIDATA_MAX_SOURCE) return null;
   for (const e of ENTITIES) {
-    if (long && e.wikidata) continue;
+    if (Boolean(e.wikidata) !== wikidata) continue;
     const want = e[target];
     if (want && e.source.test(source) && !want.test(translated)) return e.code;
   }
   return null;
 }
+export const entityIssue = (source, translated, target = targetLanguage(translated)) =>
+  firstMissing(source, translated, target, false);
+export const wikidataEntityIssue = (source, translated, target = targetLanguage(translated)) =>
+  firstMissing(source, translated, target, true);
