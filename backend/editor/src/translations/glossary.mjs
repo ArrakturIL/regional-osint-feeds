@@ -125,7 +125,9 @@ const gap = '[-\\s\u2010-\u2014]+';
 // (Саудовская → Саудовск matches Саудовской, Израиль → Израил).
 const ruStem = w => {
   const stem = w.replace(/[аяоеиыуюьй]{1,2}$/iu, '');
-  return stem.length >= 4 ? stem : w.length > 4 ? w.slice(0, -1) : w;
+  if (stem.length >= 4) return stem;
+  const one = w.replace(/[аяоеиыуюьй]$/iu, '');
+  return one.length >= 3 ? one : w; // Газа → Газ (Газе), Доха → Дох
 };
 const ruForm = f =>
   f
