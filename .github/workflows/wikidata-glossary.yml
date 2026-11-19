@@ -11,6 +11,7 @@ on:
       - "scripts/build_wikidata_glossary.py"
       - "scripts/glossary-fp-report.mjs"
       - "backend/editor/src/translations/glossary.mjs"
+      - "tests/architecture/translation-glossary.test.mjs"
       - "config/glossary-wikidata.json"
       - ".github/workflows/wikidata-glossary.yml"
   workflow_dispatch:
