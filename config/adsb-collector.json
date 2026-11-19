@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "description": "Q12: ADS-B collected from GitHub Actions (Cloudflare Worker egress gets adsb.lol 429 / adsb.fi 403). Point regions must equal Monitor DEFAULT_REGION focus + context (tests/architecture/adsb-collector-cache.test.mjs). Monitor reads only the private D1 cache.",
+  "point": {
+    "source_key": "adsb",
+    "provider": "adsb.lol",
+    "url": "https://api.adsb.lol/v2/point/{lat}/{lon}/{radius}",
+    "max_radius_nm": 250,
+    "regions": [
+      ["tehran", 35.7, 51.4, 100],
+      ["western_iran", 33.1, 48.4, 190],
+      ["eastern_iran", 33.6, 58.4, 260],
+      ["persian_gulf", 26.6, 51.8, 195],
+      ["hormuz", 26.5, 56.4, 85],
+      ["gulf_of_oman", 24.5, 59.0, 150]
+    ]
+  },
+  "mil": {
+    "source_key": "adsb_mil",
+    "providers": [
+      ["adsb.lol", "https://api.adsb.lol/v2/mil"],
+      ["adsb.fi", "https://opendata.adsb.fi/api/v2/mil"]
+    ]
+  }
+}

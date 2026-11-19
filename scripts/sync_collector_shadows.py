@@ -18,7 +18,7 @@ from pathlib import Path
 import sys
 
 from scripts.neon_mirror import (
-    SOURCE_FILES, load_snapshot, publish_snapshot,
+    GITHUB_JSON_SOURCES, load_snapshot, publish_snapshot,
     verify_snapshot, read_stored_snapshot,
 )
 from scripts.neon_to_d1 import D1Client, mirror_source
@@ -44,7 +44,7 @@ def execute_shadow_sync(
     root = Path(root)
     # The all-or-nothing input gate comes before any network request:
     # invalid, oversized or future-dated JSON must not trigger a partial run.
-    sources = list(SOURCE_FILES)
+    sources = list(GITHUB_JSON_SOURCES)
     snapshots = [loader(source, root) for source in sources]
     if [x.source_key for x in snapshots] != sources:
         raise RuntimeError("collector source/order mismatch")

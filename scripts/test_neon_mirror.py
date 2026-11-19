@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from scripts.neon_mirror import (
-    SOURCE_FILES, MAX_DOC_BYTES, load_snapshot, decide_update,
+    GITHUB_JSON_SOURCES, SOURCE_FILES, MAX_DOC_BYTES, load_snapshot, decide_update,
     canonical_hash, UPSERT_SQL, inspect_snapshot,
 )
 
@@ -30,8 +30,10 @@ class TestCollectorSnapshotContract(unittest.TestCase):
     def test_registry_contains_collector_mirrors_and_translation(self):
         self.assertEqual(set(SOURCE_FILES), {
             "analysts", "centcom", "copernicus", "gdelt",
-            "marad", "satellite", "unosat", "news_translation",
+            "marad", "satellite", "unosat", "news_translation", "adsb", "adsb_mil",
         })
+        # Q12: ADS-B JSON is never committed; jobs that compare GitHub JSON skip it.
+        self.assertEqual(set(SOURCE_FILES) - set(GITHUB_JSON_SOURCES), {"adsb", "adsb_mil"})
 
     def test_load_paired_json_is_atomic_and_preserves_original_objects(self):
         payload, status = self.write_pair()

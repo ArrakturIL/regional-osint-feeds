@@ -13,7 +13,7 @@ import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
-from scripts.neon_mirror import SOURCE_FILES, read_stored_snapshot
+from scripts.neon_mirror import GITHUB_JSON_SOURCES, SOURCE_FILES, read_stored_snapshot
 from scripts.neon_to_d1 import D1Client, mirror_source, READ_D1_SQL, _validate_d1_row
 from scripts.publish_neon_mirror import _open_connection
 
@@ -146,7 +146,8 @@ def execute_replica_sync(
     if not all((neon_url, account_id, token)):
         raise ValueError("required private Neon/D1 credentials missing")
 
-    sources = list(SOURCE_FILES)
+    # Actions-only sources (ADS-B) sync to D1 in their own workflow every run.
+    sources = list(GITHUB_JSON_SOURCES)
     checked = {}
     observations = []
     with connector(neon_url) as db:

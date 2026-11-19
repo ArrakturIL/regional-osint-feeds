@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 import sys
 
-from scripts.neon_mirror import SOURCE_FILES, VALID_STATES, canonical_hash, load_snapshot
+from scripts.neon_mirror import GITHUB_JSON_SOURCES, SOURCE_FILES, VALID_STATES, canonical_hash, load_snapshot
 from scripts.neon_to_d1 import D1Client, _validate_d1_row
 
 READ_ONLY_SQL = (
@@ -80,7 +80,7 @@ def audit_rows(rows: list[dict], root: Path | str | None, *,
             raise RuntimeError("invalid or duplicate D1 cache source")
         by_source[key] = row
     checks = [compare_source(source, root, by_source.get(source), now=now)
-              for source in sorted(SOURCE_FILES)]
+              for source in sorted(GITHUB_JSON_SOURCES)]
     return {
         "result": "parity" if all(c["comparison"] == "matched" for c in checks)
                   else "drift",

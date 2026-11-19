@@ -25,7 +25,6 @@
     "collectors/official/dod.js",
     "collectors/official/idf.js",
     "collectors/markets/polymarket.js",
-    "collectors/official/centcom-rss.js",
     "collectors/official/centcom-dvids.js",
     "collectors/satellite/github.js",
     "collectors/satellite/catalog.js",

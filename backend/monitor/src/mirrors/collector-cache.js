@@ -12,6 +12,9 @@ export const MIRROR_SOURCES = Object.freeze([
   'satellite',
   'unosat',
   'news_translation',
+  // Q12: Actions-only, no GitHub JSON fallback; read via readD1CollectorSnapshot.
+  'adsb',
+  'adsb_mil',
 ]);
 const allowedSources = new Set(MIRROR_SOURCES);
 const MAX_JSON_BYTES = 1048576;

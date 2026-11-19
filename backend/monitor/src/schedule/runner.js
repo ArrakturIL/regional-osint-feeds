@@ -30,7 +30,6 @@ export function scheduledSourceNames(minute) {
                         : [];
   // Added only in a previously unused slot; existing source timing is unchanged.
   const supplemental = [
-    ...(minute % 240 === 18 ? ['centcom_rss'] : []),
     ...(minute % 30 === 9 ? ['centcom_dvids'] : []),
     ...(minute % 360 === 61 ? ['marad_official'] : []),
     ...(minute % 720 === 53 ? ['satellite_context'] : []),
@@ -53,22 +52,6 @@ export async function runSchedule(controller, env) {
   const manual = await claimManualRun(env.DB, slot);
   const selected = new Set([...scheduledSourceNames(minute), ...(manual?.wanted || [])]);
 
-  // Shared adsb.lol quota: skip redundant automatic attempts during cooldown.
-  // While recovering, reserve the first successful probe for the Tehran-priority collector,
-  // not for the broad /mil endpoint. Explicit manual requests still report their result.
-  // mil_lol is not gated here: it picks adsb.lol only when healthy, else adsb.fi.
-  const autoAdsb = ['adsb'].filter(name => selected.has(name) && !(manual?.wanted || []).includes(name));
-  if (autoAdsb.length) {
-    const health = await env.DB.prepare(
-      'SELECT failures,next_allowed_at,lease_until FROM worker_provider_state WHERE provider=?',
-    )
-      .bind('adsb.lol')
-      .first();
-    const now = Date.now();
-    if ((health?.next_allowed_at || 0) > now || (health?.lease_until || 0) > now) {
-      for (const name of autoAdsb) selected.delete(name);
-    }
-  }
   // Operator kill switch (H-04): a disabled source makes no upstream request in either
   // automatic or manual runs; its status says so instead of keeping a stale "ok".
   const disabled = selected.size ? await disabledSources(env.DB, Date.now()) : new Map();
