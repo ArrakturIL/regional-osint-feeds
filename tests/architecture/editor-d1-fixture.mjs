@@ -102,11 +102,20 @@ export function addGroup(db, { id, rep, priority = 5, last_seen_ms }) {
 }
 
 // Workers AI stub: answer(model, input) -> response object; records calls.
-export function ai(answer) {
-  const calls = [];
+// B11 meaning checks (second opinion) are answered by `verdict` (default: same
+// meaning) and recorded in `checks`, so translation call counts stay exact.
+export const isMeaningCheck = input => /^You check a news translation/.test(input?.messages?.[0]?.content || '');
+export function ai(answer, verdict = () => ({ same_meaning: true, error: 'none', evidence: '' })) {
+  const calls = [],
+    checks = [];
   return {
     calls,
+    checks,
     run: async (model, input) => {
+      if (isMeaningCheck(input)) {
+        checks.push({ model, input });
+        return { choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(verdict(model, input)) } }], usage: { neurons: 3 } };
+      }
       calls.push({ model, input });
       return answer(model, input);
     },

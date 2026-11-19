@@ -13,6 +13,9 @@ export const ROUTES = {
   // (7 414 of 8 623 neurons on 18.11, analysts starved). Gemini first; llama
   // takes what Gemini cannot do or what the gate rejects (per item).
   ru_titles: [GEMINI_LITE, { provider: 'cloudflare', model: RU_TITLES_MODEL }],
+  // B11 part 2: second opinion for urgent/important (translations/meaning-check.mjs);
+  // the step of the translating model is skipped.
+  meaning_check: [GEMINI_LITE, GLM, { provider: 'cloudflare', model: RU_TITLES_MODEL }],
   he_translate: [
     { provider: 'gemini', family: 'flash-lite', dailyCap: 450 }, // project quota 500 RPD
     { provider: 'cloudflare', model: '@cf/zai-org/glm-4.7-flash' },
@@ -115,7 +118,7 @@ export async function chat(env, task, input, deps = {}, accept = null) {
     try {
       const out = await runStep(env, step, input, deps);
       if (!out) continue;
-      const rejected = accept ? accept(out) : null;
+      const rejected = accept ? await accept(out) : null; // may be async (B11 meaning check)
       if (!rejected) return spent ? { ...out, rejected_neurons: spent } : out;
       spent += Number(out?.usage?.neurons) || 0;
       last = Object.assign(new Error(rejected), { rejected: true, model: out.model });

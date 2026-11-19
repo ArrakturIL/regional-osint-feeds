@@ -76,6 +76,7 @@ export async function opsFromD1(request, env, now = Date.now()) {
     ruError,
     heErrors,
     ruRejected,
+    meaningCheck,
     ruPending,
     sources,
     collectors,
@@ -116,6 +117,8 @@ export async function opsFromD1(request, env, now = Date.now()) {
       news,
       "SELECT language,state,tier,count(*) n,min(created_ms) oldest_ms FROM translation_jobs WHERE state<>'done' GROUP BY language,state,tier",
     ),
+    // B11 part 2: second-opinion verdicts today (translations/meaning-check.mjs).
+    one(news, 'SELECT value FROM editor_state WHERE key=?', 'meaning_check:' + day),
     one(
       news,
       'SELECT count(*) n FROM news_items WHERE discovered_ms>? AND priority>=7 AND headline_ru IS NULL',
@@ -152,6 +155,13 @@ export async function opsFromD1(request, env, now = Date.now()) {
       sla: sla ? { ...parse(sla.value), updated_ms: sla.updated_ms } : null,
       ru_last_error: ruError,
       queue: ruRejected,
+      meaning_check: (() => {
+        try {
+          return meaningCheck?.value ? JSON.parse(meaningCheck.value) : {};
+        } catch {
+          return {};
+        }
+      })(),
       ru_missing_24h_priority7: ruPending?.n ?? null,
       he_errors_today: heErrors,
       gpt_translations_24h: gptToday,
