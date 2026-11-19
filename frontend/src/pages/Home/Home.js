@@ -52,6 +52,7 @@ export function HomeV2({ visible, overview, news, cases, go, errors, feeds }) {
         assessmentDesc: 'הערכת המצב המפורטת בעברית עדיין אינה זמינה. ניתן לבדוק את מקורות הנתונים.',
         analysis: 'ניתוח: ',
         compared: 'נבדקו המקורות הזמינים',
+        notCompared: 'לא ניתן היה להשוות לבדיקה הקודמת: אין נתונים בני השוואה',
         featured: 'הסיפורים המרכזיים',
         featuredSub: 'אירועים מתפתחים: מה ידוע ומה עדיין לא ברור',
         allEvents: 'לכל האירועים ←',
@@ -78,6 +79,7 @@ export function HomeV2({ visible, overview, news, cases, go, errors, feeds }) {
         assessmentDesc: 'Получаем последнюю оценку мониторинга.',
         analysis: 'Анализ: ',
         compared: 'Последнее сравнение выполнено по доступным источникам',
+        notCompared: 'Сравнить с прошлой проверкой не удалось: нет сопоставимых данных',
         featured: 'Главные истории',
         featuredSub: 'Развивающиеся темы, в которых отдельно указано, что известно и что остаётся неясным',
         allEvents: 'Все события →',
@@ -94,6 +96,16 @@ export function HomeV2({ visible, overview, news, cases, go, errors, feeds }) {
           'Текущая картина строится по открытым источникам. Полноту данных, методологию и технические ограничения можно проверить отдельно.',
         method: 'Данные и методология →',
       };
+  // Q4 (QA 19.11): say "compared" only when /api/changes actually compared
+  // two checks; before, the line was printed unconditionally next to
+  // "analysis unavailable".
+  const digestState = cases?.digestState;
+  const comparedLabel =
+    !cases || digestState === 'loading' || digestState === 'error'
+      ? null
+      : Number(cases.sourceComparable) > 0 && digestState !== 'insufficient_comparison'
+        ? labels.compared
+        : labels.notCompared;
   return h(
     'div',
     { className: 'rw-page', hidden: !visible, id: 'overview' },
@@ -123,7 +135,9 @@ export function HomeV2({ visible, overview, news, cases, go, errors, feeds }) {
               ? 'דורש תשומת לב'
               : overview?.analysis?.state === 'normal'
                 ? 'ללא התרעות חדשות'
-                : 'ממתינים להערכה'
+                : overview?.analysis?.state === 'partial'
+                  ? 'ניתוח חלקי'
+                  : 'ממתינים להערכה'
             : overview?.analysis?.badge || labels.pending,
         ),
       ),
@@ -149,7 +163,7 @@ export function HomeV2({ visible, overview, news, cases, go, errors, feeds }) {
         'div',
         { className: 'rw-situation-bottom' },
         t('span', null, labels.analysis + fmtTime(overview?.analysis?.time)),
-        t('span', null, labels.compared),
+        comparedLabel && t('span', null, comparedLabel),
       ),
     ),
     h('div', { className: 'rw-editorial-lead' }, h(Editorial, { notes: news?.editorials })),
