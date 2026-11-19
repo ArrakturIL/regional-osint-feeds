@@ -200,3 +200,24 @@ test('legacy pivot translations stay visible and are excluded from automatic re-
  await translateScheduled(env,atKind('news'));
  assert.equal(events.filter(e=>e.sql&&e.sql.includes('INSERT OR IGNORE INTO regional_i18n_attempts')).length,0,'legacy item is not auto re-translated');
 });
+
+test('19.11: Gemini Hebrew with Arabic letters is rejected and glm translates it in the same tick',async()=>{
+ const {env,events,ai}=makeEnv({
+  newsRows:[newsRow('n-7',7)],
+  translate:{title:'ישראל מדווחת על 7 כטב״מים ליד הגבול',body:'',comment:'',confidence:96}
+ });
+ env.GEMINI_API_KEY='K';
+ const realFetch=globalThis.fetch;
+ globalThis.fetch=async url=>String(url).includes(':generateContent')
+  ? Response.json({candidates:[{content:{parts:[{text:JSON.stringify({title:'ישראל מדווחת על 7 כטב״מים ליד הגבולة',body:'',comment:'',confidence:97})}]},finishReason:'STOP'}]})
+  : Response.json({models:[{name:'models/gemini-3.5-flash-lite',supportedGenerationMethods:['generateContent']}]});
+ try{
+  const result=await translateScheduled(env,atKind('news'));
+  assert.equal(result.translated,1);
+ }finally{globalThis.fetch=realFetch;}
+ assert.equal(ai.length,1,'glm called once after the Gemini answer was rejected');
+ const written=writes(events,'INSERT INTO regional_i18n(kind,item_id');
+ assert.equal(written.length,1);
+ assert.equal(written[0].args[3],'ישראל מדווחת על 7 כטב״מים ליד הגבול');
+ assert.equal(written[0].args.at(-2),'@cf/zai-org/glm-4.7-flash');
+});

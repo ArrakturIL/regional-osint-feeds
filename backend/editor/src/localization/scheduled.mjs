@@ -226,8 +226,21 @@ async function translateLocaleItem(env, item, day, now) {
     err = null,
     neurons = 0;
   try {
-    const answer = await chat(env, 'he_translate', heTranslateInput(kind, text));
-    neurons = Number(answer?.usage?.neurons) || 0;
+    // The same checks as below decide whether the next provider is tried.
+    const answer = await chat(env, 'he_translate', heTranslateInput(kind, text), {}, out => {
+      if (out?.choices?.[0]?.finish_reason && out.choices[0].finish_reason !== 'stop')
+        return 'model_incomplete';
+      const body = out?.choices?.[0]?.message?.content ?? out?.response;
+      if (typeof body !== 'string' || body.length > 9500) return 'model_invalid_response';
+      let parsed;
+      try {
+        parsed = JSON.parse(body);
+      } catch (e) {
+        return String(e?.message || e);
+      }
+      return checkHebrew(text, parsed) ? null : hebrewQualityIssue(text, parsed);
+    });
+    neurons = (Number(answer?.usage?.neurons) || 0) + (Number(answer?.rejected_neurons) || 0);
     if (answer?.choices?.[0]?.finish_reason && answer.choices[0].finish_reason !== 'stop')
       throw Error('model_incomplete');
     const raw = answer?.choices?.[0]?.message?.content ?? answer?.response;
@@ -260,6 +273,7 @@ async function translateLocaleItem(env, item, day, now) {
       }).catch(() => {});
   } catch (e) {
     err = String(e?.message || e).slice(0, 180);
+    neurons += Number(e?.neurons) || 0;
   }
   await db
     .prepare(

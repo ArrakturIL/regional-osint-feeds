@@ -2,12 +2,17 @@
 // final chains): Gemini Flash-Lite first for Hebrew, Cloudflare as fallback.
 // Any provider error falls through to the next step in the same call.
 import { geminiChat, listModels, pickModel } from './providers/gemini.mjs';
+import { RU_TITLES_MODEL } from '../translations/prompts.mjs';
 
 const GEMINI_LITE = { provider: 'gemini', family: 'flash-lite', dailyCap: 450 }; // project quota 500 RPD, shared by all tasks
 const GLM = { provider: 'cloudflare', model: '@cf/zai-org/glm-4.7-flash' };
 export const ROUTES = {
   analyst_decision: [GEMINI_LITE, GLM], // B7
   analyst_translate: [GEMINI_LITE, GLM], // B7
+  // 19.11: RU titles left the shared Workers AI pool to llama-70B alone
+  // (7 414 of 8 623 neurons on 18.11, analysts starved). Gemini first; llama
+  // takes what Gemini cannot do or what the gate rejects (per item).
+  ru_titles: [GEMINI_LITE, { provider: 'cloudflare', model: RU_TITLES_MODEL }],
   he_translate: [
     { provider: 'gemini', family: 'flash-lite', dailyCap: 450 }, // project quota 500 RPD
     { provider: 'cloudflare', model: '@cf/zai-org/glm-4.7-flash' },
@@ -99,15 +104,25 @@ export async function runStep(env, step, input, deps = {}) {
   }
 }
 
-export async function chat(env, task, input, deps = {}) {
-  let last = new Error('no_route_available');
+// accept(out) → null to take the answer, or a rejection code: the next
+// provider in the chain is tried in the same call (19.11: a Hebrew answer the
+// script/meaning gate rejects no longer waits for a next-day retry). Neurons
+// of rejected Cloudflare answers are reported as rejected_neurons / .neurons.
+export async function chat(env, task, input, deps = {}, accept = null) {
+  let last = new Error('no_route_available'),
+    spent = 0;
   for (const step of ROUTES[task] || []) {
     try {
       const out = await runStep(env, step, input, deps);
-      if (out) return out;
+      if (!out) continue;
+      const rejected = accept ? accept(out) : null;
+      if (!rejected) return spent ? { ...out, rejected_neurons: spent } : out;
+      spent += Number(out?.usage?.neurons) || 0;
+      last = Object.assign(new Error(rejected), { rejected: true, model: out.model });
     } catch (e) {
       last = e;
     }
   }
+  if (spent) last.neurons = spent;
   throw last;
 }

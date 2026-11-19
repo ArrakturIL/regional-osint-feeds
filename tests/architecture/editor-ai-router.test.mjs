@@ -106,3 +106,23 @@ test('analyst tasks route Gemini-first and share the flash-lite daily cap', asyn
     assert.equal(ROUTES[task].at(-1).model, '@cf/zai-org/glm-4.7-flash');
   }
 });
+
+test('19.11: an answer the caller rejects falls through to the next provider in the same call', async () => {
+  // Live: gemini put Arabic letters into Hebrew; the gate rejected it and the
+  // item waited for a next-day retry instead of trying glm right away.
+  const db = fakeDb(), ai = cfAI(), f = geminiFetch();
+  const seen = [];
+  const accept = out => { seen.push(out.model); return out.model.startsWith('gemini') ? 'body:mixed_script_word' : null; };
+  const out = await chat({NEWS_DB: db, AI: ai, GEMINI_API_KEY: 'K'}, 'he_translate', input, {fetch: f.fn, now: () => 1e12}, accept);
+  assert.equal(out.model, ROUTES.he_translate.at(-1).model);
+  assert.deepEqual(seen, ['gemini-3.5-flash-lite', ROUTES.he_translate.at(-1).model]);
+  assert.equal(ai.calls.length, 1);
+});
+
+test('19.11: when every provider is rejected, the last rejection reason is thrown', async () => {
+  const db = fakeDb(), ai = cfAI(), f = geminiFetch();
+  await assert.rejects(
+    chat({NEWS_DB: db, AI: ai, GEMINI_API_KEY: 'K'}, 'he_translate', input, {fetch: f.fn, now: () => 1e12}, () => 'title:foreign_script'),
+    {message: 'title:foreign_script'},
+  );
+});
