@@ -41,10 +41,12 @@ async function run(minute,opts){
  return h.calls;
 }
 const statusWrites=calls=>calls.batches.flat().filter(s=>s.sql.includes('INSERT INTO source_status'));
+// Q12: ADS-B sources read the D1 cache, not the network; "ran" = a status other than disabled.
+const ran=(calls,name)=>[...calls.writes,...calls.batches.flat()].some(s=>s.sql.includes('INSERT INTO source_status')&&s.params[0]===name&&s.params[3]!=='disabled');
 
-test('baseline: mil_lol polls its provider when nothing is disabled',async()=>{
+test('baseline: mil_lol runs when nothing is disabled',async()=>{
  const out=await run('04');
- assert.equal(out.requests.length,1);
+ assert.ok(ran(out,'mil_lol'));
  assert.equal(out.controlReads.length,1);
 });
 test('a disabled source makes no upstream request and reports state=disabled with the reason',async()=>{
@@ -56,16 +58,17 @@ test('a disabled source makes no upstream request and reports state=disabled wit
 });
 test('disabling one source leaves the others in the same slot untouched',async()=>{
  const out=await run('15',{controls:[{source:'mil_lol',reason:'x',until_ms:null}]});
- assert.equal(out.requests.length,1,'adsb still polled');
+ assert.ok(ran(out,'adsb'),'adsb still runs');
+ assert.ok(!ran(out,'mil_lol'));
  assert.equal(statusWrites(out).filter(s=>s.params[3]==='disabled').length,0);
 });
 test('an expired control no longer blocks the source',async()=>{
  const out=await run('04',{controls:[{source:'mil_lol',reason:'x',until_ms:Date.now()-1}]});
- assert.equal(out.requests.length,1);
+ assert.ok(ran(out,'mil_lol'));
 });
 test('control read failure fails open: sources still run',async()=>{
  const out=await run('04',{controlsFail:true});
- assert.equal(out.requests.length,1);
+ assert.ok(ran(out,'mil_lol'));
 });
 test('a manual request for a disabled source is reported as disabled, not missing_secrets, and not done',async()=>{
  const out=await run('05',{manual:{id:'m1',sources_json:'["mil_lol"]'},controls:[{source:'mil_lol',reason:'r',until_ms:null}]});

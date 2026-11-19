@@ -78,7 +78,7 @@ test('no token means no network calls', async () => {
 test('GitHub errors are reported, never thrown', async () => {
   const f = fakeFetch(403);
   const res = await dispatchDueWorkflows({GITHUB_DISPATCH_TOKEN: 'tok'}, at(13, 7), {fetch: f.fn, log: () => {}});
-  assert.deepEqual(res.failed, [{workflow: 'analysts.yml', status: 403}]);
+  assert.deepEqual(res.failed, [{workflow: 'analysts.yml', status: 403}, {workflow: 'adsb.yml', status: 403}]);
   const boom = await dispatchDueWorkflows({GITHUB_DISPATCH_TOKEN: 'tok'}, at(13, 7),
     {fetch: async () => { throw new Error('net'); }, log: () => {}});
   assert.equal(boom.failed[0].status, 'error');

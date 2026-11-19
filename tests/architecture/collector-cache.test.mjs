@@ -196,3 +196,30 @@ test('other mirrored Monitor collectors use validated D1 snapshots without reque
   }
  }finally{globalThis.fetch=originalFetch}
 });
+
+// Q12: ADS-B is collected on GitHub (Python) and read by the Monitor (JS).
+// The sampled regions and the allowed cache keys must agree everywhere.
+import {readFileSync as readQ12} from 'node:fs';
+import {MIRROR_SOURCES} from '../../backend/monitor/src/mirrors/collector-cache.js';
+import {DEFAULT_REGION} from '../../backend/monitor/src/config/constants.js';
+import {airSamplingRegions} from '../../backend/monitor/src/collectors/aviation/regions.js';
+test('Q12: GitHub ADS-B collector samples exactly the Monitor focus and context regions',()=>{
+ const cfg=JSON.parse(readQ12(new URL('../../config/adsb-collector.json',import.meta.url),'utf8'));
+ const {focus,context}=airSamplingRegions({});
+ assert.deepEqual(cfg.point.regions,[focus,...context]);
+ assert.deepEqual(cfg.point.regions[0],DEFAULT_REGION.air_focus);
+ assert.equal(cfg.point.source_key,'adsb');
+ assert.equal(cfg.mil.source_key,'adsb_mil');
+});
+test('Q12: cache source keys agree in Monitor, Python mirror and both schemas',()=>{
+ const keys=[...MIRROR_SOURCES].sort();
+ assert.ok(keys.includes('adsb')&&keys.includes('adsb_mil'));
+ const py=readQ12(new URL('../../scripts/neon_mirror.py',import.meta.url),'utf8');
+ const pyKeys=[...py.matchAll(/^\s+"([a-z_]+)": \(/gm)].map(m=>m[1]).sort();
+ assert.deepEqual(pyKeys,keys);
+ for(const sql of ['storage/neon/001_collector_snapshots.sql','storage/cloudflare/001_regional_collector_cache.sql','storage/neon/002_collector_snapshots_adsb.sql','storage/cloudflare/006_collector_cache_adsb.sql']){
+  const text=readQ12(new URL('../../'+sql,import.meta.url),'utf8');
+  const list=text.match(/source_key IN \(([^)]*)\)/)[1];
+  assert.deepEqual([...list.matchAll(/'([a-z_]+)'/g)].map(m=>m[1]).sort(),keys,sql);
+ }
+});

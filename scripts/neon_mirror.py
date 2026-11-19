@@ -22,6 +22,14 @@ SOURCE_FILES: dict[str, tuple[str, str | None]] = {
     "unosat": ("unosat-analysis.json", "unosat-analysis-status.json"),
     "news_translation": ("news-localization-mirror.json", None),
 }
+# Sources above keep their JSON committed in data/ (legacy GitHub reader and the
+# shadow/parity/replica jobs). Q12 ADS-B is collected only from GitHub Actions:
+# its JSON exists just in the runner workspace, Neon -> D1 is the only reader.
+GITHUB_JSON_SOURCES: tuple[str, ...] = tuple(SOURCE_FILES)
+SOURCE_FILES.update({
+    "adsb": ("adsb-point.json", "adsb-point-status.json"),
+    "adsb_mil": ("adsb-mil.json", "adsb-mil-status.json"),
+})
 MAX_DOC_BYTES = 1_048_576
 MAX_FUTURE_SKEW = timedelta(minutes=20)
 VALID_STATES = frozenset(("ok", "partial", "error", "stale"))

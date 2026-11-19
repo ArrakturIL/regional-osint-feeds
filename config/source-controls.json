@@ -11,7 +11,6 @@
         "airbridge_context",
         "ais",
         "centcom_dvids",
-        "centcom_rss",
         "copernicus_ems",
         "easa",
         "fcdo",
@@ -33,6 +32,8 @@
         "us_dod_rss"
       ],
       "workflows": {
+        "adsb-mil.yml": "mil_lol",
+        "adsb.yml": "adsb",
         "centcom-test.yml": "centcom_dvids",
         "copernicus-analytics.yml": "copernicus_ems",
         "gdelt.yml": "gdelt_context",

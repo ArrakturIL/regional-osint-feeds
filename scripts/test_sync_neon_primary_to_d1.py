@@ -11,7 +11,7 @@ from unittest import mock
 from types import SimpleNamespace
 
 from scripts.sync_neon_primary_to_d1 import execute_replica_sync, main, assess_snapshot_health, summarize_health, verify_d1_last_good, emit_health_report
-from scripts.neon_mirror import SOURCE_FILES, canonical_hash
+from scripts.neon_mirror import GITHUB_JSON_SOURCES as SOURCE_FILES, canonical_hash
 
 
 class DummyConnection:

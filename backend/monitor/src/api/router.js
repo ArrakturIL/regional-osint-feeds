@@ -185,13 +185,11 @@ export async function read(request, env) {
     until: now,
     truncated: events.results.length > 500,
     interpretation: {
-      adsb: 'One ADS-B sample every 15 minutes: half prioritize the configured focus area under normal operation; recovery probes exclusively prioritize Tehran. Zero in a sample is not empty airspace.',
+      adsb: 'One adsb.lol sample every 15 minutes, collected by GitHub Actions: every other sample is the configured focus area, the rest rotate through context regions. Zero in a sample is not empty airspace.',
       airbridge_context:
         'AvioADSB corridor context: 24 requests/day in 6 rotating 100 NM zones; counts are snapshots, not unique flights or a confirmed US air bridge. Database military flags and type hints are not proof of affiliation.',
       adsb_alt:
         'AvioADSB community data, up to 48 requests/day, adaptively throttled to protect Tehran when the shared-network quota is low: 32 focus, 16 context. Each <=100NM sample has unverified receiver coverage. Data: AvioADSB (CC BY-NC 4.0), https://avioadsb.org — personal/noncommercial use only.',
-      centcom_rss:
-        'Official news RSS; may be archival, not exhaustive CENTCOM coverage. Items older than 30 days excluded; stale feed is partial.',
       centcom_dvids:
         'Official CENTCOM Public Affairs news via DVIDS, mirrored by GitHub Actions. /news/ entries only, not all CENTCOM press releases. Check original publication dates and collector heartbeat.',
       satellite_context:
@@ -204,7 +202,8 @@ export async function read(request, env) {
         'OpenAerialMap historical aerial imagery catalog: one regional lookup per day, four regions; acquisitions may be years old and individual redistribution terms need checking.',
       marad_official:
         'Official active US MARAD maritime advisories. Collection date is NOT publication date; no event should be treated as newly issued merely by first ingestion.',
-      mil_lol: 'Military-tagged IDs in broad overlapping areas. Never infer sorties from samples.',
+      mil_lol:
+        'Hourly military-tagged snapshot (adsb.lol, else adsb.fi), collected by GitHub Actions. IDs in broad overlapping areas. Never infer sorties from samples.',
       fcdo: 'Official UK travel advisories; not a real-time alert source.',
       us_dod_rss:
         'Official U.S. Department of Defense RSS; filtered regional coverage only, NOT an exhaustive CENTCOM feed.',

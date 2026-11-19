@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS public.regional_collector_snapshots (
     persisted_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT rw_source_key CHECK (source_key IN (
         'analysts','centcom','copernicus','gdelt',
-        'marad','satellite','unosat','news_translation'
+        'marad','satellite','unosat','news_translation',
+        'adsb','adsb_mil'
     )),
     CONSTRAINT rw_payload_object CHECK (jsonb_typeof(data_payload) IN ('object','array')),
     CONSTRAINT rw_status_object CHECK (jsonb_typeof(status_payload) = 'object'),

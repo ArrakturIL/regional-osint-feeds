@@ -10,6 +10,10 @@ import { disabledSources } from '../storage/source-controls.js';
 // Cadence is UTC: minutes-since-epoch % every === offset (every divides 1440).
 export const WORKFLOW_CADENCE = [
   { workflow: 'analysts.yml', every: 15, offset: 7 }, // 7,22,37,52 * * * *
+  // Q12: ADS-B lands in D1 a few minutes before Monitor reads it (adsb :00/:15/:30/:45,
+  // mil_lol :04) and wakes Neon together with analysts.
+  { workflow: 'adsb.yml', source: 'adsb', every: 15, offset: 7 }, // 7,22,37,52 * * * *
+  { workflow: 'adsb-mil.yml', source: 'mil_lol', every: 60, offset: 52 }, // 52 * * * *
   { workflow: 'centcom-test.yml', source: 'centcom_dvids', every: 15, offset: 0 }, // */15 * * * *
   { workflow: 'gdelt.yml', source: 'gdelt_context', every: 60, offset: 37 }, // 37 * * * *
   { workflow: 'news-open-source-translation.yml', every: 120, offset: 17 }, // 17 */2 * * *

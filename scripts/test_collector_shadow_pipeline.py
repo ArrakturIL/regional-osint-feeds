@@ -10,7 +10,7 @@ from pathlib import Path
 from unittest import TestCase, mock
 
 from scripts.sync_collector_shadows import execute_shadow_sync, main
-from scripts.neon_mirror import SOURCE_FILES
+from scripts.neon_mirror import GITHUB_JSON_SOURCES as SOURCE_FILES
 
 class DummyConn:
     def __init__(self):

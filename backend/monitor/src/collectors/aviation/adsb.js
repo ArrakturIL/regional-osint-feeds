@@ -1,20 +1,50 @@
 import { AIRLIFT_TYPES, TANKER_TYPES } from './airbridge-types.js';
 import { airSamplingRegions } from './regions.js';
 import { MINUTE } from '../../config/constants.js';
-import { providerGet } from '../../network/provider-client.js';
+import { readD1CollectorSnapshot } from '../../mirrors/collector-cache.js';
 import { item } from '../../observations/item.js';
+
+// Q12 (19.11): ADS-B providers refuse Cloudflare Worker egress (adsb.lol 429
+// since 18.11; /mil and adsb.fi 403) but answer GitHub runners. The
+// adsb.yml / adsb-mil.yml workflows collect there, publish to Neon and sync the
+// private D1 row; the Monitor reads only that row and never calls the provider.
+//
+// A snapshot is accepted once: it must have been collected after this
+// source's previous Monitor slot, so a missed collector run shows as missing
+// data instead of the same aircraft being stored as a second sample.
+export async function readAdsbCache(env, sourceKey, slot, everyMinutes) {
+  let cached;
+  try {
+    cached = await readD1CollectorSnapshot(env, sourceKey);
+  } catch (error) {
+    throw new Error(
+      'upstream ADS-B GitHub collector cache unreadable: ' + String(error?.message).slice(0, 80),
+    );
+  }
+  if (!cached) throw new Error('upstream ADS-B GitHub collector cache missing (' + sourceKey + ')');
+  const since = slot - everyMinutes * MINUTE;
+  if (cached.checkedAtMs <= since || cached.checkedAtMs > slot + 20 * MINUTE) {
+    throw new Error(
+      'upstream ADS-B GitHub collector: no new snapshot since ' +
+        new Date(since).toISOString() +
+        ' (last ' +
+        new Date(cached.checkedAtMs).toISOString() +
+        ')',
+    );
+  }
+  if (cached.data?.source !== sourceKey || cached.status?.source !== sourceKey)
+    throw new Error('unexpected ADS-B cache structure');
+  return cached;
+}
+
 export async function aviation(env, slot) {
   const { focus, context } = airSamplingRegions(env);
-  // Existing 15-minute budget: 48 focus and 48 context samples per day.
-  // After a provider rate-limit failure, spend recovery probes on the focus area.
-  const health = await env.DB.prepare('SELECT failures FROM worker_provider_state WHERE provider=?')
-    .bind('adsb.lol')
-    .first();
-  const recovering = (health?.failures || 0) > 0;
+  // Same 15-minute budget as before: focus and context samples alternate.
   const turn = Math.floor(slot / (15 * MINUTE)),
-    primary = recovering || turn % 2 === 0;
+    primary = turn % 2 === 0;
   const region = primary ? focus : context[Math.floor(turn / 2) % context.length];
-  const sample = await aviationRegion(region, slot, env);
+  const cached = await readAdsbCache(env, 'adsb', slot, 15);
+  const sample = aviationRegion(region, slot, cached);
   sample.payload.sampled_only = true;
   sample.payload.receiver_coverage_unverified = true;
   sample.payload.sampling_priority = primary ? 'primary' : 'context';
@@ -33,21 +63,31 @@ export async function aviation(env, slot) {
   };
 }
 
-export async function aviationRegion([area, lat, lon, requestedRadius], slot, env) {
+export function aviationRegion([area, lat, lon, requestedRadius], slot, cached) {
   if (![lat, lon, requestedRadius].every(Number.isFinite) || requestedRadius <= 0)
     throw new Error('unexpected ADS-B region');
-  const radius = Math.min(250, requestedRadius);
-  const provider = 'adsb.lol';
-  const url = 'https://api.adsb.lol/v2/point/' + [lat, lon, radius].join('/');
-  const data = await providerGet(env, provider, url);
+  const regions = Array.isArray(cached.data.regions) ? cached.data.regions : [];
+  const sampled = regions.find(
+    r =>
+      r?.area === area &&
+      Math.abs(r.lat - lat) < 1e-9 &&
+      Math.abs(r.lon - lon) < 1e-9 &&
+      r.requested_radius_nm === requestedRadius,
+  );
+  if (!sampled) throw new Error('unexpected ADS-B cache: region ' + area + ' not collected');
+  const provider = String(cached.data.provider || 'adsb.lol');
+  if (sampled.error)
+    throw new Error('upstream ' + provider + ' ' + String(sampled.error).slice(0, 60) + ' (' + area + ')');
+  if (!Array.isArray(sampled.ac) || !Number.isFinite(sampled.now_ms) || !(sampled.radius_nm > 0))
+    throw new Error('unexpected ADS-B cache structure');
   const types = {},
     unique = new Set();
   let missingCallsign = 0,
     militaryFlagged = 0,
     airliftTypes = 0,
     tankerTypes = 0;
-  for (const aircraft of data.ac) {
-    if (!aircraft.hex || unique.has(aircraft.hex)) continue;
+  for (const aircraft of sampled.ac) {
+    if (!aircraft?.hex || unique.has(aircraft.hex)) continue;
     unique.add(aircraft.hex);
     const type = /^[A-Z0-9]{2,5}$/.test(aircraft.t) ? aircraft.t : 'unknown';
     types[type] = (types[type] || 0) + 1;
@@ -57,13 +97,15 @@ export async function aviationRegion([area, lat, lon, requestedRadius], slot, en
     if (TANKER_TYPES.has(type)) tankerTypes++;
   }
   return item(area + '/' + slot, {
-    url,
+    url: sampled.url,
     provider,
+    collected_via: 'github_actions',
+    collected_at: cached.checkedAtMs,
     area,
-    radius_nm: radius,
+    radius_nm: sampled.radius_nm,
     requested_radius_nm: requestedRadius,
-    coverage_limited: radius < requestedRadius,
-    snapshot_at: data.now < 1e12 ? data.now * 1000 : data.now,
+    coverage_limited: sampled.radius_nm < requestedRadius,
+    snapshot_at: sampled.now_ms,
     observed_aircraft: unique.size,
     types,
     missing_callsign: missingCallsign,

@@ -1,3 +1,8 @@
 dist/
 __pycache__/
 *.pyc
+# Q12: ADS-B JSON lives only in the Actions runner (Neon -> D1 is the reader)
+data/adsb-point.json
+data/adsb-point-status.json
+data/adsb-mil.json
+data/adsb-mil-status.json

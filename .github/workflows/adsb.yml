@@ -1,0 +1,78 @@
+name: ADS-B regional samples (adsb.lol)
+
+# Q12 (19.11): providers refuse Cloudflare Worker egress (adsb.lol 429, /mil and
+# adsb.fi 403) but answer GitHub runners (probe run 44534686137). This workflow
+# collects ADS-B here; Monitor `adsb` reads only the private D1 cache.
+# No JSON is committed. Rollback: source-control.yml disable adsb.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/collect_adsb.py"
+      - "scripts/test_collect_adsb.py"
+      - "config/adsb-collector.json"
+      - ".github/workflows/adsb.yml"
+  pull_request:
+    paths:
+      - "scripts/collect_adsb.py"
+      - "scripts/test_collect_adsb.py"
+      - "config/adsb-collector.json"
+      - ".github/workflows/adsb.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "7,22,37,52 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: adsb-point
+  cancel-in-progress: false
+
+jobs:
+  source-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      enabled: ${{ steps.gate.outputs.enabled }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            scripts
+            config/source-controls.json
+            storage/cloudflare/004_source_controls.sql
+      - id: gate
+        env:
+          CLOUDFLARE_D1_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: python3 -m scripts.source_gate --workflow adsb.yml
+  collect:
+    needs: source-gate
+    if: needs.source-gate.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Offline collector checks
+        run: python -m unittest scripts.test_collect_adsb
+      - name: Collect point ADS-B snapshot
+        if: github.event_name != 'pull_request'
+        run: python -m scripts.collect_adsb --kind point
+      - name: Publish to Neon and sync the private D1 cache
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          CLOUDFLARE_D1_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check "psycopg[binary]>=3.2,<4"
+          python -m scripts.publish_neon_mirror --source adsb --mode required
+          python -m scripts.neon_to_d1 --source adsb
