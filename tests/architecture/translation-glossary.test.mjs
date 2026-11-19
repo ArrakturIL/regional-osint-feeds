@@ -72,7 +72,8 @@ test('Wikidata entities: a swapped country, a dropped participant and a lost nam
 });
 test('Wikidata entities: case endings, Hebrew prefixes, acronyms and Latin originals are accepted', () => {
   assert.equal(entityIssue('Strikes near Damascus', 'Удары под Дамаском', 'ru'), null);
-  assert.equal(entityIssue('Rubio visits Jerusalem', 'רוביו ביקר בירושלים', 'he'), null);
+  assert.equal(entityIssue('Rubio visits Damascus', 'רוביו ביקר בדמשק', 'he'), null);
+  assert.equal(entityIssue('Former Mossad official warns', 'בכיר לשעבר במוסד מזהיר', 'he'), null, 'article yields to a prefix');
   assert.equal(entityIssue('Iran-backed militias', 'проиранские ополченцы', 'ru'), null);
   assert.equal(entityIssue('UNRWA staff detained', 'עובדי UNRWA נעצרו', 'he'), null);
   assert.equal(entityIssue('Let us talk', 'בואו נדבר', 'he'), null, 'lowercase "us" is not the US');

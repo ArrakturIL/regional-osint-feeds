@@ -136,8 +136,9 @@ const ruForm = f =>
     .join(gap);
 // Final letters turn regular inside a longer word: איראן → איראנית.
 const FINAL = { ך: '[ךכ]', ם: '[םמ]', ן: '[ןנ]', ף: '[ףפ]', ץ: '[ץצ]' };
+// A leading definite article yields to a prefix: המוסד → במוסד, המפרץ → במפרץ.
 const heForm = f =>
-  esc(f)
+  esc(f.length > 3 ? f.replace(/^ה(?=\p{L}{2})/u, '') : f)
     .replace(/[ךםןףץ]/gu, c => FINAL[c])
     // Spelling variants: doubled vav/yod (כווית / כוויית).
     .replace(/ו+/gu, 'ו{1,2}')
