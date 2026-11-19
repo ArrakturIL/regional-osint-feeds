@@ -47,6 +47,21 @@ def targets():
         "site_ru_news":PAGES+"/api/news?lang=ru&limit=40&sort=latest"
     }
 
+def analyst_locale_issue(ru_ids,he_ids,he_withheld):
+    """HE hides analyst posts without a Hebrew translation (B4 contract), so
+    HE is the RU list minus withheld posts, in the same order. Before 19.11
+    the smoke demanded identical lists and failed twice on correct output."""
+    position={pid:i for i,pid in enumerate(ru_ids)}
+    order=[position.get(pid) for pid in he_ids]
+    if None in order:
+        return "analyst HE post missing from RU list"
+    if order!=sorted(order):
+        return "analyst post order differs across locales"
+    if len(he_ids)<len(ru_ids) and not (isinstance(he_withheld,int) and he_withheld>0):
+        return "analyst HE posts missing without withheld_count"
+    return None
+
+
 def run():
     urls=targets()
     with ThreadPoolExecutor(max_workers=5) as pool:
@@ -99,8 +114,10 @@ def run():
     he_posts=ah.get("posts",[])
     if not isinstance(ru_posts,list) or not isinstance(he_posts,list):
         errors.append("analyst posts API response invalid")
-    elif [p.get("id") for p in ru_posts]!=[p.get("id") for p in he_posts]:
-        errors.append("analyst published post IDs/order differ across locales")
+    else:
+        issue=analyst_locale_issue([p.get("id") for p in ru_posts],[p.get("id") for p in he_posts],ah.get("withheld_count"))
+        if issue:
+            errors.append(issue)
     for lang,posts,body in (("ru",ru_posts,ar),("he",he_posts,ah)):
         if body.get("post_count")!=len(posts) or not isinstance(body.get("translation_summary"),dict):
             errors.append("analyst translation summary missing ("+lang+")")
