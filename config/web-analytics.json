@@ -1,0 +1,5 @@
+{
+  "host": "regional-watch.pages.dev",
+  "site_tag": "e8d23a36e7ed4d129913dca20789be1c",
+  "note": "Cloudflare Web Analytics site (owner 20.11). The beacon token is in frontend/scripts/build-site.mjs (public by design)."
+}

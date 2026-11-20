@@ -1,51 +1,65 @@
 <!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#050b09"><title>Пульт · REGIONAL WATCH</title><link rel="stylesheet" href="/assets/app.css?v=rw-ops">
 <style>
 :root{--bg:#050b09;--panel:#08130f;--panel2:#0b1813;--line:#1f4031;--line2:#2b5642;--mint:#9ff5c6;--mint2:#4d7a63;--text:#e9fbf1;--text2:#c4e0d0;--text3:#8fb8a2;--bad:#f3a59b;--warn:#efd09a;--mono:"JetBrains Mono",ui-monospace,monospace;--body:"Manrope",system-ui,sans-serif;--display:"Unbounded","Manrope",system-ui,sans-serif}
-*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 var(--body)}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 var(--body)}
 body{background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:56px 56px;background-attachment:fixed}
 body::before{content:"";position:fixed;inset:0;background:radial-gradient(ellipse at top,rgba(5,11,9,.4),var(--bg) 70%);pointer-events:none;z-index:0}
-.wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:20px 16px 64px}
-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
-h1{font:600 22px/1.2 var(--display);margin:0;letter-spacing:.02em}h1 small{display:block;font:500 12px var(--mono);color:var(--text3);letter-spacing:.08em;margin-top:6px}
-h2{font:600 15px/1.3 var(--display);margin:0 0 4px;letter-spacing:.03em}
-.radar{width:40px;height:40px;border-radius:50%;border:1px solid var(--line2);position:relative;overflow:hidden;flex:none}
+.wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:14px 12px 48px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+h1{font:600 20px/1.2 var(--display);margin:0;letter-spacing:.02em}h1 small{display:block;font:500 11px var(--mono);color:var(--text3);letter-spacing:.06em;margin-top:4px}
+h2{font:600 14px/1.3 var(--display);margin:0;letter-spacing:.03em}
+.radar{width:34px;height:34px;border-radius:50%;border:1px solid var(--line2);position:relative;overflow:hidden;flex:none}
 .radar::after{content:"";position:absolute;inset:0;background:conic-gradient(from 0deg,rgba(159,245,198,.55),transparent 25%);animation:spin 3s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.brand{display:flex;gap:12px;align-items:center}
-.btn{font:600 13px var(--mono);color:var(--bg);background:var(--mint);border:0;padding:0 16px;min-height:44px;cursor:pointer;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.brand{display:flex;gap:10px;align-items:center}.acts{display:flex;gap:6px}
+.btn{font:600 12px var(--mono);color:var(--bg);background:var(--mint);border:0;padding:0 12px;min-height:40px;cursor:pointer;display:inline-grid;place-items:center;text-decoration:none;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
 .btn.ghost{background:transparent;color:var(--mint);border:1px solid var(--line2)}
 .meta{font:12px var(--mono);color:var(--text3)}
-.grid{display:grid;gap:14px}.g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}.g5{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
-.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);padding:16px;position:relative;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%)}
-.card>.explain{margin:6px 0 12px;color:var(--text3);font-size:13.5px}
-details.help{margin:4px 0 10px}details.help summary{cursor:pointer;color:var(--mint);font:12px var(--mono);list-style:none;min-height:28px}
-details.help summary::before{content:"? "}details.help p{margin:6px 0;color:var(--text2);font-size:13.5px}
-.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
-.pill{border:1px solid var(--line);background:var(--panel);padding:12px;display:flex;gap:10px;align-items:center;min-height:64px}
-.dot{width:12px;height:12px;border-radius:50%;flex:none;background:var(--mint);box-shadow:0 0 0 0 rgba(159,245,198,.6);animation:pulse 2.4s infinite}
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);padding:14px;min-width:0}
+.top{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:10px;margin-bottom:10px}
+.vis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:10px 0 8px}
+.vis div{border:1px solid var(--line);background:var(--panel);padding:8px}.vis b{display:block;font:600 22px/1.1 var(--display)}.vis span{font-size:11.5px;color:var(--text3)}
+.spark{display:flex;gap:3px;align-items:flex-end;height:42px;margin-top:6px}.spark i{flex:1;background:var(--mint2);min-height:2px;position:relative}.spark i.today{background:var(--mint)}
+.spark-l{display:flex;gap:3px}.spark-l span{flex:1;text-align:center;font:9.5px var(--mono);color:var(--text3)}
+.summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.pill{border:1px solid var(--line);background:var(--panel);padding:8px 10px;display:flex;gap:8px;align-items:center;min-height:48px;cursor:pointer;color:inherit;font:inherit;text-align:left;width:100%}
+.pill:hover{border-color:var(--line2)}
+.dot{width:10px;height:10px;border-radius:50%;flex:none;background:var(--mint);box-shadow:0 0 0 0 rgba(159,245,198,.6);animation:pulse 2.4s infinite}
 .dot.warn{background:var(--warn);box-shadow:0 0 0 0 rgba(239,208,154,.6)}.dot.bad{background:var(--bad);box-shadow:0 0 0 0 rgba(243,165,155,.6)}.dot.off{background:var(--mint2);animation:none}
-@keyframes pulse{70%{box-shadow:0 0 0 9px transparent}100%{box-shadow:0 0 0 0 transparent}}
-.pill b{display:block;font:600 18px var(--display)}.pill span{font-size:12.5px;color:var(--text3)}
-.ring{--p:0;--c:var(--mint);width:118px;height:118px;border-radius:50%;margin:6px auto 8px;display:grid;place-items:center;background:conic-gradient(var(--c) calc(var(--p)*1%),var(--line) 0);transition:--p .8s}
-.ring>div{width:92px;height:92px;border-radius:50%;background:var(--panel);display:grid;place-items:center;text-align:center}
-.ring b{font:600 20px var(--display)}.ring small{display:block;font:9.5px var(--mono);color:var(--text3);max-width:84px;margin:0 auto;line-height:1.25}
-.quota h3{font:600 13px var(--display);margin:0;text-align:center}.quota p{margin:4px 0 0;font-size:12.5px;color:var(--text3);text-align:center}
-table{width:100%;border-collapse:collapse;font-size:13.5px}.tw{overflow-x:auto;max-width:100%}.card{min-width:0}.kv dd{min-width:0;overflow-wrap:anywhere}th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
-th{font:600 11px var(--mono);color:var(--text3);letter-spacing:.05em;text-transform:uppercase}
+@keyframes pulse{70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.pill b{display:block;font:600 14px var(--display)}.pill span{font-size:11.5px;color:var(--text3)}
+details.sec{border:1px solid var(--line);background:linear-gradient(180deg,var(--panel2),var(--panel));margin-bottom:8px;min-width:0}
+details.sec>summary{display:flex;align-items:center;gap:10px;padding:10px 12px;min-height:48px;cursor:pointer;list-style:none}
+details.sec>summary::-webkit-details-marker{display:none}
+details.sec>summary::after{content:"+";font:600 16px var(--mono);color:var(--mint);margin-inline-start:4px}details.sec[open]>summary::after{content:"−"}
+details.sec>summary h2{flex:none}details.sec>summary .st{flex:1;min-width:0;text-align:end;font:12px var(--mono);color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+details.sec>.in{padding:0 12px 12px;border-top:1px solid var(--line)}
+.explain{margin:8px 0;color:var(--text3);font-size:13px}
+details.help{margin:2px 0 8px}details.help summary{cursor:pointer;color:var(--mint);font:12px var(--mono);list-style:none;min-height:28px;display:flex;align-items:center}
+details.help summary::before{content:"? "}details.help p{margin:6px 0;color:var(--text2);font-size:13px}
+.q{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:8px 0;border-bottom:1px solid var(--line)}.q:last-child{border-bottom:0}
+.q b{font:600 13px var(--body)}.q .n{font:12px var(--mono);color:var(--text2);text-align:end;white-space:nowrap}.q .bar{grid-column:1/-1}.q p{grid-column:1/-1;margin:2px 0 0;font-size:12px;color:var(--text3)}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+table{width:100%;border-collapse:collapse;font-size:13px}.tw{overflow-x:auto;max-width:100%}
+th,td{text-align:left;padding:6px 5px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 10.5px var(--mono);color:var(--text3);letter-spacing:.05em;text-transform:uppercase}
 td.num{font-family:var(--mono);white-space:nowrap}
-.row{display:flex;gap:10px;align-items:center;padding:9px 4px;border-bottom:1px solid var(--line);cursor:pointer;min-height:44px}
-.row:hover{background:var(--panel2)}.row .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.row .age{font:12px var(--mono);color:var(--text3);white-space:nowrap}
-.bar{height:6px;background:var(--line);margin-top:4px;position:relative;overflow:hidden}.bar i{position:absolute;inset:0 auto 0 0;background:var(--mint)}
-.detail{display:none;padding:8px 26px 12px;color:var(--text2);font-size:13px;border-bottom:1px solid var(--line);word-break:break-word}.detail.open{display:block}
-.tag{font:11px var(--mono);padding:2px 7px;border:1px solid var(--line2);color:var(--text2);white-space:nowrap}
+.row{display:flex;gap:8px;align-items:center;padding:8px 2px;border-bottom:1px solid var(--line);cursor:pointer;min-height:44px}
+.row:hover{background:var(--panel2)}.row .name,.name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.age{font:11.5px var(--mono);color:var(--text3);white-space:nowrap}
+.bar{height:5px;background:var(--line);margin-top:4px;position:relative;overflow:hidden}.bar i{position:absolute;inset:0 auto 0 0;background:var(--mint)}
+.detail{display:none;padding:6px 20px 10px;color:var(--text2);font-size:12.5px;border-bottom:1px solid var(--line);word-break:break-word}.detail.open{display:block}
+.tag{font:10.5px var(--mono);padding:2px 6px;border:1px solid var(--line2);color:var(--text2);white-space:nowrap}
 .tag.ok{color:var(--mint);border-color:var(--mint2)}.tag.warn{color:var(--warn);border-color:#99734e}.tag.bad{color:var(--bad);border-color:#a0574e}
-.filters{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 8px}.filters button{font:12px var(--mono);background:transparent;color:var(--text2);border:1px solid var(--line2);min-height:36px;padding:0 10px;cursor:pointer}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.filters button{font:12px var(--mono);background:transparent;color:var(--text2);border:1px solid var(--line2);min-height:36px;padding:0 10px;cursor:pointer}
 .filters button[aria-pressed=true]{background:var(--mint);color:var(--bg);border-color:var(--mint)}
 .login{max-width:380px;margin:12vh auto}.login label{display:block;font:12px var(--mono);color:var(--text3);margin:12px 0 4px}
 .login input{width:100%;min-height:44px;background:var(--panel);border:1px solid var(--line2);color:var(--text);font:16px var(--body);padding:0 12px}
 .err{color:var(--bad);font-size:13px;min-height:20px;margin-top:8px}
-.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13.5px}.kv dt{color:var(--text3)}.kv dd{margin:0}
+.kv{margin:8px 0 0}.kv>div{display:grid;grid-template-columns:minmax(150px,34%) minmax(0,1fr);gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}.kv>div:last-child{border-bottom:0}
+.kv dt{color:var(--text3)}.kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.alert{border:1px solid var(--bad);background:rgba(243,165,155,.06);padding:10px 12px;margin-bottom:8px}
+@media (max-width:760px){.top,.cols{grid-template-columns:1fr}.vis{grid-template-columns:repeat(2,minmax(0,1fr))}.kv>div{grid-template-columns:1fr;gap:2px}h1{font-size:17px}.acts .btn{padding:0 10px}details.sec>summary{flex-wrap:wrap;row-gap:2px}details.sec>summary h2{flex:1}details.sec>summary .st{order:3;flex-basis:100%;text-align:start;padding-inline-start:20px;white-space:normal}}
 @media (prefers-reduced-motion:reduce){.radar::after,.dot{animation:none}}
 </style></head><body><div class="wrap" id="app"></div>
 <script>
@@ -75,10 +89,17 @@ async function load(){
  if(!r.ok)return render(null,'Сервер ответил '+r.status+' — повторю через минуту.');
  render(await r.json());
 }
-function ring(title,used,limit,desc,unit=''){
+// 20.11 compact: one bar per quota instead of a ring card.
+function quota(title,used,limit,desc,unit=''){
  const p=limit?Math.min(100,Math.round((used||0)/limit*100)):0, c=p>=90?'var(--bad)':p>=70?'var(--warn)':'var(--mint)';
- return `<div class="card quota"><h3>${esc(title)}</h3><div class="ring" style="--p:${p};--c:${c}"><div><span><b>${p}%</b><small>${fmt(used)} / ${fmt(limit)}${unit}</small></span></div></div><p>${desc}</p></div>`;
+ return `<div class="q"><b>${esc(title)}</b><span class="n">${fmt(used)} / ${fmt(limit)}${unit} · <span style="color:${c}">${p}%</span></span><div class="bar"><i style="width:${p}%;background:${c}"></i></div><p>${desc}</p></div>`;
 }
+// Open/closed sections survive the minute refresh; first visit opens only what needs attention.
+const OPEN_KEY='rw-ops-open';
+let openState={}; try{openState=JSON.parse(sessionStorage.getItem(OPEN_KEY)||'{}')}catch{}
+const sec=(id,title,level,status,inner,attention)=>{const open=id in openState?openState[id]:!!attention;
+ return `<details class="sec" id="s-${id}" data-id="${id}"${open?' open':''}><summary><span class="dot ${level}"></span><h2>${esc(title)}</h2><span class="st">${esc(status)}</span></summary><div class="in">${inner}</div></details>`};
+const kv=pairs=>`<dl class="kv">${pairs.filter(Boolean).map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${v}</dd></div>`).join('')}</dl>`;
 // 19.11: plain-language groups instead of raw states. "partial" from context
 // sources and "empty" after a recent success are normal, not failures.
 const SRC_GROUPS=[
@@ -106,99 +127,106 @@ const stateTag=s=>{const k=/^(ok)$/.test(s)?'ok':/partial|stale|degraded/.test(s
 const COLLECTOR_MIN={analysts:15,centcom:15,gdelt:60,translation:120,shadow:120,copernicus:360,marad:360,unosat:720,satellite:1440};
 const expectMin=k=>{for(const[n,m]of Object.entries(COLLECTOR_MIN))if(String(k).includes(n))return m;return 120};
 
+function visitorsCard(v){
+ if(!v)return `<div class="card"><h2>Посетители</h2><p class="explain">Счётчик Cloudflare Web Analytics включён 20.11. Цифры появятся в течение получаса после первых визитов (сборщик раз в 30 минут).</p></div>`;
+ const days=(v.days||[]).slice(-7), max=Math.max(1,...days.map(x=>x.pageviews)), today=new Date().toISOString().slice(0,10);
+ const wd=d=>['вс','пн','вт','ср','чт','пт','сб'][new Date(d+'T12:00:00Z').getUTCDay()];
+ const top=(v.top_paths||[]).map(x=>`${esc(x.path)} — ${fmt(x.pageviews)}`).join('<br>')||'—';
+ const geo=(v.top_countries||[]).map(x=>`${esc(x.country)} — ${fmt(x.pageviews)}`).join('<br>')||'—';
+ return `<div class="card"><h2>Посетители</h2>
+ <div class="vis"><div><b>${fmt(v.visits_24h)}</b><span>визитов за 24 ч</span></div><div><b>${fmt(v.pageviews_24h)}</b><span>просмотров за 24 ч</span></div><div><b>${fmt(v.visits_7d)}</b><span>визитов за 7 дней</span></div><div><b>${fmt(v.pageviews_7d)}</b><span>просмотров за 7 дней</span></div></div>
+ ${days.length?`<div class="spark" aria-label="Просмотры по дням">${days.map(x=>`<i class="${x.date===today?'today':''}" style="height:${Math.round(x.pageviews/max*100)}%" title="${x.date}: ${x.pageviews} просмотров, ${x.visits} визитов"></i>`).join('')}</div><div class="spark-l">${days.map(x=>`<span>${wd(x.date)}</span>`).join('')}</div>`:''}
+ <p class="meta" style="margin:6px 0 0">обновлено ${ago(v.collected_ms)} · без cookies</p>
+ ${help('Страницы и страны за неделю','Визит — заход на сайт извне (по ссылке или вручную набранным адресом); просмотр — каждая открытая страница. Свои заходы на /ops не считаются: счётчика там нет.',`<b>Страницы:</b><br>${top}`,`<b>Страны:</b><br>${geo}`)}</div>`;
+}
 function render(d,error){
  if(!d){app.innerHTML=`<div class="card"><h2>Пульт</h2><p class="err">${esc(error)}</p></div>`;return}
  const q=d.quotas||{}, L=d.limits||{}, t=d.translations||{}, sla=t.sla?.languages||{};
  const gem=(q.providers||[]).find(x=>/gemini/.test(x.provider_model));
- const srcs=d.sources||[], ok=srcs.filter(s=>s.state==='ok').length, part=srcs.filter(s=>s.state==='partial').length;
+ const srcs=d.sources||[];
  const problems=srcs.filter(x=>['limited','blocked','broken','stale'].includes(srcGroup(x)));
  const cols=(d.collectors||[]).map(c=>({...c,age:(Date.now()-c.checked_at_ms)/60000,exp:expectMin(c.source_key)}));
  const late=cols.filter(c=>c.age>2*c.exp);
- const ruWait=(sla.ru?.urgent?.waiting||0)+(sla.ru?.important?.waiting||0), ruOver=(sla.ru?.urgent?.overdue||0)+(sla.ru?.important?.overdue||0);
- const pool=q.pool?.neurons||0, poolP=Math.round(pool/(L.aiPool||1)*100);
- const gpt=d.gpt||{}, gptAge=ms(gpt.last_monitor_run?.recorded_at_ms);
+ const ruOver=(sla.ru?.urgent?.overdue||0)+(sla.ru?.important?.overdue||0), heOver=(sla.he?.urgent?.overdue||0)+(sla.he?.important?.overdue||0);
+ const pool=q.pool?.neurons||0, poolP=Math.round(pool/(L.aiPool||1)*100), gemP=Math.round((gem?.calls||0)/(L.gemini||1)*100);
+ const gpt=d.gpt||{}, gptAge=ms(gpt.last_monitor_run?.recorded_at_ms), gptOld=!gptAge||Date.now()-gptAge>3*3600e3, gptLate=gptAge&&Date.now()-gptAge>90*60e3;
+ const noteAge=ms(gpt.last_editorial_note?.created_ms), noteOld=!noteAge||Date.now()-noteAge>36*3600e3;
  const lvl=(bad,warn)=>bad?'bad':warn?'warn':'';
  const al=(t.alert?.active)||[], AL={stalled:'стоит больше часа: срочное или важное ждёт в очереди',manual:'3+ задания ушли в ручную очередь за сутки'};
- const alertBox=al.length?`<div class="card" role="alert" style="border-color:var(--bad);margin:12px 0"><h2 style="color:var(--bad);margin:0 0 6px">Тревога переводов</h2>${al.map(a=>{const[k,l]=a.type.split(':');return `<p style="margin:4px 0"><b>${l.toUpperCase()}</b> — ${esc(AL[k]||k)}: ${fmt(a.count)}${a.oldest_ms?' · старейшее '+ago(a.oldest_ms):''}${t.alert.notified?.[a.type]?' · объявлено '+ago(t.alert.notified[a.type].at_ms):''}</p>`}).join('')}<p class="meta" style="margin:6px 0 0">Проверка раз в 5 минут, повтор не чаще раза в час на тип. Писем Editor не шлёт — тревога видна здесь.</p></div>`:'';
- const ar=t.archive||{}, arLine=['ru','he_news','he_core'].map(k=>{const x=ar[k];if(!x)return null;const p=x.last_pass;return `${k}: ${p?'проход '+ago(p.finished_ms)+', проверено '+fmt(p.checked)+', заново '+fmt(p.redo):'идёт, проверено '+fmt(x.pass?.checked||0)+', заново '+fmt(x.pass?.redo||0)}`}).filter(Boolean).join(' · ')||'ещё не запускался';
+ const alertBox=al.length?`<div class="alert" role="alert"><h2 style="color:var(--bad);margin:0 0 4px">Тревога переводов</h2>${al.map(a=>{const[k,l]=a.type.split(':');return `<p style="margin:3px 0;font-size:13px"><b>${l.toUpperCase()}</b> — ${esc(AL[k]||k)}: ${fmt(a.count)}${a.oldest_ms?' · старейшее '+ago(a.oldest_ms):''}${t.alert.notified?.[a.type]?' · объявлено '+ago(t.alert.notified[a.type].at_ms):''}</p>`}).join('')}<p class="meta" style="margin:4px 0 0">Проверка раз в 5 минут, повтор не чаще раза в час на тип.</p></div>`:'';
+ const ar=t.archive||{}, arLine=['ru','he_news','he_core'].map(k=>{const x=ar[k];if(!x)return null;const p=x.last_pass;return `${k}: ${p?'проход '+ago(p.finished_ms)+', проверено '+fmt(p.checked)+', заново '+fmt(p.redo):'идёт, проверено '+fmt(x.pass?.checked||0)+', заново '+fmt(x.pass?.redo||0)}`}).filter(Boolean).join('<br>')||'ещё не запускался';
  const mSamples=(t.meaning_samples||[]).slice(-3).map(x=>`<br><span class="meta">${esc(x.code)} · ${esc(x.language)}: «${esc(x.original)}» → «${esc(x.translation)}»${x.evidence?' — '+esc(x.evidence):''}</span>`).join('');
  const pills=[
-  [lvl(problems.length>3,problems.length>0),problems.length?problems.length+' с проблемой':'все в норме','источники данных'],
-  [lvl(late.length>2,late.length>0),late.length?late.length+' отстают':'все в срок','сборщики GitHub'],
-  [lvl(ruOver>2,ruOver>0),ruOver?ruOver+' просрочено':'в срок','переводы RU (срочн./важн.)'],
-  [lvl(al.length>0,false),al.length?al.length+' тревог':'нет','тревоги переводов'],
-  [lvl(poolP>=95,poolP>=75),poolP+'%','пул нейронов AI'],
-  [lvl(!gptAge||Date.now()-gptAge>3*3600e3,Date.now()-gptAge>90*60e3),ago(gptAge),'GPT-монитор писал'],
- ].map(([k,b,s])=>`<div class="pill"><span class="dot ${k}"></span><div><b>${esc(b)}</b><span>${esc(s)}</span></div></div>`).join('');
+  ['tr',lvl(ruOver+heOver>2||al.length,ruOver+heOver>0),al.length?al.length+' '+(al.length===1?'тревога':al.length<5?'тревоги':'тревог'):ruOver+heOver?(ruOver+heOver)+' просрочено':'в срок','переводы'],
+  ['q',lvl(poolP>=95,poolP>=75||gemP>=80),poolP+'%','пул нейронов AI'],
+  ['src',lvl(problems.length>3,problems.length>0),problems.length?problems.length+' с проблемой':'все в норме','источники данных'],
+  ['col',lvl(late.length>2,late.length>0),late.length?late.length+' отстают':'все в срок','сборщики GitHub'],
+  ['gpt',lvl(gptOld,gptLate||noteOld),ago(gptAge),'GPT-монитор'],
+  ['pause','',fmt((d.paused_feeds||[]).length),'лент на паузе'],
+ ].map(([id,k,b,s])=>`<button class="pill" data-go="${id}"><span class="dot ${k}"></span><span><b>${esc(b)}</b><span>${esc(s)}</span></span></button>`).join('');
 
  const slaRows=['ru','he'].flatMap(l=>['urgent','important','normal'].map(tier=>{const x=sla[l]?.[tier]||{};const p=x.translated?Math.round((x.within_sla||0)/x.translated*100):null;
-  return `<tr><td>${l==='ru'?'Русский':'Иврит'}</td><td>${{urgent:'срочно',important:'важно',normal:'обычно'}[tier]}</td><td class="num">${fmt(x.translated)}</td><td class="num">${p==null?'—':p+'%'}</td><td class="num">${fmt(x.p50_min)} / ${fmt(x.p90_min)} мин</td><td class="num">${fmt(x.waiting)} / ${x.overdue?`<span style="color:var(--bad)">${x.overdue}</span>`:'0'}</td></tr>`}));
+  return `<tr><td>${l.toUpperCase()}</td><td>${{urgent:'срочно',important:'важно',normal:'обычно'}[tier]}</td><td class="num">${fmt(x.translated)}</td><td class="num">${p==null?'—':p+'%'}</td><td class="num">${fmt(x.p50_min)}/${fmt(x.p90_min)}</td><td class="num">${fmt(x.waiting)}/${x.overdue?`<span style="color:var(--bad)">${x.overdue}</span>`:'0'}</td></tr>`}));
 
  const grouped=SRC_GROUPS.map(g=>({...g,items:srcs.filter(x=>srcGroup(x)===g.k)})).filter(g=>g.items.length);
  let n=0;
- const srcRows=grouped.filter(g=>srcFilter==='all'||(srcFilter==='problem'?['limited','blocked','broken','stale'].includes(g.k):!['limited','blocked','broken','stale'].includes(g.k))).map(g=>`<h3 style="font:600 12px var(--mono);letter-spacing:.06em;margin:14px 0 2px;display:flex;gap:8px;align-items:center"><span class="dot ${g.c}"></span>${esc(g.t)} · ${g.items.length}</h3><p class="meta" style="margin:0 0 4px">${esc(g.d)}</p>`+g.items.map(s=>{const i=n++;return `<div class="row" data-i="${i}" role="button" tabindex="0" aria-expanded="false"><span class="name">${esc(s.source)}</span>${stateTag(s.state)}<span class="age">✓ ${esc(ago(s.succeeded_at))}</span></div><div class="detail" id="sd${i}">Последняя попытка: ${esc(ago(s.attempted_at))}. Последний успех: ${esc(ago(s.succeeded_at))}.<br>${esc(s.detail||'Без подробностей.')}</div>`}).join('')).join('');
+ const srcRows=grouped.filter(g=>srcFilter==='all'||(srcFilter==='problem'?['limited','blocked','broken','stale'].includes(g.k):!['limited','blocked','broken','stale'].includes(g.k))).map(g=>`<h3 style="font:600 11.5px var(--mono);letter-spacing:.05em;margin:12px 0 2px;display:flex;gap:8px;align-items:center"><span class="dot ${g.c}"></span>${esc(g.t)} · ${g.items.length}</h3><p class="meta" style="margin:0 0 2px">${esc(g.d)}</p>`+g.items.map(s=>{const i=n++;return `<div class="row" data-i="${i}" role="button" tabindex="0" aria-expanded="false"><span class="name">${esc(s.source)}</span>${stateTag(s.state)}<span class="age">✓ ${esc(ago(s.succeeded_at))}</span></div><div class="detail" id="sd${i}">Последняя попытка: ${esc(ago(s.attempted_at))}. Последний успех: ${esc(ago(s.succeeded_at))}.<br>${esc(s.detail||'Без подробностей.')}</div>`}).join('')).join('');
 
  const colRows=cols.map(c=>{const r=Math.min(100,c.age/(2*c.exp)*100), k=c.age>2*c.exp?'bad':c.age>c.exp*1.2?'warn':'';
-  return `<div style="padding:8px 4px;border-bottom:1px solid var(--line)"><div style="display:flex;gap:10px;align-items:center"><span class="dot ${k}"></span><span class="name" style="flex:1">${esc(c.source_key)}</span><span class="age">${esc(ago(c.checked_at_ms))} · норма ≤ ${c.exp<60?c.exp+' мин':c.exp/60+' ч'}</span></div><div class="bar"><i style="width:${r}%;background:${k==='bad'?'var(--bad)':k==='warn'?'var(--warn)':'var(--mint)'}"></i></div></div>`}).join('');
+  return `<div style="padding:7px 2px;border-bottom:1px solid var(--line)"><div style="display:flex;gap:8px;align-items:center"><span class="dot ${k}"></span><span class="name">${esc(c.source_key)}</span><span class="age">${esc(ago(c.checked_at_ms))} · ≤ ${c.exp<60?c.exp+' мин':c.exp/60+' ч'}</span></div><div class="bar"><i style="width:${r}%;background:${k==='bad'?'var(--bad)':k==='warn'?'var(--warn)':'var(--mint)'}"></i></div></div>`}).join('');
 
- const an=d.analysts||{}, st=an.stats||{};
+ const an=d.analysts||{}, st=an.stats||{}, anPending=st.pending ?? st.pending_count;
  const queueRows=rows=>{const by={};for(const r of rows||[]){const l=(by[r.language]||={pending:{},manual:0,oldest:null});if(r.state==='pending'){l.pending[r.tier]=(l.pending[r.tier]||0)+r.n;if(r.oldest_ms&&(!l.oldest||r.oldest_ms<l.oldest))l.oldest=r.oldest_ms}else if(r.state==='manual')l.manual+=r.n}
- return ['ru','he'].map(lang=>{const l=by[lang]||{pending:{},manual:0,oldest:null},p=l.pending;return `<dt>Очередь ${lang.toUpperCase()}</dt><dd>ждут: срочн. ${fmt(p.urgent||0)} · важн. ${fmt(p.important||0)} · обычн. ${fmt(p.normal||0)}${l.oldest?' · старейшее '+ago(l.oldest):''}; ручная очередь ${fmt(l.manual)}${l.manual?' — три отказа подряд или старше 72 ч, нужен человек или GPT':''}</dd>`}).join('')};
+ return ['ru','he'].map(lang=>{const l=by[lang]||{pending:{},manual:0,oldest:null},p=l.pending;return ['Очередь '+lang.toUpperCase(),`ждут: срочн. ${fmt(p.urgent||0)} · важн. ${fmt(p.important||0)} · обычн. ${fmt(p.normal||0)}${l.oldest?' · старейшее '+ago(l.oldest):''}; ручная ${fmt(l.manual)}${l.manual?' (три отказа или старше 72 ч)':''}`]})};
  const heErr=(t.he_errors_today||[]).map(e=>`<tr><td>${esc(e.error)}</td><td class="num">${e.n}</td></tr>`).join('')||'<tr><td colspan="2">Ошибок сегодня нет.</td></tr>';
+ const heErrN=(t.he_errors_today||[]).reduce((a,e)=>a+(e.n||0),0);
  const gptTr=(t.gpt_translations_24h||[]).map(x=>`${esc(x.model)}: ${x.n}`).join(', ')||'нет';
- const paused=(d.paused_feeds||[]).map(p=>`<tr><td>${esc(p.source)}</td><td>${esc(p.reason||'')}</td><td class="num">${p.until_ms?'до '+new Date(p.until_ms).toLocaleString('ru-RU'):'без срока'}</td></tr>`).join('')||'<tr><td colspan="3">Все ленты включены.</td></tr>';
- const b6=d.b6;
+ const paused=(d.paused_feeds||[]).map(p=>`<tr><td>${esc(p.source)}</td><td>${esc(p.reason||'')}</td><td class="num">${p.until_ms?'до '+new Date(p.until_ms).toLocaleDateString('ru-RU'):'без срока'}</td></tr>`).join('')||'<tr><td colspan="3">Все ленты включены.</td></tr>';
+ const b6=d.b6, mc=t.meaning_check||{};
 
- app.innerHTML=`<header><div class="brand"><div class="radar" aria-hidden="true"></div><h1>Пульт<small>обновлено ${new Date(d.generated_at_ms).toLocaleTimeString('ru-RU')} · сам обновляется раз в минуту</small></h1></div>
- <div style="display:flex;gap:8px"><button class="btn ghost" id="rf">Обновить</button><button class="btn ghost" id="lo">Выйти</button><a class="btn ghost" href="/" style="display:grid;place-items:center;text-decoration:none">На сайт</a></div></header>
- <div class="summary">${pills}</div>${alertBox}
- ${help('Как читать этот пульт','Зелёная точка — всё в норме, жёлтая — стоит присмотреться, красная — что-то стоит или сломано. Нажми на строку источника, чтобы увидеть подробности.','Все цифры — из базы сайта (D1) в момент открытия. Страница ничего не меняет, только читает.')}
+ app.innerHTML=`<header><div class="brand"><div class="radar" aria-hidden="true"></div><h1>Пульт<small>${new Date(d.generated_at_ms).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})} · обновляется раз в минуту</small></h1></div>
+ <div class="acts"><button class="btn ghost" id="rf">Обновить</button><a class="btn ghost" href="/">Сайт</a><button class="btn ghost" id="lo">Выйти</button></div></header>
+ <div class="top">${visitorsCard(d.visitors)}<div class="card"><h2 style="margin-bottom:8px">Состояние</h2><div class="summary">${pills}</div>
+ ${help('Как читать пульт','Зелёная точка — норма, жёлтая — присмотреться, красная — стоит или сломано. Нажми на плитку — откроется нужный раздел. Разделы ниже свёрнуты в одну строку; открытые запоминаются до закрытия вкладки.','Все цифры — из базы сайта (D1) в момент открытия. Страница ничего не меняет, только читает.')}</div></div>
+ ${alertBox}
 
- <h2 style="margin:18px 0 8px">Квоты на сегодня</h2>
- <div class="grid g5">
- ${ring('Пул нейронов AI',pool,L.aiPool,'Общий дневной лимит бесплатного Cloudflare Workers AI на все модели (llama, glm, gemma). Когда кончается — аналитики и часть переводов встают до сброса. '+RESET)}
- ${ring('Запросы Gemini',gem?.calls,L.gemini,'Бесплатный Google Gemini: переводы на иврит и русский, аналитики. Кончится — работа уходит на Cloudflare. '+RESET)}
- ${ring('RU-заголовки, нейроны',Math.round(q.ru?.estimated_neurons||0),L.ruNeurons,'Сколько Cloudflare-нейронов ушло на русские переводы новостей (Gemini не считается — он бесплатный). Пакетов сегодня: '+fmt(q.ru?.batches)+' из '+fmt(L.ruBatches)+'. '+RESET)}
- ${ring('Иврит, попытки',q.he?.attempts,L.heAttempts,'Сколько раз сегодня пытались перевести на иврит новости, досье, аналитиков и реплики. '+RESET)}
- ${ring('ЦАХАЛ, пакеты',q.idf?.batches,L.idfBatches,'Переводы официальных постов ЦАХАЛ на русский. '+RESET)}
- </div>
+ ${sec('q','Квоты на сегодня',lvl(poolP>=95,poolP>=75||gemP>=80),`AI ${poolP}% · Gemini ${gemP}%`,
+ quota('Пул нейронов AI',pool,L.aiPool,'Общий дневной лимит бесплатного Workers AI на все модели. Кончится — аналитики и часть переводов встают до сброса.')+
+ quota('Запросы Gemini',gem?.calls,L.gemini,'Бесплатный Google Gemini: переводы и аналитики. Кончится — работа уходит на Cloudflare.')+
+ quota('RU-заголовки, нейроны',Math.round(q.ru?.estimated_neurons||0),L.ruNeurons,'Cloudflare-нейроны на русские заголовки (Gemini не считается). Пакетов: '+fmt(q.ru?.batches)+' из '+fmt(L.ruBatches)+'.')+
+ quota('Иврит, попытки',q.he?.attempts,L.heAttempts,'Попытки перевода на иврит: новости, досье, аналитики, реплики.')+
+ quota('ЦАХАЛ, пакеты',q.idf?.batches,L.idfBatches,'Переводы официальных постов ЦАХАЛ на русский.')+
+ `<p class="meta" style="margin:6px 0 0">${RESET}</p>`,poolP>=75)}
 
- <div class="grid g2" style="margin-top:14px">
- <div class="card"><h2>Переводы: успеваем ли</h2><p class="explain">Срочное должно появиться переведённым за 15 минут, важное — за час. Окно — последние сутки.</p>
- ${help('Что значат колонки','«Переведено» — сколько новостей получили перевод за сутки. «В срок» — какая доля успела в норму. «Медиана / 90%» — половина переводов успела за первое число, 90% — за второе. «Ждут / просрочено» — сейчас без перевода; красное число — уже вышли за норму.','Таблицу пересчитывает Editor каждые 5 минут.')}
- <div class="tw"><table><thead><tr><th>Язык</th><th>Уровень</th><th>Переведено</th><th>В срок</th><th>Медиана / 90%</th><th>Ждут / просроч.</th></tr></thead><tbody>${slaRows.join('')}</tbody></table></div>
- <dl class="kv" style="margin-top:12px"><dt>RU без перевода (важные, сутки)</dt><dd>${fmt(t.ru_missing_24h_priority7)}</dd>${queueRows(t.queue)}<dt>Сверка смысла сегодня</dt><dd>норма ${fmt(t.meaning_check?.ok||0)} · отклонено ${fmt(t.meaning_check?.reject||0)} · проверяющая модель недоступна ${fmt(t.meaning_check?.unavailable||0)} — срочное и важное перепроверяет вторая модель: кто что сделал${mSamples}</dd><dt>Архив переводов (7 дней) через новые проверки</dt><dd>${arLine}</dd><dt>Переводы GPT за сутки</dt><dd>${gptTr}</dd><dt>Последняя ошибка RU</dt><dd>${t.ru_last_error?esc(String(t.ru_last_error.value).slice(0,160))+' · '+ago(t.ru_last_error.updated_ms):'нет'}</dd></dl></div>
+ ${sec('tr','Переводы',lvl(ruOver+heOver>2||al.length,ruOver+heOver>0),`просрочено RU ${ruOver} · HE ${heOver} · смысл: откл. ${fmt(mc.reject||0)}`,
+ `<p class="explain">Срочное — за 15 минут, важное — за час. Окно — последние сутки.</p>
+ ${help('Что значат колонки','«Перев.» — сколько получили перевод за сутки. «В срок» — доля, успевшая в норму. «Мед/90%» — минуты: половина успела за первое число, 90% — за второе. «Ждут/просроч.» — сейчас без перевода; красное — уже за нормой.')}
+ <div class="tw"><table><thead><tr><th>Яз.</th><th>Уровень</th><th>Перев.</th><th>В срок</th><th>Мед/90%</th><th>Ждут/просроч.</th></tr></thead><tbody>${slaRows.join('')}</tbody></table></div>
+ ${kv([['RU без перевода (важные, сутки)',fmt(t.ru_missing_24h_priority7)],...queueRows(t.queue),['Сверка смысла сегодня',`норма ${fmt(mc.ok||0)} · отклонено ${fmt(mc.reject||0)} · нет проверяющей ${fmt(mc.unavailable||0)}${mSamples}`],['Архив за 7 дней через новые проверки',arLine],['Переводы GPT за сутки',gptTr],['Последняя ошибка RU',t.ru_last_error?esc(String(t.ru_last_error.value).slice(0,160))+' · '+ago(t.ru_last_error.updated_ms):'нет']])}`,al.length||ruOver+heOver>0)}
 
- <div class="card"><h2>Почему иврит отклонён сегодня</h2><p class="explain">Каждый перевод проходит проверку: числа, имена, письменность. Здесь — причины отказов за сегодня.</p>
- ${help('Расшифровка частых причин','mixed_script_word — внутри ивритского слова арабские буквы. foreign_script — кусок текста на чужом алфавите. truncated_hebrew — текст оборван посреди слова. numbers_changed — модель изменила число. entity_* — потеряна или искажена страна, организация, имя. model_invalid_json / Expected… — модель вернула сломанный ответ.','Отклонённый перевод не показывается: читатель видит оригинал, а перевод пробует следующий провайдер.')}
- <div class="tw"><table><thead><tr><th>Причина</th><th>Сколько</th></tr></thead><tbody>${heErr}</tbody></table></div></div>
- </div>
+ ${sec('he','Иврит: почему отклонён сегодня','',heErrN?heErrN+' отказов':'нет отказов',
+ `<p class="explain">Отклонённый перевод не показывается: читатель видит оригинал, а перевод пробует следующий провайдер.</p>
+ ${help('Расшифровка причин','mixed_script_word — внутри ивритского слова арабские буквы. foreign_script — кусок на чужом алфавите. truncated_hebrew — оборван посреди слова. numbers_changed — изменено число. entity_* и *_name_missing — потеряна или искажена страна, организация, имя. meaning:* — вторая модель нашла ошибку смысла. model_invalid_json — сломанный ответ модели.')}
+ <div class="tw"><table><thead><tr><th>Причина</th><th>Сколько</th></tr></thead><tbody>${heErr}</tbody></table></div>`,false)}
 
- <div class="grid g2" style="margin-top:14px">
- <div class="card"><h2>Источники данных</h2><p class="explain">Monitor раз в минуту опрашивает внешние API (самолёты, корабли, ведомства, рынки). Здесь — их состояние.</p>
- ${help('Как читать группы','Источники разложены по смыслу, у каждой группы под заголовком — что это значит. Серая метка справа — сырое состояние из базы (ok, partial, empty, error, retired). «✓ … назад» — когда в последний раз был удачный ответ. Нажми на строку — увидишь точный текст ошибки.')}
+ ${sec('src','Источники данных',lvl(problems.length>3,problems.length>0),`${srcs.length-problems.length} в норме · ${problems.length} с проблемой`,
+ `<p class="explain">Monitor раз в минуту опрашивает внешние API. Нажми на строку — увидишь точный текст ошибки.</p>
  <div class="filters" role="group" aria-label="Фильтр"><button data-f="all" aria-pressed="${srcFilter==='all'}">Все ${srcs.length}</button><button data-f="problem" aria-pressed="${srcFilter==='problem'}">С проблемами ${problems.length}</button><button data-f="ok" aria-pressed="${srcFilter==='ok'}">В норме ${srcs.length-problems.length}</button></div>
- ${srcRows||'<p class="meta">Нет строк.</p>'}</div>
+ ${srcRows||'<p class="meta">Нет строк.</p>'}`,problems.length>3)}
 
- <div class="card"><h2>Сборщики на GitHub</h2><p class="explain">Отдельные скрипты (аналитики, GDELT, спутники и т. п.) запускаются по расписанию в GitHub Actions и складывают данные в базу. Полоска — сколько прошло с последней сборки относительно нормы.</p>
- ${help('Как читать полоски','Полоска заполняется до конца, когда прошло вдвое больше нормы — тогда точка краснеет: сборщик, скорее всего, не запускается или падает. Норма — интервал расписания этого сборщика.')}
- ${colRows||'<p class="meta">Нет данных.</p>'}</div>
- </div>
+ ${sec('col','Сборщики на GitHub',lvl(late.length>2,late.length>0),late.length?late.length+' отстают из '+cols.length:'все '+cols.length+' в срок',
+ `<p class="explain">Скрипты в GitHub Actions по расписанию складывают данные в базу. Полоска заполняется до конца, когда прошло вдвое больше нормы — тогда точка краснеет.</p>${colRows||'<p class="meta">Нет данных.</p>'}`,late.length>0)}
 
- <div class="grid g2" style="margin-top:14px">
- <div class="card"><h2>GPT и аналитики</h2><p class="explain">GPT по расписанию раз в час пишет досье и анализ, переводит и чинит переводы. Аналитиков разбирает Editor.</p>
- <dl class="kv"><dt>GPT-монитор, последний анализ</dt><dd>${esc(ago(gpt.last_monitor_run?.recorded_at_ms))} · итог: ${esc(gpt.last_monitor_run?.outcome||'—')}</dd>
- <dt>Последнее досье</dt><dd>${esc(ago(gpt.last_dossier?.updated_at_ms))} · ${esc(gpt.last_dossier?.event_id||'—')}</dd>
- <dt>Последняя реплика редактора</dt><dd>${esc(ago(gpt.last_editorial_note?.created_ms))}</dd>
- <dt>Аналитики, последний прогон</dt><dd>${esc(ago(an.started_at_ms))} · ${esc(an.status||'—')}${an.error_message?' · '+esc(an.error_message):''}</dd>
- <dt>Аналитики в очереди</dt><dd>${fmt(st.pending ?? st.pending_count)} (норма — меньше 10)</dd>
- ${b6?`<dt>Сравнение моделей B6</dt><dd>${esc(b6.status||'—')} · ${esc(b6.run_id||'')}</dd>`:''}</dl>
- ${help('Что значит «итог» анализа','no_alert — сравнил, тревоги нет. alert — сравнил, есть важное изменение. partial — часть источников сравнить не удалось. Если «последний анализ» старше двух часов — GPT-задача, скорее всего, не запускалась.')}</div>
+ ${sec('gpt','GPT и аналитики',lvl(gptOld,gptLate||noteOld||(anPending||0)>=10),`монитор ${ago(gptAge)} · реплика ${ago(noteAge)} · аналитики ${fmt(anPending)}`,
+ kv([['GPT-монитор, последний анализ',`${esc(ago(gpt.last_monitor_run?.recorded_at_ms))} · итог: ${esc(gpt.last_monitor_run?.outcome||'—')}`],['Последнее досье',`${esc(ago(gpt.last_dossier?.updated_at_ms))} · ${esc(gpt.last_dossier?.event_id||'—')}`],['Последняя реплика редактора',esc(ago(noteAge))+(noteOld?' — дольше полутора суток, проверь задачу GPT':'')],['Аналитики, последний прогон',`${esc(ago(an.started_at_ms))} · ${esc(an.status||'—')}${an.error_message?' · '+esc(an.error_message):''}`],['Аналитики в очереди',`${fmt(anPending)} (норма — меньше 10)`],b6?['Сравнение моделей B6',`${esc(b6.status||'—')} · ${esc(b6.run_id||'')}`]:null])+
+ help('Что значит «итог» анализа','no_alert — сравнил, тревоги нет. alert — есть важное изменение. partial — часть источников сравнить не удалось. Анализ старше двух часов — GPT-задача, скорее всего, не запускалась.'),gptOld)}
 
- <div class="card"><h2>Ленты на паузе</h2><p class="explain">RSS-ленты, которые выключены вручную (например, из-за условий использования).</p>
- <div class="tw"><table><thead><tr><th>Лента</th><th>Почему</th><th>Срок</th></tr></thead><tbody>${paused}</tbody></table></div></div>
- </div>`;
+ ${sec('pause','Ленты на паузе','',(d.paused_feeds||[]).length?(d.paused_feeds||[]).length+' лент':'нет',
+ `<p class="explain">RSS-ленты, выключенные вручную (например, из-за условий использования).</p><div class="tw"><table><thead><tr><th>Лента</th><th>Почему</th><th>Срок</th></tr></thead><tbody>${paused}</tbody></table></div>`,false)}`;
+
  $('#rf').onclick=load; $('#lo').onclick=()=>{sessionStorage.removeItem(KEY);login()};
+ document.querySelectorAll('details.sec').forEach(el=>el.addEventListener('toggle',()=>{openState[el.dataset.id]=el.open;try{sessionStorage.setItem(OPEN_KEY,JSON.stringify(openState))}catch{}}));
+ document.querySelectorAll('.pill[data-go]').forEach(b=>b.onclick=()=>{const el=$('#s-'+b.dataset.go);if(!el)return;el.open=true;el.scrollIntoView({behavior:'smooth',block:'start'})});
  document.querySelectorAll('.filters button').forEach(b=>b.onclick=()=>{srcFilter=b.dataset.f;render(d)});
  document.querySelectorAll('.row').forEach(r=>{const t=()=>{const el=$('#sd'+r.dataset.i);el.classList.toggle('open');r.setAttribute('aria-expanded',el.classList.contains('open'))};r.onclick=t;r.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();t()}}});
 }

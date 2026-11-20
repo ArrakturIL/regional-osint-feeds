@@ -5,6 +5,7 @@ import { gunzipSync } from 'node:zlib';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { assemble } from './build.mjs';
+import { withBeacon } from './beacon.mjs';
 import { fontFiles, FONT_DIR } from './build-styles.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const dest=resolve(root,'dist');
@@ -26,8 +27,9 @@ export function versionDocument(html,map=hashes){
 for(const lang of ['ru','he'])for(const page of ['home','events','data','analysts']){
  const html=readFileSync(resolve(root,'documents',lang,page+'.html'),'utf8');
  const path=(lang==='he'?'he/':'')+(page==='home'?'':page+'/')+'index.html';
- const out=versionDocument(html);
+ const out=withBeacon(versionDocument(html));
  if(out===html||!/\?v=[0-9a-f]{12}"/.test(out))throw Error('asset version not applied: '+path);
+ if(!out.includes('cloudflareinsights.com/beacon.min.js'))throw Error('analytics beacon not applied: '+path);
  write(path,out);
 }
 // Owner service page (/ops): one self-contained document, not part of the SPA.
