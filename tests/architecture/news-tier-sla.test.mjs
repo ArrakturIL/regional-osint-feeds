@@ -91,3 +91,27 @@ test('SLA counts only displayed items (translator eligibility)', async () => {
   await slaSummary(db, Date.now());
   assert.match(sql, /n\.priority>=7 OR n\.id IN \(SELECT g\.representative_id FROM news_event_groups g WHERE g\.priority>=4/);
 });
+
+// B5 live check 20.11: 17 of 28 items the queue served as urgent were false —
+// advocacy and calls ("lobbied for strikes", "urge Iran"), plots, speculation
+// in Hebrew ("weighing a strike", "chances of a strike"), retrospectives and
+// a strike mentioned only in an "after …" clause. Real attacks stay urgent.
+import {readFileSync} from 'node:fs';
+const LIVE = JSON.parse(readFileSync(new URL('./fixtures/news-tier-live-20261120.json', import.meta.url), 'utf8')).items;
+
+test('live 18-20.11: real attacks stay urgent, calls, plots, speculation and aftermath do not', () => {
+  for (const x of LIVE) {
+    const got = newsTier(x);
+    assert.equal(got.tier === 'urgent', x.want === 'urgent', `${x.id} ${x.headline} → ${got.tier}/${got.reason}`);
+  }
+});
+
+test('sirens count only in the headline; advocacy verbs never make a strike', () => {
+  const t = (headline, summary = '') => newsTier({headline, summary, source: 'Times of Israel'});
+  assert.notEqual(t('Knesset debates new budget', 'Earlier, sirens sounded in the north').reason, 'sirens');
+  assert.equal(t('Sirens sound in Tel Aviv as rockets fired from Gaza').tier, 'urgent');
+  assert.equal(t('אזעקות בגוש דן: שיגור מתימן').tier, 'urgent');
+  for (const h of ['Senator calls for US strikes on Iran nuclear sites', 'Netanyahu urges Trump to back strikes on Iran',
+    'Former general warns that Israel should strike Iran now', 'Lobby group advocated for strikes on Hezbollah'])
+    assert.notEqual(t(h).tier, 'urgent', h);
+});

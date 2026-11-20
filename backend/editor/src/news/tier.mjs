@@ -13,6 +13,9 @@ export const TIER_RANK = Object.freeze({ urgent: 0, important: 1, normal: 2 });
 export const TIER_SLA_MIN = Object.freeze({ urgent: 15, important: 60, normal: null });
 
 // Explicit safety signals in EN/HE/RU/AR. Each one alone makes an item urgent.
+// `sirens` counts only in the headline (live 20.11: a summary line "earlier,
+// sirens sounded" or a column about alerts is not an alert now).
+const TITLE_ONLY_SIGNALS = new Set(['sirens']);
 const URGENT_SIGNALS = [
   [
     'home_front_command',
@@ -40,20 +43,44 @@ const CORE_STRIKE_SCORE = 8; // strike topic + core region (see events.mjs BASE)
 // threats, plots). Urgent needs a kinetic event in the headline itself and no
 // analysis/forecast framing.
 const KINETIC_TITLE =
-  /\b(?:strikes?|struck|airstrikes?|shelling|shelled|bomb(?:ed|ing|ings)|(?:missile|drone|rocket)\s+(?:attacks?|fire|barrage)|intercept(?:ed|s|ion)|killed|kills|explosions?|blasts?|ramming|stabbing|shooting|terror(?:ist)?\s+attack|attacks?)\b|תקיפ|פיגוע|הפצצ|יירוט|נהרג|חוסל|פיצוץ|ירי\s+רקטות|удар|обстрел|теракт|перехват|погиб|взрыв|قصف|غارة|هجوم/iu;
-const NOT_EVENT_TITLE =
-  /\b(?:analysis|opinion|plots?|plotting|planning|plans?|threat|threatens?|could|may|might|scenario|explainer|how|why|what|fears?|frets?|warns?|crisis|ability|risks?)\b|ניתוח|תרחיש|מאיימ|מתכננ|анализ|угроз|может|план/iu;
+  /\b(?:strikes?|struck|airstrikes?|attacked|shelling|shelled|bomb(?:ed|ing|ings)|(?:missile|drone|rocket)\s+(?:attacks?|fire|barrage)|intercept(?:ed|s|ion)|killed|kills|explosions?|blasts?|ramming|stabbing|shooting|terror(?:ist)?\s+attack|attacks?)\b|תקיפ|פיגוע|הפצצ|יירוט|נהרג|חוסל|פיצוץ|ירי\s+רקטות|удар|обстрел|теракт|перехват|погиб|взрыв|قصف|غارة|هجوم/iu;
+// Not an event under way (live check 20.11, 17 of 28 false urgent): analysis
+// and forecasts; advocacy and calls ("lobbied for strikes", "urges", "calls
+// for", "warns that … should"); conditionals; plots and recruitment;
+// retrospectives and reactions; Hebrew speculation ("weighing a strike",
+// "chances of a strike", "the strike window", rumours).
+const NOT_EVENT_TITLE = new RegExp(
+  [
+    '\\b(?:analysis|opinion|plots?|plotting|planning|planned|plans?|threat|threatens?|could|may|might|would|should|if|scenario|explainer|how|why|what|fears?|frets?|warns?|crisis|ability|risks?)\\b',
+    '\\b(?:lobb(?:y|ies|ied|ying)|advocat\\w*|urg(?:e|es|ed|ing)|call(?:s|ed|ing)?\\s+for|push(?:es|ed|ing)?\\s+for|press(?:es|ed|ing)?\\s+for|weigh(?:s|ed|ing)?|consider(?:s|ed|ing)?|mulls?|mulling|recruit\\w*|foil(?:s|ed)?|alarmed|families|anniversary|memorial|commemorat\\w*)\\b',
+    'ניתוח|תרחיש|מאיימ|מתכננ|בוחנ|שוקל|מעריכ|הסיכוי|סיכויי|שמועות|השמועה|המועד|חלון\\s+ה|יגלה|שנה\\s+(?:לאחר|אחרי)|יום\\s+השנה|אזכרה|קורא(?:ים|ת)?\\s+ל',
+    'анализ|угроз|может|план|призыва\\p{L}*|призвал\\p{L}*|призыв|лоббир\\p{L}*|выступ\\p{L}*\\s+за|если|годовщин',
+  ].join('|'),
+  'iu',
+);
+// A strike named only in an "after …" clause is background, not the event
+// ("Soroka expands ER after Iranian missile strike"; "Gulf nations attacked
+// after US strikes" keeps its own verb).
+const MAIN_CLAUSE = title =>
+  String(title).replace(
+    /\s(?:after|following|since|despite)\s.*$|\s(?:לאחר|אחרי|בעקבות)\s.*$|\s(?:после|вслед\s+за)\s.*$/iu,
+    '',
+  );
 
 export function newsTier(item) {
   const a = analyze(item);
   const text = a.title + ' ' + a.summary;
   if (a.type !== 'news') return { tier: 'normal', reason: 'non_news_' + a.type };
-  for (const [reason, re] of URGENT_SIGNALS) if (re.test(text)) return { tier: 'urgent', reason };
+  const notEvent = NOT_EVENT_TITLE.test(a.title);
+  for (const [reason, re] of URGENT_SIGNALS) {
+    if (TITLE_ONLY_SIGNALS.has(reason) ? !notEvent && re.test(a.title) : re.test(text))
+      return { tier: 'urgent', reason };
+  }
   if (
     a.topic === 'strike' &&
     a.score >= CORE_STRIKE_SCORE &&
-    KINETIC_TITLE.test(a.title) &&
-    !NOT_EVENT_TITLE.test(a.title)
+    KINETIC_TITLE.test(MAIN_CLAUSE(a.title)) &&
+    !notEvent
   )
     return { tier: 'urgent', reason: 'strike_core_region' };
   if (['strike', 'military'].includes(a.topic) && a.score >= 6)
