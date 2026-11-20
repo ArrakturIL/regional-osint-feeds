@@ -13,12 +13,38 @@ const HE_DAILY_ATTEMPT_CAP = 300; // B1: ceiling only; shared AI pool decides
 function translationNumerals(s) {
   return (String(s).match(/\d+(?:[.,]\d+)*/g) || []).map(t => t.replace(/,/g, '.'));
 }
+// Live 20.11: correct Hebrew spells small numbers as words («2 Palestinians» →
+// «שני פלסטינים») and decades as «שנות ה־70» («1970s»); both were rejected.
+const HE_NUMBER_WORDS = {
+  1: 'אחד|אחת',
+  2: 'שניים|שתיים|שני|שתי|זוג',
+  3: 'שלושה|שלוש|שלושת',
+  4: 'ארבעה|ארבע|ארבעת',
+  5: 'חמישה|חמש|חמשת',
+  6: 'שישה|שש|ששת',
+  7: 'שבעה|שבע|שבעת',
+  8: 'שמונה|שמונת',
+  9: 'תשעה|תשע|תשעת',
+  10: 'עשרה|עשר|עשרת',
+};
+const heWord = n =>
+  HE_NUMBER_WORDS[n] &&
+  new RegExp('(?:^|[^\\u05d0-\\u05ea])[והבלמשכ]?(?:' + HE_NUMBER_WORDS[n] + ')(?![\\u05d0-\\u05ea])', 'u');
 function translationPreservesNumbers(before, after) {
   const values = translationNumerals(after);
-  for (const n of translationNumerals(before)) {
+  const take = n => {
     const i = values.indexOf(n);
     if (i < 0) return false;
     values.splice(i, 1);
+    return true;
+  };
+  const decades = new Set((String(before).match(/\b\d{4}s\b/g) || []).map(d => d.slice(0, 4)));
+  for (const n of translationNumerals(before)) {
+    if (take(n)) continue;
+    if (decades.has(n) && take(n.slice(2))) continue; // 1970s → שנות ה־70
+    const word = heWord(Number(n));
+    if (word && word.test(after)) continue;
+    return false;
   }
   return true;
 }

@@ -495,6 +495,24 @@ test('HE (B6): gemma leads; its answer with Arabic letters is rejected and Gemin
   });
 });
 
+// Live 20.11: after B6 both gemma and Gemini were rejected on correct Hebrew —
+// «2 Palestinians» → «שני פלסטינים», «1970s» → «שנות ה־70» (numbers_changed_*).
+test('HE: small numbers as Hebrew words and decades as «שנות ה־70» keep the numbers; a changed number is still rejected', async () => {
+  const cases = [
+    ['2 Palestinians said wounded in settler attack on village', '', 'שני פלסטינים נפצעו לפי הדיווח בתקיפת מתנחלים בכפר', '', 'done'],
+    ['Energy crisis in Europe', 'It dwarfs the oil shocks of the 1970s', 'משבר אנרגיה באירופה', 'הוא מגמד את זעזועי הנפט של שנות ה־70', 'done'],
+    ['3 soldiers wounded in Gaza', '', 'ארבעה חיילים נפצעו בעזה', '', 'pending'],
+    ['2 Palestinians said wounded in settler attack', '', 'פלסטינים נפצעו בתקיפת מתנחלים', '', 'pending'],
+  ];
+  for (const [en, sum, title, body, state] of cases) {
+    const db = newsDb();
+    const t = atKind('news');
+    addNews(db, { id: 'x', headline: en, summary: sum, published_ms: t - MIN });
+    await translateScheduled(heEnv(db, heAnswer({ title, body, comment: '', confidence: 95 })), t);
+    assert.equal(heJob(db, 'x').state, state, en + ' → ' + title);
+  }
+});
+
 test('HE: a source read failure is journaled and never reported as success', async () => {
   const db = newsDb();
   db.raw.exec('DROP TABLE news_items');
