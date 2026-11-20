@@ -49,3 +49,16 @@ test('/api/ops: B12 translation alert, archive re-check and meaning-check sample
   assert.equal(body.translations.archive.ru.last_pass.redo, 1);
   assert.equal(body.translations.meaning_samples[0].code, 'meaning:actor_swapped');
 });
+
+test('/api/ops: visitors summary from usage_daily (Web Analytics), null until the first collection', async () => {
+  const summary = { visits_24h: 17, pageviews_24h: 41, visits_7d: 95, pageviews_7d: 230, days: [] };
+  const stub = rows => ({ prepare: sql => ({ bind: () => ({ all: async () => ({
+    results: /usage_daily/.test(sql) && /site_visitors/.test(sql) ? rows : [],
+  }) }) }) });
+  const got = await (await handlePages(req('admin:admin'), { DB: stub([{ detail: JSON.stringify(summary), collected_ms: 5 }]), NEWS_DB: stub([]) })).json();
+  assert.equal(got.visitors.visits_24h, 17);
+  assert.equal(got.visitors.pageviews_7d, 230);
+  assert.equal(got.visitors.collected_ms, 5);
+  const none = await (await handlePages(req('admin:admin'), { DB: stub([]), NEWS_DB: stub([]) })).json();
+  assert.equal(none.visitors, null);
+});

@@ -90,6 +90,7 @@ export async function opsFromD1(request, env, now = Date.now()) {
     alert,
     archive,
     meaningSamples,
+    visitorsRow,
   ] = await Promise.all([
     one(news, 'SELECT neurons,calls,updated_ms FROM ai_daily_neurons WHERE day_utc=?', day),
     rows(news, 'SELECT provider_model,calls,updated_ms FROM ai_provider_calls WHERE day_utc=?', day),
@@ -150,6 +151,8 @@ export async function opsFromD1(request, env, now = Date.now()) {
     one(news, "SELECT value,updated_ms FROM editor_state WHERE key='translation_alert'"),
     one(news, "SELECT value,updated_ms FROM editor_state WHERE key='translation_archive'"),
     one(news, 'SELECT value FROM editor_state WHERE key=?', 'meaning_check_samples:' + day),
+    // Visitors (owner 20.11): Web Analytics summary from scripts/site_visitors.py.
+    one(core, "SELECT detail,collected_ms FROM usage_daily WHERE day='latest' AND metric='site_visitors'"),
   ]);
   const analyst = analystRun ? { ...analystRun, stats: parse(analystRun.stats_json) } : null;
   if (analyst) delete analyst.stats_json;
@@ -182,5 +185,6 @@ export async function opsFromD1(request, env, now = Date.now()) {
     paused_feeds: controls,
     gpt: { last_monitor_run: lastRun, last_dossier: lastEvent, last_editorial_note: lastNote },
     b6: eval6 ? { ...parse(eval6.value), updated_ms: eval6.updated_ms } : null,
+    visitors: visitorsRow ? { ...parse(visitorsRow.detail), collected_ms: visitorsRow.collected_ms } : null,
   });
 }

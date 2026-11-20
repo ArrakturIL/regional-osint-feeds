@@ -6,6 +6,7 @@ import { readFileSync,existsSync } from 'node:fs';
 import { dirname,resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
+import { withBeacon } from '../scripts/beacon.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),dest=resolve(root,'dist');
 const load=s=>readFileSync(resolve(dest,s),'utf8');
 test('exact original vendor runtime scripts are retained',()=>{
@@ -21,8 +22,9 @@ test('all eight locale routes retain exact document HTML',()=>{
  const route=(lang==='he'?'he/':'')+(page==='home'?'':page+'/')+'index.html';
  assert.ok(existsSync(resolve(dest,route)));
  // F-06: only the asset version markers differ; each is the asset's own content hash.
+ // 20.11: plus the Web Analytics beacon before </head>, nothing else.
  const out=load(route);
- assert.equal(out.replace(/\?v=[0-9a-f]{12}"/g,'?v=rw-editor-bottom-v16"'),source,route+' changed');
+ assert.equal(out.replace(/\?v=[0-9a-f]{12}"/g,'?v=rw-editor-bottom-v16"'),withBeacon(source),route+' changed');
  for(const name of ['react.js','react-dom.js','app.js','app.css'])
   assert.ok(out.includes('/assets/'+name+'?v='+createHash('sha256').update(load('assets/'+name)).digest('hex').slice(0,12)+'"'),route+' '+name+' hash');
  }
@@ -44,4 +46,9 @@ test('2077 theme: every self-hosted font URL resolves to a built file with a mat
  assert.doesNotMatch(css,/__FONT_/);
  assert.match(css,/@media \(prefers-reduced-motion:reduce\)\{[^]*\.page-intro::after\{display:none\}/);
  assert.ok(existsSync(resolve(root,'vendor/fonts/LICENSE-rubik.txt')),'OFL notices kept with the fonts');
+});
+test('Web Analytics beacon: on the 8 public pages, not on /ops',()=>{
+ const pages=['index.html','events/index.html','data/index.html','analysts/index.html'].flatMap(p=>[p,'he/'+p]);
+ for(const p of pages)assert.match(load(p),/cloudflareinsights\.com\/beacon\.min\.js" data-cf-beacon='\{"token":"[0-9a-f]{32}"\}'/,p);
+ assert.doesNotMatch(load('ops/index.html'),/cloudflareinsights/);
 });
