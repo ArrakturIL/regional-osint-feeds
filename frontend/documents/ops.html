@@ -118,10 +118,15 @@ function render(d,error){
  const pool=q.pool?.neurons||0, poolP=Math.round(pool/(L.aiPool||1)*100);
  const gpt=d.gpt||{}, gptAge=ms(gpt.last_monitor_run?.recorded_at_ms);
  const lvl=(bad,warn)=>bad?'bad':warn?'warn':'';
+ const al=(t.alert?.active)||[], AL={stalled:'стоит больше часа: срочное или важное ждёт в очереди',manual:'3+ задания ушли в ручную очередь за сутки'};
+ const alertBox=al.length?`<div class="card" role="alert" style="border-color:var(--bad);margin:12px 0"><h2 style="color:var(--bad);margin:0 0 6px">Тревога переводов</h2>${al.map(a=>{const[k,l]=a.type.split(':');return `<p style="margin:4px 0"><b>${l.toUpperCase()}</b> — ${esc(AL[k]||k)}: ${fmt(a.count)}${a.oldest_ms?' · старейшее '+ago(a.oldest_ms):''}${t.alert.notified?.[a.type]?' · объявлено '+ago(t.alert.notified[a.type].at_ms):''}</p>`}).join('')}<p class="meta" style="margin:6px 0 0">Проверка раз в 5 минут, повтор не чаще раза в час на тип. Писем Editor не шлёт — тревога видна здесь.</p></div>`:'';
+ const ar=t.archive||{}, arLine=['ru','he_news','he_core'].map(k=>{const x=ar[k];if(!x)return null;const p=x.last_pass;return `${k}: ${p?'проход '+ago(p.finished_ms)+', проверено '+fmt(p.checked)+', заново '+fmt(p.redo):'идёт, проверено '+fmt(x.pass?.checked||0)+', заново '+fmt(x.pass?.redo||0)}`}).filter(Boolean).join(' · ')||'ещё не запускался';
+ const mSamples=(t.meaning_samples||[]).slice(-3).map(x=>`<br><span class="meta">${esc(x.code)} · ${esc(x.language)}: «${esc(x.original)}» → «${esc(x.translation)}»${x.evidence?' — '+esc(x.evidence):''}</span>`).join('');
  const pills=[
   [lvl(problems.length>3,problems.length>0),problems.length?problems.length+' с проблемой':'все в норме','источники данных'],
   [lvl(late.length>2,late.length>0),late.length?late.length+' отстают':'все в срок','сборщики GitHub'],
   [lvl(ruOver>2,ruOver>0),ruOver?ruOver+' просрочено':'в срок','переводы RU (срочн./важн.)'],
+  [lvl(al.length>0,false),al.length?al.length+' тревог':'нет','тревоги переводов'],
   [lvl(poolP>=95,poolP>=75),poolP+'%','пул нейронов AI'],
   [lvl(!gptAge||Date.now()-gptAge>3*3600e3,Date.now()-gptAge>90*60e3),ago(gptAge),'GPT-монитор писал'],
  ].map(([k,b,s])=>`<div class="pill"><span class="dot ${k}"></span><div><b>${esc(b)}</b><span>${esc(s)}</span></div></div>`).join('');
@@ -146,7 +151,7 @@ function render(d,error){
 
  app.innerHTML=`<header><div class="brand"><div class="radar" aria-hidden="true"></div><h1>Пульт<small>обновлено ${new Date(d.generated_at_ms).toLocaleTimeString('ru-RU')} · сам обновляется раз в минуту</small></h1></div>
  <div style="display:flex;gap:8px"><button class="btn ghost" id="rf">Обновить</button><button class="btn ghost" id="lo">Выйти</button><a class="btn ghost" href="/" style="display:grid;place-items:center;text-decoration:none">На сайт</a></div></header>
- <div class="summary">${pills}</div>
+ <div class="summary">${pills}</div>${alertBox}
  ${help('Как читать этот пульт','Зелёная точка — всё в норме, жёлтая — стоит присмотреться, красная — что-то стоит или сломано. Нажми на строку источника, чтобы увидеть подробности.','Все цифры — из базы сайта (D1) в момент открытия. Страница ничего не меняет, только читает.')}
 
  <h2 style="margin:18px 0 8px">Квоты на сегодня</h2>
@@ -162,7 +167,7 @@ function render(d,error){
  <div class="card"><h2>Переводы: успеваем ли</h2><p class="explain">Срочное должно появиться переведённым за 15 минут, важное — за час. Окно — последние сутки.</p>
  ${help('Что значат колонки','«Переведено» — сколько новостей получили перевод за сутки. «В срок» — какая доля успела в норму. «Медиана / 90%» — половина переводов успела за первое число, 90% — за второе. «Ждут / просрочено» — сейчас без перевода; красное число — уже вышли за норму.','Таблицу пересчитывает Editor каждые 5 минут.')}
  <div class="tw"><table><thead><tr><th>Язык</th><th>Уровень</th><th>Переведено</th><th>В срок</th><th>Медиана / 90%</th><th>Ждут / просроч.</th></tr></thead><tbody>${slaRows.join('')}</tbody></table></div>
- <dl class="kv" style="margin-top:12px"><dt>RU без перевода (важные, сутки)</dt><dd>${fmt(t.ru_missing_24h_priority7)}</dd>${queueRows(t.queue)}<dt>Сверка смысла сегодня</dt><dd>норма ${fmt(t.meaning_check?.ok||0)} · отклонено ${fmt(t.meaning_check?.reject||0)} · проверяющая модель недоступна ${fmt(t.meaning_check?.unavailable||0)} — срочное и важное перепроверяет вторая модель: кто что сделал</dd><dt>Переводы GPT за сутки</dt><dd>${gptTr}</dd><dt>Последняя ошибка RU</dt><dd>${t.ru_last_error?esc(String(t.ru_last_error.value).slice(0,160))+' · '+ago(t.ru_last_error.updated_ms):'нет'}</dd></dl></div>
+ <dl class="kv" style="margin-top:12px"><dt>RU без перевода (важные, сутки)</dt><dd>${fmt(t.ru_missing_24h_priority7)}</dd>${queueRows(t.queue)}<dt>Сверка смысла сегодня</dt><dd>норма ${fmt(t.meaning_check?.ok||0)} · отклонено ${fmt(t.meaning_check?.reject||0)} · проверяющая модель недоступна ${fmt(t.meaning_check?.unavailable||0)} — срочное и важное перепроверяет вторая модель: кто что сделал${mSamples}</dd><dt>Архив переводов (7 дней) через новые проверки</dt><dd>${arLine}</dd><dt>Переводы GPT за сутки</dt><dd>${gptTr}</dd><dt>Последняя ошибка RU</dt><dd>${t.ru_last_error?esc(String(t.ru_last_error.value).slice(0,160))+' · '+ago(t.ru_last_error.updated_ms):'нет'}</dd></dl></div>
 
  <div class="card"><h2>Почему иврит отклонён сегодня</h2><p class="explain">Каждый перевод проходит проверку: числа, имена, письменность. Здесь — причины отказов за сегодня.</p>
  ${help('Расшифровка частых причин','mixed_script_word — внутри ивритского слова арабские буквы. foreign_script — кусок текста на чужом алфавите. truncated_hebrew — текст оборван посреди слова. numbers_changed — модель изменила число. entity_* — потеряна или искажена страна, организация, имя. model_invalid_json / Expected… — модель вернула сломанный ответ.','Отклонённый перевод не показывается: читатель видит оригинал, а перевод пробует следующий провайдер.')}

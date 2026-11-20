@@ -5,6 +5,7 @@ import { meteredAI } from './ai/budget.mjs';
 import localization from './localization/localization.mjs';
 import { readNewsEvents } from './news/api.mjs';
 import { translationQueue, importTranslationMirror } from './translations/news-mirror.mjs';
+import { translationWatch } from './translations/watch.mjs';
 import { articlePriority } from './news/normalization.mjs';
 import { scan } from './news/scan.mjs';
 import { readOfficialPosts } from './api/official-posts.mjs';
@@ -70,6 +71,8 @@ export default {
     if (new Date(event.scheduledTime).getUTCMinutes() === 20)
       ctx.waitUntil(archiveExpiredPolymarket(env.CORE_DB, Date.now()));
     ctx.waitUntil(localization.scheduled(aiEnv, event.scheduledTime));
+    // B12: RU/HE stall alerts and the archive re-check through today's gates.
+    ctx.waitUntil(translationWatch(env, event.scheduledTime).catch(() => null));
     // B6: blind model A/B, only while an evaluation is requested (editor_state).
     ctx.waitUntil(runEvalTick(aiEnv, event.scheduledTime).catch(() => null));
     if (new Date(event.scheduledTime).getUTCMinutes() % 15 === 0) ctx.waitUntil(importTranslationMirror(env));
