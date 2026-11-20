@@ -61,31 +61,31 @@ function geminiFetch(status = 200) {
 }
 const cfAI = () => { const calls = []; return {calls, run: async (m) => { calls.push(m); return {choices: [{message: {content: '{"title":"cf"}'}, finish_reason: 'stop'}]}; }}; };
 
-test('he_translate prefers Gemini when the key exists and reports the model used', async () => {
+test('B6 (owner 20.11): he_translate leads with gemma and does not spend Gemini when gemma is accepted', async () => {
   const db = fakeDb(), ai = cfAI(), f = geminiFetch();
   const out = await chat({NEWS_DB: db, AI: ai, GEMINI_API_KEY: 'K'}, 'he_translate', input, {fetch: f.fn, now: () => 1e12});
-  assert.equal(out.model, 'gemini-3.5-flash-lite');
-  assert.equal(ai.calls.length, 0);
+  assert.equal(out.model, '@cf/google/gemma-4-26b-a4b-it');
+  assert.ok(!f.seen.some(u => u.includes(':generateContent')), 'no Gemini call');
 });
 
 test('Gemini failure or 429 falls back to Cloudflare in the same call', async () => {
   for (const status of [429, 500]) {
     const db = fakeDb(), ai = cfAI(), f = geminiFetch(status);
-    const out = await chat({NEWS_DB: db, AI: ai, GEMINI_API_KEY: 'K'}, 'he_translate', input, {fetch: f.fn, now: () => 1e12});
-    assert.equal(out.model, ROUTES.he_translate.at(-1).model, 'status ' + status);
+    const out = await chat({NEWS_DB: db, AI: ai, GEMINI_API_KEY: 'K'}, 'ru_titles', input, {fetch: f.fn, now: () => 1e12});
+    assert.equal(out.model, ROUTES.ru_titles[1].model, 'status ' + status);
     assert.equal(ai.calls.length, 1);
   }
 });
 
 test('no key or spent daily Gemini cap goes straight to Cloudflare', async () => {
   const ai = cfAI();
-  const out = await chat({NEWS_DB: fakeDb(), AI: ai}, 'he_translate', input, {fetch: async () => { throw Error('no network'); }});
-  assert.equal(out.model, ROUTES.he_translate.at(-1).model);
-  const db = fakeDb(); const step = ROUTES.he_translate[0];
+  const out = await chat({NEWS_DB: fakeDb(), AI: ai}, 'ru_titles', input, {fetch: async () => { throw Error('no network'); }});
+  assert.equal(out.model, ROUTES.ru_titles[1].model);
+  const db = fakeDb(); const step = ROUTES.ru_titles[0];
   const day = new Date(1e12).toISOString().slice(0, 10);
   db.calls.set(day + '|gemini:' + step.family, step.dailyCap);
   const f = geminiFetch(); const ai2 = cfAI();
-  await chat({NEWS_DB: db, AI: ai2, GEMINI_API_KEY: 'K'}, 'he_translate', input, {fetch: f.fn, now: () => 1e12});
+  await chat({NEWS_DB: db, AI: ai2, GEMINI_API_KEY: 'K'}, 'ru_titles', input, {fetch: f.fn, now: () => 1e12});
   assert.equal(ai2.calls.length, 1);
   assert.ok(!f.seen.some(u => u.includes(':generateContent')), 'no Gemini call over the daily cap');
 });
@@ -99,12 +99,15 @@ test('Gemini gets the JSON schema as text when the task asks for json_schema', a
   assert.match(body.systemInstruction.parts[0].text, /^SYS[\s\S]*"enum":\["publish","skip"\]/);
 });
 
-test('analyst tasks route Gemini-first and share the flash-lite daily cap', async () => {
-  for (const task of ['analyst_decision', 'analyst_translate']) {
-    assert.equal(ROUTES[task][0].provider, 'gemini');
-    assert.equal(ROUTES[task][0].family, ROUTES.he_translate[0].family);
-    assert.equal(ROUTES[task].at(-1).model, '@cf/zai-org/glm-4.7-flash');
-  }
+test('B6 chains: glm left every translation chain; all Gemini steps share one flash-lite cap', () => {
+  const GEMMA = '@cf/google/gemma-4-26b-a4b-it', LLAMA = '@cf/meta/llama-3.3-70b-instruct-fp8-fast', GLM = '@cf/zai-org/glm-4.7-flash';
+  const ids = task => ROUTES[task].map(s => s.model || 'gemini:' + s.family);
+  assert.deepEqual(ids('he_translate'), [GEMMA, 'gemini:flash-lite']);
+  assert.deepEqual(ids('ru_titles'), ['gemini:flash-lite', LLAMA, GEMMA]);
+  assert.deepEqual(ids('analyst_translate'), ['gemini:flash-lite', GEMMA]);
+  assert.deepEqual(ids('meaning_check'), ['gemini:flash-lite', GEMMA, LLAMA]);
+  assert.deepEqual(ids('analyst_decision'), ['gemini:flash-lite', GLM], 'not measured in B6, unchanged');
+  for (const task of Object.keys(ROUTES)) for (const s of ROUTES[task]) if (s.provider === 'gemini') assert.equal(s.dailyCap, 450);
 });
 
 test('19.11: an answer the caller rejects falls through to the next provider in the same call', async () => {
@@ -113,9 +116,9 @@ test('19.11: an answer the caller rejects falls through to the next provider in 
   const db = fakeDb(), ai = cfAI(), f = geminiFetch();
   const seen = [];
   const accept = out => { seen.push(out.model); return out.model.startsWith('gemini') ? 'body:mixed_script_word' : null; };
-  const out = await chat({NEWS_DB: db, AI: ai, GEMINI_API_KEY: 'K'}, 'he_translate', input, {fetch: f.fn, now: () => 1e12}, accept);
-  assert.equal(out.model, ROUTES.he_translate.at(-1).model);
-  assert.deepEqual(seen, ['gemini-3.5-flash-lite', ROUTES.he_translate.at(-1).model]);
+  const out = await chat({NEWS_DB: db, AI: ai, GEMINI_API_KEY: 'K'}, 'ru_titles', input, {fetch: f.fn, now: () => 1e12}, accept);
+  assert.equal(out.model, ROUTES.ru_titles[1].model);
+  assert.deepEqual(seen, ['gemini-3.5-flash-lite', ROUTES.ru_titles[1].model]);
   assert.equal(ai.calls.length, 1);
 });
 

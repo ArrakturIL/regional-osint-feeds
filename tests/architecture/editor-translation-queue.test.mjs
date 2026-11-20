@@ -18,6 +18,7 @@ import { isTransientFailure } from '../../backend/editor/src/localization/retry-
 import { sourceText, fingerprint, legacyNewsPivotText } from '../../backend/editor/src/localization/shared.mjs';
 import { newsTier } from '../../backend/editor/src/news/tier.mjs';
 import { AI_POOL_NEURONS } from '../../backend/editor/src/ai/budget.mjs';
+import { ROUTES } from '../../backend/editor/src/ai/router.mjs';
 
 const MIN = 60000,
   HOUR = 3600000;
@@ -226,13 +227,16 @@ test('RU: a rejected item is retried after the back-off (not tomorrow), manual a
   const db = newsDb();
   addNews(db, { id: 'u', headline: URGENT, published_ms: NOW - HOUR });
   const bad = ruAnswer(h => h); // English back: rejected by the quality gate
+  // B6: without a Gemini key the chain is llama → gemma; both are tried per attempt.
+  const perTry = ROUTES.ru_titles.filter(s => s.provider === 'cloudflare').length;
   await translateTitles(ruEnv(db, bad), NOW);
   assert.deepEqual([ruJob(db, 'u').state, ruJob(db, 'u').attempts, ruJob(db, 'u').last_reason], ['pending', 1, 'quality_gate']);
+  assert.deepEqual(bad.calls.map(c => c.model), ROUTES.ru_titles.filter(s => s.provider === 'cloudflare').map(s => s.model));
   await translateTitles(ruEnv(db, bad), NOW + MIN);
-  assert.equal(bad.calls.length, 1, 'not re-sent inside the back-off');
+  assert.equal(bad.calls.length, perTry, 'not re-sent inside the back-off');
   await translateTitles(ruEnv(db, bad), NOW + 5 * MIN);
   await translateTitles(ruEnv(db, bad), NOW + 20 * MIN);
-  assert.equal(bad.calls.length, 3);
+  assert.equal(bad.calls.length, 3 * perTry);
   assert.equal(ruJob(db, 'u').state, 'manual');
   await translateTitles(ruEnv(db, ruAnswer()), NOW + 60 * MIN);
   assert.equal(db.one("SELECT headline_ru FROM news_items WHERE id='u'").headline_ru, null, 'manual jobs are not auto-retried');
@@ -461,7 +465,7 @@ test('HE: analyst publications (CORE_DB) are queued on their turn and written to
   assert.equal(db.one("SELECT state FROM translation_jobs WHERE kind='analyst'").state, 'done');
 });
 
-test('HE: Gemini answer with Arabic letters is rejected and glm translates it in the same tick', async () => {
+test('HE (B6): gemma leads; its answer with Arabic letters is rejected and Gemini translates it in the same tick', async () => {
   const db = newsDb();
   const t = atKind('news');
   addNews(db, { id: 'n', headline: drones, published_ms: t - MIN });
@@ -470,21 +474,24 @@ test('HE: Gemini answer with Arabic letters is rejected and glm translates it in
     String(url).includes(':generateContent')
       ? Response.json({
           candidates: [
-            { content: { parts: [{ text: JSON.stringify({ title: heTitle + 'ة', body: '', comment: '', confidence: 97 }) }] }, finishReason: 'STOP' },
+            { content: { parts: [{ text: JSON.stringify({ title: heTitle, body: '', comment: '', confidence: 97 }) }] }, finishReason: 'STOP' },
           ],
         })
       : Response.json({ models: [{ name: 'models/gemini-3.5-flash-lite', supportedGenerationMethods: ['generateContent'] }] });
-  const glm = heAnswer();
+  const gemma = ai(() => ({
+    choices: [{ finish_reason: 'stop', message: { content: JSON.stringify({ title: heTitle + 'ة', body: '', comment: '', confidence: 97 }) } }],
+    usage: { neurons: 24 },
+  }));
   try {
-    const out = await translateScheduled({ ...heEnv(db, glm), GEMINI_API_KEY: 'K' }, t);
+    const out = await translateScheduled({ ...heEnv(db, gemma), GEMINI_API_KEY: 'K' }, t);
     assert.equal(out.translated, 1);
   } finally {
     globalThis.fetch = realFetch;
   }
-  assert.equal(glm.calls.length, 1);
+  assert.deepEqual(gemma.calls.map(c => c.model), ['@cf/google/gemma-4-26b-a4b-it']);
   assert.deepEqual(db.one("SELECT title,model FROM regional_i18n WHERE item_id='n'"), {
     title: heTitle,
-    model: '@cf/zai-org/glm-4.7-flash',
+    model: 'gemini-3.5-flash-lite',
   });
 });
 
@@ -512,9 +519,10 @@ test('RU: an urgent title the second model calls actor_swapped goes to the next 
   assert.equal(db.one("SELECT headline_ru FROM news_items WHERE id='u'").headline_ru, null);
   assert.deepEqual([ruJob(db, 'u').attempts, ruJob(db, 'u').last_reason], [1, 'meaning:actor_swapped']);
   assert.equal(db.one("SELECT headline_ru FROM news_items WHERE id='n'").headline_ru, RU[NORMAL], 'normal tier is not second-checked');
-  assert.equal(AI.checks.length, 1);
-  assert.equal(AI.checks[0].model, '@cf/zai-org/glm-4.7-flash', 'checker differs from the llama translator');
-  assert.deepEqual(JSON.parse(db.one("SELECT value FROM editor_state WHERE key='meaning_check:2026-11-19'").value), { reject: 1 });
+  // B6 chain llama → gemma: each translation is checked by a model that did not write it.
+  assert.deepEqual(AI.checks.map(c => c.model), ['@cf/google/gemma-4-26b-a4b-it', '@cf/meta/llama-3.3-70b-instruct-fp8-fast']);
+  assert.deepEqual(AI.calls.map(c => c.model), ['@cf/meta/llama-3.3-70b-instruct-fp8-fast', '@cf/google/gemma-4-26b-a4b-it']);
+  assert.deepEqual(JSON.parse(db.one("SELECT value FROM editor_state WHERE key='meaning_check:2026-11-19'").value), { reject: 2 }); // one verdict per provider tried
 });
 
 test('HE: important news — the checker is not the translating model; a meaning error is a rejection', async () => {
@@ -529,7 +537,7 @@ test('HE: important news — the checker is not the translating model; a meaning
   await translateScheduled(heEnv(db, AI), t);
   assert.equal(heJob(db, 'i').last_reason, 'meaning:participant_dropped');
   assert.equal(db.one("SELECT count(*) n FROM regional_i18n WHERE item_id='i'").n, 0);
-  assert.deepEqual(AI.checks.map(c => c.model), ['@cf/meta/llama-3.3-70b-instruct-fp8-fast'], 'glm translated, so llama checks');
+  assert.deepEqual(AI.checks.map(c => c.model), ['@cf/meta/llama-3.3-70b-instruct-fp8-fast'], 'gemma translated, so llama checks');
   const ok = ai(() => ({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(value) } }], usage: { neurons: 12 } }));
   await translateScheduled(heEnv(db, ok), heJob(db, 'i').next_at_ms);
   assert.equal(heJob(db, 'i').state, 'done');
