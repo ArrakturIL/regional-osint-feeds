@@ -1,25 +1,27 @@
-// B2: task → ordered provider chain. Starting hypothesis (B6 A/B decides the
-// final chains): Gemini Flash-Lite first for Hebrew, Cloudflare as fallback.
-// Any provider error falls through to the next step in the same call.
+// B2: task → ordered provider chain. Any provider error or gate rejection
+// falls through to the next step in the same call.
+// B6 (owner 20.11, blind A/B b6-20261118, docs/STATUS.md): glm-4.7-flash left
+// every translation chain (HE: 41% accepted, 1.27/4 blind; all 19 HE jobs in
+// the manual queue on 20.11 last went through it). gemma-4-26b leads Hebrew
+// (82%, 2.95/4, ~24 neurons) and keeps the 450 Gemini calls for RU/analysts.
 import { geminiChat, listModels, pickModel } from './providers/gemini.mjs';
 import { RU_TITLES_MODEL } from '../translations/prompts.mjs';
 
 const GEMINI_LITE = { provider: 'gemini', family: 'flash-lite', dailyCap: 450 }; // project quota 500 RPD, shared by all tasks
 const GLM = { provider: 'cloudflare', model: '@cf/zai-org/glm-4.7-flash' };
+const GEMMA = { provider: 'cloudflare', model: '@cf/google/gemma-4-26b-a4b-it' };
+const LLAMA = { provider: 'cloudflare', model: RU_TITLES_MODEL };
 export const ROUTES = {
-  analyst_decision: [GEMINI_LITE, GLM], // B7
-  analyst_translate: [GEMINI_LITE, GLM], // B7
+  analyst_decision: [GEMINI_LITE, GLM], // B7; not measured in B6, unchanged
+  analyst_translate: [GEMINI_LITE, GEMMA],
   // 19.11: RU titles left the shared Workers AI pool to llama-70B alone
-  // (7 414 of 8 623 neurons on 18.11, analysts starved). Gemini first; llama
-  // takes what Gemini cannot do or what the gate rejects (per item).
-  ru_titles: [GEMINI_LITE, { provider: 'cloudflare', model: RU_TITLES_MODEL }],
+  // (7 414 of 8 623 neurons on 18.11, analysts starved). Gemini first (best
+  // meaning in B6); llama is fast; gemma is more accurate but ~9x slower.
+  ru_titles: [GEMINI_LITE, LLAMA, GEMMA],
   // B11 part 2: second opinion for urgent/important (translations/meaning-check.mjs);
   // the step of the translating model is skipped.
-  meaning_check: [GEMINI_LITE, GLM, { provider: 'cloudflare', model: RU_TITLES_MODEL }],
-  he_translate: [
-    { provider: 'gemini', family: 'flash-lite', dailyCap: 450 }, // project quota 500 RPD
-    { provider: 'cloudflare', model: '@cf/zai-org/glm-4.7-flash' },
-  ],
+  meaning_check: [GEMINI_LITE, GEMMA, LLAMA],
+  he_translate: [GEMMA, GEMINI_LITE],
 };
 const COOLDOWN_MS = 10 * 60_000;
 const memo = {};
