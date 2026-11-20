@@ -82,3 +82,39 @@ test('Wikidata entities: case endings, Hebrew prefixes, acronyms and Latin origi
   assert.equal(wikidataEntityIssue('Saudi Arabia reports attacks', 'Саудовская Аравия сообщила; удары по Саудовской Аравии', 'ru'), null);
   assert.equal(wikidataEntityIssue('Israel steps up strikes in Gaza Strip', 'Израиль усиливает удары в Газе', 'ru'), null, 'proper-noun part of a multi-word name');
 });
+
+// B11 acceptance 20.11: manual-queue reasons sanaa_name_missing for «Австралия
+// вводит санкции…» and eu_name_missing for «…и европейские страны…» were false.
+// A Russian source form is a name with its case endings, not any word that
+// starts with its stem; indeclinable names (Фордо, НАТО, Рубио) keep their form.
+test('Wikidata: a Russian stem does not match other words or adjectives (live false rejections 20.11)', () => {
+  const cases = [
+    ['Мнение: Австралия вводит санкции против израильских деятелей', 'דעה: אוסטרליה מטילה סנקציות על גורמים ישראליים'],
+    ['США и европейские страны потребовали от Ирана возобновить инспекции', 'ארה"ב ומדינות אירופה דרשו מאיראן לחדש את הפיקוח'],
+    ['Доходы Хезболлы от золота', 'הכנסות חיזבאללה מזהב'],
+    ['Авианосец «Джеральд Форд» прибыл в регион', 'נושאת המטוסים ג\'רלד פורד הגיעה לאזור'],
+    ['Персонал посольства эвакуирован', 'צוות השגרירות פונה'],
+    ['Натиск на юге усилился', 'הלחץ בדרום התגבר'],
+    ['Манёвры у берегов', 'תמרונים ליד החוף'],
+    ['Сирийская армия вошла в город', 'הצבא הסורי נכנס לעיר'],
+    ['Российский МИД заявил', 'משרד החוץ הרוסי הודיע'],
+    ['Египетский посредник прибыл', 'המתווך המצרי הגיע'],
+    ['Кипрский порт закрыт', 'נמל קפריסאי נסגר'],
+  ];
+  for (const [s, t] of cases) assert.equal(wikidataEntityIssue(s, t, 'he'), null, s);
+});
+
+test('Wikidata: Russian names with case endings still demand the name', () => {
+  assert.equal(wikidataEntityIssue('Удар по Сане', 'תקיפה בעיר', 'he'), 'sanaa_name_missing');
+  assert.equal(wikidataEntityIssue('Переговоры в Дохе', 'שיחות בבירה', 'he'), 'doha_name_missing');
+  assert.equal(wikidataEntityIssue('Иран и Россия подписали соглашение', 'איראן חתמה על הסכם', 'he'), 'russia_name_missing');
+  assert.equal(wikidataEntityIssue('Генсек НАТО прибыл', 'המזכיר הכללי הגיע', 'he'), 'nato_name_missing');
+  assert.equal(wikidataEntityIssue('МАГАТЭ требует доступа к Фордо', 'סבא"א דורשת גישה למתקן', 'he'), 'fordow_name_missing');
+  assert.equal(wikidataEntityIssue('Санкции США против Ирана', 'סנקציות של ארה"ב נגד איראן', 'he'), null);
+  assert.equal(wikidataEntityIssue('Удары по Сирии и Ливану', 'תקיפות בסוריה ובלבנון', 'he'), null);
+});
+
+test('Wikidata: «Европа» (the continent) is not the European Union', () => {
+  assert.equal(wikidataEntityIssue('Переговоры в Европе продолжаются', 'השיחות באירופה נמשכות', 'he'), null);
+  assert.equal(wikidataEntityIssue('Евросоюз ввёл санкции', 'הוטלו סנקציות', 'he'), 'eu_name_missing');
+});

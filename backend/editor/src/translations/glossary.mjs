@@ -134,6 +134,17 @@ const ruForm = f =>
     .split(/[-\s]+/u)
     .map(w => esc(ruStem(w)) + '\\p{L}{0,4}')
     .join(gap);
+// Source side (does the original name the entity?): the stem takes only case
+// endings and ends the word, so «Сана» is not «санкции», «Европа» is not
+// «европейские», «Россия» is not «российский» (live false rejections 20.11).
+// Foreign names ending in -о/-и/-у/-ю do not decline: «Фордо» is not «Форд»,
+// «НАТО» is not «натиск».
+const RU_ENDING = '[аяоеёиыуюьй]{0,3}(?:м|х|ми|в)?(?!\\p{L})';
+const ruSourceForm = f =>
+  f
+    .split(/[-\s]+/u)
+    .map(w => (/[оиую]$/iu.test(w) ? esc(w) + '(?!\\p{L})' : esc(ruStem(w)) + RU_ENDING))
+    .join(gap);
 // Final letters turn regular inside a longer word: איראן → איראנית.
 const FINAL = { ך: '[ךכ]', ם: '[םמ]', ן: '[ןנ]', ף: '[ףפ]', ץ: '[ץצ]' };
 // A leading definite article yields to a prefix: המוסד → במוסד, המפרץ → במפרץ.
@@ -163,7 +174,7 @@ function fromWikidata(e) {
   const ruParts = e.ru.flatMap(f =>
     /[\s-]/u.test(f) ? f.split(/[\s-]+/u).filter(w => /^\p{Lu}\p{L}{3,}$/u.test(w)) : [],
   );
-  const ruSource = new RegExp(L + '(?:' + e.ru.map(ruForm).join('|') + ')', 'iu'),
+  const ruSource = new RegExp(L + '(?:' + e.ru.map(ruSourceForm).join('|') + ')', 'iu'),
     ruTarget = new RegExp([...e.ru, ...ruParts].map(ruForm).join('|'), 'iu'),
     he = new RegExp(e.he.map(heForm).join('|'), 'u'),
     // Last word of a multi-word Hebrew name (דונלד טראמפ → טראמפ).
