@@ -36,7 +36,7 @@
 ## Подводные камни
 
 - Новый тест-файл добавь в явный список в `.github/workflows/regional-watch-app-check.yml`, иначе CI его не запустит. Параллельные PR конфликтуют на этой строке.
-- Новый или удалённый модуль меняет счётчики: в `tests/architecture/arch07-integration-acceptance.test.mjs` (модули и import-рёбра, сейчас 102 и 265; Editor — 50) и `editor-cross-component-acceptance`; Monitor — `backend/monitor/build-order.json` и `source-parity` (45); frontend — `frontend/build-order.json` и его `source-parity` (56).
+- Новый или удалённый модуль меняет счётчики: в `tests/architecture/arch07-integration-acceptance.test.mjs` (модули и import-рёбра, сейчас 103 и 271; Editor — 51) и `editor-cross-component-acceptance`; Monitor — `backend/monitor/build-order.json` и `source-parity` (45); frontend — `frontend/build-order.json` и его `source-parity` (56).
 - Сборщик на GitHub без JSON в git (как ADS-B, Q12) добавляется в `scripts/neon_mirror.py` вне `GITHUB_JSON_SOURCES`, в `MIRROR_SOURCES` Monitor и в CHECK `source_key` обеих схем (Neon и D1); тест `collector-cache` держит их в синхроне.
 - D1 CORE: не используй `ALTER TABLE … RENAME` — триггеры `monitor_runs_link_events_*` валят проверку схемы. Таблицу пересоздавай копированием (пример: `storage/cloudflare/006`).
 
