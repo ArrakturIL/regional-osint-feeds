@@ -62,11 +62,3 @@ test('/api/ops: visitors summary from usage_daily (Web Analytics), null until th
   const none = await (await handlePages(req('admin:admin'), { DB: stub([]), NEWS_DB: stub([]) })).json();
   assert.equal(none.visitors, null);
 });
-
-test('Web Analytics beacon: on the 8 public pages, not on /ops', async () => {
-  const { readFileSync } = await import('node:fs');
-  const dist = new URL('../../frontend/dist/', import.meta.url);
-  const pages = ['index.html', 'events/index.html', 'data/index.html', 'analysts/index.html'].flatMap(p => [p, 'he/' + p]);
-  for (const p of pages) assert.match(readFileSync(new URL(p, dist), 'utf8'), /cloudflareinsights\.com\/beacon\.min\.js" data-cf-beacon='\{"token":"[0-9a-f]{32}"\}'/, p);
-  assert.doesNotMatch(readFileSync(new URL('ops/index.html', dist), 'utf8'), /cloudflareinsights/);
-});

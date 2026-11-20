@@ -47,3 +47,8 @@ test('2077 theme: every self-hosted font URL resolves to a built file with a mat
  assert.match(css,/@media \(prefers-reduced-motion:reduce\)\{[^]*\.page-intro::after\{display:none\}/);
  assert.ok(existsSync(resolve(root,'vendor/fonts/LICENSE-rubik.txt')),'OFL notices kept with the fonts');
 });
+test('Web Analytics beacon: on the 8 public pages, not on /ops',()=>{
+ const pages=['index.html','events/index.html','data/index.html','analysts/index.html'].flatMap(p=>[p,'he/'+p]);
+ for(const p of pages)assert.match(load(p),/cloudflareinsights\.com\/beacon\.min\.js" data-cf-beacon='\{"token":"[0-9a-f]{32}"\}'/,p);
+ assert.doesNotMatch(load('ops/index.html'),/cloudflareinsights/);
+});
