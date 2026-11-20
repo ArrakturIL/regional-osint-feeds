@@ -22,10 +22,42 @@ async function count(env, verdict, now) {
     .catch(() => {});
 }
 
-// → { verdict: 'ok' | 'reject' | 'unavailable', code?, model?, neurons }
+// B12: the day's first rejections with both texts and the checker's evidence,
+// so a verdict can be audited (the rejected translation is not stored elsewhere).
+export const MEANING_SAMPLES_PER_DAY = 20;
+async function sample(env, args, result, now) {
+  if (!env.NEWS_DB) return;
+  const cut = (x, n) => String(x || '').slice(0, n);
+  const item = {
+    at_ms: now,
+    language: args.language,
+    tier: args.tier,
+    code: result.code,
+    checker: result.model || null,
+    translator: args.translatorModel || null,
+    evidence: cut(result.evidence, 160),
+    original: cut(args.original?.title, 260),
+    translation: cut(args.translation?.title, 260),
+  };
+  await env.NEWS_DB.prepare(
+    "INSERT INTO editor_state(key,value,updated_ms) VALUES(?,json_array(json(?)),?) ON CONFLICT(key) DO UPDATE SET value=CASE WHEN json_array_length(value)<? THEN json_insert(value,'$[#]',json(?)) ELSE value END,updated_ms=excluded.updated_ms",
+  )
+    .bind(
+      'meaning_check_samples:' + new Date(now).toISOString().slice(0, 10),
+      JSON.stringify(item),
+      now,
+      MEANING_SAMPLES_PER_DAY,
+      JSON.stringify(item),
+    )
+    .run()
+    .catch(() => {});
+}
+
+// → { verdict: 'ok' | 'reject' | 'unavailable', code?, model?, evidence?, neurons }
 export async function meaningCheck(env, args, now = Date.now()) {
   const result = await check(env, args);
   if (!result.skipped) await count(env, result.verdict, now);
+  if (result.verdict === 'reject') await sample(env, args, result, now);
   return result;
 }
 async function check(env, { original, translation, language, translatorModel, tier }) {
@@ -41,7 +73,13 @@ async function check(env, { original, translation, language, translatorModel, ti
       const value = typeof raw === 'string' ? JSON.parse(raw) : raw;
       if (typeof value?.same_meaning !== 'boolean') continue;
       if (value.same_meaning === false && MEANING_ERRORS.includes(value.error))
-        return { verdict: 'reject', code: 'meaning:' + value.error, model: out.model, neurons };
+        return {
+          verdict: 'reject',
+          code: 'meaning:' + value.error,
+          model: out.model,
+          evidence: typeof value.evidence === 'string' ? value.evidence : '',
+          neurons,
+        };
       return { verdict: 'ok', model: out.model, neurons };
     } catch {
       // next checker

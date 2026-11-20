@@ -33,3 +33,19 @@ test('/ops is a page, /api/ops is a Pages endpoint', () => {
   assert.equal(ownership('/ops').kind, 'html');
   assert.equal(ownership('/api/ops').kind, 'pages');
 });
+
+test('/api/ops: B12 translation alert, archive re-check and meaning-check samples', async () => {
+  const values = {
+    translation_alert: JSON.stringify({ active: [{ type: 'stalled:ru', language: 'ru', count: 2 }], notified: {} }),
+    translation_archive: JSON.stringify({ ru: { last_pass: { checked: 40, redo: 1 } } }),
+  };
+  const stub = { prepare: sql => ({ bind: (...a) => ({ all: async () => {
+    const key = (sql.match(/key='([a-z_]+)'/) || [])[1] || (/key=\?/.test(sql) ? a[0] : null);
+    if (key && String(key).startsWith('meaning_check_samples:')) return { results: [{ value: JSON.stringify([{ code: 'meaning:actor_swapped' }]) }] };
+    return { results: values[key] ? [{ value: values[key], updated_ms: 1 }] : [] };
+  } }) }) };
+  const body = await (await handlePages(req('admin:admin'), { DB: stub, NEWS_DB: stub })).json();
+  assert.deepEqual(body.translations.alert.active.map(a => a.type), ['stalled:ru']);
+  assert.equal(body.translations.archive.ru.last_pass.redo, 1);
+  assert.equal(body.translations.meaning_samples[0].code, 'meaning:actor_swapped');
+});

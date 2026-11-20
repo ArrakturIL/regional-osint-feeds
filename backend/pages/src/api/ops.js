@@ -87,6 +87,9 @@ export async function opsFromD1(request, env, now = Date.now()) {
     lastNote,
     gptToday,
     eval6,
+    alert,
+    archive,
+    meaningSamples,
   ] = await Promise.all([
     one(news, 'SELECT neurons,calls,updated_ms FROM ai_daily_neurons WHERE day_utc=?', day),
     rows(news, 'SELECT provider_model,calls,updated_ms FROM ai_provider_calls WHERE day_utc=?', day),
@@ -143,6 +146,10 @@ export async function opsFromD1(request, env, now = Date.now()) {
       dayAgo,
     ),
     one(news, "SELECT value,updated_ms FROM editor_state WHERE key='ai_eval_request'"),
+    // B12: RU/HE stall alerts and the archive re-check (translations/watch.mjs).
+    one(news, "SELECT value,updated_ms FROM editor_state WHERE key='translation_alert'"),
+    one(news, "SELECT value,updated_ms FROM editor_state WHERE key='translation_archive'"),
+    one(news, 'SELECT value FROM editor_state WHERE key=?', 'meaning_check_samples:' + day),
   ]);
   const analyst = analystRun ? { ...analystRun, stats: parse(analystRun.stats_json) } : null;
   if (analyst) delete analyst.stats_json;
@@ -165,6 +172,9 @@ export async function opsFromD1(request, env, now = Date.now()) {
       ru_missing_24h_priority7: ruPending?.n ?? null,
       he_errors_today: heErrors,
       gpt_translations_24h: gptToday,
+      alert: alert ? { ...parse(alert.value), updated_ms: alert.updated_ms } : null,
+      archive: archive ? { ...parse(archive.value), updated_ms: archive.updated_ms } : null,
+      meaning_samples: (meaningSamples?.value && parse(meaningSamples.value)) || [],
     },
     sources,
     collectors,

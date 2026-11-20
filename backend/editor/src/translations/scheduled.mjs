@@ -108,7 +108,9 @@ export async function translateTitles(env, now) {
     const pending = [];
     for (const job of due) {
       const row = current.get(job.id);
-      if (!row || !needsRu(row)) {
+      // B12: an accepted translation that fails today's gates comes back as a redo job.
+      const redo = Boolean(job.payload?.redo);
+      if (!row || (!needsRu(row) && !redo)) {
         await settleJob(db, job, 'done', { reason: row ? 'already_translated' : 'item_gone' }, now);
         continue;
       }
@@ -118,7 +120,7 @@ export async function translateTitles(env, now) {
         await enqueueJobs(db, [{ ...job, sourceHash: hash, discoveredMs: row.discovered_ms }], now);
         continue;
       }
-      if (pending.length < RU_BATCH) pending.push({ ...row, job, tier: job.tier });
+      if (pending.length < RU_BATCH) pending.push({ ...row, job, tier: job.tier, redo });
     }
     if (!pending.length) return { translated: 0, summaries: 0 };
     const claimed = await db
@@ -181,7 +183,8 @@ export async function translateTitles(env, now) {
           validateCandidate(row.summary, value.summary_ru, 'ru')
             ? value.summary_ru.trim().slice(0, 480)
             : null;
-        if ((!title && !row.headline_ru) || (!title && !summary)) {
+        // A redo replaces a failing translation: it needs a new title.
+        if (row.redo ? !title : (!title && !row.headline_ru) || (!title && !summary)) {
           rejected.set(row.id, 'quality_gate');
           next.push(row);
           continue;
@@ -206,12 +209,14 @@ export async function translateTitles(env, now) {
         }
         const write = await db
           .prepare(
-            'UPDATE news_items SET headline_ru=COALESCE(headline_ru,?),summary_ru=COALESCE(summary_ru,?) WHERE id=?',
+            row.redo
+              ? 'UPDATE news_items SET headline_ru=?,summary_ru=? WHERE id=?'
+              : 'UPDATE news_items SET headline_ru=COALESCE(headline_ru,?),summary_ru=COALESCE(summary_ru,?) WHERE id=?',
           )
           .bind(title, summary, row.id)
           .run();
         if (write.meta?.changes) {
-          if (title && !row.headline_ru) translated++;
+          if (title && (row.redo || !row.headline_ru)) translated++;
           if (summary) summaries++;
         }
         await settleJob(db, row.job, 'done', { model: out.model || null }, now);
