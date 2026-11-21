@@ -16,7 +16,7 @@ const render = he => {
     h: (tag, props, ...children) => ({ tag, props, children: children.flat() }),
     t: (tag, cls, content) => ({ tag, props: { className: cls }, children: [content] }),
   };
-  vm.runInNewContext(src + '\nthis.Tension = Tension; this.L = TENSION_L;', ctx);
+  vm.runInNewContext(src + '\nthis.Tension = Tension; this.L = TENSION_L; this.tensionReason = tensionReason;', ctx);
   return ctx;
 };
 const text = node =>
@@ -32,6 +32,7 @@ test('labels exist in RU and HE for every region and signal code', () => {
     for (const r of REGIONS) assert.ok(L[lang].regions[r], lang + ' region ' + r);
     for (const i of INDICATORS) assert.ok(L[lang].signals[i.id], lang + ' signal ' + i.id);
     assert.equal(L[lang].level.length, 6);
+    for (const i of INDICATORS) assert.ok(L[lang].families[i.family], lang + ' family ' + i.family);
   }
 });
 
@@ -48,6 +49,10 @@ test('no tension, no block; calibrating shows the demo badge and the note with d
         level: 3,
         families: ['air', 'news'],
         signals: ['mil_aircraft', 'urgent_news'],
+        details: [
+          { indicator: 'mil_aircraft', value: 14, p95: 6, median: 3 },
+          { indicator: 'urgent_news', value: 5, p95: 2.4, median: 1 },
+        ],
         coverage: { seen: 9, total: 10 },
       },
       { id: 'iran', level: 1, families: [], signals: [], coverage: { seen: 9, total: 9 } },
@@ -56,10 +61,24 @@ test('no tension, no block; calibrating shows the demo badge and the note with d
   const ru = text(render(false).Tension({ tension }));
   assert.match(ru, /демо/);
   assert.match(ru, /по 11 дн\. из 30/);
-  assert.match(ru, /военные борта · срочные новости/);
-  assert.match(ru, /всё в пределах нормы/);
-  assert.match(ru, /видим 9 из 10/);
+  assert.match(ru, /Необычная активность/);
+  assert.match(ru, /два независимых отклонения/);
+  assert.match(ru, /военные борта: 14, обычно до 6/);
+  assert.match(ru, /срочные новости: 5, обычно до 2\.4/);
+  assert.match(ru, /Как обычно:\s+Иран/);
+  assert.match(ru, /нет данных по 1 сигн\./);
   const he = text(render(true).Tension({ tension }));
   assert.doesNotMatch(he, /[Ѐ-ӿ]/u, 'no Cyrillic on the HE page');
   assert.match(he, /הדגמה/);
+});
+
+test('rule signals show the count without a norm; lit families match the region', () => {
+  const ctx = render(false);
+  assert.equal(ctx.tensionReason({ indicator: 'official_notice', value: 3, rule: 1 }, ctx.L.ru), 'официальные предупреждения: 3');
+  const tree = ctx.Tension({
+    tension: { as_of: 'x', calibrating: false, regions: [{ id: 'gulf', level: 2, families: ['official'], signals: ['official_notice'], details: [{ indicator: 'official_notice', value: 2, rule: 1 }] }] },
+  });
+  const find = (n, cls) => (n && typeof n === 'object' ? (n.props?.className === cls ? [n] : (n.children || []).flatMap(c => find(c, cls))) : []);
+  const lit = find(tree, 'on').map(text);
+  assert.deepEqual(lit, ['официальные']);
 });
