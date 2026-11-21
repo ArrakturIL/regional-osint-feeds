@@ -200,3 +200,24 @@ test('a disabled publisher is not fetched, gets status=disabled, and other feeds
     ),
   );
 });
+
+test('21.11: a publication time in the future is clamped to the moment of discovery', async () => {
+  const { NEWS_DB, writes } = db();
+  const ahead = new Date(NOW + 9 * 60000).toUTCString();
+  await withFeeds(
+    url =>
+      url === byName('Times of Israel')
+        ? new Response(
+            rss([item('Israel and Iran regional talks resume', 'https://example.net/future', ahead)]),
+            {
+              status: 200,
+            },
+          )
+        : new Response(rss(), { status: 200 }),
+    () => ingestNewsFeeds({ NEWS_DB }, NOW),
+  );
+  const insert = writes.find(w => w.sql.includes('INSERT OR IGNORE INTO news_items'));
+  assert.ok(insert, 'the item was stored');
+  assert.equal(insert.args[5], NOW, 'published_ms is not later than discovered_ms');
+  assert.equal(insert.args[6], NOW);
+});
