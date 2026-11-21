@@ -100,6 +100,17 @@ export function GlobalHeader({ active, overview, go }) {
           ),
         ),
       ),
+      // Owner's service page (owner 21.11: at the top, the same on every page).
+      h(
+        'a',
+        {
+          className: 'rw-ops-link',
+          href: '/ops',
+          title: he ? 'לוח בקרה' : 'Служебный пульт',
+          'aria-label': he ? 'לוח בקרה' : 'Служебный пульт',
+        },
+        h(UiIcon, { name: 'gauge', size: 18 }),
+      ),
       h(
         'button',
         {
