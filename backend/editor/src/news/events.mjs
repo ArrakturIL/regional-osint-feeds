@@ -319,6 +319,44 @@ function namedFatality(a) {
   const role = ((a.title || '') + ' ' + text).match(/\b(goalkeeper|surgeon|journalist|paramedic)\b/iu)?.[1];
   return name && role ? name.normalize('NFKC').toLowerCase() + '|' + role.toLowerCase() : null;
 }
+// 21.11: one strike told three ways (Al Jazeera «hits food aid vehicle… killing
+// three», ToI «in Gaza City kills 3… aid workers», JPost «vehicle struck in
+// Gaza… PIJ») did not merge: no shared venue token, low headline overlap.
+// Same region, ≤ 6 h, the same struck object and the same death toll make it one
+// event; with the toll known on one side only, three shared headline words do.
+const NUM_WORDS = {
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+};
+const NUM = '(\\d{1,3}|one|two|three|four|five|six|seven|eight|nine|ten)';
+const TOLL = [
+  new RegExp('\\bkill(?:s|ed|ing)\\s+(?:at\\s+least\\s+)?' + NUM + '\\b', 'iu'),
+  new RegExp('\\b' + NUM + '\\s+(?:[\\p{L}-]+\\s+){0,2}(?:were\\s+|are\\s+)?(?:killed|dead)\\b', 'iu'),
+];
+export function deathToll(a) {
+  const text = (a.title || '') + ' ' + (a.summary || '');
+  for (const re of TOLL) {
+    const m = text.match(re)?.[1]?.toLowerCase();
+    if (m) return NUM_WORDS[m] || Number(m);
+  }
+  return null;
+}
+const STRUCK_OBJECT =
+  /\b(vehicles?|cars?|trucks?|convoys?|tents?|schools?|homes?|houses?|buildings?|apartments?|boats?|ships?|vessels?|ambulances?|mosques?|hospitals?)\b/giu;
+const struckObjects = a =>
+  new Set(
+    [...((a.title || '') + ' ' + (a.summary || '')).matchAll(STRUCK_OBJECT)].map(m =>
+      m[1].toLowerCase().replace(/s$/, ''),
+    ),
+  );
 export function sameEvent(a, b) {
   if (a.id === b.id) return { ok: true, why: 'same_article' };
   if (a.topic !== b.topic) return { ok: false, why: 'different_action' };
@@ -367,6 +405,15 @@ export function sameEvent(a, b) {
       return { ok: true, why: 'victim_casualties' };
     if (!venue && hours <= 5 && region && common >= 4 && ratio >= 0.6)
       return { ok: true, why: 'high_overlap' };
+    if (region && hours <= 6) {
+      const oa = struckObjects(a),
+        sharedObject = [...struckObjects(b)].some(o => oa.has(o));
+      const ta = deathToll(a),
+        tb = deathToll(b);
+      if (sharedObject && ta && tb && ta !== tb) return { ok: false, why: 'different_death_toll' };
+      if (sharedObject && ((ta && ta === tb) || ((!ta || !tb) && common >= 3)))
+        return { ok: true, why: 'same_struck_object' };
+    }
     return { ok: false, why: 'uncorroborated' };
   }
   if (a.topic === 'negotiation') {
