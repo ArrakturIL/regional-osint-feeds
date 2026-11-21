@@ -1,0 +1,65 @@
+// Tension index block (owner 21.11): every code the Editor can send has a RU
+// and a HE label; no block without data; the demo note while calibrating.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import { readFileSync } from 'node:fs';
+import { INDICATORS, REGIONS } from '../../backend/editor/src/tension/indicators.mjs';
+
+const src = readFileSync(new URL('../src/components/Tension/Tension.js', import.meta.url), 'utf8')
+  .replace(/^import[\s\S]*?from\s+['"][^'"]+['"];?\n/gm, '')
+  .replace(/^export /gm, '');
+const render = he => {
+  const ctx = {
+    UI_HE: he,
+    fmtTime: () => '21:00',
+    h: (tag, props, ...children) => ({ tag, props, children: children.flat() }),
+    t: (tag, cls, content) => ({ tag, props: { className: cls }, children: [content] }),
+  };
+  vm.runInNewContext(src + '\nthis.Tension = Tension; this.L = TENSION_L;', ctx);
+  return ctx;
+};
+const text = node =>
+  node == null || node === false
+    ? ''
+    : typeof node !== 'object'
+      ? String(node)
+      : (node.children || []).map(text).join(' ');
+
+test('labels exist in RU and HE for every region and signal code', () => {
+  const { L } = render(false);
+  for (const lang of ['ru', 'he']) {
+    for (const r of REGIONS) assert.ok(L[lang].regions[r], lang + ' region ' + r);
+    for (const i of INDICATORS) assert.ok(L[lang].signals[i.id], lang + ' signal ' + i.id);
+    assert.equal(L[lang].level.length, 6);
+  }
+});
+
+test('no tension, no block; calibrating shows the demo badge and the note with days', () => {
+  assert.equal(render(false).Tension({ tension: null }), null);
+  const tension = {
+    as_of: '2026-11-21T19:00:00Z',
+    level: 3,
+    calibrating: true,
+    baseline_days: 11,
+    regions: [
+      {
+        id: 'gulf',
+        level: 3,
+        families: ['air', 'news'],
+        signals: ['mil_aircraft', 'urgent_news'],
+        coverage: { seen: 9, total: 10 },
+      },
+      { id: 'iran', level: 1, families: [], signals: [], coverage: { seen: 9, total: 9 } },
+    ],
+  };
+  const ru = text(render(false).Tension({ tension }));
+  assert.match(ru, /демо/);
+  assert.match(ru, /по 11 дн\. из 30/);
+  assert.match(ru, /военные борта · срочные новости/);
+  assert.match(ru, /всё в пределах нормы/);
+  assert.match(ru, /видим 9 из 10/);
+  const he = text(render(true).Tension({ tension }));
+  assert.doesNotMatch(he, /[Ѐ-ӿ]/u, 'no Cyrillic on the HE page');
+  assert.match(he, /הדגמה/);
+});
