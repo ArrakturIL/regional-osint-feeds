@@ -198,3 +198,15 @@ test('concept E pages layer: shared kicker heads, filter chips with counts, no !
     'heads live in the shared layer',
   );
 });
+
+test('concept E palette (21.11): muted text AA on every surface, card borders 3:1 on the page', () => {
+  const theme = source('src/styles/theme-2077.css');
+  const tok = name => theme.match(new RegExp('--rw7-' + name + ':(#[0-9a-fA-F]{6})'))[1];
+  for (const surface of ['bg', 'panel', 'panel-2', 'hover']) {
+    for (const fg of ['text', 'text-2', 'text-3', 'mint', 'urgent', 'important'])
+      assert.ok(contrast(tok(fg), tok(surface)) >= 4.5, fg + ' on ' + surface);
+    // mint-dim draws rules, focus hovers and decorative dashes, not text.
+    assert.ok(contrast(tok('mint-dim'), tok(surface)) >= 3, 'mint-dim on ' + surface);
+  }
+  assert.ok(contrast(tok('line-strong'), tok('bg')) >= 3, 'card border on the page');
+});
