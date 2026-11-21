@@ -204,3 +204,25 @@ test('sirens count only in the headline; advocacy verbs never make a strike', ()
   ])
     assert.notEqual(t(h).tier, 'urgent', h);
 });
+
+// Live 21.11 (they led the new «Главное сейчас» block): a kinetic word in a
+// relative clause about the past («the fire that killed Rabin»), attacks as the
+// backdrop of someone else's act («Swimmer braves tanker attacks»), and a
+// leader talking about a topic («Trump talks about Iran», «…מדבר על איראן»)
+// are not events under way. Real attacks of the same day stay urgent.
+test('live 21.11: relative-clause past, braving attacks and talk about a topic are not urgent', () => {
+  const t = (headline, source = 'Al Jazeera') => newsTier({ headline, summary: '', source });
+  for (const h of [
+    'Netanyahu is playing with the fire that killed Rabin',
+    'Swimmer braves tanker attacks to expose Hormuz contamination',
+    'הפצצה המלוכלכת, המגעים והנפט: דונלד טראמפ מדבר על איראן',
+    'Trump talks about Iran strikes in Fox interview',
+  ])
+    assert.notEqual(t(h).tier, 'urgent', h);
+  for (const h of [
+    'Israeli attacks on Gaza kill at least four Palestinians',
+    'Israeli drone attacks kill seven Palestinians in central Gaza',
+    'IDF strikes Hamas terror meeting in Gaza, one suspect killed in West Bank incident',
+  ])
+    assert.equal(t(h).tier, 'urgent', h);
+});

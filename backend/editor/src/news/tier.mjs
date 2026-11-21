@@ -55,15 +55,21 @@ const NOT_EVENT_TITLE = new RegExp(
     '\\b(?:lobb(?:y|ies|ied|ying)|advocat\\w*|urg(?:e|es|ed|ing)|call(?:s|ed|ing)?\\s+for|push(?:es|ed|ing)?\\s+for|press(?:es|ed|ing)?\\s+for|weigh(?:s|ed|ing)?|consider(?:s|ed|ing)?|mulls?|mulling|recruit\\w*|foil(?:s|ed)?|alarmed|families|anniversary|memorial|commemorat\\w*)\\b',
     'ניתוח|תרחיש|מאיימ|מתכננ|בוחנ|שוקל|מעריכ|הסיכוי|סיכויי|שמועות|השמועה|המועד|חלון\\s+ה|יגלה|שנה\\s+(?:לאחר|אחרי)|יום\\s+השנה|אזכרה|קורא(?:ים|ת)?\\s+ל',
     'анализ|угроз|может|план|призыва\\p{L}*|призвал\\p{L}*|призыв|лоббир\\p{L}*|выступ\\p{L}*\\s+за|если|годовщин',
+    // 21.11: talk about a topic (interviews, remarks) and attacks as the
+    // backdrop of someone else's act («Swimmer braves tanker attacks»).
+    '\\b(?:talks?|speaks?|spoke|interview\\w*|remarks?|podcast)\\b|\\b(?:braves?|braving|defies|defying|defied|dodg\\w*)\\b',
+    'מדבר(?:ת|ים)?\\s+על|מתראיי?נ|בראיון|ריאיון|ראיון|говорит\\s+о|интервью',
   ].join('|'),
   'iu',
 );
 // A strike named only in an "after …" clause is background, not the event
 // ("Soroka expands ER after Iranian missile strike"; "Gulf nations attacked
 // after US strikes" keeps its own verb).
+// 21.11: a relative clause about the past is background too («the fire that
+// killed Rabin», «…, which killed …»).
 const MAIN_CLAUSE = title =>
   String(title).replace(
-    /\s(?:after|following|since|despite)\s.*$|\s(?:לאחר|אחרי|בעקבות)\s.*$|\s(?:после|вслед\s+за)\s.*$/iu,
+    /\s(?:after|following|since|despite|amid)\s.*$|\s(?:that|which|who)\s.*$|\s(?:לאחר|אחרי|בעקבות)\s.*$|\s(?:после|вслед\s+за)\s.*$/iu,
     '',
   );
 
