@@ -138,14 +138,17 @@ export function AnalystShared({ hePosts, heProfiles }) {
         ? h('small', { className: 'rw-translation-state' }, 'תרגום ממתין — מוצג נוסח המקור')
         : null,
       t('p', null, x.summary),
-      x.originalPublished
-        ? t(
-            'small',
-            'hint',
-            (he ? 'פורסם במקור: ' : 'Опубликовано у источника: ') + fmtTime(x.originalPublished),
+      // 21.11 (concept E): both times on one mono line.
+      x.originalPublished || x.published
+        ? h(
+            'p',
+            { className: 'rw-analyst-time' },
+            x.originalPublished
+              ? h('span', null, (he ? 'במקור ' : 'У источника ') + fmtTime(x.originalPublished))
+              : null,
+            x.published ? h('span', null, L.published + ' ' + fmtTime(x.published)) : null,
           )
         : null,
-      x.published ? t('small', 'hint', L.published + ': ' + fmtTime(x.published)) : null,
       h(
         'div',
         { className: 'rw-analyst-links' },
