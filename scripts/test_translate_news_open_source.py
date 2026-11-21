@@ -59,6 +59,30 @@ class FreeTranslationTests(unittest.TestCase):
         self.assertIn("ru",mirror["items"][0])
         self.assertIn("he",mirror["items"][0])
 
+    def test_empty_queue_writes_a_fresh_heartbeat_and_failed_translation_keeps_the_old_mirror(self):
+        # Live 21.11: the Editor pipeline translates everything, the queue is
+        # empty, the mirror kept its 18.11 time and /ops showed the collector
+        # red for hours although it worked. Nothing to do is healthy; a queue
+        # with no accepted translation is not.
+        import json,os,tempfile,translate_news_open_source as t
+        old=os.getcwd();d=tempfile.mkdtemp();os.chdir(d)
+        try:
+            os.makedirs("data");open(t.OUTPUT,"w").write('{"generated_at":"2026-11-18T18:18:53+00:00","items":[]}')
+            t.read_queue=lambda:{"schema_version":1,"items":[]}
+            t.main()
+            fresh=json.load(open(t.OUTPUT))
+            self.assertEqual(fresh["items"],[])
+            self.assertNotEqual(fresh["generated_at"][:10],"2026-11-18")
+            self.assertEqual(fresh["quality"]["queue"],0)
+            open(t.OUTPUT,"w").write('{"generated_at":"2026-11-18T18:18:53+00:00","items":[]}')
+            items=[{"id":"x","source_language":"en","original_title":"Iran retains 50 missiles","original_summary":"","need_ru":True,"need_he":False,"source":"BBC"}]
+            t.read_queue=lambda:{"schema_version":1,"items":items}
+            t.build_mirror=lambda q:{"schema_version":1,"generated_at":"2026-11-21T10:00:00+00:00","items":[],"quality":{"accepted":0,"rejected":1}}
+            t.main()
+            self.assertEqual(json.load(open(t.OUTPUT))["generated_at"][:10],"2026-11-18")
+        finally:
+            os.chdir(old)
+
     def test_bad_model_output_skipped(self):
         items=[{"id":"x","source_language":"en","original_title":"Iran retains 50 missiles",
                 "original_summary":"Iran retained 50 missiles.","need_ru":True,"need_he":False,"source":"BBC"}]

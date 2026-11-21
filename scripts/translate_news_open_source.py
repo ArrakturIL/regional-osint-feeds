@@ -153,6 +153,17 @@ def build_mirror(queue,translator=translate):
 def main():
     queue=read_queue()
     print("Queue loaded:",len(queue["items"]),"news event representatives")
+    if not queue["items"]:
+        # Nothing to translate (the Editor pipeline already covered it): a
+        # fresh empty mirror is the heartbeat that says the collector is alive.
+        result={"schema_version":1,"generated_at":datetime.now(timezone.utc).isoformat(),
+            "source":"Helsinki-NLP/Opus-MT via GitHub Actions CPU (Apache-2.0)",
+            "items":[],"quality":{"queue":0,"accepted":0,"rejected":0}}
+        os.makedirs("data",exist_ok=True)
+        with open(OUTPUT,"w",encoding="utf-8") as f:
+            json.dump(result,f,ensure_ascii=False,indent=2);f.write("\n")
+        print("Queue empty: heartbeat mirror written")
+        return 0
     result=build_mirror(queue)
     if not result["items"]:
         print("No safe translations accepted: existing mirror remains unchanged")
