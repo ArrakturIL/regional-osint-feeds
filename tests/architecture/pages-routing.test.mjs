@@ -58,3 +58,7 @@ test('deep links to individual analyst posts preserve one shared page and locale
     assert.notEqual(ownership(url).kind, 'html', url);
   }
 });
+
+test('sitemap.xml is served as a static asset (22.11)', () => {
+  assert.equal(ownership('/sitemap.xml').kind, 'asset');
+});

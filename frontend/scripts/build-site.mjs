@@ -66,4 +66,21 @@ for (const lang of ['ru', 'he'])
   if (out === html) throw Error('asset version not applied: 404.html');
   write('404.html', out);
 }
-console.log('Built standalone static Pages payload: 10 locale routes + /ops + 404 + modular frontend assets.');
+// 22.11: sitemap for search engines (owner submits it in Search Console).
+{
+  const base = 'https://regional-watch.pages.dev/';
+  const urls = ['ru', 'he'].flatMap(lang =>
+    ['', 'feed', 'events', 'data', 'analysts'].map(
+      page => base + (lang === 'he' ? 'he' + (page ? '/' : '') : '') + page,
+    ),
+  );
+  write(
+    'sitemap.xml',
+    '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+      urls.map(u => '  <url><loc>' + u + '</loc><changefreq>hourly</changefreq></url>').join('\n') +
+      '\n</urlset>\n',
+  );
+}
+console.log(
+  'Built standalone static Pages payload: 10 locale routes + /ops + 404 + modular frontend assets.',
+);
