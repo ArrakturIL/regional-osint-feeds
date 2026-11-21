@@ -58,7 +58,9 @@ export async function ingestNewsFeeds(env, now) {
     const r = await env.NEWS_DB.prepare(
       'INSERT OR IGNORE INTO news_items (id,source,headline,summary,url,published_ms,discovered_ms,priority) VALUES(?,?,?,?,?,?,?,?)',
     )
-      .bind(id, item.source, item.title, item.summary, item.link, item.pub, now, item.score)
+      // 21.11: a publication time after we saw the item is the source's clock
+      // (Jerusalem Post stamps 5–9 min ahead); the moment of discovery is the honest bound.
+      .bind(id, item.source, item.title, item.summary, item.link, Math.min(item.pub, now), now, item.score)
       .run();
     existingUrls.add(canonical);
     if (r.meta?.changes) inserted++;
