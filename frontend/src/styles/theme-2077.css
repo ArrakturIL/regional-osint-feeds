@@ -31,21 +31,8 @@ a{color:var(--rw7-mint)}a:hover{color:#e0fff0}
 ::selection{background:rgba(159,245,198,.28)}
 :where(a,button,[tabindex]):focus-visible{outline:2px solid var(--rw7-mint)!important;outline-offset:2px}
 
-/* Header: HUD bar, mono brand, cut-corner active item */
-.rw-global-header{border-bottom:1px solid var(--rw7-line)!important}
-.rw-global-header .brand strong{font-family:var(--rw7-mono);letter-spacing:.14em;font-weight:600}
-.rw-global-header .brand small{font-family:var(--rw7-mono);letter-spacing:.08em;color:var(--rw7-text-3)}
-.rw-global-header .rw-site-links a{border-radius:0!important;font-family:var(--rw7-mono);letter-spacing:.08em;text-transform:uppercase;font-weight:500;color:var(--rw7-text-2);transition:color .2s ease,background-color .2s ease}
-html[lang="he"] .rw-site-links a{text-transform:none;letter-spacing:.02em}
-.rw-site-links a:hover{color:var(--rw7-text);background:rgba(159,245,198,.06)}
-.rw-global-header .rw-site-links a.active,.rw-global-header .rw-site-links a[aria-current="page"]{border-radius:0!important;background:var(--rw7-mint)!important;color:#050b09!important;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%)}
-.rw-site-source,.rw-site-language a{border-radius:0!important;font-family:var(--rw7-mono);border-color:var(--rw7-line-strong)!important}
-.rw-site-language a.active{background:var(--rw7-mint)!important;color:#050b09!important}
 
 /* Square wrappers of the header controls */
-.rw-global-header .rw-site-links,.rw-global-header .rw-site-links[data-open],.rw-global-header .rw-site-language,.rw-global-header .brand .logo{border-radius:0!important}
-.rw-global-header .rw-site-links,.rw-global-header .rw-site-links[data-open]{background:rgba(8,19,15,.7)!important;border-color:var(--rw7-line)!important}
-.rw-global-header .rw-site-language{border-color:var(--rw7-line-strong)!important}
 
 /* Kickers, badges, meta: mono labels */
 .kicker,.rw-situation .kicker,.section-head .kicker,.badge,.rw-importance-badge,.stamp span,.stamp small{font-family:var(--rw7-mono)!important;letter-spacing:.14em}
@@ -146,7 +133,6 @@ html[dir="rtl"] :is(.news-card,.rw-story-teaser,.rw-dossier,.rw-situation,.panel
 .rw-digest-item a{display:inline-block;margin-top:2px}
 .rw-digest-item:nth-child(odd):nth-last-child(2){grid-column:1/-1}
 @media (pointer:coarse),(max-width:640px){
-  .rw-site-language a{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
   main button{min-height:44px}
   /* iOS zooms the page on focus when a field's text is under 16px. The :not()
      pair skips toggles and lifts the rule over component rules such as
@@ -160,12 +146,6 @@ html[dir="rtl"] :is(.news-card,.rw-story-teaser,.rw-dossier,.rw-situation,.panel
   .page-intro::after{display:none}
   *{transition-duration:0s!important}
 }
-/* Owner service link (/ops): a quiet square icon in the header actions,
-   identical on every page and both locales (owner 21.11). */
-.rw-global-header .rw-ops-link{display:inline-grid;place-items:center;flex:none;width:40px;min-height:40px;color:var(--rw7-text-3,#8fb8a2);font:16px/1 var(--rw7-mono,monospace);text-decoration:none;border:1px solid var(--rw7-line-strong,#2b5642);background:transparent;transition:color .2s,border-color .2s}
-.rw-global-header .rw-ops-link:hover,.rw-global-header .rw-ops-link:focus-visible{color:var(--rw7-mint,#9ff5c6);border-color:var(--rw7-mint-dim,#4d7a63)}
-.rw-global-header .rw-ops-link:focus-visible{outline:2px solid var(--rw7-mint,#9ff5c6);outline-offset:2px}
-@media(max-width:400px){.rw-global-header .rw-ops-link{width:34px;min-height:34px;font-size:14px}}
 /* 19.11: one base look for every content button; component rules override it
    (zero specificity). Unstyled buttons (analysts "Обновить") fell back to the
    browser's grey. */

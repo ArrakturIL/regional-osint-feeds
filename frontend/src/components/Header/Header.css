@@ -1,0 +1,368 @@
+/* Site header, concept E «2077» (owner 21.11). One file replaces the former
+   Header.navigation / .mobile / .status layers and the header part of the theme.
+   Loaded last, so plain selectors win; no important-flags needed.
+   Desktop (≥ 1000px): one row — brand · sections · sources · language · ops.
+   Below: brand + actions in one row; sections open as a vertical list (☰).
+   Direction follows the page: RTL in Hebrew, the menu sits at the inline end. */
+
+.rw-global-header.rw-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'brand nav actions';
+  align-items: center;
+  gap: 12px 24px;
+  min-height: 76px;
+  padding: 14px 0;
+  margin: 0;
+  border-bottom: 1px solid var(--rw7-line);
+  direction: inherit;
+}
+
+/* Skip link: visible only on keyboard focus. */
+.rw-global-header .rw-skip-link {
+  position: fixed;
+  inset-block-start: -100px;
+  inset-inline-start: 12px;
+  z-index: 999;
+  padding: 10px 14px;
+  background: var(--rw7-mint);
+  color: var(--rw7-bg);
+  font: 600 13px var(--rw7-mono);
+  text-decoration: none;
+}
+.rw-global-header .rw-skip-link:focus {
+  inset-block-start: 12px;
+}
+
+/* Brand: hexagon mark + wordmark. */
+.rw-global-header .brand {
+  grid-area: brand;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 44px;
+  color: var(--rw7-text);
+  text-decoration: none;
+}
+.rw-global-header .rw-brand-mark {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  color: var(--rw7-mint);
+}
+.rw-global-header .brand strong {
+  font: 500 16px/1 var(--rw7-display);
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+html[lang='he'] .rw-global-header .brand strong {
+  font-family: 'Unbounded', 'Manrope', system-ui, sans-serif;
+}
+
+/* Sections. */
+.rw-global-header .rw-site-links {
+  grid-area: nav;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.rw-global-header .rw-site-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  color: var(--rw7-text-2);
+  font: 500 13px var(--rw7-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    color 0.2s var(--rw7-ease),
+    background-color 0.2s var(--rw7-ease);
+}
+html[lang='he'] .rw-global-header .rw-site-links a {
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.rw-global-header .rw-site-links a:hover {
+  color: var(--rw7-text);
+  background: rgba(159, 245, 198, 0.06);
+}
+.rw-global-header .rw-site-links a.active,
+.rw-global-header .rw-site-links a[aria-current='page'] {
+  background: var(--rw7-mint);
+  color: var(--rw7-bg);
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+}
+html[dir='rtl'] .rw-global-header .rw-site-links a.active,
+html[lang='he'] .rw-global-header .rw-site-links a.active {
+  clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);
+}
+.rw-global-header .rw-site-links .rw-ui-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+/* Actions: sources · language · ops · menu. */
+.rw-global-header .rw-site-actions {
+  grid-area: actions;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rw-global-header .rw-site-source,
+.rw-global-header .rw-ops-link,
+.rw-global-header .rw-site-menu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border: 1px solid var(--rw7-line-strong);
+  background: transparent;
+  color: var(--rw7-text-2);
+  font: 500 12px var(--rw7-mono);
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    border-color 0.2s;
+}
+.rw-global-header .rw-site-source:hover,
+.rw-global-header .rw-ops-link:hover,
+.rw-global-header .rw-site-menu:hover {
+  color: var(--rw7-mint);
+  border-color: var(--rw7-mint-dim);
+}
+.rw-global-header .rw-site-source {
+  gap: 8px;
+  padding: 0 12px;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+html[lang='he'] .rw-global-header .rw-site-source {
+  text-transform: none;
+}
+.rw-global-header .rw-site-source::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  flex: none;
+  background: var(--rw7-mint);
+}
+.rw-global-header .rw-source-label-short {
+  display: none;
+}
+/* LTR count stays isolated from the Hebrew label. */
+.rw-global-header .rw-site-source-count,
+.rw-global-header .rw-dlg-counter {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.rw-global-header .rw-site-source-count {
+  color: var(--rw7-text);
+}
+.rw-global-header .rw-site-language {
+  display: flex;
+  direction: ltr;
+  border: 1px solid var(--rw7-line-strong);
+}
+.rw-global-header .rw-site-language a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 42px;
+  padding: 0 10px;
+  color: var(--rw7-text-2);
+  font: 600 12px var(--rw7-mono);
+  text-decoration: none;
+}
+.rw-global-header .rw-site-language a:hover {
+  color: var(--rw7-text);
+}
+.rw-global-header .rw-site-language a.active {
+  background: var(--rw7-mint);
+  color: var(--rw7-bg);
+}
+.rw-global-header .rw-ops-link {
+  width: 44px;
+  flex: none;
+}
+.rw-global-header .rw-site-menu {
+  display: none;
+  width: 44px;
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* Source status dialog. */
+.rw-global-header .rw-dlg {
+  width: min(530px, calc(100vw - 24px));
+  max-height: 80vh;
+  overflow: auto;
+  padding: 20px;
+  border: 1px solid var(--rw7-line-strong);
+  background: var(--rw7-panel-2);
+  color: var(--rw7-text);
+}
+.rw-global-header .rw-dlg::backdrop {
+  background: rgba(0, 0, 0, 0.72);
+}
+.rw-global-header .rw-dlg-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.rw-global-header .rw-dlg-head h2 {
+  margin: 0;
+  font: 600 16px var(--rw7-display);
+  letter-spacing: 0.04em;
+}
+.rw-global-header .rw-dlg-close {
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--rw7-line-strong);
+  background: transparent;
+  color: var(--rw7-text);
+  cursor: pointer;
+}
+.rw-global-header .rw-dlg-counter {
+  display: block;
+  margin-top: 8px;
+  color: var(--rw7-mint);
+  font: 600 22px var(--rw7-mono);
+}
+.rw-global-header .rw-dlg-items {
+  display: grid;
+  gap: 0;
+  margin: 12px 0;
+}
+.rw-global-header .rw-dlg-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 2px;
+  border-bottom: 1px solid var(--rw7-line);
+  font-size: 13px;
+}
+.rw-global-header .rw-dlg-state {
+  color: var(--rw7-text-3);
+  font-family: var(--rw7-mono);
+}
+.rw-global-header .rw-dlg-more {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font: 500 13px var(--rw7-mono);
+}
+
+/* Below desktop: sections move into the ☰ list. */
+@media (max-width: 999px) {
+  .rw-global-header.rw-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'brand actions'
+      'nav nav';
+    gap: 10px 12px;
+    min-height: 0;
+    padding: 10px 0;
+  }
+  .rw-global-header .rw-site-menu {
+    display: inline-flex;
+  }
+  .rw-global-header .rw-site-links {
+    display: none;
+  }
+  .rw-global-header .rw-site-links[data-open='true'] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--rw7-line);
+  }
+  .rw-global-header .rw-site-links[data-open='true'] a {
+    justify-content: flex-start;
+    min-height: 52px;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--rw7-line);
+    font-size: 14px;
+  }
+}
+@media (max-width: 560px) {
+  .rw-global-header .brand {
+    gap: 8px;
+  }
+  .rw-global-header .rw-brand-mark {
+    width: 26px;
+    height: 26px;
+  }
+  .rw-global-header .brand strong {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+  }
+  .rw-global-header .rw-site-actions {
+    gap: 6px;
+  }
+  .rw-global-header .rw-site-source {
+    padding: 0 8px;
+  }
+  .rw-global-header .rw-source-label-full {
+    display: none;
+  }
+}
+/* Phones: the wordmark stacks, the language switch shows only the other
+   language (like the mockup), the source status loses its frame. */
+@media (max-width: 430px) {
+  .rw-global-header .brand strong {
+    max-width: 6.5em;
+    white-space: normal;
+    font-size: 11px;
+    line-height: 1.25;
+    letter-spacing: 0.1em;
+  }
+  .rw-global-header .rw-site-actions {
+    gap: 4px;
+  }
+  .rw-global-header .rw-site-source {
+    min-width: 0;
+    padding: 0 4px;
+    border-color: transparent;
+  }
+  .rw-global-header .rw-site-language a.active {
+    display: none;
+  }
+  .rw-global-header .rw-site-language a {
+    min-width: 44px;
+    padding: 0 8px;
+  }
+  .rw-global-header .rw-ops-link,
+  .rw-global-header .rw-site-menu {
+    width: 42px;
+  }
+}
+@media (max-width: 330px) {
+  .rw-global-header.rw-header {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'brand' 'actions' 'nav';
+  }
+  .rw-global-header .rw-site-actions {
+    justify-content: space-between;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rw-global-header .rw-site-links a,
+  .rw-global-header .rw-site-source,
+  .rw-global-header .rw-ops-link,
+  .rw-global-header .rw-site-menu {
+    transition: none;
+  }
+}

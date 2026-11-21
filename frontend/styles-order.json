@@ -31,7 +31,6 @@
     "styles/locale-legacy.css",
     "styles/legacy-theme.css",
     "pages/Analysts/Analysts.css",
-    "components/Header/Header.navigation.css",
     "components/StoryDossier/StoryDossier.qa.css",
     "styles/translation-states.css",
     "pages/Home/Home.spacing.css",
