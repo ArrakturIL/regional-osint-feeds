@@ -8,8 +8,8 @@ import { assemble } from '../scripts/build.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const repo = resolve(root, '../..');
 const manifest = JSON.parse(readFileSync(resolve(root, 'build-order.json'), 'utf8'));
-test('all 45 monitored source modules exist (incl. SYS-01 dispatch, H-04 source-controls; centcom-rss retired in Q12)', () => {
-  assert.equal(manifest.order.length, 45);
+test('all 44 monitored source modules exist (incl. SYS-01 dispatch, H-04 source-controls; centcom-rss retired in Q12, satellite catalog retired 21.11)', () => {
+  assert.equal(manifest.order.length, 44);
   for (const x of manifest.order) assert.ok(existsSync(resolve(root, 'src', x)), x);
 });
 test('assembled Monitor includes the gated D1 collector-cache reader', () => {

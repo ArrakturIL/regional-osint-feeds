@@ -16,7 +16,6 @@ import { airBulletins } from '../collectors/official/easa.js';
 import { fcdoAdvice } from '../collectors/official/fcdo.js';
 import { idfReleases } from '../collectors/official/idf.js';
 import { stateTravelAdvisories } from '../collectors/official/state.js';
-import { aerialArchive, sentinelCatalog } from '../collectors/satellite/catalog.js';
 import { copernicusAnalysis } from '../collectors/satellite/copernicus.js';
 import { hotspots } from '../collectors/satellite/firms.js';
 import { satelliteContext } from '../collectors/satellite/github.js';
@@ -30,8 +29,6 @@ export const sources = [
   { name: 'centcom_dvids', every: 30, read: centcomDvids },
   { name: 'satellite_context', every: 720, read: satelliteContext },
   { name: 'gdelt_context', every: 60, read: gdeltContext },
-  { name: 'sentinel_catalog', every: 180, read: sentinelCatalog },
-  { name: 'aerial_archive', every: 1440, read: aerialArchive },
   { name: 'fcdo', every: 480, read: fcdoAdvice },
   { name: 'marad_official', every: 360, read: maradAdvisories },
   { name: 'us_dod_rss', every: 240, read: dodOfficialRss },

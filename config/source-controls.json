@@ -7,7 +7,6 @@
       "sources": [
         "adsb",
         "adsb_alt",
-        "aerial_archive",
         "airbridge_context",
         "ais",
         "centcom_dvids",
@@ -26,7 +25,6 @@
         "mscio",
         "polymarket",
         "satellite_context",
-        "sentinel_catalog",
         "state_dept",
         "unosat_analysis",
         "us_dod_rss"

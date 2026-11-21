@@ -11,7 +11,6 @@ export const SOURCE_LABELS = Object.freeze({
   marad_official: 'MARAD',
   mscio: 'UKMTO',
   polymarket: 'Polymarket',
-  sentinel_catalog: 'Sentinel',
   state_dept: 'Госдеп США',
   mil_lol: 'Военный ADS-B',
 });
@@ -29,7 +28,6 @@ export const SOURCE_LABELS_HE = Object.freeze({
   marad_official: 'MARAD',
   mscio: 'UKMTO',
   polymarket: 'Polymarket',
-  sentinel_catalog: 'Sentinel',
   state_dept: 'משרד החוץ האמריקאי',
   mil_lol: 'ADS-B צבאי',
 });
