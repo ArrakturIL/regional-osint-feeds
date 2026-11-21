@@ -113,6 +113,22 @@ export const ENTITIES = [
     he: /גדה\s+(?:ה)?מערבית|יהודה\s+ושומרון|West\s+Bank/iu,
     ru: /Западн\p{L}*\s+берег|Иуде\p{L}*\s+и\s+Самари/iu,
   },
+  // B11 audit 21.11: the second model caught «David's Sling» → «כיפת ברזל»
+  // (Iron Dome) three times; air-defence systems are now deterministic.
+  {
+    id: 'davids_sling',
+    code: 'davids_sling_name_missing',
+    source: src("David['’]?s\\s+Sling|קלע\\s+דוד|Пращ\\p{L}*\\s+Давид\\p{L}*"),
+    he: /קלע\s+דוד|David['’]?s\s+Sling/iu,
+    ru: /Пращ\p{L}*\s+Давид|David['’]?s\s+Sling/iu,
+  },
+  {
+    id: 'iron_dome',
+    code: 'iron_dome_name_missing',
+    source: src('Iron\\s+Dome|כיפת\\s+ברזל|Железн\\p{L}*\\s+купол\\p{L}*'),
+    he: /כיפת\s+ברזל|Iron\s+Dome/iu,
+    ru: /Железн\p{L}*\s+купол|Iron\s+Dome/iu,
+  },
 ];
 
 // B11 part 1: entities whose names come from Wikidata (labels + aliases in

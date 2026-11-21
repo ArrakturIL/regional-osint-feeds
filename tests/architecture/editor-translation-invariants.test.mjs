@@ -191,3 +191,8 @@ test('analyst translation (21.11): spelled-out small numbers, list markers, lead
   assert.equal(numbersPreserved('טס 15 שעות', 'летел 16 часов'), false);
   assert.equal(numbersPreserved('12 טיסות', 'двенадцать рейсов'), false, 'only 1–10 may be spelled out');
 });
+test('B11 audit 21.11: the meaning checker compares field with field, a self-contradicting original is not a translation error', async () => {
+  const { MEANING_CHECK_SYSTEM } = await import('../../backend/editor/src/translations/prompts.mjs');
+  assert.match(MEANING_CHECK_SYSTEM, /same field of the original/);
+  assert.match(MEANING_CHECK_SYSTEM, /contradict each other, that is not a translation error/);
+});
