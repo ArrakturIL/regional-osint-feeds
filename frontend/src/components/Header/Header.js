@@ -18,7 +18,9 @@ export function GlobalHeader({ active, overview, go }) {
     section =
       active === '/events'
         ? 'events'
-        : active === '/data'
+        : active === '/feed'
+          ? 'feed'
+          : active === '/data'
           ? 'data'
           : active === '/analysts'
             ? 'analysts'
@@ -32,6 +34,7 @@ export function GlobalHeader({ active, overview, go }) {
   };
   const names = [
     ['', 'Обстановка', 'תמונת מצב'],
+    ['feed', 'Лента', 'עדכונים'],
     ['events', 'События', 'אירועים'],
     ['data', 'Данные', 'נתונים'],
     ['analysts', 'Аналитики', 'פרשנים'],
@@ -156,7 +159,9 @@ export function GlobalHeader({ active, overview, go }) {
             name:
               slug === 'events'
                 ? 'files'
-                : slug === 'data'
+                : slug === 'feed'
+                  ? 'newspaper'
+                  : slug === 'data'
                   ? 'database'
                   : slug === 'analysts'
                     ? 'users'

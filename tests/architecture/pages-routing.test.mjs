@@ -7,8 +7,8 @@ import {
   LOCAL_ENDPOINTS,
   MONITOR_ENDPOINTS,
 } from '../../backend/pages/src/routes.js';
-test('all nine Pages routes (8 locale + /ops) use immutable local HTML assets', () => {
-  assert.equal(Object.keys(PAGE_PATHS).length, 9);
+test('all eleven Pages routes (10 locale + /ops) use immutable local HTML assets', () => {
+  assert.equal(Object.keys(PAGE_PATHS).length, 11);
   for (const [route, asset] of Object.entries(PAGE_PATHS)) {
     assert.deepEqual(ownership(route), { kind: 'html', asset: '/' + asset });
     if (route !== '/') assert.deepEqual(ownership(route + '/'), { kind: 'html', asset: '/' + asset });

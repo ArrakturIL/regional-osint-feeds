@@ -48,6 +48,7 @@
     "utils/unknowns.js",
     "components/StoryDossier/StoryDossier.js",
     "pages/Events/Events.js",
+    "pages/Feed/Feed.js",
     "components/Aviation/AviationExplained.js",
     "components/MarketCard/MarketCard.js",
     "components/SatelliteCatalog/SatelliteCatalog.js",
