@@ -127,3 +127,36 @@ html[lang='he'] .rw-tension-level {
     grid-column: 1 / -1;
   }
 }
+
+/* «Данные»: the index in full (21.11). */
+.rw-tension-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 12px;
+}
+.rw-tension-detail-grid > .panel {
+  margin: 0;
+}
+.rw-tension-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.rw-tension-table th {
+  padding: 6px 12px 6px 0;
+  color: var(--rw7-text-3);
+  font: 500 11px var(--rw7-mono);
+  letter-spacing: 0.1em;
+  text-align: start;
+  text-transform: uppercase;
+}
+.rw-tension-table td {
+  padding: 6px 12px 6px 0;
+  border-top: 1px dashed var(--rw7-line);
+  color: var(--rw7-text-2);
+}
+.rw-tension-table td.num {
+  color: var(--rw7-text);
+  font-family: var(--rw7-mono);
+  white-space: nowrap;
+}

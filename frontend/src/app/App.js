@@ -104,11 +104,11 @@ export function App() {
     120000,
     route === '/',
   );
-  const data = useFeed('/api/data' + (UI_HE ? '?lang=he' : ''), 120000, route === '/data');
+  const data = useFeed('/api/data' + (UI_HE ? '?lang=he' : ''), 120000, route === '/data' || route === '/feed');
   const officialPosts = useFeed(
     '/api/official-posts?lang=' + (UI_HE ? 'he' : 'ru') + '&limit=5',
     120000,
-    route === '/data',
+    route === '/feed',
   );
   const heAviation = useFeed('/api/rw-localized/aviation', 180000, UI_HE && route === '/data');
   const heSatellite = useFeed('/api/rw-localized/satellite', 180000, UI_HE && route === '/data');
@@ -177,14 +177,12 @@ export function App() {
         route === '/events'
           ? h(CasesPageV2, { visible: true, cases: normalizedCases, error: cases.error, feed: cases })
           : null,
-        route === '/feed' ? h(FeedPage, {}) : null,
+        route === '/feed' ? h(FeedPage, { data: data.value, officialPosts: officialPosts.value }) : null,
         route === '/data'
           ? h(DataRoomV2, {
               visible: true,
-              data:
-                officialPosts.value?.items && data.value
-                  ? { ...data.value, home: officialPosts.value.items }
-                  : data.value,
+              data: data.value,
+              tension: overview.value?.tension,
               error: data.error,
               feed: data,
               aviation: UI_HE ? heAviation.value : ruAviation.value,

@@ -99,6 +99,7 @@ test('official statements preserve original source and timestamps without false 
     'satelliteScenes',
     'marad',
     'centcom',
+    'advisories',
     'alt',
     'sources',
   ]);
@@ -133,7 +134,7 @@ test('read-only D1 API uses canonical sources and never mutates database', async
       },
     };
   const d = await dataFromD1({ DB: db }, now);
-  assert.equal(sql.length, 4);
+  assert.equal(sql.length, 5); // + advisories (21.11)
   assert.equal(d.markets.length, 1);
   assert.equal(d.sources[0].id, 'ais');
   assert.equal(d.sources[0].label, 'AIS');
@@ -252,4 +253,25 @@ test('21.11: ?lang=he drops the Russian market caveat and Russian source labels'
     assembleData({ nowMs: now, marketRows: [row('A', at, 0.03, 100)] }).markets[0].caveat,
     'RU keeps it',
   );
+});
+
+test('21.11: advisories for «Лента» — UKMTO title and date from the file name, FCDO change note, newest first', () => {
+  const at = Date.parse('2026-11-21T10:00:00Z');
+  const r = (source, payload) => ({ source, observed_at: at, payload: JSON.stringify(payload) });
+  const d = assembleData({
+    advisoryRows: [
+      r('mscio', { url: 'https://mscio.eu/media/documents/20260909-UKMTO_ADVISORY_129-26_fAkhO2Z.pdf' }),
+      r('fcdo', {
+        url: 'https://www.gov.uk/foreign-travel-advice/iran',
+        title: 'Iran travel advice',
+        updated_at: '2026-11-18T16:30:59+00:00',
+        change_description: 'Updated information about regional tensions',
+      }),
+      r('easa', { url: 'http://insecure.example/czib', title: 'Airspace of Iran' }),
+    ],
+  });
+  assert.deepEqual(d.advisories.ukmto[0].title, 'UKMTO Advisory 129/26');
+  assert.equal(d.advisories.ukmto[0].published, '2026-09-09T00:00:00.000Z');
+  assert.equal(d.advisories.fcdo[0].description, 'Updated information about regional tensions');
+  assert.equal(d.advisories.easa.length, 0, 'only https links');
 });

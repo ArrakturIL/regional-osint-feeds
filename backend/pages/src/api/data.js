@@ -112,6 +112,50 @@ function officialGroups(rows) {
   by.centcom_dvids.sort((a, b) => Date.parse(b.published || 0) - Date.parse(a.published || 0));
   return { home: by.idf_official, marad: by.marad_official, centcom: by.centcom_dvids };
 }
+// 21.11 (owner, variant A): the advisories Monitor already collects but the
+// site never showed — UKMTO, EASA, FCDO, US State Department — for «Лента».
+// Titles stay in the original language.
+const ADVISORY_SOURCES = Object.freeze(['mscio', 'easa', 'fcdo', 'state_dept']);
+function ukmtoTitle(url) {
+  const m = String(url).match(/(\d{4})(\d{2})(\d{2})-UKMTO_ADVISORY_(\d+)[-_](\d+)/i);
+  return m
+    ? { title: 'UKMTO Advisory ' + m[4] + '/' + m[5], published: m[1] + '-' + m[2] + '-' + m[3] }
+    : { title: 'UKMTO Advisory', published: null };
+}
+function advisoryGroups(rows) {
+  const out = { ukmto: [], easa: [], fcdo: [], state: [] };
+  const key = { mscio: 'ukmto', easa: 'easa', fcdo: 'fcdo', state_dept: 'state' };
+  const seen = new Set();
+  for (const row of rows) {
+    const k = key[row.source];
+    if (!k) continue;
+    const raw = json(row.payload),
+      url = validHttps(raw.url);
+    if (!url || seen.has(url) || out[k].length >= 3) continue;
+    seen.add(url);
+    const ukmto = row.source === 'mscio' ? ukmtoTitle(url) : null;
+    const published = ukmto ? ukmto.published : str(raw.updated_at) || str(raw.published) || null;
+    const item = {
+      title: ukmto ? ukmto.title : str(raw.title),
+      url,
+      published:
+        published && Number.isFinite(Date.parse(published))
+          ? new Date(Date.parse(published)).toISOString()
+          : null,
+      description:
+        row.source === 'fcdo'
+          ? str(raw.change_description)
+          : row.source === 'state_dept'
+            ? str(raw.description).slice(0, 300)
+            : '',
+      observed: ISO(row.observed_at),
+    };
+    if (item.title) out[k].push(item);
+  }
+  for (const list of Object.values(out))
+    list.sort((a, b) => Date.parse(b.published || 0) - Date.parse(a.published || 0));
+  return out;
+}
 function satelliteItems(rows) {
   const seen = new Set(),
     out = [];
@@ -131,6 +175,7 @@ export function assembleData({
   marketRows = [],
   officialRows = [],
   sceneRows = [],
+  advisoryRows = [],
   statusRows = [],
   nowMs = Date.now(),
   lang = 'ru',
@@ -150,6 +195,7 @@ export function assembleData({
     satelliteScenes: satelliteItems(sceneRows),
     marad: official.marad,
     centcom: official.centcom,
+    advisories: advisoryGroups(advisoryRows),
     alt: null,
     sources: he ? sources.map(x => ({ ...x, label: x.label_he })) : sources,
   };
@@ -163,13 +209,19 @@ export async function dataFromD1(env, nowMs = Date.now(), lang = 'ru') {
     "WITH latest AS (SELECT source,observed_at,payload,ROW_NUMBER() OVER(PARTITION BY source,json_extract(payload,'$.url') ORDER BY observed_at DESC) ver FROM observations WHERE source IN ('idf_official','marad_official','centcom_dvids')), unique_rows AS (SELECT source,observed_at,payload,ROW_NUMBER() OVER(PARTITION BY source ORDER BY observed_at DESC) n FROM latest WHERE ver=1) SELECT source,observed_at,payload FROM unique_rows WHERE n<=3 ORDER BY source,observed_at DESC";
   const scenesSql =
     "WITH ranked AS (SELECT observed_at,payload,ROW_NUMBER() OVER(PARTITION BY json_extract(payload,'$.scene_id') ORDER BY observed_at DESC) n FROM observations WHERE source='sentinel_catalog') SELECT observed_at,payload FROM ranked WHERE n=1 ORDER BY observed_at DESC,json_extract(payload,'$.acquired_at') DESC LIMIT 10";
-  const [markets, official, scenes, status] = await db.batch([
+  const advisorySql =
+    "WITH latest AS (SELECT source,observed_at,payload,ROW_NUMBER() OVER(PARTITION BY source,json_extract(payload,'$.url') ORDER BY observed_at DESC) ver FROM observations WHERE source IN ('" +
+    ADVISORY_SOURCES.join("','") +
+    "')), unique_rows AS (SELECT source,observed_at,payload,ROW_NUMBER() OVER(PARTITION BY source ORDER BY observed_at DESC) n FROM latest WHERE ver=1) SELECT source,observed_at,payload FROM unique_rows WHERE n<=6 ORDER BY source,observed_at DESC";
+  const [markets, official, scenes, status, advisories] = await db.batch([
     db.prepare(marketSql),
     db.prepare(officialSql),
     db.prepare(scenesSql),
     db.prepare('SELECT source,attempted_at,succeeded_at,state,detail FROM source_status ORDER BY source'),
+    db.prepare(advisorySql),
   ]);
   return assembleData({
+    advisoryRows: advisories?.results || [],
     marketRows: markets.results || [],
     officialRows: official.results || [],
     sceneRows: scenes.results || [],
