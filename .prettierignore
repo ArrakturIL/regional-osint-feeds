@@ -12,3 +12,5 @@ frontend/src/
 # Build outputs.
 **/dist/
 release/
+# Entity list read by scripts/build_wikidata_glossary.py (hand-edited tuples).
+config/glossary-wikidata.json
