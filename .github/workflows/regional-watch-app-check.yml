@@ -167,8 +167,6 @@ jobs:
         run: node scripts/audit_active_architecture.mjs --summary
       - name: Verify production provider client backoff and D1 quota safety
         run: node --test backend/monitor/tests/provider-client-runtime.test.mjs
-      - name: Verify live satellite catalogue metadata and provider failure semantics
-        run: node --test backend/monitor/tests/geo-catalog-runtime.test.mjs
       - name: Editor translation and news invariants
         run: node --test tests/architecture/editor-translation-invariants.test.mjs
 

@@ -26,7 +26,6 @@
     "collectors/markets/polymarket.js",
     "collectors/official/centcom-dvids.js",
     "collectors/satellite/github.js",
-    "collectors/satellite/catalog.js",
     "collectors/media/gdelt.js",
     "collectors/maritime/marad.js",
     "collectors/maritime/gfw.js",

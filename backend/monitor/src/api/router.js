@@ -196,10 +196,6 @@ export async function read(request, env) {
         'NASA GIBS NOAA-20 optical center-tile previews and NASA EONET natural events. Visual differences are not evidence of military activity. Coverage can be partial.',
       gdelt_context:
         'GDELT Project automated machine-coded news events from official 15-minute public exports, mirrored hourly by GitHub. These are media signals, NOT verified incidents; count and domains are not independent confirmations.',
-      sentinel_catalog:
-        'Element 84 Earth Search STAC discovery of Sentinel-1 GRD and Sentinel-2 L2A: one bounded search every 3h, four regions, metadata only. No image analysis, verified changes, or complete coverage claims.',
-      aerial_archive:
-        'OpenAerialMap historical aerial imagery catalog: one regional lookup per day, four regions; acquisitions may be years old and individual redistribution terms need checking.',
       marad_official:
         'Official active US MARAD maritime advisories. Collection date is NOT publication date; no event should be treated as newly issued merely by first ingestion.',
       mil_lol:
