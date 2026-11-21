@@ -13,7 +13,9 @@ const EDITOR_VERSION = 'analyst-editor-v1.1.2-translation';
 const MODEL = '@cf/zai-org/glm-4.7-flash';
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
-const MAX_AI_PER_RUN = 3;
+// 21.11: 3 per hourly run fell behind Abu Ali Express (~4–5 long posts an hour);
+// the daily cap and the shared AI pool still bound spending.
+const MAX_AI_PER_RUN = 6;
 const MAX_AI_PER_DAY = 60; // B1: ceiling only; shared AI pool decides
 const REGION =
   /(?:израил|иран|цахал|сша|вашингтон|пентагон|трамп|байден|американск|ближн(?:ий|его) восток|хусит|хезболл|хамас|йемен|ливан|сири|ирак|ормуз|залив|саудов|катар|иордан|иерусалим|тегеран|хаменеи|нетаньяху|iran|israel|tehran|middle east|centcom|pentagon|hormuz|hezbollah|houthi|gaza|idf|us military)/i;
@@ -23,10 +25,14 @@ const PROMO =
 function isCommercialAd(text, language) {
   const s = String(text || '');
   if (language === 'he')
-    return [
-      /(?:בלאק נובמבר|מבצעי|במבצעים|הנחות|מבצעי|קופון|חינם|ללא עלות)/u,
-      /(?:קונים עכשיו|קונים|לכל מבצעי|להזמין|לרכישה|ספה|פינת אוכל|מיטה|להשאיר פרטים)/u,
-    ].every(re => re.test(s));
+    return (
+      [
+        /(?:בלאק נובמבר|מבצעי|במבצעים|הנחות|מבצעי|קופון|חינם|ללא עלות)/u,
+        /(?:קונים עכשיו|קונים|לכל מבצעי|להזמין|להזמנה|לרכישה|ספה|פינת אוכל|מיטה|להשאיר פרטים)/u,
+      ].every(re => re.test(s)) ||
+      // 21.11: «ב־2,290 ₪ בלבד במקום 2,990 ₪» with an order link.
+      (/\d[\d,.]*\s*₪/u.test(s) && /(?:בלבד|במקום|להזמנה|להזמין|לרכישה)/u.test(s))
+    );
   if (language === 'ru')
     return (
       /(?:промокод|на правах рекламы|рекламная интеграция|скидк|распродаж)/i.test(s) &&

@@ -176,3 +176,18 @@ test('BE-02: RAF Fairford never becomes Hebrew prime-minister abbreviation', () 
     null,
   );
 });
+test('analyst translation (21.11): spelled-out small numbers, list markers, leading zeros, glued names', () => {
+  assert.ok(numbersPreserved('הצהרות של 3 המנהיגים', 'заявлений трёх лидеров'));
+  assert.equal(numbersPreserved('הצהרות של 3 המנהיגים', 'заявлений четырёх лидеров'), false);
+  assert.ok(
+    numbersPreserved(
+      '3 נהרגו: 1. שניים בתקיפה. 2. אחד בתקיפה',
+      '3 погибли: двое при ударе, ещё один при ударе',
+    ),
+  );
+  assert.ok(
+    numbersPreserved('בסביבות 03:30 מטוס Airforce1 טס 15 שעות', 'около 3:30 Air Force One летел 15 часов'),
+  );
+  assert.equal(numbersPreserved('טס 15 שעות', 'летел 16 часов'), false);
+  assert.equal(numbersPreserved('12 טיסות', 'двенадцать рейсов'), false, 'only 1–10 may be spelled out');
+});
