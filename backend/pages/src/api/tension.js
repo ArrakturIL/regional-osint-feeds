@@ -33,7 +33,13 @@ export function publicTension(index) {
         indicator: f.indicator,
         value: f.value,
         ...(f.rule !== undefined ? { rule: f.rule } : { p95: f.p95, median: f.median }),
-        ...(Array.isArray(f.refs) ? { refs: f.refs.slice(0, 4).map(x => ({ source: String(x.source), at: new Date(Number(x.at)).toISOString() })) } : {}),
+        ...(Array.isArray(f.refs)
+          ? {
+              refs: f.refs
+                .slice(0, 4)
+                .map(x => ({ source: String(x.source), at: new Date(Number(x.at)).toISOString() })),
+            }
+          : {}),
       })),
       coverage: r.coverage,
     })),
