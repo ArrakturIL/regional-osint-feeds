@@ -192,6 +192,11 @@ html[lang='he'] .rw-top-meta {
   color: var(--rw7-text-2);
   text-transform: uppercase;
 }
+.rw-net-mon {
+  margin: 16px 0 0;
+  color: var(--rw7-text-3);
+  font: 400 12px/1.6 var(--rw7-mono);
+}
 .rw-net-link {
   display: inline-flex;
   align-items: center;

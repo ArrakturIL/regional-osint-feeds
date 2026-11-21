@@ -32,7 +32,6 @@ test('stylesheet cascade: component sources, then refinements in a fixed order',
       source('src/styles/document-shell.css') +
       source('src/components/NewsMasonry/NewsMasonry.layout.css') +
       source('src/components/NewsArchive/NewsArchive.filters.css') +
-      source('src/components/Digest/Digest.qa.css') +
       source('src/components/FeedState/FeedState.css') +
       themeWithFonts() +
       source('src/components/Header/Header.css') +
@@ -110,7 +109,6 @@ test('eight RU/HE documents contain no duplicated inline CSS', () => {
       shared +
       source('src/components/NewsMasonry/NewsMasonry.layout.css') +
       source('src/components/NewsArchive/NewsArchive.filters.css') +
-      source('src/components/Digest/Digest.qa.css') +
       source('src/components/FeedState/FeedState.css') +
       themeWithFonts() +
       source('src/components/Header/Header.css') +

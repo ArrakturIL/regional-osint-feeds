@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs';
 const src = readFileSync(new URL('../src/components/TopNow/TopNow.js', import.meta.url), 'utf8')
   .replace(/^import[\s\S]*?from\s+['"][^'"]+['"];?\n/gm, '')
   .replace(/^export /gm, '');
-const ctx = { UI_HE: false, h: () => null, t: () => null, GoLink: () => null };
+const ctx = { UI_HE: false, h: () => null, t: () => null, GoLink: () => null, simpleTime: () => '' };
 vm.runInNewContext(src + '\nthis.topStories = topStories; this.networkCounts = networkCounts;', ctx);
 const ids = list => JSON.stringify(list.map(s => s.id));
 

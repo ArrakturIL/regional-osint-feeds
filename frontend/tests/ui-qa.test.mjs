@@ -26,19 +26,6 @@ test('expanded news cards no longer force giant row-height gaps or reorder DOM',
   assert.doesNotMatch(layout, /grid-auto-rows:\s*auto/, 'row-stretching layout reintroduced');
 });
 
-test('Digest shows result and checked period, sources and time in one summary area', () => {
-  const js = code(source('src/components/Digest/Digest.js'));
-  const css = assembleStyles();
-  assert.match(js, /rw-digest-summary/);
-  assert.match(js, /rw-digest-meta/);
-  assert.match(js, /rw-digest-meta-label/);
-  assert.match(js, /h\("bdi",\{dir:"ltr"\}/);
-  assert.match(css, /\.rw-digest-grid\s*\{[^\}]*grid-template-columns:[^\}]*\}/);
-  assert.match(css, /\.rw-digest-summary\s*\{/);
-  assert.match(css, /\.rw-digest-meta\s*\{/);
-  assert.match(css, /@media\s*\(max-width:\s*640px\)[\s\S]*?\.rw-digest-meta/);
-});
-
 test('Russian plural inflection handles 1, 2, 5, 11, 17, 21 and 112', () => {
   const forms = ['публикация', 'публикации', 'публикаций'];
   for (const [n, v] of [

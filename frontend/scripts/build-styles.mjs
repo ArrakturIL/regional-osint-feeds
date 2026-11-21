@@ -22,7 +22,6 @@ export function assembleStyles({ includeRefinements = true } = {}) {
     css += readFileSync(resolve(frontendRoot, 'src/styles/document-shell.css'), 'utf8');
     css += readFileSync(resolve(frontendRoot, 'src/components/NewsMasonry/NewsMasonry.layout.css'), 'utf8');
     css += readFileSync(resolve(frontendRoot, 'src/components/NewsArchive/NewsArchive.filters.css'), 'utf8');
-    css += readFileSync(resolve(frontendRoot, 'src/components/Digest/Digest.qa.css'), 'utf8');
     css += readFileSync(resolve(frontendRoot, 'src/components/FeedState/FeedState.css'), 'utf8'); // F-04
     css += themeWithFonts(); // redesign «2077»
     // Concept E components, written clean; they come after the theme layer.
