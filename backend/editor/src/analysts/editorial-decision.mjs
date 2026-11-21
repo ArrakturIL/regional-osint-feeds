@@ -1,4 +1,10 @@
 import { chat } from '../ai/router.mjs';
+// Hebrew security vocabulary (owner 22.11). One hit sends the post on to AI.
+const HE_TOPIC =
+  /(?:צה["״]ל|צבא|תקיפ|תקף|תקפו|ירי|טיל|רקט|כטב["״]מ|מל["״]ט|רחפן|פיגוע|מחבל|חיזבאללה|חמאס|ג'יהאד|איראן|איראני|משמרות המהפכה|חות'?י|עזה|לבנון|סוריה|עיראק|תימן|הרוג|פצוע|יירוט|יורט|אזעק|פיקוד העורף|גבול|חטופ|גרעין|הפסקת אש|שב["״]כ|מוסד|ביטחו|חיל האוויר|חיל הים|הורמוז|המפרץ|סנקצי|בסיס)/u;
+// Paid posts marked by the channel itself.
+const HE_MARKETING = /(?:תוכן שיווקי|תוכן ממומן|בשיתוף פעולה מסחרי|פרסומת)/u;
+
 export function createAnalystDecision({
   EDITOR_VERSION,
   MODEL,
@@ -153,10 +159,39 @@ export function createAnalystDecision({
         novelty: 0,
         substance: 0,
       };
-    } else if (it.body.length < minBody || isCommercialAd(it.body, it.original_language || 'ru')) {
+    } else if (
+      it.body.length < minBody ||
+      isCommercialAd(it.body, it.original_language || 'ru') ||
+      HE_MARKETING.test(it.body)
+    ) {
       decision = {
         decision: 'skip',
         reason: 'Недостаточно аналитического содержания либо рекламная публикация.',
+        relevance: 0,
+        novelty: 0,
+        substance: 0,
+      };
+    } else if (it.original_language === 'he' && !HE_TOPIC.test(it.body)) {
+      // Owner 22.11: Abu Ali Express writes about everything (US politics,
+      // Paris protests, coalition talk). A Hebrew post with no security term is
+      // skipped before translation, so it costs no AI.
+      decision = {
+        decision: 'skip',
+        reason: 'Не о безопасности региона (фильтр до перевода).',
+        relevance: 0,
+        novelty: 0,
+        substance: 0,
+      };
+    } else if (
+      await db
+        .prepare('SELECT 1 FROM analyst_editorial_decisions WHERE content_hash=? AND item_id<>? LIMIT 1')
+        .bind(it.content_hash, it.id)
+        .first()
+    ) {
+      // The same text posted twice (22.11: pairs of identical Abu Ali posts).
+      decision = {
+        decision: 'skip',
+        reason: 'Повтор уже разобранного текста.',
         relevance: 0,
         novelty: 0,
         substance: 0,
