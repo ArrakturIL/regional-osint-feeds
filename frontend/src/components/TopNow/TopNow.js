@@ -31,6 +31,19 @@ export function topAge(time, now, he) {
   const d = Math.floor(hr / 24);
   return he ? 'לפני ' + d + ' ימים' : d + ' дн назад';
 }
+// Owner 22.11: many feeds send the headline again as the summary. A summary
+// that only repeats the title (or is part of it) adds nothing; skip it.
+const plainText = x =>
+  String(x || '')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+export function leadExcerpt(s) {
+  const ex = plainText(s?.excerpt);
+  const ti = plainText(s?.title);
+  if (!ex || ex === ti || ti.includes(ex) || ex.includes(ti) && ex.length - ti.length < 24) return '';
+  return s.excerpt;
+}
 const TOP_STATES = ['ok', 'partial', 'empty', 'error'];
 export function networkCounts(sources) {
   const out = { ok: 0, partial: 0, empty: 0, error: 0 };
@@ -123,7 +136,7 @@ export function TopNow({ stories, overview, go }) {
             { className: 'rw-top-lead rw-top-' + tierOf(lead) },
             meta(lead),
             title(lead, 'h3'),
-            lead.excerpt ? t('p', 'rw-top-excerpt', lead.excerpt) : null,
+            leadExcerpt(lead) ? t('p', 'rw-top-excerpt', leadExcerpt(lead)) : null,
             t('p', 'rw-top-verify', independent > 1 ? L.many(independent) : L.single),
           )
         : t('p', 'hint', L.wait),
