@@ -36,6 +36,7 @@ MAX_LISTED_BATCHES = 8  # Monitor contract: data.batches has at most 8 entries
 MAX_COMPRESSED = 6_000_000
 MAX_EXPANDED = 40_000_000
 MAX_SAMPLE = 32
+UPSTREAM_GAP_GRACE = timedelta(hours=3)
 UA = "RegionalWatch/1.0 (public noncommercial research; cite GDELT Project)"
 
 
@@ -255,6 +256,18 @@ def collect() -> int:
                 contiguous = False
                 misses.append(stamp + ": " + type(e).__name__)
         if not downloaded:
+            # GDELT sometimes lists a batch in lastupdate.txt before its archive
+            # is downloadable. A short gap after a fresh checkpoint is upstream
+            # lag, not a failure: keep the cursor and retry next hour. A gap
+            # longer than UPSTREAM_GAP_GRACE stays an error.
+            if last_done is not None:
+                done_dt = datetime.strptime(last_done, "%Y%m%d%H%M%S").replace(tzinfo=timezone.utc)
+                if now - done_dt <= UPSTREAM_GAP_GRACE:
+                    emit(checked, "partial",
+                         f"GDELT exports not yet downloadable ({len(misses)} batches); cursor kept",
+                         latest_stamp, checkpoint_data(previous))
+                    print(json.dumps({"state": "partial", "batch_count": 0, "missing": len(misses)}))
+                    return 0
             raise ValueError("No valid GDELT export in sampled window")
         dedup = {}
         for event in all_events:

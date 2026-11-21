@@ -74,6 +74,20 @@ class GdeltWatermarkSafety(unittest.TestCase):
             self.assertIsNotNone(data)
             self.assertEqual(data["latest_batch"], stamp(22, 0))
 
+    def test_fresh_upstream_gap_is_partial_and_keeps_the_cursor(self):
+        # 21.11 19:37Z and 22:18Z: lastupdate.txt listed batches whose archives
+        # were not downloadable yet; the run failed although nothing was lost.
+        allgone = {stamp(h, m) for h in (22, 23) for m in (0, 15, 30, 45)}
+        code, seen, (checked, state, detail, batch, data) = run_collector(stamp(22, 0), stamp(23, 45), allgone)
+        self.assertEqual((code, state), (0, "partial"))
+        self.assertEqual(data["latest_batch"], stamp(22, 0))
+
+    def test_long_upstream_gap_stays_an_error(self):
+        allgone = {stamp(h, m) for h in range(19, 24) for m in (0, 15, 30, 45)}
+        code, seen, (checked, state, detail, batch, data) = run_collector(stamp(19, 0), stamp(23, 45), allgone)
+        self.assertEqual((code, state), (1, "error"))
+        self.assertEqual(data["latest_batch"], stamp(19, 0))
+
     def test_failed_middle_export_does_not_advance_past_gap(self):
         previous = stamp(22, 30)
         lost = stamp(23, 0)
