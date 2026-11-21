@@ -8,13 +8,11 @@ on:
     paths:
       - 'scripts/translate_news_open_source.py'
       - 'scripts/test_translate_news_open_source.py'
-      - 'worker/live-editor/news-translation-mirror.mjs'
       - '.github/workflows/news-open-source-translation.yml'
   pull_request:
     paths:
       - 'scripts/translate_news_open_source.py'
       - 'scripts/test_translate_news_open_source.py'
-      - 'worker/live-editor/news-translation-mirror.mjs'
       - '.github/workflows/news-open-source-translation.yml'
 
 permissions:

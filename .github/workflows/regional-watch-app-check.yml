@@ -83,10 +83,10 @@ jobs:
         run: npm exec --yes --package=esbuild@0.25.0 -- esbuild backend/editor/src/index.js --bundle --format=esm --target=es2022 --outfile=backend/editor/dist/worker.modern.mjs
       - name: Validate loadable Worker exports and React bundle
         run: node --test tests/architecture/modern-bundles.test.mjs
-      - name: Audit legacy dependency reachability before archive decisions
+      - name: Source graph (entrypoints, imports)
         run: |
-          node --test tests/architecture/legacy-dependency-audit.test.mjs
-          node scripts/audit_legacy_dependencies.mjs --summary
+          node --test tests/architecture/source-graph.test.mjs
+          node scripts/source_graph.mjs
       - name: Verify protected Monitor summary contract on modern source
         run: node --test backend/monitor/tests/summary-runtime.test.mjs
       - name: Verify live provider cooldown and AvioADSB quota policy on modern source
@@ -99,8 +99,8 @@ jobs:
         run: node --test backend/monitor/tests/provider-client-runtime.test.mjs
       - name: Verify live satellite catalogue metadata and provider failure semantics
         run: node --test backend/monitor/tests/geo-catalog-runtime.test.mjs
-      - name: Verify preserved Editor legacy translation and news invariants on modular source
-        run: node --test tests/architecture/legacy-editor-runtime-parity.test.mjs
+      - name: Editor translation and news invariants
+        run: node --test tests/architecture/editor-translation-invariants.test.mjs
 
   pages-documents:
     runs-on: ubuntu-latest

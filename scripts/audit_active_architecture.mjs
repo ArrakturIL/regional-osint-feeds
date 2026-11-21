@@ -3,7 +3,7 @@
 import {readFileSync} from 'node:fs';
 import {resolve,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {auditLegacyDependencies} from './audit_legacy_dependencies.mjs';
+import {sourceGraphReport} from './source_graph.mjs';
 import {EDITOR_ENDPOINTS,MONITOR_ENDPOINTS,LOCAL_ENDPOINTS} from '../backend/pages/src/routes.js';
 
 const own=(path)=>path.match(/^backend\/(pages|editor|monitor)\/src\/.+\.(?:js|mjs)$/)?.[1]||null;
@@ -37,10 +37,10 @@ const workflowFor={
 };
 export function auditActiveArchitecture(root){
  root=resolve(root);
- const legacy=auditLegacyDependencies(root);
- const entrypoints=legacy.production.entrypoints;
- const candidates=legacy.graph.files.filter(f=>own(f)!==null);
- const activeEdges=legacy.graph.edges.filter(e=>own(e.from)!==null);
+ const graph=sourceGraphReport(root);
+ const entrypoints=graph.production.entrypoints;
+ const candidates=graph.graph.files.filter(f=>own(f)!==null);
+ const activeEdges=graph.graph.edges.filter(e=>own(e.from)!==null);
  const modulesByOwner=Object.fromEntries(['pages','editor','monitor'].map(owner=>[
   owner,candidates.filter(x=>own(x)===owner)
  ]));
@@ -138,17 +138,14 @@ export function auditActiveArchitecture(root){
   graph:{activeModuleCount:candidates.length,
    ownerCounts:Object.fromEntries(Object.entries(modulesByOwner).map(([k,v])=>[k,v.length])),
    activeImportEdges:activeEdges.length,
-   unresolvedImports:legacy.graph.unresolvedRelativeImports.filter(x=>own(x.from)!==null),
+   unresolvedImports:graph.graph.unresolvedRelativeImports.filter(x=>own(x.from)!==null),
    crossWorkerSourceImports:activeEdges.filter(e=>own(e.to)!==null&&own(e.from)!==own(e.to)),
    unreachableModules:components.flatMap(c=>c.unreachableModules),
    components,dynamicImportReview},
   routes:{editor:uniq(EDITOR_ENDPOINTS),monitor:uniq(Object.keys(MONITOR_ENDPOINTS)),pages:uniq(LOCAL_ENDPOINTS)},
   collectors:{sources,workflowGaps,integrityGaps,
    workflowOwnership:Object.entries(workflowFor).sort((a,b)=>a[0].localeCompare(b[0])).map(([source,workflow])=>({source,workflow}))},
-  boundaries:{productionImportsLegacyWorker:legacy.worker.productionReferenced,
-   legacyFrontendJs:legacy.frontend.activeLegacyJS,
-   legacyFrontendCss:legacy.frontend.activeLegacyCSS,
-   historicalWorkerTests:legacy.ci.historicalTestRoots}
+  boundaries:{frontendJs:graph.frontend.js.length,frontendCss:graph.frontend.css.length}
  };
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){

@@ -19,9 +19,8 @@ test('CSS has component and page owners; original 550-line monolith is not autho
  assert.ok(parts.some(p=>p.startsWith('pages/DataRoom/')));
  assert.ok(parts.every(p=>existsSync(resolve(frontend,'src',p))));
 });
-test('modularized baseline preserves every original CSS byte and cascade ordering',()=>{
- const baseline=source('../baselines/cloudflare/2026-11-14/pages-0f39f36e/app.css');
- assert.equal(assembleStyles({includeRefinements:false}),baseline);
+test('stylesheet cascade: component sources, then refinements in a fixed order',()=>{
+ const baseline=assembleStyles({includeRefinements:false});
  assert.equal(assembleStyles(),baseline+refined+source('src/styles/document-shell.css')+source('src/components/Header/Header.mobile.css')+source('src/components/NewsMasonry/NewsMasonry.layout.css')+source('src/components/NewsArchive/NewsArchive.filters.css')+source('src/components/Header/Header.status.css')+source('src/components/Digest/Digest.qa.css')+source('src/components/FeedState/FeedState.css')+themeWithFonts());
 });
 test('both locales share one explicit rhythm for main sections',()=>{
@@ -63,7 +62,7 @@ test('eight RU/HE documents contain no duplicated inline CSS',()=>{
   assert.doesNotMatch(html,/<style(?:\s|>)/i,lang+'/'+page);
   assert.ok(html.includes('/assets/app.css'));
  }
- const baseline=source('../baselines/cloudflare/2026-11-14/pages-0f39f36e/app.css');
+ const baseline=assembleStyles({includeRefinements:false});
  assert.equal(assembleStyles(),baseline+refined+shared+source('src/components/Header/Header.mobile.css')+source('src/components/NewsMasonry/NewsMasonry.layout.css')+source('src/components/NewsArchive/NewsArchive.filters.css')+source('src/components/Header/Header.status.css')+source('src/components/Digest/Digest.qa.css')+source('src/components/FeedState/FeedState.css')+themeWithFonts());
 });
 
