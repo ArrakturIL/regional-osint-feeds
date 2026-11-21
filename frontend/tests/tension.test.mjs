@@ -85,6 +85,13 @@ test('rule signals show the count without a norm; lit families match the region'
     ctx.tensionReasons({ indicator: 'official_notice', value: 2, rule: 1, refs: [{ source: 'fcdo', at: '2026-11-18T10:00:00Z' }] }, ctx.L.ru),
     ['МИД Великобритании обновил рекомендации для поездок, 18.11'],
   );
+  assert.deepEqual(
+    ctx.tensionReasons({ indicator: 'official_notice', value: 4, rule: 1, refs: [
+      { source: 'fcdo', at: '2026-11-18T10:00:00Z', n: 3 },
+      { source: 'state_dept', at: '2026-11-17T10:00:00Z', n: 1 },
+    ] }, ctx.L.ru),
+    ['МИД Великобритании обновил рекомендации для поездок (3 обновл.), последнее 18.11', 'Госдеп США обновил предупреждение для поездок, 17.11'],
+  );
 });
 
 test('the Data page detail renders in RU and HE (22.11: a removed label crashed «Данные»)', () => {

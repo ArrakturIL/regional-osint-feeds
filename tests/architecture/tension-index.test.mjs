@@ -61,7 +61,7 @@ test('official: the first import of a source is history; a later revision is a n
   const v = hourValues(H, data, none);
   assert.equal(v.get('levant:official_notice').value, 1);
   assert.equal(v.get('iran:official_notice').value, 0);
-  assert.deepEqual(v.get('levant:official_notice').refs, [{ source: 'fcdo', at: H - 2 * HOUR }]);
+  assert.deepEqual(v.get('levant:official_notice').refs, [{ source: 'fcdo', at: H - 2 * HOUR, n: 1 }]);
   assert.equal(v.get('iran:official_notice').refs, undefined);
 });
 

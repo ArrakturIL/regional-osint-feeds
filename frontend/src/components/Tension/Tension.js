@@ -39,6 +39,8 @@ export const TENSION_L = {
     usual: 'обычно не больше',
     legend: 'Значок горит — этот тип источников сейчас выше обычного для региона. Тап по региону — подробности.',
     open: 'подробнее',
+    times: n => ' (' + n + ' обновл.)',
+    last: 'последнее ',
     bodies: {
       fcdo: 'МИД Великобритании обновил рекомендации для поездок',
       state_dept: 'Госдеп США обновил предупреждение для поездок',
@@ -87,6 +89,8 @@ export const TENSION_L = {
     usual: 'בדרך כלל לא יותר מ־',
     legend: 'סמל דולק — סוג המקורות הזה גבוה כעת מהרגיל לאזור. הקשה על אזור — פרטים.',
     open: 'פרטים',
+    times: n => ' (' + n + ' עדכונים)',
+    last: 'אחרון ',
     bodies: {
       fcdo: 'משרד החוץ הבריטי עדכן את המלצות הנסיעה',
       state_dept: 'מחלקת המדינה האמריקאית עדכנה את אזהרת הנסיעה',
@@ -119,7 +123,9 @@ const ddmm = iso => {
 };
 export function tensionReasons(d, L) {
   if (d.indicator === 'official_notice' && Array.isArray(d.refs) && d.refs.length)
-    return d.refs.map(r => (L.bodies[r.source] || r.source) + (ddmm(r.at) ? ', ' + ddmm(r.at) : ''));
+    return d.refs.map(
+      r => (L.bodies[r.source] || r.source) + (r.n > 1 ? L.times(r.n) : '') + (ddmm(r.at) ? ', ' + (r.n > 1 ? L.last : '') + ddmm(r.at) : ''),
+    );
   return [tensionReason(d, L)];
 }
 // Six family icons (Material Icons, Apache 2.0), 24×24.
@@ -140,9 +146,9 @@ const famIcon = (f, on, L) =>
   );
 // Abstract scheme, not a map: five tiles roughly where the regions lie.
 const TILE = {
-  levant: [6, 56, 106, 58],
-  iraq: [120, 12, 104, 58],
-  iran: [232, 28, 102, 92],
+  levant: [6, 56, 120, 58],
+  iraq: [131, 12, 100, 58],
+  iran: [237, 28, 98, 92],
   gulf: [178, 128, 128, 58],
   red_sea: [10, 132, 150, 58],
 };
@@ -155,7 +161,19 @@ function Scheme({ regions, L }) {
       const [x, y, w, hh] = TILE[r.id] || [0, 0, 0, 0];
       return h(
         'a',
-        { key: r.id, href: '#ten-' + r.id, className: 'rw-tension-tile rw-tension-l' + r.level },
+        {
+          key: r.id,
+          href: '#ten-' + r.id,
+          className: 'rw-tension-tile rw-tension-l' + r.level,
+          // Scroll here, without a hashchange: the app's scroll restore
+          // listens to hashchange and moved the page on phones (22.11).
+          onClick: e => {
+            const card = document.getElementById('ten-' + r.id);
+            if (!card) return;
+            e.preventDefault();
+            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          },
+        },
         h('rect', { x, y, width: w, height: hh }),
         h('text', { x: UI_HE ? x + w - 10 : x + 10, y: y + 22, className: 'n', textAnchor: 'start' }, L.short[r.id] || r.id),
         h('text', { x: UI_HE ? x + w - 10 : x + 10, y: y + 40, className: 'l', textAnchor: 'start' }, L.level[r.level] || ''),

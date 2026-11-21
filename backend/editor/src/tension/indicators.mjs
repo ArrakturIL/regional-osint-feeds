@@ -259,8 +259,14 @@ export function hourValues(h, data, tierOf) {
   for (const region of REGIONS) {
     const hit = notices.filter(n => textRegions(n.text).includes(region));
     const latest = new Map();
-    for (const n of hit) if (!(latest.get(n.source)?.at >= n.at)) latest.set(n.source, n);
-    const refs = [...latest.values()].sort((a, b) => b.at - a.at).map(n => ({ source: n.source, at: n.at }));
+    const count = new Map();
+    for (const n of hit) {
+      count.set(n.source, (count.get(n.source) || 0) + 1);
+      if (!(latest.get(n.source)?.at >= n.at)) latest.set(n.source, n);
+    }
+    const refs = [...latest.values()]
+      .sort((a, b) => b.at - a.at)
+      .map(n => ({ source: n.source, at: n.at, n: count.get(n.source) }));
     put(region, 'official_notice', hit.length, true, refs);
   }
   return out;
