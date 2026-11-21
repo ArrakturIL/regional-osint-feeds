@@ -177,6 +177,9 @@ function fromWikidata(e) {
   const ruSource = new RegExp(L + '(?:' + e.ru.map(ruSourceForm).join('|') + ')', 'iu'),
     ruTarget = new RegExp([...e.ru, ...ruParts].map(ruForm).join('|'), 'iu'),
     he = new RegExp(e.he.map(heForm).join('|'), 'u'),
+    // Live 21.11: in the source a Hebrew name is a whole word with at most a
+    // one-letter prefix, else «מדווחים» reads as Doha (דוחה).
+    heSource = new RegExp(L + '[בהולמשכ]?(?:' + e.he.map(heForm).join('|') + ')' + R, 'u'),
     // Last word of a multi-word Hebrew name (דונלד טראמפ → טראמפ).
     heParts = e.he.flatMap(f => (/\s/u.test(f) ? [f.split(/\s+/u).pop()] : [])).filter(w => w.length >= 3),
     heTarget = heParts.length ? new RegExp([...e.he, ...heParts].map(heForm).join('|'), 'u') : he;
@@ -185,7 +188,7 @@ function fromWikidata(e) {
     id: e.id,
     code: e.id + '_name_missing',
     wikidata: e.qid,
-    source: { test: t => latin.some(r => r.test(t)) || ruSource.test(t) || he.test(t) },
+    source: { test: t => latin.some(r => r.test(t)) || ruSource.test(t) || heSource.test(t) },
     he: either(heTarget, latin),
     ru: either(ruTarget, latin),
   };

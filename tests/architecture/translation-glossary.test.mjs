@@ -118,3 +118,15 @@ test('Wikidata: «Европа» (the continent) is not the European Union', () 
   assert.equal(wikidataEntityIssue('Переговоры в Европе продолжаются', 'השיחות באירופה נמשכות', 'he'), null);
   assert.equal(wikidataEntityIssue('Евросоюз ввёл санкции', 'הוטלו סנקציות', 'he'), 'eu_name_missing');
 });
+
+// Live 21.11: «מדווחים» («report») matched Doha (דוחה, with the vav-doubling
+// variant), so correct RU translations of two Maariv headlines were redone
+// three times and ended in the manual queue. A Hebrew name in the source is a
+// whole word, with at most a one-letter prefix (ב/ה/ו/ל/מ/ש/כ).
+test('Wikidata names in Hebrew sources match whole words only', () => {
+  const report = 'צה"ל תקף בכיר בחמאס - בעזה מדווחים על חיסול מפקד חטיבת רפיח';
+  assert.equal(wikidataEntityIssue(report, 'ЦАХАЛ атаковал высокопоставленного деятеля ХАМАС — в Газе сообщают о ликвидации командира бригады Рафах', 'ru'), null);
+  assert.equal(wikidataEntityIssue('הכוחות כבר באזור: בארה"ב מדווחים על תקיפה אפשרית', 'Силы уже в регионе: в США сообщают о возможном ударе', 'ru'), null);
+  assert.equal(wikidataEntityIssue('שיחות הפסקת האש בדוחה נתקעו', 'Переговоры о прекращении огня зашли в тупик', 'ru'), 'doha_name_missing');
+  assert.equal(wikidataEntityIssue('שיחות הפסקת האש בדוחה נתקעו', 'Переговоры о прекращении огня в Дохе зашли в тупик', 'ru'), null);
+});

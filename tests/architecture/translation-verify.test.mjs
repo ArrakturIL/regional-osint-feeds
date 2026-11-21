@@ -102,3 +102,14 @@ test('common RU renderings of IRGC and IDF are accepted (live replay 18.11)', ()
   assert.equal(translationIssue('IDF troops arrested two brothers', 'Израильские военные задержали двух братьев', 'ru'), null);
   assert.equal(translationIssue('a bill acceptable to the IDF chief', 'законопроект, приемлемый для начальника Генштаба', 'ru'), null);
 });
+
+// Live 21.11: «$6.7 billion» → «6,7 млрд» was rejected three times (manual queue):
+// the Russian decimal comma split 6,7 into 6 and 7. Space thousands likewise.
+test('RU numbers: decimal comma and space-separated thousands are the same number; a changed number is not', () => {
+  const s = '$6.7 billion flows into Jordan, funding desalination in the desert kingdom';
+  assert.equal(validateCandidate(s, '6,7 млрд долларов поступают в Иорданию на опреснение в пустынном королевстве', 'ru'), true);
+  assert.equal(validateCandidate('Israel to buy 1,200 interceptors', 'Израиль купит 1 200 перехватчиков', 'ru'), true);
+  assert.equal(validateCandidate('Israel to buy 1,200 interceptors', 'Израиль купит 1200 перехватчиков', 'ru'), true);
+  assert.equal(validateCandidate(s, '7,6 млрд долларов поступают в Иорданию на опреснение в пустынном королевстве', 'ru'), false);
+  assert.equal(validateCandidate('Strike kills 6, wounds 7', 'Удар убил 6 человек, ранены 7', 'ru'), true);
+});
