@@ -245,7 +245,12 @@ export function hourValues(h, data, tierOf) {
         .filter(r => r.observed_at > (data.firstSeen?.[s] || 0) + HOUR)
         .map(r => {
           const p = json(r.payload);
-          const text = [p.title, p.area, p.country, s === 'mscio' ? 'gulf of aden red sea persian gulf' : ''].join(' ');
+          const text = [
+            p.title,
+            p.area,
+            p.country,
+            s === 'mscio' ? 'gulf of aden red sea persian gulf' : '',
+          ].join(' ');
           return { text, source: s, at: r.observed_at };
         }),
     );
@@ -286,7 +291,13 @@ export function hourIndex(h, values, history, baselineDays) {
       seen++;
       if (d.rule !== undefined) {
         if (v.value >= d.rule)
-          flagged.push({ indicator: d.id, family: d.family, value: v.value, rule: d.rule, ...(v.refs ? { refs: v.refs } : {}) });
+          flagged.push({
+            indicator: d.id,
+            family: d.family,
+            value: v.value,
+            rule: d.rule,
+            ...(v.refs ? { refs: v.refs } : {}),
+          });
         continue;
       }
       const past = history.get(region + ':' + d.id) || [];
