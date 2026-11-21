@@ -36,6 +36,7 @@
     "components/Navigation/GoLink.js",
     "components/TopNow/TopNow.js",
     "components/Tension/Tension.js",
+    "components/CivilDefense/CivilDefense.js",
     "utils/editorialPending.js",
     "components/StoryTeaser/StoryTeaser.js",
     "pages/Home/Home.js",

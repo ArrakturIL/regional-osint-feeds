@@ -58,7 +58,7 @@
   - `tests/architecture/arch07-integration-acceptance.test.mjs` — модули и рёбра импортов, сейчас 107 и 276; Editor — 54;
   - `editor-cross-component-acceptance`;
   - Monitor: `backend/monitor/build-order.json` и `source-parity` (44);
-  - frontend: `frontend/build-order.json` и `source-parity` (59).
+  - frontend: `frontend/build-order.json` и `source-parity` (60).
 - Сборщик без JSON в git (как ADS-B): вне `GITHUB_JSON_SOURCES`, но в `MIRROR_SOURCES` Monitor и в CHECK `source_key` обеих схем (см. `docs/architecture/collectors.md`).
 - D1 CORE: без `ALTER TABLE … RENAME`, таблицу пересоздавать копированием.
 - Preview Pages делит D1 и Workers с production. Запросы, меняющие состояние, на preview не делать.
