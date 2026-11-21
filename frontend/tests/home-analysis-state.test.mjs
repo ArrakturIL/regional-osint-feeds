@@ -36,6 +36,7 @@ function render(he, cases) {
     useState: v => [v, () => {}],
     Digest: stub,
     Editorial: stub,
+    HomeHero: stub,
     Loading: stub,
     GoLink: stub,
     NewsMasonry: stub,

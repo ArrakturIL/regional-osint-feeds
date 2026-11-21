@@ -16,6 +16,7 @@
     "components/UiIcon/UiIcon.js",
     "components/SectionHead/Head.js",
     "components/PageIntro/Intro.js",
+    "components/HomeHero/HomeHero.js",
     "components/MonitorStatus/ActivityChips.js",
     "components/Summary/Summary.js",
     "components/Editorial/Editorial.js",

@@ -4,7 +4,7 @@ import { Editorial } from '../../components/Editorial/Editorial.js';
 import { Loading } from '../../components/Loading/Loading.js';
 import { GoLink } from '../../components/Navigation/GoLink.js';
 import { NewsMasonry } from '../../components/NewsMasonry/NewsMasonry.js';
-import { Intro } from '../../components/PageIntro/Intro.js';
+import { HomeHero } from '../../components/HomeHero/HomeHero.js';
 import { FeedState } from '../../components/FeedState/FeedState.js';
 import { Head } from '../../components/SectionHead/Head.js';
 import { StoryTeaser } from '../../components/StoryTeaser/StoryTeaser.js';
@@ -109,17 +109,7 @@ export function HomeV2({ visible, overview, news, cases, go, errors, feeds }) {
   return h(
     'div',
     { className: 'rw-page', hidden: !visible, id: 'overview' },
-    h(Intro, {
-      kicker: labels.kicker,
-      title: labels.title,
-      accent: labels.accent,
-      desc: labels.desc,
-      stamp: {
-        label: labels.stamp,
-        main: simpleTime(overview?.analysis?.time),
-        sub: fmtTime(overview?.analysis?.time) + ' · Israel',
-      },
-    }),
+    h(HomeHero, { stories: news?.stories }),
     h(
       'section',
       { className: 'rw-situation' },

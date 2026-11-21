@@ -1,0 +1,169 @@
+/* Home hero, concept E (owner 21.11): headline over an abstract radar with
+   SIG marks for the freshest urgent/important news. Loaded after the theme. */
+.rw-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 440px;
+  display: flex;
+  align-items: center;
+  margin: 0 0 8px;
+  padding: 72px 0 64px;
+  border-bottom: 1px solid var(--rw7-line);
+  color: var(--rw7-text);
+}
+.rw-hero-radar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  z-index: -1;
+  width: 56%;
+  height: 100%;
+  color: var(--rw7-mint);
+  pointer-events: none;
+  /* Coordinates are physical; text anchors must not flip in Hebrew. */
+  direction: ltr;
+}
+html[lang='he'] .rw-hero-radar {
+  right: auto;
+  left: 0;
+}
+.rw-hero-radar text {
+  fill: var(--rw7-text-2);
+  font: 500 13px var(--rw7-mono);
+  letter-spacing: 0.08em;
+}
+.rw-hero-field {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: rwHeroField 14s ease-in-out infinite;
+}
+.rw-hero-flow {
+  stroke-dasharray: 6 14;
+  animation: rwHeroFlow 14s linear infinite;
+}
+.rw-hero-flow-slow {
+  animation-duration: 26s;
+  animation-direction: reverse;
+}
+.rw-hero-sig-urgent {
+  color: var(--rw7-urgent);
+}
+.rw-hero-sig-important {
+  color: var(--rw7-important);
+}
+.rw-hero-pulse {
+  animation: rwHeroPulse 3.2s ease-out infinite;
+}
+.rw-hero-calm {
+  opacity: 0.8;
+}
+.rw-hero-copy {
+  position: relative;
+  max-width: 680px;
+}
+.rw-hero-kicker {
+  margin: 0 0 18px;
+  color: var(--rw7-mint);
+  font: 500 12px var(--rw7-mono);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.rw-hero-title {
+  margin: 0;
+  font-family: var(--rw7-display);
+  font-size: clamp(30px, 4.6vw, 56px);
+  font-weight: 300;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+}
+.rw-hero-title span,
+.rw-hero-title em {
+  display: block;
+}
+.rw-hero-title em {
+  white-space: nowrap;
+  font-style: normal;
+  font-weight: 700;
+  color: var(--rw7-mint);
+}
+.rw-hero-lead {
+  max-width: 560px;
+  margin: 24px 0 0;
+  color: var(--rw7-text-2);
+  font-size: 17px;
+  line-height: 1.65;
+}
+.rw-hero-note {
+  max-width: 560px;
+  margin: 14px 0 0;
+  color: var(--rw7-text-3);
+  font: 400 12px/1.6 var(--rw7-mono);
+}
+html[lang='he'] .rw-hero-kicker {
+  letter-spacing: 0.06em;
+}
+@keyframes rwHeroField {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.03);
+  }
+}
+@keyframes rwHeroFlow {
+  to {
+    stroke-dashoffset: -200;
+  }
+}
+@keyframes rwHeroPulse {
+  0% {
+    r: 4;
+    opacity: 0.9;
+  }
+  100% {
+    r: 28;
+    opacity: 0;
+  }
+}
+/* Phones and tablets: the radar becomes a band above the text. */
+@media (max-width: 900px) {
+  .rw-hero {
+    min-height: 0;
+    padding: 210px 0 36px;
+  }
+  .rw-hero-radar {
+    inset: 0 0 auto 0;
+    width: 100%;
+    height: 210px;
+  }
+  .rw-hero-radar text {
+    font-size: 24px;
+  }
+  .rw-hero-title em {
+    white-space: normal;
+  }
+  .rw-hero-dot,
+  .rw-hero-calm {
+    r: 8;
+  }
+}
+@media (max-width: 760px) {
+  .rw-hero-lead {
+    font-size: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rw-hero-field,
+  .rw-hero-flow,
+  .rw-hero-pulse {
+    animation: none;
+  }
+  .rw-hero-pulse {
+    display: none;
+  }
+}
