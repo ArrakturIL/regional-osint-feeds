@@ -280,3 +280,37 @@ test('E-06: Cyrillic categorical confirmation is rejected but explicit negation 
     );
   }
 });
+
+test('Hebrew posts (22.11): off-topic, paid and repeated posts skip before any AI', async () => {
+  const noAi = {
+    AI: {
+      run: async () => {
+        throw Error('AI should not be called');
+      },
+    },
+  };
+  const he = body => ({ ...report, original_language: 'he', body: body + ' '.repeat(10) + 'א'.repeat(170) });
+  const run = async (item, dupe = false) => {
+    const f = dbFixture();
+    if (dupe) {
+      const prep = f.db.prepare;
+      f.db.prepare = sql => {
+        const st = prep(sql);
+        if (sql.includes('content_hash=?')) st.first = async () => ({ 1: 1 });
+        return st;
+      };
+    }
+    const out = await decide(f.db, noAi, item, now, []);
+    return { out, ai: f.calls.some(x => x.sql.includes('analyst_ai_attempts')) };
+  };
+  const { decide } = make();
+  assert.deepEqual(await run(he('הסנאטור הרפובליקני טד קרוז מזהיר מפני התגברות האנטישמיות בארה"ב')), {
+    out: 'skip',
+    ai: false,
+  });
+  assert.deepEqual(await run(he('°תוכן שיווקי משמרות המהפכה')), { out: 'skip', ai: false });
+  assert.deepEqual(await run(he('משמרות המהפכה תקפו שני בסיסים אמריקאים בבחריין'), true), {
+    out: 'skip',
+    ai: false,
+  });
+});
