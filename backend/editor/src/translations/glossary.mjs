@@ -61,8 +61,9 @@ export const ENTITIES = [
     id: 'raf_fairford',
     code: 'raf_misidentified',
     source: /(?:RAF\s+Fairford|баз[аеуы]\s+RAF\s*Fairford)/iu,
-    he: /(?:\bRAF\b|חיל\s+האוויר\s+המלכותי)/iu,
-    ru: /RAF|Королевск\p{L}*\s+ВВС/iu,
+    // 21.11: «ВВС Великобритании» / «британских ВВС» are correct too (false reject in B6).
+    he: /(?:\bRAF\b|חיל\s+האוויר\s+(?:המלכותי|הבריטי))/iu,
+    ru: /RAF|Королевск\p{L}*\s+ВВС|ВВС\s+Великобритани|Британск\p{L}*\s+(?:ВВС|военно-воздушн)/iu,
   },
   {
     id: 'hezbollah',
