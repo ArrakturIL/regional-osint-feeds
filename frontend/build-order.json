@@ -34,6 +34,7 @@
     "legacy/AviationContext.js",
     "legacy/DataRoom.js",
     "components/Navigation/GoLink.js",
+    "components/TopNow/TopNow.js",
     "components/Digest/Digest.js",
     "utils/editorialPending.js",
     "components/StoryTeaser/StoryTeaser.js",

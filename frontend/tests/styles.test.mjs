@@ -36,7 +36,8 @@ test('stylesheet cascade: component sources, then refinements in a fixed order',
       source('src/components/FeedState/FeedState.css') +
       themeWithFonts() +
       source('src/components/Header/Header.css') +
-      source('src/components/HomeHero/HomeHero.css'),
+      source('src/components/HomeHero/HomeHero.css') +
+      source('src/components/TopNow/TopNow.css'),
   );
 });
 test('both locales share one explicit rhythm for main sections', () => {
@@ -113,7 +114,8 @@ test('eight RU/HE documents contain no duplicated inline CSS', () => {
       source('src/components/FeedState/FeedState.css') +
       themeWithFonts() +
       source('src/components/Header/Header.css') +
-      source('src/components/HomeHero/HomeHero.css'),
+      source('src/components/HomeHero/HomeHero.css') +
+      source('src/components/TopNow/TopNow.css'),
   );
 });
 
@@ -126,7 +128,9 @@ test('concept E header: one row on desktop, ☰ list below 1000px, 44px targets,
   assert.match(header, /min-height: 44px/);
   assert.doesNotMatch(header, /!important/, 'the header layer needs no !important');
   assert.ok(
-    assembleStyles().endsWith(header + source('src/components/HomeHero/HomeHero.css')),
+    assembleStyles().endsWith(
+      header + source('src/components/HomeHero/HomeHero.css') + source('src/components/TopNow/TopNow.css'),
+    ),
     'header comes after every older layer',
   );
   for (const old of ['Header.navigation.css', 'Header.mobile.css', 'Header.status.css'])
