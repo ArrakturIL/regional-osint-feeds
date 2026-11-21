@@ -58,4 +58,12 @@ for (const lang of ['ru', 'he'])
   if (out === html) throw Error('asset version not applied: ops/index.html');
   write('ops/index.html', out);
 }
-console.log('Built standalone static Pages payload: 8 locale routes + /ops + modular frontend assets.');
+// 21.11: a real 404 page. Its presence also switches Pages asset serving out of
+// the SPA fallback, so a missing /assets/… file answers 404 instead of HTML.
+{
+  const html = readFileSync(resolve(root, 'documents', '404.html'), 'utf8'),
+    out = versionDocument(html);
+  if (out === html) throw Error('asset version not applied: 404.html');
+  write('404.html', out);
+}
+console.log('Built standalone static Pages payload: 8 locale routes + /ops + 404 + modular frontend assets.');

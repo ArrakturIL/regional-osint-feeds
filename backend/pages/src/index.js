@@ -33,6 +33,12 @@ async function editor(request, env, upstream) {
   }
   return env.EDITOR.fetch(new Request(target, request));
 }
+async function notFound(request, env) {
+  const page = await env.ASSETS.fetch(new Request(new URL('/404.html', request.url), { method: 'GET' }));
+  const headers = new Headers(page.headers);
+  headers.set('Cache-Control', 'no-store');
+  return new Response(request.method === 'HEAD' ? null : page.body, { status: 404, headers });
+}
 export async function handlePages(request, env, ctx) {
   const url = new URL(request.url),
     path = url.pathname,
@@ -70,7 +76,8 @@ export async function handlePages(request, env, ctx) {
       if (route.upstream === '/api/ops') return await opsFromD1(request, env);
     }
     if (path.startsWith('/api/') || path === '/summary') return jsonError('not_found', 404);
-    return await assets(request, env);
+    // 21.11: an unknown address is a real 404, not the home page with 200.
+    return await notFound(request, env);
   } catch (error) {
     console.error('Pages route failed', route.kind, path, String(error).slice(0, 160));
     return jsonError('upstream_unavailable', 503);

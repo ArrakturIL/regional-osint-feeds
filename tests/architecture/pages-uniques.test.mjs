@@ -58,3 +58,25 @@ test('the Pages entrypoint counts public pages and never /ops', async () => {
   await pages.fetch(req('/ops', '7.7.7.7', FIREFOX), env);
   assert.equal(db.one("SELECT count(*) n FROM site_uniques WHERE period LIKE 'D:%'").n, 1);
 });
+
+test('21.11: an unknown address answers 404 with the 404 page, not the home page with 200', async () => {
+  const asked = [];
+  const env = {
+    ASSETS: {
+      fetch: async r => {
+        asked.push(new URL(r.url).pathname);
+        return new Response('<html>404 page</html>', {
+          status: 200,
+          headers: { 'content-type': 'text/html' },
+        });
+      },
+    },
+  };
+  const res = await pages.fetch(req('/no-such-page', '1.1.1.1', FIREFOX), env);
+  assert.equal(res.status, 404);
+  assert.match(await res.text(), /404 page/);
+  assert.deepEqual(asked, ['/404.html']);
+  const api = await pages.fetch(req('/api/no-such', '1.1.1.1', FIREFOX), env);
+  assert.equal(api.status, 404);
+  assert.match(api.headers.get('content-type') || '', /json/);
+});
