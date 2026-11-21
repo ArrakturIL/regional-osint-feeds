@@ -77,7 +77,8 @@ function login(msg=''){
  app.innerHTML=`<form class="login card" id="f"><div class="brand"><div class="radar"></div><h1>Пульт<small>служебная страница</small></h1></div>
  <label for="u">Логин</label><input id="u" autocomplete="username" required>
  <label for="p">Пароль</label><input id="p" type="password" autocomplete="current-password" required>
- <div class="err" role="alert">${esc(msg)}</div><button class="btn" style="width:100%;margin-top:6px">Войти</button></form>`;
+ <div class="err" role="alert">${esc(msg)}</div><button class="btn" style="width:100%;margin-top:6px">Войти</button>
+ <a class="btn ghost" href="/" style="width:100%;margin-top:8px">← Вернуться на сайт</a></form>`;
  $('#f').onsubmit=e=>{e.preventDefault();sessionStorage.setItem(KEY,btoa(unescape(encodeURIComponent($('#u').value+':'+$('#p').value))));load()};
  $('#u').focus();
 }

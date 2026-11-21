@@ -1,4 +1,5 @@
 export const RW_ICON_PATHS = {
+  gauge: 'M12 14l4-4M3.34 19a10 10 0 1 1 17.32 0',
   pulse: 'M3 12h4l3-7 4 14 3-7h4',
   files: 'M8 4h9l4 4v12H8zM3 8v12h13M17 4v4h4M11 12h7M11 16h7',
   pen: 'M12 20h9M16.8 3.9a2 2 0 0 1 2.8 2.8L9 17.3l-4 1 1-4z',
