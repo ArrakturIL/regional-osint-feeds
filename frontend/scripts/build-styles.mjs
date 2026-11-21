@@ -28,6 +28,7 @@ export function assembleStyles({ includeRefinements = true } = {}) {
     // Concept E components, written clean; they come after the theme layer.
     css += readFileSync(resolve(frontendRoot, 'src/components/Header/Header.css'), 'utf8');
     css += readFileSync(resolve(frontendRoot, 'src/components/HomeHero/HomeHero.css'), 'utf8');
+    css += readFileSync(resolve(frontendRoot, 'src/components/TopNow/TopNow.css'), 'utf8');
   }
   return css;
 }

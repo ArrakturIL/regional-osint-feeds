@@ -37,6 +37,7 @@ function render(he, cases) {
     Digest: stub,
     Editorial: stub,
     HomeHero: stub,
+    TopNow: stub,
     Loading: stub,
     GoLink: stub,
     NewsMasonry: stub,
