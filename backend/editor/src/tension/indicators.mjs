@@ -125,8 +125,8 @@ const OFFICIAL = new Set(['easa', 'marad_official', 'mscio', 'fcdo', 'state_dept
  */
 export function hourValues(h, data, tierOf) {
   const out = new Map();
-  const put = (region, id, value, hasData) =>
-    out.set(region + ':' + id, { value, has_data: hasData ? 1 : 0 });
+  const put = (region, id, value, hasData, refs) =>
+    out.set(region + ':' + id, { value, has_data: hasData ? 1 : 0, ...(refs?.length ? { refs } : {}) });
   const obs = s => data.obs[s] || [];
 
   // Air: military-tagged aircraft (mil_lol), last 6 h.
@@ -245,13 +245,19 @@ export function hourValues(h, data, tierOf) {
         .filter(r => r.observed_at > (data.firstSeen?.[s] || 0) + HOUR)
         .map(r => {
           const p = json(r.payload);
-          return [p.title, p.area, p.country, s === 'mscio' ? 'gulf of aden red sea persian gulf' : ''].join(
-            ' ',
-          );
+          const text = [p.title, p.area, p.country, s === 'mscio' ? 'gulf of aden red sea persian gulf' : ''].join(' ');
+          return { text, source: s, at: r.observed_at };
         }),
     );
-  for (const region of REGIONS)
-    put(region, 'official_notice', notices.filter(t => textRegions(t).includes(region)).length, true);
+  // Owner 22.11: say whose notice it is. refs: the latest notice per source
+  // (code and time only; the UI names the body in RU/HE).
+  for (const region of REGIONS) {
+    const hit = notices.filter(n => textRegions(n.text).includes(region));
+    const latest = new Map();
+    for (const n of hit) if (!(latest.get(n.source)?.at >= n.at)) latest.set(n.source, n);
+    const refs = [...latest.values()].sort((a, b) => b.at - a.at).map(n => ({ source: n.source, at: n.at }));
+    put(region, 'official_notice', hit.length, true, refs);
+  }
   return out;
 }
 
@@ -280,7 +286,7 @@ export function hourIndex(h, values, history, baselineDays) {
       seen++;
       if (d.rule !== undefined) {
         if (v.value >= d.rule)
-          flagged.push({ indicator: d.id, family: d.family, value: v.value, rule: d.rule });
+          flagged.push({ indicator: d.id, family: d.family, value: v.value, rule: d.rule, ...(v.refs ? { refs: v.refs } : {}) });
         continue;
       }
       const past = history.get(region + ':' + d.id) || [];
