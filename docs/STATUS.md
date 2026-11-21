@@ -14,7 +14,8 @@
   - [#208](https://github.com/ArrakturIL/regional-osint-feeds/pull/208) — числа словами в иврите;
   - [#206](https://github.com/ArrakturIL/regional-osint-feeds/pull/206) — цепочки моделей B6;
   - [#204](https://github.com/ArrakturIL/regional-osint-feeds/pull/204) — пульт `/ops` и посетители;
-  - [#210](https://github.com/ArrakturIL/regional-osint-feeds/pull/210) — удалены legacy `worker/`, `baselines/`, `site/`.
+  - уборка репозитория: [#210](https://github.com/ArrakturIL/regional-osint-feeds/pull/210) удалены legacy `worker/`, `baselines/`, `site/`; [#211](https://github.com/ArrakturIL/regional-osint-feeds/pull/211) документы сведены к 7 актуальным; [#212](https://github.com/ArrakturIL/regional-osint-feeds/pull/212) Prettier;
+  - [#213](https://github.com/ArrakturIL/regional-osint-feeds/pull/213) — сборщик `news_translation` при пустой очереди пишет heartbeat (был ложно «красный» в `/ops`).
 
 ## Срез 21.11 (D1 и Cloudflare)
 
