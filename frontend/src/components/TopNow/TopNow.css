@@ -254,15 +254,17 @@ html[lang='he'] .rw-top-meta {
   justify-content: flex-start;
   column-gap: 16px;
 }
-.rw-top-lead .rw-top-time {
-  margin-inline-start: auto;
-}
+/* Time goes on its own line under tier and source, on the lead and the cards
+   alike; pushed to the end it wrapped and ran under the cut corner on phones. */
+.rw-top-lead .rw-top-meta,
 .rw-top-card .rw-top-meta {
   flex-wrap: wrap;
   row-gap: 4px;
 }
+.rw-top-lead .rw-top-time,
 .rw-top-card .rw-top-time {
   flex-basis: 100%;
+  white-space: normal;
 }
 .rw-top-excerpt {
   display: -webkit-box;

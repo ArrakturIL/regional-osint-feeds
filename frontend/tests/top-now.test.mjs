@@ -17,7 +17,7 @@ const ctx = {
   fmtTime: () => '',
 };
 vm.runInNewContext(
-  src + '\nthis.topStories = topStories; this.networkCounts = networkCounts; this.topAge = topAge;',
+  src + '\nthis.topStories = topStories; this.networkCounts = networkCounts; this.topAge = topAge; this.leadExcerpt = leadExcerpt;',
   ctx,
 );
 const ids = list => JSON.stringify(list.map(s => s.id));
@@ -79,4 +79,14 @@ test('top cards say how old the news is, in both languages', () => {
   assert.equal(ctx.topAge(at(42), now, true), 'לפני 42 דק׳');
   assert.equal(ctx.topAge(at(-5), now, false), '');
   assert.equal(ctx.topAge('bad', now, false), '');
+});
+
+test('lead excerpt that only repeats the title is dropped', () => {
+  const title = 'Бахрейн заявляет, что иранская атака попала в промышленное предприятие';
+  assert.equal(ctx.leadExcerpt({ title, excerpt: title }), '');
+  assert.equal(ctx.leadExcerpt({ title, excerpt: title + '.' }), '');
+  assert.equal(ctx.leadExcerpt({ title, excerpt: 'Бахрейн заявляет' }), '');
+  const real = 'Министерство внутренних дел сообщило о пожаре на заводе в Ситре, пострадавших нет.';
+  assert.equal(ctx.leadExcerpt({ title, excerpt: real }), real);
+  assert.equal(ctx.leadExcerpt({ title }), '');
 });
