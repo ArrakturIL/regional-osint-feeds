@@ -6,6 +6,7 @@ import { NewsMasonry } from '../../components/NewsMasonry/NewsMasonry.js';
 import { HomeHero } from '../../components/HomeHero/HomeHero.js';
 import { TopNow } from '../../components/TopNow/TopNow.js';
 import { Tension } from '../../components/Tension/Tension.js';
+import { CivilDefense } from '../../components/CivilDefense/CivilDefense.js';
 import { FeedState } from '../../components/FeedState/FeedState.js';
 import { Head } from '../../components/SectionHead/Head.js';
 import { StoryTeaser } from '../../components/StoryTeaser/StoryTeaser.js';
@@ -79,6 +80,7 @@ export function HomeV2({ visible, overview, news, cases, go, errors, feeds }) {
     h(HomeHero, { stories: news?.stories }),
     h(TopNow, { stories: news?.stories, overview, go }),
     h(Tension, { tension: overview?.tension }),
+    h(CivilDefense, {}),
     h('div', { className: 'rw-editorial-lead' }, h(Editorial, { notes: news?.editorials })),
     h(
       'section',
