@@ -210,7 +210,7 @@ jobs:
         with:
           node-version: '22'
       - name: Verify overview adapter against D1 schema fixtures
-        run: node --test tests/architecture/pages-overview.test.mjs
+        run: node --test tests/architecture/pages-overview.test.mjs tests/architecture/pages-uniques.test.mjs
 
   pages-data:
     runs-on: ubuntu-latest
