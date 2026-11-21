@@ -161,7 +161,7 @@ test('local read-only pages endpoints use D1 and preserve output schemas', async
     ['A'],
   );
   assert.deepEqual(data.aviationSamples, []);
-  assert.equal(seen.sql.length, 8); // + tension_hours (21.11)
+  assert.equal(seen.sql.length, 9); // + tension_hours, advisories (21.11)
 });
 test('private API and methods fail closed; unavailable bindings report 503', async () => {
   const { env, seen } = mockEnv();

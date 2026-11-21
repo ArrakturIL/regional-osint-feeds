@@ -28,6 +28,12 @@ export function publicTension(index) {
       level: r.level,
       families: r.families || [],
       signals: (r.flagged || []).map(f => f.indicator),
+      // «Данные» shows each signal against its norm (numbers only).
+      details: (r.flagged || []).map(f => ({
+        indicator: f.indicator,
+        value: f.value,
+        ...(f.rule !== undefined ? { rule: f.rule } : { p95: f.p95, median: f.median }),
+      })),
       coverage: r.coverage,
     })),
   };

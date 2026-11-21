@@ -2,6 +2,7 @@ import { FeedState } from '../../components/FeedState/FeedState.js';
 import { UI_HE, fmtTime, h, t, useState } from '../../app/runtime.js';
 import { AviationExplainedV2 } from '../../components/Aviation/AviationExplained.js';
 import { Card } from '../../components/Card/Card.js';
+import { TensionDetail } from '../../components/Tension/Tension.js';
 import { External } from '../../components/External/External.js';
 import { Intro } from '../../components/PageIntro/Intro.js';
 import { SatelliteCatalog } from '../../components/SatelliteCatalog/SatelliteCatalog.js';
@@ -21,6 +22,7 @@ export function DataRoomV2({
   satelliteError,
   aviationPending,
   satellitePending,
+  tension,
 }) {
   const [filter, setFilter] = useState('all'),
     [showAll, setShowAll] = useState(false),
@@ -31,19 +33,11 @@ export function DataRoomV2({
         title: 'נתונים',
         accent: 'ומקורות',
         intro:
-          'מקורות ראשוניים, עדכונים רשמיים, מעקב אחר שווקים ומגבלות המידע. מידע גולמי מוסתר כאשר אינו ראוי לפרסום.',
+          'מדידות בלבד: מדד המתיחות לפי אזורים ואותות, ציפיות השוק, תעופה ולוויינים, ומגבלות הניטור. הודעות רשמיות — בעמוד העדכונים.',
         nav: 'חלקי הנתונים',
-        civil: 'ביטחון אזרחי',
+        index: 'מדד המתיחות',
         markets: 'ציפיות השוק',
-        official: 'פרסומים רשמיים',
         diagnostics: 'שיטת העבודה',
-        safety: 'פיקוד העורף וביטחון אזרחי',
-        safetySub: 'הודעות רשמיות לפני כל הערכה',
-        noAlerts: 'אין במערכת חיבור ישיר להתרעות בזמן אמת.',
-        oref: 'פיקוד העורף',
-        history: 'היסטוריית התרעות',
-        officialNotices: 'הודעות רשמיות',
-        idf: 'הודעות צה״ל האחרונות',
         marketsTitle: 'Polymarket: ציפיות המשתתפים',
         marketSub:
           'האחוזים הם מחיר חוזה ה״כן״ ב־Polymarket: כך משתתפי השוק מעריכים את הסיכוי. זו אינה תחזית של המערכת ואינה אישור שהאירוע יתרחש.',
@@ -58,10 +52,6 @@ export function DataRoomV2({
         satellite: 'מידע לווייני',
         meaningful: 'מוצגים רק ממצאים שעברו סינון ואישור לפרסום.',
         emptyTelemetry: 'אין כעת נתונים מתורגמים בעלי משמעות לפרסום.',
-        officialData: 'ים ופרסומים רשמיים',
-        marad: 'MARAD — אזהרות ימיות',
-        centcom: 'CENTCOM / DVIDS',
-        origin: 'כותרות המקור מוצגות כפי שפורסמו.',
         issues: (n, all) => 'מקורות עם תקלה: ' + n + ' מתוך ' + all,
         sourceState: 'מצב מקורות הנתונים',
         sourceUnknown: 'סטטוס לא ידוע',
@@ -81,19 +71,11 @@ export function DataRoomV2({
         kicker: 'ИССЛЕДОВАТЕЛЬСКИЙ УРОВЕНЬ / ОТКРЫТЫЕ ДАННЫЕ',
         title: 'Данные',
         accent: 'и источники',
-        intro: 'Проверка первоисточников, официальные публикации, ожидания рынка и ограничения мониторинга.',
+        intro: 'Только измерения: индекс напряжённости по регионам и сигналам, ожидания рынка, авиация и спутники, ограничения мониторинга. Официальные сообщения — в «Ленте».',
         nav: 'Разделы данных',
-        civil: 'Гражданская безопасность',
+        index: 'Индекс напряжённости',
         markets: 'Ожидания рынка',
-        official: 'Официальные источники',
         diagnostics: 'Методология',
-        safety: 'Служба тыла и гражданская безопасность',
-        safetySub: 'Официальные источники прежде любых оценок',
-        noAlerts: 'Прямое получение действующих тревог не подключено.',
-        oref: 'Служба тыла',
-        history: 'История предупреждений',
-        officialNotices: 'Официальные сообщения',
-        idf: 'Последние публикации ЦАХАЛ',
         marketsTitle: 'Polymarket: ожидания участников рынка',
         marketSub:
           'Проценты — цена контракта «Да» на Polymarket: так участники рынка оценивают шансы. Это не прогноз редакции и не подтверждение события.',
@@ -108,10 +90,6 @@ export function DataRoomV2({
         satellite: 'Спутниковые данные',
         meaningful: 'Показываются только сведения, разрешённые к публикации.',
         emptyTelemetry: 'Нет содержательных записей, подходящих для публикации.',
-        officialData: 'Море и официальные публикации',
-        marad: 'MARAD — морские предупреждения',
-        centcom: 'CENTCOM / DVIDS',
-        origin: 'Заголовки источников приведены в оригинале.',
         issues: (n, all) => 'С перебоями: ' + n + ' из ' + all,
         sourceState: 'Состояние источников данных',
         sourceUnknown: 'Статус неизвестен',
@@ -135,62 +113,6 @@ export function DataRoomV2({
     selected = showAll ? marketCards : marketCards.slice(0, 6);
   const allSources = Array.isArray(data?.sources) ? data.sources : [],
     issues = allSources.filter(x => x.state === 'error' || x.state === 'partial');
-  const official = (name, items) =>
-    h(
-      Card,
-      null,
-      h('h3', null, name),
-      Array.isArray(items) && items.length
-        ? h(
-            'div',
-            { className: 'rw-data-official-list' },
-            ...items.slice(0, 5).map((x, i) => {
-              const language = x.content_language || 'en',
-                idfofficial = /^https:\/\/t\.me\/idfofficial\//.test(String(x.url || '')),
-                pending = idfofficial && language !== (isHe ? 'he' : 'ru');
-              return h(
-                'article',
-                { className: 'rw-official-row', key: x.id || i },
-                h('strong', { lang: language, dir: 'auto' }, x.title || name),
-                // 21.11 (concept E): time and translation state on one mono line
-                // under the title instead of badges inside the title line.
-                (() => {
-                  const parts = [];
-                  if (x.published)
-                    parts.push(h('time', { key: 't', dateTime: x.published }, fmtTime(x.published)));
-                  if (pending)
-                    parts.push(
-                      h(
-                        'span',
-                        { key: 'p', className: 'rw-official-note', role: 'status' },
-                        isHe
-                          ? language === 'en'
-                            ? 'המקור באנגלית · התרגום ממתין'
-                            : 'המקור ברוסית · התרגום ממתין'
-                          : language === 'en'
-                            ? 'Оригинал на английском · перевод ожидается'
-                            : 'Оригинал на иврите · перевод ожидается',
-                      ),
-                    );
-                  else if (idfofficial && x.translation_status === 'available')
-                    parts.push(
-                      h(
-                        'span',
-                        { key: 'm', className: 'rw-official-note' },
-                        isHe
-                          ? 'תרגום מכונה · יש לבדוק מול המקור'
-                          : 'Автоматический перевод · сверяй с оригиналом',
-                      ),
-                    );
-                  return parts.length ? h('p', { className: 'rw-official-meta' }, ...parts) : null;
-                })(),
-                x.description ? h('p', { lang: language, dir: 'auto' }, x.description) : null,
-                x.url ? h(External, { url: x.url }, isHe ? 'למקור ↗' : 'Первоисточник ↗') : null,
-              );
-            }),
-          )
-        : t('p', 'hint', L.emptyTelemetry),
-    );
   const heReady = v => {
     const rows = Array.isArray(v?.items) ? v.items : Array.isArray(v?.signals) ? v.signals : [];
     if (v?.display_policy !== 'show' || v?.has_publishable_content === false) return [];
@@ -276,37 +198,13 @@ export function DataRoomV2({
       'nav',
       { className: 'rw-data-nav', 'aria-label': L.nav },
       ...[
-        ['#civil', L.civil],
+        ['#index', L.index],
         ['#markets', L.markets],
-        ['#official', L.official],
         ['#diagnostics', L.diagnostics],
       ].map(([href, label]) => h('a', { href, key: href }, label)),
     ),
     error ? h(FeedState, { feed }) : null,
-    h(
-      'section',
-      { className: 'section', id: 'civil' },
-      h(Head, { title: L.safety, icon: 'activity', sub: L.safetySub }),
-      // 21.11: one panel with the alert links, the IDF list beside it; the
-      // IDF heading used to appear twice (outer card and inner card).
-      h(
-        'div',
-        { className: 'rw-civil-grid' },
-        h(
-          Card,
-          null,
-          t('span', 'notice', L.noAlerts),
-          h(
-            'div',
-            { className: 'links' },
-            h(External, { url: 'https://www.oref.org.il/' }, L.oref + ' ↗'),
-            h(External, { url: 'https://alerts-history.oref.org.il/' }, L.history + ' ↗'),
-            h(External, { url: 'https://t.me/PikudHaOref_all' }, L.officialNotices + ' ↗'),
-          ),
-        ),
-        official(L.idf, data?.home),
-      ),
-    ),
+    h(TensionDetail, { tension }),
     h(
       'section',
       { className: 'section', id: 'markets' },
@@ -366,17 +264,6 @@ export function DataRoomV2({
     isHe ? localized(L.aviation, aviation) : h(AviationExplainedV2, { data }),
     panelNotice('satellite', L.satellite, satellite, satelliteError, satellitePending),
     isHe ? localized(L.satellite, satellite) : h(SatelliteCatalog, { data }),
-    h(
-      'section',
-      { className: 'section', id: 'official' },
-      h(Head, { title: L.officialData, icon: 'files', sub: L.origin }),
-      h(
-        'div',
-        { className: 'data-grid-2' },
-        official(L.marad, data?.marad),
-        official(L.centcom, data?.centcom),
-      ),
-    ),
     h(
       'section',
       { className: 'section', id: 'diagnostics' },

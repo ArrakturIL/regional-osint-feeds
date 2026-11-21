@@ -127,6 +127,7 @@ test('tension index (21.11): codes and numbers only; a missing table gives null,
     level: 3,
     families: ['air', 'news'],
     signals: ['mil_aircraft'],
+    details: [{ indicator: 'mil_aircraft', value: 9, p95: 4, median: 2 }],
     coverage: { seen: 7, total: 9 },
   });
   assert.equal(v.tension.calibrating, true);

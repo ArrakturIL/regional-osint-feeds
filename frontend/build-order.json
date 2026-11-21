@@ -37,6 +37,7 @@
     "components/TopNow/TopNow.js",
     "components/Tension/Tension.js",
     "components/CivilDefense/CivilDefense.js",
+    "components/Official/OfficialGroup.js",
     "utils/editorialPending.js",
     "components/StoryTeaser/StoryTeaser.js",
     "pages/Home/Home.js",
