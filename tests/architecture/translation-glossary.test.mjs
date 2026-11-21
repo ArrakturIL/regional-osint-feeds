@@ -263,3 +263,16 @@ test('Wikidata names in Hebrew sources match whole words only', () => {
     null,
   );
 });
+
+test('B11 audit 21.11: air-defence systems are not swapped (David’s Sling ≠ Iron Dome)', () => {
+  const sling = 'Israel said to upgrade David’s Sling system to counter wider range of ballistic threats';
+  assert.equal(entityIssue(sling, 'ישראל תשדרג את מערכת כיפת ברזל'), 'davids_sling_name_missing');
+  assert.equal(entityIssue(sling, 'ישראל תשדרג את מערכת קלע דוד'), null);
+  assert.equal(entityIssue(sling, 'Израиль модернизирует систему «Праща Давида»'), null);
+  assert.equal(
+    entityIssue('ישראל משדרגת את קלע דוד', 'Израиль модернизирует «Железный купол»'),
+    'davids_sling_name_missing',
+  );
+  assert.equal(entityIssue('Iron Dome intercepts rockets', '«Железный купол» перехватил ракеты'), null);
+  assert.equal(entityIssue('Iron Dome intercepts rockets', 'קלע דוד יירט רקטות'), 'iron_dome_name_missing');
+});
