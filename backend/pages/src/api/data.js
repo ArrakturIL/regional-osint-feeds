@@ -133,11 +133,16 @@ export function assembleData({
   sceneRows = [],
   statusRows = [],
   nowMs = Date.now(),
+  lang = 'ru',
 } = {}) {
   const official = officialGroups(officialRows);
+  const he = lang === 'he';
+  // 21.11: the Russian market caveat and Russian source labels stay out of ?lang=he.
+  const markets = marketSnapshots(marketRows, nowMs);
+  const sources = assembleSources(statusRows);
   return {
     generatedAt: ISO(nowMs),
-    markets: marketSnapshots(marketRows, nowMs),
+    markets: he ? markets.map(({ caveat, ...m }) => m) : markets,
     home: official.home,
     airbridge: null,
     aviationSamples: [],
@@ -146,10 +151,10 @@ export function assembleData({
     marad: official.marad,
     centcom: official.centcom,
     alt: null,
-    sources: assembleSources(statusRows),
+    sources: he ? sources.map(x => ({ ...x, label: x.label_he })) : sources,
   };
 }
-export async function dataFromD1(env, nowMs = Date.now()) {
+export async function dataFromD1(env, nowMs = Date.now(), lang = 'ru') {
   const db = env.DB;
   if (!db?.batch) throw new Error('Missing CORE DB binding');
   const marketSql =
@@ -170,5 +175,6 @@ export async function dataFromD1(env, nowMs = Date.now()) {
     sceneRows: scenes.results || [],
     statusRows: status.results || [],
     nowMs,
+    lang,
   });
 }

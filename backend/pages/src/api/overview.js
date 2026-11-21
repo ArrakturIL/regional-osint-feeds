@@ -40,6 +40,7 @@ export function assembleOverview({
   eventRows = [],
   statusRows = [],
   nowMs = Date.now(),
+  lang = 'ru',
 } = {}) {
   const outcome = text(latestRun?.outcome);
   const base = analysisSchema[outcome] || {
@@ -63,16 +64,19 @@ export function assembleOverview({
     };
   });
   const sources = assembleSources(statusRows);
+  // 21.11: the HE page reads only the analysis time and state; the Russian
+  // badge/title/description and the Russian event list stay out of ?lang=he.
+  const he = lang === 'he';
   return {
     generatedAt: ISO(nowMs),
-    analysis,
-    events,
-    sources,
+    analysis: he ? { time: analysis.time, state: analysis.state } : analysis,
+    events: he ? [] : events,
+    sources: he ? sources.map(x => ({ ...x, label: x.label_he })) : sources,
     available: sources.filter(x => x.state === 'ok' || x.state === 'partial').length,
     total: sources.length,
   };
 }
-export async function overviewFromD1(env, nowMs = Date.now()) {
+export async function overviewFromD1(env, nowMs = Date.now(), lang = 'ru') {
   const db = env.DB;
   if (!db?.batch) throw new Error('Missing CORE DB binding');
   const [latest, events, status] = await db.batch([
@@ -88,6 +92,7 @@ export async function overviewFromD1(env, nowMs = Date.now()) {
     latestRun: latest.results?.[0] || null,
     eventRows: events.results || [],
     statusRows: status.results || [],
+    lang,
     nowMs,
   });
 }
