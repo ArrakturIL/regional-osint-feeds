@@ -215,3 +215,29 @@ test('RU numbers: decimal comma and space-separated thousands are the same numbe
   );
   assert.equal(validateCandidate('Strike kills 6, wounds 7', 'Удар убил 6 человек, ранены 7', 'ru'), true);
 });
+
+test('false rejects from B6 (21.11): «the top 3» → «тройка», RAF Fairford → «ВВС Великобритании»', async () => {
+  const { validateCandidate } = await import('../../backend/editor/src/translations/news-mirror.mjs');
+  const { entityIssue } = await import('../../backend/editor/src/translations/glossary.mjs');
+  const src = "Herzog tells the crowd that Israel should be among 'the top 3' globally";
+  assert.equal(
+    validateCandidate(src, 'Герцог заявил, что Израиль должен войти в мировую тройку', 'ru'),
+    true,
+  );
+  assert.equal(
+    validateCandidate(src, 'Герцог заявил, что Израиль должен войти в мировую пятёрку', 'ru'),
+    false,
+  );
+  assert.equal(
+    validateCandidate('Israel strikes Gaza', 'Израиль нанёс 2 удара по Газе', 'ru'),
+    false,
+    'no added numbers',
+  );
+  const raf = 'B-52 bombers land at RAF Fairford';
+  assert.equal(
+    entityIssue(raf, 'Бомбардировщики B-52 приземлились на базе ВВС Великобритании Фэрфорд'),
+    null,
+  );
+  assert.equal(entityIssue(raf, 'B-52 сели на авиабазе британских ВВС Фэрфорд'), null);
+  assert.equal(entityIssue(raf, 'B-52 сели на американской базе Фэрфорд'), 'raf_misidentified');
+});

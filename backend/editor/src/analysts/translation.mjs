@@ -1,5 +1,6 @@
 import { chat } from '../ai/router.mjs';
 import { translationIssue } from '../translations/verify.mjs';
+import { ruNumberWord } from '../translations/numbers-ru.mjs';
 /** Editorial translation for the private processing pipeline; no public full-text republishing. */
 export const TRANSLATION_MODEL = '@cf/zai-org/glm-4.7-flash';
 export const SUPPORTED_ORIGINAL_LANGUAGES = new Set(['ru', 'he', 'en']);
@@ -39,22 +40,6 @@ function numericTokens(text, isTranslation = false) {
     return value.replace(/,/g, '.').replace(/^0+(?=\d)/, '');
   });
 }
-// 21.11: small numbers may be spelled out in Russian («3 המנהיגים» → «трёх
-// лидеров»); a different number still fails because only the same value's word
-// is accepted.
-const RU_NUMBER_WORDS = {
-  1: 'одн|один',
-  2: 'два|две|двух|двум',
-  3: 'три|тр[её]х|тр[её]м',
-  4: 'четыр',
-  5: 'пят[ьиюе]',
-  6: 'шест[ьиюе]',
-  7: 'сем[ьиюе]',
-  8: 'восем|восьм',
-  9: 'девят[ьиюе]',
-  10: 'десят[ьиюе]',
-};
-const ruWord = n => RU_NUMBER_WORDS[n] && new RegExp('(?<![а-яё])(?:' + RU_NUMBER_WORDS[n] + ')', 'iu');
 // Enumeration markers («: 1. … 2. …») may be dropped or rendered as a list.
 const listMarkers = text =>
   (String(text).match(/(?:^|[\s:;])\d{1,2}\.(?=\s)/gu) || []).map(m => m.replace(/\D/g, ''));
@@ -74,7 +59,7 @@ export function numbersPreserved(original, translated) {
       markers.splice(marker, 1);
       continue;
     }
-    const word = ruWord(Number(value));
+    const word = ruNumberWord(Number(value));
     if (word && word.test(translated)) continue;
     return false;
   }

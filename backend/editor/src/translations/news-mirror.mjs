@@ -1,6 +1,7 @@
 // Free, self-hosted translation pipeline: Helsinki-NLP models on GitHub Actions.
 // Public queue -> GitHub translation mirror -> validated D1 cache.
 // No paid inference or credentials; no AI output is treated as a verified fact.
+import { ruNumberWord } from './numbers-ru.mjs';
 import { eventRows, hebrew, language } from '../news/events.mjs';
 import { fingerprint } from '../localization/localization.mjs';
 import { sourceText, newsHebrewSource } from '../localization/shared.mjs';
@@ -31,6 +32,17 @@ function numbers(s) {
   const matches = text.match(/\d+(?:[,.]\d{3})*(?:\.\d+)?/g) || [];
   return matches.map(x => x.replace(/(?<=\d)[,.](?=\d{3}(?:\D|$))/g, '')).sort();
 }
+// Every source number must reappear and no number may be added; in RU a small
+// number may be spelled out (21.11: «the top 3» → «в тройке» was rejected).
+function sameNumbers(source, translated, lang) {
+  const left = numbers(translated);
+  for (const n of numbers(source)) {
+    const i = left.indexOf(n);
+    if (i >= 0) left.splice(i, 1);
+    else if (!(lang === 'ru' && ruNumberWord(Number(n))?.test(translated))) return false;
+  }
+  return left.length === 0;
+}
 export function validateCandidate(input, result, lang) {
   const source = trunc(input, 700),
     translated = trunc(result, 900);
@@ -38,7 +50,7 @@ export function validateCandidate(input, result, lang) {
     return false;
   if (lang === 'he' && !hasHe(translated)) return false;
   if (lang === 'ru' && !hasRu(translated)) return false;
-  if (JSON.stringify(numbers(source)) !== JSON.stringify(numbers(translated))) return false;
+  if (!sameNumbers(source, translated, lang)) return false;
   if (/&(?:quot|amp|lt|gt);|(?:\.\s*){6,}/iu.test(translated)) return false;
   // B3: entity and meaning rules come from the shared verify, per target language.
   if (translationIssue(source, translated, lang)) return false;
