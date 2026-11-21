@@ -260,7 +260,11 @@ test('21.11: advisories for «Лента» — UKMTO title and date from the fil
   const r = (source, payload) => ({ source, observed_at: at, payload: JSON.stringify(payload) });
   const d = assembleData({
     advisoryRows: [
+      r('mscio', {
+        url: 'https://mscio.eu/media/documents/20250611-UKMTO_MSCIO_JMIC_ADVISORY_INCIDENT__021-251.pdf',
+      }),
       r('mscio', { url: 'https://mscio.eu/media/documents/20260909-UKMTO_ADVISORY_129-26_fAkhO2Z.pdf' }),
+      r('mscio', { url: 'https://mscio.eu/media/documents/20250704-UKMTO_ADVISORY_INCIDENT_025-25.pdf' }),
       r('fcdo', {
         url: 'https://www.gov.uk/foreign-travel-advice/iran',
         title: 'Iran travel advice',
@@ -271,7 +275,15 @@ test('21.11: advisories for «Лента» — UKMTO title and date from the fil
     ],
   });
   assert.deepEqual(d.advisories.ukmto[0].title, 'UKMTO Advisory 129/26');
-  assert.equal(d.advisories.ukmto[0].published, '2026-09-09T00:00:00.000Z');
+  assert.equal(
+    d.advisories.ukmto[0].published,
+    '2026-09-09T00:00:00.000Z',
+    'newest file first, whatever the batch order',
+  );
+  assert.deepEqual(
+    d.advisories.ukmto.map(x => x.title),
+    ['UKMTO Advisory 129/26', 'UKMTO Advisory 025/25', 'UKMTO Advisory 021/25'],
+  );
   assert.equal(d.advisories.fcdo[0].description, 'Updated information about regional tensions');
   assert.equal(d.advisories.easa.length, 0, 'only https links');
 });

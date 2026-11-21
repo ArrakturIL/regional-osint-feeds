@@ -116,11 +116,16 @@ function officialGroups(rows) {
 // site never showed — UKMTO, EASA, FCDO, US State Department — for «Лента».
 // Titles stay in the original language.
 const ADVISORY_SOURCES = Object.freeze(['mscio', 'easa', 'fcdo', 'state_dept']);
+// UKMTO files are named «YYYYMMDD-UKMTO_[…_]ADVISORY[_INCIDENT]_NNN-YY….pdf»;
+// all of them were first seen in one batch, so the file name gives the order.
 function ukmtoTitle(url) {
-  const m = String(url).match(/(\d{4})(\d{2})(\d{2})-UKMTO_ADVISORY_(\d+)[-_](\d+)/i);
-  return m
-    ? { title: 'UKMTO Advisory ' + m[4] + '/' + m[5], published: m[1] + '-' + m[2] + '-' + m[3] }
-    : { title: 'UKMTO Advisory', published: null };
+  const name = decodeURIComponent(String(url).split('/').pop() || '');
+  const date = name.match(/^(\d{4})(\d{2})(\d{2})-/);
+  const num = name.match(/ADVISORY(?:_[A-Z]+)*_+(\d{1,3})[-_](\d{2})/i);
+  return {
+    title: 'UKMTO Advisory' + (num ? ' ' + num[1] + '/' + num[2] : ''),
+    published: date ? date[1] + '-' + date[2] + '-' + date[3] : null,
+  };
 }
 function advisoryGroups(rows) {
   const out = { ukmto: [], easa: [], fcdo: [], state: [] };
@@ -131,7 +136,7 @@ function advisoryGroups(rows) {
     if (!k) continue;
     const raw = json(row.payload),
       url = validHttps(raw.url);
-    if (!url || seen.has(url) || out[k].length >= 3) continue;
+    if (!url || seen.has(url)) continue;
     seen.add(url);
     const ukmto = row.source === 'mscio' ? ukmtoTitle(url) : null;
     const published = ukmto ? ukmto.published : str(raw.updated_at) || str(raw.published) || null;
@@ -212,7 +217,7 @@ export async function dataFromD1(env, nowMs = Date.now(), lang = 'ru') {
   const advisorySql =
     "WITH latest AS (SELECT source,observed_at,payload,ROW_NUMBER() OVER(PARTITION BY source,json_extract(payload,'$.url') ORDER BY observed_at DESC) ver FROM observations WHERE source IN ('" +
     ADVISORY_SOURCES.join("','") +
-    "')), unique_rows AS (SELECT source,observed_at,payload,ROW_NUMBER() OVER(PARTITION BY source ORDER BY observed_at DESC) n FROM latest WHERE ver=1) SELECT source,observed_at,payload FROM unique_rows WHERE n<=6 ORDER BY source,observed_at DESC";
+    "')), unique_rows AS (SELECT source,observed_at,payload,ROW_NUMBER() OVER(PARTITION BY source ORDER BY observed_at DESC) n FROM latest WHERE ver=1) SELECT source,observed_at,payload FROM unique_rows WHERE n<=40 ORDER BY source,observed_at DESC";
   const [markets, official, scenes, status, advisories] = await db.batch([
     db.prepare(marketSql),
     db.prepare(officialSql),
