@@ -59,9 +59,9 @@ test('official: the first import of a source is history; a later revision is a n
     firstSeen: { fcdo: first },
   };
   const v = hourValues(H, data, none);
-  assert.equal(v.get('levant:official_notice').value, 1);
+  assert.equal(v.get('israel:official_notice').value, 1);
   assert.equal(v.get('iran:official_notice').value, 0);
-  assert.deepEqual(v.get('levant:official_notice').refs, [{ source: 'fcdo', at: H - 2 * HOUR, n: 1 }]);
+  assert.deepEqual(v.get('israel:official_notice').refs, [{ source: 'fcdo', at: H - 2 * HOUR, n: 1 }]);
   assert.equal(v.get('iran:official_notice').refs, undefined);
 });
 
@@ -88,7 +88,7 @@ test('cyber, ground and news: outage start, FIRMS by day, urgent headlines by re
   assert.equal(v.get('iran:firms_hotspots').value, 40);
   assert.equal(v.get('iraq:firms_hotspots').value, 7);
   assert.equal(v.get('iran:urgent_news').value, 2);
-  assert.equal(v.get('levant:urgent_news').value, 0);
+  assert.equal(v.get('israel:urgent_news').value, 0);
 });
 
 test('index: a norm indicator flags only above its p95, its floor and 1.5× median, after 3 days', () => {
@@ -198,7 +198,13 @@ test('tick: back-fills from the first observation a few hours per tick, then sta
   assert.equal(ticks, 5);
   assert.equal((await tensionTick(env, H + 10 * 60000)).state, 'up_to_date');
   const last = JSON.parse(core.one('SELECT index_json j FROM tension_hours WHERE hour_ms=?', H).j);
-  assert.equal(last.regions.length, 5);
+  assert.equal(last.regions.length, 6);
   assert.equal(last.regions.find(r => r.id === 'red_sea').coverage.seen >= 1, true);
   assert.equal(last.calibrating, true);
+});
+
+test('regions (22.11): Israel apart from Lebanon and Syria', () => {
+  assert.deepEqual(textRegions('IDF strikes in Gaza'), ['israel']);
+  assert.deepEqual(textRegions('Hezbollah fires from Lebanon'), ['lebanon_syria']);
+  assert.deepEqual(textRegions('Israel strikes Hezbollah in Beirut'), ['israel', 'lebanon_syria']);
 });

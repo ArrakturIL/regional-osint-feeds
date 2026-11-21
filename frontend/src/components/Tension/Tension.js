@@ -6,15 +6,17 @@ export const TENSION_L = {
   ru: {
     head: 'Необычная активность',
     demo: 'демо',
-    lead: 'Сравниваем открытые источники с их обычным уровнем за две недели. Не прогноз и не подтверждение событий.',
+    lead: 'Каждый час считаем по шести регионам: военные самолёты в небе, суда с выключенным маячком, пожары на спутниковых снимках, отключения интернета, срочные новости и официальные предупреждения. Если чего-то сейчас заметно больше, чем обычно бывало за последние две недели, это отклонение. Чем больше разных отклонений сразу, тем выше уровень. Это не прогноз и не подтверждение событий.',
     regions: {
       iran: 'Иран',
+      israel: 'Израиль',
+      lebanon_syria: 'Ливан, Сирия, Иордания',
       levant: 'Израиль, Ливан, Сирия',
       gulf: 'Залив и Ормуз',
       red_sea: 'Красное море и Йемен',
       iraq: 'Ирак',
     },
-    short: { iran: 'Иран', levant: 'Израиль и Ливан', gulf: 'Залив', red_sea: 'Красное море', iraq: 'Ирак' },
+    short: { israel: 'Израиль', lebanon_syria: 'Ливан и Сирия', iran: 'Иран', gulf: 'Залив', red_sea: 'Красное море', iraq: 'Ирак' },
     level: ['', 'как обычно', 'одно отклонение', 'два независимых отклонения', 'три независимых отклонения', 'много отклонений'],
     families: {
       air: 'военная авиация',
@@ -37,7 +39,7 @@ export const TENSION_L = {
       official_notice: 'официальные предупреждения',
     },
     usual: 'обычно не больше',
-    legend: 'Значок горит — этот тип источников сейчас выше обычного для региона. Тап по региону — подробности.',
+    legend: 'Значок горит — этого сейчас больше обычного:',
     open: 'подробнее',
     times: n => ' (' + n + ' обновл.)',
     last: 'последнее ',
@@ -56,15 +58,17 @@ export const TENSION_L = {
   he: {
     head: 'פעילות חריגה',
     demo: 'הדגמה',
-    lead: 'משווים מקורות פתוחים לרמה הרגילה שלהם בשבועיים האחרונים. זו אינה תחזית ואינה אישור לאירועים.',
+    lead: 'בכל שעה אנחנו סופרים בשישה אזורים: מטוסים צבאיים באוויר, כלי שיט שכיבו את המשדר, שריפות בתמונות לוויין, ניתוקי אינטרנט, חדשות דחופות ואזהרות רשמיות. אם משהו גבוה כעת בבירור מהרגיל בשבועיים האחרונים — זו חריגה. ככל שיש יותר חריגות שונות בבת אחת, הרמה גבוהה יותר. זו אינה תחזית ואינה אישור לאירועים.',
     regions: {
       iran: 'איראן',
+      israel: 'ישראל',
+      lebanon_syria: 'לבנון, סוריה, ירדן',
       levant: 'ישראל, לבנון, סוריה',
       gulf: 'המפרץ והורמוז',
       red_sea: 'ים סוף ותימן',
       iraq: 'עיראק',
     },
-    short: { iran: 'איראן', levant: 'ישראל ולבנון', gulf: 'המפרץ', red_sea: 'ים סוף', iraq: 'עיראק' },
+    short: { israel: 'ישראל', lebanon_syria: 'לבנון וסוריה', iran: 'איראן', gulf: 'המפרץ', red_sea: 'ים סוף', iraq: 'עיראק' },
     level: ['', 'כרגיל', 'חריגה אחת', 'שתי חריגות בלתי תלויות', 'שלוש חריגות בלתי תלויות', 'חריגות רבות'],
     families: {
       air: 'תעופה צבאית',
@@ -87,7 +91,7 @@ export const TENSION_L = {
       official_notice: 'אזהרות רשמיות',
     },
     usual: 'בדרך כלל לא יותר מ־',
-    legend: 'סמל דולק — סוג המקורות הזה גבוה כעת מהרגיל לאזור. הקשה על אזור — פרטים.',
+    legend: 'סמל דולק — יש מזה כעת יותר מהרגיל:',
     open: 'פרטים',
     times: n => ' (' + n + ' עדכונים)',
     last: 'אחרון ',
@@ -144,44 +148,6 @@ const famIcon = (f, on, L) =>
     h('svg', { viewBox: '0 0 24 24', 'aria-hidden': 'true' }, h('path', { d: ICON[f] })),
     h('span', null, L.families[f]),
   );
-// Abstract scheme, not a map: five tiles roughly where the regions lie.
-const TILE = {
-  levant: [6, 56, 120, 58],
-  iraq: [131, 12, 100, 58],
-  iran: [237, 28, 98, 92],
-  gulf: [178, 128, 128, 58],
-  red_sea: [10, 132, 150, 58],
-};
-function Scheme({ regions, L }) {
-  return h(
-    'svg',
-    { className: 'rw-tension-map', viewBox: '0 0 340 200', role: 'img', 'aria-label': regions.map(r => (L.regions[r.id] || r.id) + ': ' + (L.level[r.level] || '')).join('; ') },
-    h('path', { className: 'rw-tension-grid', d: 'M0 40H340M0 100H340M0 160H340M60 0V200M160 0V200M260 0V200' }),
-    ...regions.map(r => {
-      const [x, y, w, hh] = TILE[r.id] || [0, 0, 0, 0];
-      return h(
-        'a',
-        {
-          key: r.id,
-          href: '#ten-' + r.id,
-          className: 'rw-tension-tile rw-tension-l' + r.level,
-          // Scroll here, without a hashchange: the app's scroll restore
-          // listens to hashchange and moved the page on phones (22.11).
-          onClick: e => {
-            const card = document.getElementById('ten-' + r.id);
-            if (!card) return;
-            e.preventDefault();
-            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          },
-        },
-        h('rect', { x, y, width: w, height: hh }),
-        h('text', { x: UI_HE ? x + w - 10 : x + 10, y: y + 22, className: 'n', textAnchor: 'start' }, L.short[r.id] || r.id),
-        h('text', { x: UI_HE ? x + w - 10 : x + 10, y: y + 40, className: 'l', textAnchor: 'start' }, L.level[r.level] || ''),
-      );
-    }),
-  );
-}
-
 // Owner 22.11: «абсолютно не понятно что он показывает». The home block now
 // names what is measured (deviation from the usual, not danger), lights the
 // families that left their norm, and says why in a phrase with the number.
@@ -213,7 +179,6 @@ export function Tension({ tension }) {
       h(
         'div',
         { className: 'rw-tension-visual' },
-        h(Scheme, { regions: tension.regions, L }),
         h(
           'div',
           { className: 'rw-tension-legend' },

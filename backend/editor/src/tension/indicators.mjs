@@ -13,13 +13,15 @@
 
 export const HOUR = 3600e3;
 export const DAY = 24 * HOUR;
-export const REGIONS = Object.freeze(['iran', 'levant', 'gulf', 'red_sea', 'iraq']);
+// Owner 22.11: Israel is its own region; Lebanon, Syria and Jordan another.
+export const REGIONS = Object.freeze(['israel', 'lebanon_syria', 'iran', 'gulf', 'red_sea', 'iraq']);
 export const FAMILIES = Object.freeze(['air', 'sea', 'ground', 'cyber', 'news', 'official']);
 
 // mil_lol area names → regions (syria_iraq counts for both).
 const MIL_AREAS = {
   iran: ['western_iran', 'central_eastern_iran'],
-  levant: ['israel_jordan', 'eastern_mediterranean', 'syria_iraq'],
+  israel: ['israel_jordan', 'eastern_mediterranean'],
+  lebanon_syria: ['eastern_mediterranean', 'syria_iraq'],
   gulf: ['persian_gulf', 'gulf_of_oman'],
   red_sea: ['red_sea'],
   iraq: ['syria_iraq'],
@@ -47,7 +49,8 @@ const TANKER_AIRLIFT = new Set([
 // GDELT / FIPS country codes → regions.
 const GDELT_COUNTRIES = {
   iran: ['IR'],
-  levant: ['IS', 'LE', 'SY', 'JO', 'GZ', 'WE'],
+  israel: ['IS', 'GZ', 'WE'],
+  lebanon_syria: ['LE', 'SY', 'JO'],
   gulf: ['SA', 'AE', 'QA', 'BA', 'KU', 'MU'],
   red_sea: ['YM'],
   iraq: ['IZ'],
@@ -55,8 +58,10 @@ const GDELT_COUNTRIES = {
 // Free text (official titles, news headlines; EN/RU/HE) → regions.
 const TEXT_REGIONS = {
   iran: /iran|tehran|irgc|иран|тегеран|ксир|איראן|טהרן/iu,
-  levant:
-    /israel|lebanon|syria|gaza|jordan|hezbollah|hamas|west bank|израил|ливан|сири|газ[аеуы]|иордан|хезболл|хамас|ישראל|לבנון|סוריה|עזה|ירדן|חיזבאללה|חמאס/iu,
+  israel:
+    /israel|gaza|hamas|west bank|jerusalem|tel aviv|израил|газ[аеуы]|хамас|иерусалим|тель-авив|ישראל|עזה|חמאס|ירושלים|תל אביב/iu,
+  lebanon_syria:
+    /lebanon|syria|jordan|hezbollah|beirut|damascus|ливан|сири|иордан|хезболл|бейрут|дамаск|לבנון|סוריה|ירדן|חיזבאללה|ביירות|דמשק/iu,
   gulf: /persian gulf|arabian gulf|hormuz|gulf of oman|bahrain|qatar|emirates|\buae\b|kuwait|\boman\b|saudi|персидск|ормуз|оманск|бахрейн|катар|эмират|оаэ|кувейт|саудов|המפרץ|הורמוז|בחריין|קטאר|האמירויות|כווית|סעודי/iu,
   red_sea:
     /red sea|bab el|bab-el|gulf of aden|yemen|houthi|красн\p{L}*\s+мор|йемен|хусит|ים סוף|תימן|חות['׳]?י/iu,
@@ -94,7 +99,7 @@ export const INDICATORS = Object.freeze([
   { id: 'sar_dark_vessels', family: 'sea', regions: ['gulf'], rule: 1.3 },
   { id: 'firms_hotspots', family: 'ground', regions: ['iran', 'gulf', 'iraq'], floor: 15 },
   { id: 'copernicus_activation', family: 'ground', regions: REGIONS, rule: 1 },
-  { id: 'internet_outage', family: 'cyber', regions: ['iran', 'levant', 'gulf', 'red_sea', 'iraq'], rule: 1 },
+  { id: 'internet_outage', family: 'cyber', regions: REGIONS, rule: 1 },
   { id: 'urgent_news', family: 'news', regions: REGIONS, floor: 3 },
   { id: 'gdelt_conflict', family: 'news', regions: REGIONS, floor: 10 },
   { id: 'official_notice', family: 'official', regions: REGIONS, rule: 1 },
@@ -102,11 +107,11 @@ export const INDICATORS = Object.freeze([
 
 const IODA_COUNTRY = {
   IR: 'iran',
-  IL: 'levant',
-  LB: 'levant',
-  SY: 'levant',
-  JO: 'levant',
-  PS: 'levant',
+  IL: 'israel',
+  PS: 'israel',
+  LB: 'lebanon_syria',
+  SY: 'lebanon_syria',
+  JO: 'lebanon_syria',
   IQ: 'iraq',
   YE: 'red_sea',
   SA: 'gulf',
