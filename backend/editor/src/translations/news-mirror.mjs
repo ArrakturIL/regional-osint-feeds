@@ -21,8 +21,14 @@ const trunc = (s, len = 400) =>
     .slice(0, len);
 const hasRu = s => /[\u0400-\u04ff]/u.test(String(s || ''));
 const hasHe = s => /[\u0590-\u05ff]/u.test(String(s || ''));
+// Live 21.11: Russian writes 6,7 млрд and 1 200; both are the same number as
+// 6.7 / 1,200 in the source. A comma before 1–2 digits is a decimal comma; a
+// space (incl. NBSP / narrow NBSP) between digit groups is a thousands gap.
 function numbers(s) {
-  const matches = String(s || '').match(/\d+(?:[,.]\d{3})*(?:\.\d+)?/g) || [];
+  const text = String(s || '')
+    .replace(/(?<=\d)[ \u00a0\u202f](?=\d{3}(?!\d))/g, '')
+    .replace(/(?<=\d),(?=\d{1,2}(?!\d))/g, '.');
+  const matches = text.match(/\d+(?:[,.]\d{3})*(?:\.\d+)?/g) || [];
   return matches.map(x => x.replace(/(?<=\d)[,.](?=\d{3}(?:\D|$))/g, '')).sort();
 }
 export function validateCandidate(input, result, lang) {
