@@ -4,6 +4,7 @@
 // Credentials: OPS_USER / OPS_PASSWORD Pages secrets; until the owner sets
 // them the owner asked for admin / admin.
 import { readTension } from './tension.js';
+import { uniqueStats } from './uniques.js';
 
 const LIMITS = Object.freeze({
   aiPool: 8500, // ai_daily_neurons: shared Workers AI pool (B1), Free plan 10 000
@@ -157,6 +158,7 @@ export async function opsFromD1(request, env, now = Date.now()) {
     one(core, "SELECT detail,collected_ms FROM usage_daily WHERE day='latest' AND metric='site_visitors'"),
   ]);
   const tension = await readTension(core, now);
+  const uniques = await uniqueStats(core, now);
   const analyst = analystRun ? { ...analystRun, stats: parse(analystRun.stats_json) } : null;
   if (analyst) delete analyst.stats_json;
   return json({
@@ -190,5 +192,6 @@ export async function opsFromD1(request, env, now = Date.now()) {
     b6: eval6 ? { ...parse(eval6.value), updated_ms: eval6.updated_ms } : null,
     visitors: visitorsRow ? { ...parse(visitorsRow.detail), collected_ms: visitorsRow.collected_ms } : null,
     tension,
+    uniques,
   });
 }

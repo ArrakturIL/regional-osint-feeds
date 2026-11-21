@@ -1,3 +1,4 @@
+import { countUnique } from './api/uniques.js';
 import { ownership } from './routes.js';
 import { overviewFromD1 } from './api/overview.js';
 import { dataFromD1 } from './api/data.js';
@@ -32,13 +33,21 @@ async function editor(request, env, upstream) {
   }
   return env.EDITOR.fetch(new Request(target, request));
 }
-export async function handlePages(request, env) {
+export async function handlePages(request, env, ctx) {
   const url = new URL(request.url),
     path = url.pathname,
     route = ownership(path);
   if (request.method !== 'GET' && request.method !== 'HEAD') return jsonError('method_not_allowed', 405);
   try {
-    if (route.kind === 'html') return await assets(request, env, route.asset);
+    if (route.kind === 'html') {
+      // Unique visitors (21.11): one salted fingerprint per person per day; never /ops.
+      if (path !== '/ops' && !path.startsWith('/ops/')) {
+        const counted = countUnique(request, env).catch(() => false);
+        if (ctx?.waitUntil) ctx.waitUntil(counted);
+        else await counted;
+      }
+      return await assets(request, env, route.asset);
+    }
     if (route.kind === 'asset') {
       const response = await assets(request, env);
       // F-06: build-site stamps ?v=<12-hex content hash>; such a URL never changes

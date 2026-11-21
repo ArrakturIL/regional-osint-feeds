@@ -128,8 +128,14 @@ const stateTag=s=>{const k=/^(ok)$/.test(s)?'ok':/partial|stale|degraded/.test(s
 const COLLECTOR_MIN={analysts:15,centcom:15,gdelt:60,translation:120,shadow:120,copernicus:360,marad:360,unosat:720,satellite:1440};
 const expectMin=k=>{for(const[n,m]of Object.entries(COLLECTOR_MIN))if(String(k).includes(n))return m;return 120};
 
-function visitorsCard(v){
- if(!v)return `<div class="card"><h2>Посетители</h2><p class="explain">Счётчик Cloudflare Web Analytics включён 20.11. Цифры появятся в течение получаса после первых визитов (сборщик раз в 30 минут).</p></div>`;
+function uniquesLine(u){
+ if(!u||!(u.days||[]).length)return '';
+ const D=ms=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jerusalem'}).format(ms), td=D(Date.now()), y=D(Date.now()-864e5);
+ const get=d=>(u.days.find(x=>x.day===d)||{}).uniques||0, wk=(u.weeks||[]).slice(-1)[0], prev=(u.weeks||[]).slice(-2)[0];
+ return `<p class="meta" style="margin:6px 0 0"><b>${fmt(get(td))}</b> уникальных сегодня · <b>${fmt(get(y))}</b> вчера · <b>${fmt(wk?.uniques||0)}</b> за эту неделю${prev&&prev!==wk?' · '+fmt(prev.uniques)+' за прошлую':''}</p>${help('Уникальные посетители','Один человек — один отпечаток за день и один за неделю (неделя с воскресенья): хэш от IP и браузера с солью, своей для каждого дня и каждой недели. IP не хранится; когда день или неделя кончаются, соль удаляется, и отпечатки больше не связать. Боты и /ops не считаются.')}`;
+}
+function visitorsCard(v,u){
+ if(!v)return `<div class="card"><h2>Посетители</h2><p class="explain">Счётчик Cloudflare Web Analytics включён 20.11. Цифры появятся в течение получаса после первых визитов (сборщик раз в 30 минут).</p>${uniquesLine(u)}</div>`;
  const days=(v.days||[]).slice(-7), max=Math.max(1,...days.map(x=>x.pageviews)), today=new Date().toISOString().slice(0,10);
  const wd=d=>['вс','пн','вт','ср','чт','пт','сб'][new Date(d+'T12:00:00Z').getUTCDay()];
  const top=(v.top_paths||[]).map(x=>`${esc(x.path)} — ${fmt(x.pageviews)}`).join('<br>')||'—';
@@ -137,7 +143,7 @@ function visitorsCard(v){
  return `<div class="card"><h2>Посетители</h2>
  <div class="vis"><div><b>${fmt(v.visits_24h)}</b><span>визитов за 24 ч</span></div><div><b>${fmt(v.pageviews_24h)}</b><span>просмотров за 24 ч</span></div><div><b>${fmt(v.visits_7d)}</b><span>визитов за 7 дней</span></div><div><b>${fmt(v.pageviews_7d)}</b><span>просмотров за 7 дней</span></div></div>
  ${days.length?`<div class="spark" aria-label="Просмотры по дням">${days.map(x=>`<i class="${x.date===today?'today':''}" style="height:${Math.round(x.pageviews/max*100)}%" title="${x.date}: ${x.pageviews} просмотров, ${x.visits} визитов"></i>`).join('')}</div><div class="spark-l">${days.map(x=>`<span>${wd(x.date)}</span>`).join('')}</div>`:''}
- <p class="meta" style="margin:6px 0 0">обновлено ${ago(v.collected_ms)} · без cookies</p>
+ <p class="meta" style="margin:6px 0 0">обновлено ${ago(v.collected_ms)} · без cookies</p>${uniquesLine(u)}
  ${help('Страницы и страны за неделю','Визит — заход на сайт извне (по ссылке или вручную набранным адресом); просмотр — каждая открытая страница. Свои заходы на /ops не считаются: счётчика там нет.',`<b>Страницы:</b><br>${top}`,`<b>Страны:</b><br>${geo}`)}</div>`;
 }
 function render(d,error){
@@ -191,7 +197,7 @@ function render(d,error){
 
  app.innerHTML=`<header><div class="brand"><div class="radar" aria-hidden="true"></div><h1>Пульт<small>${new Date(d.generated_at_ms).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})} · обновляется раз в минуту</small></h1></div>
  <div class="acts"><button class="btn ghost" id="rf">Обновить</button><a class="btn ghost" href="/">Сайт</a><button class="btn ghost" id="lo">Выйти</button></div></header>
- <div class="top">${visitorsCard(d.visitors)}<div class="card"><h2 style="margin-bottom:8px">Состояние</h2><div class="summary">${pills}</div>
+ <div class="top">${visitorsCard(d.visitors,d.uniques)}<div class="card"><h2 style="margin-bottom:8px">Состояние</h2><div class="summary">${pills}</div>
  ${help('Как читать пульт','Зелёная точка — норма, жёлтая — присмотреться, красная — стоит или сломано. Нажми на плитку — откроется нужный раздел. Разделы ниже свёрнуты в одну строку; открытые запоминаются до закрытия вкладки.','Все цифры — из базы сайта (D1) в момент открытия. Страница ничего не меняет, только читает.')}</div></div>
  ${alertBox}
 
