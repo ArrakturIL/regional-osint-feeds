@@ -286,4 +286,13 @@ test('21.11: advisories for «Лента» — UKMTO title and date from the fil
   );
   assert.equal(d.advisories.fcdo[0].description, 'Updated information about regional tensions');
   assert.equal(d.advisories.easa.length, 0, 'only https links');
+  const many = assembleData({
+    advisoryRows: Array.from({ length: 7 }, (_, i) =>
+      r('mscio', {
+        url: 'https://mscio.eu/media/documents/2026090' + (i + 1) + '-UKMTO_ADVISORY_10' + i + '-26.pdf',
+      }),
+    ),
+  });
+  assert.equal(many.advisories.ukmto.length, 3, 'three per body');
+  assert.equal(many.advisories.ukmto[0].title, 'UKMTO Advisory 106/26');
 });
