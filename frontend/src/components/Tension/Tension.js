@@ -14,6 +14,7 @@ export const TENSION_L = {
       red_sea: 'Красное море и Йемен',
       iraq: 'Ирак',
     },
+    short: { iran: 'Иран', levant: 'Израиль и Ливан', gulf: 'Залив', red_sea: 'Красное море', iraq: 'Ирак' },
     level: ['', 'как обычно', 'одно отклонение', 'два независимых отклонения', 'три независимых отклонения', 'много отклонений'],
     families: {
       air: 'военная авиация',
@@ -35,7 +36,16 @@ export const TENSION_L = {
       gdelt_conflict: 'события GDELT',
       official_notice: 'официальные предупреждения',
     },
-    usual: 'обычно до',
+    usual: 'обычно не больше',
+    legend: 'Значок горит — этот тип источников сейчас выше обычного для региона. Тап по региону — подробности.',
+    open: 'подробнее',
+    bodies: {
+      fcdo: 'МИД Великобритании обновил рекомендации для поездок',
+      state_dept: 'Госдеп США обновил предупреждение для поездок',
+      easa: 'EASA выпустило бюллетень о зонах конфликта',
+      marad_official: 'Морская администрация США выпустила предупреждение для судов',
+      mscio: 'MSCIO выпустил предупреждение для судоходства',
+    },
     quiet: 'Как обычно',
     missing: n => 'нет данных по ' + n + ' сигн.',
     note: d => 'Демо, идёт калибровка: норма пока по ' + d + ' дн. из 30.',
@@ -52,6 +62,7 @@ export const TENSION_L = {
       red_sea: 'ים סוף ותימן',
       iraq: 'עיראק',
     },
+    short: { iran: 'איראן', levant: 'ישראל ולבנון', gulf: 'המפרץ', red_sea: 'ים סוף', iraq: 'עיראק' },
     level: ['', 'כרגיל', 'חריגה אחת', 'שתי חריגות בלתי תלויות', 'שלוש חריגות בלתי תלויות', 'חריגות רבות'],
     families: {
       air: 'תעופה צבאית',
@@ -73,7 +84,16 @@ export const TENSION_L = {
       gdelt_conflict: 'אירועי GDELT',
       official_notice: 'אזהרות רשמיות',
     },
-    usual: 'בדרך כלל עד',
+    usual: 'בדרך כלל לא יותר מ־',
+    legend: 'סמל דולק — סוג המקורות הזה גבוה כעת מהרגיל לאזור. הקשה על אזור — פרטים.',
+    open: 'פרטים',
+    bodies: {
+      fcdo: 'משרד החוץ הבריטי עדכן את המלצות הנסיעה',
+      state_dept: 'מחלקת המדינה האמריקאית עדכנה את אזהרת הנסיעה',
+      easa: 'EASA פרסמה עלון על אזורי עימות',
+      marad_official: 'מינהל הספנות האמריקאי פרסם אזהרה לכלי שיט',
+      mscio: 'MSCIO פרסם אזהרה לספנות',
+    },
     quiet: 'כרגיל',
     missing: n => 'אין נתונים ל־' + n + ' אותות',
     note: d => 'הדגמה, הכיול נמשך: הבסיס מחושב כרגע על ' + d + ' ימים מתוך 30.',
@@ -88,7 +108,60 @@ export function tensionReason(d, L) {
   const name = L.signals[d.indicator] || d.indicator;
   const v = roundNum(d.value);
   if (d.rule !== undefined || typeof d.p95 !== 'number') return v ? name + ': ' + v : name;
-  return name + ': ' + v + ', ' + L.usual + ' ' + roundNum(d.p95);
+  return name + ': ' + v + ' · ' + L.usual + ' ' + roundNum(d.p95);
+}
+// Owner 22.11: say whose notice it is — one line per body, with the date.
+const ddmm = iso => {
+  const x = new Date(iso);
+  return Number.isFinite(x.getTime())
+    ? new Intl.DateTimeFormat('ru-RU', { timeZone: 'Asia/Jerusalem', day: '2-digit', month: '2-digit' }).format(x)
+    : '';
+};
+export function tensionReasons(d, L) {
+  if (d.indicator === 'official_notice' && Array.isArray(d.refs) && d.refs.length)
+    return d.refs.map(r => (L.bodies[r.source] || r.source) + (ddmm(r.at) ? ', ' + ddmm(r.at) : ''));
+  return [tensionReason(d, L)];
+}
+// Six family icons (Material Icons, Apache 2.0), 24×24.
+const ICON = {
+  air: 'M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z',
+  sea: 'M20 21c-1.39 0-2.78-.47-4-1.32-2.44 1.71-5.56 1.71-8 0C6.78 20.53 5.39 21 4 21H2v2h2c1.38 0 2.74-.35 4-.99a8.75 8.75 0 0 0 8 0c1.26.65 2.62.99 4 .99h2v-2h-2zM3.95 19H4c1.6 0 3.02-.88 4-2 .98 1.12 2.4 2 4 2s3.02-.88 4-2c.98 1.12 2.4 2 4 2h.05l1.89-6.68c.08-.26.06-.54-.06-.78s-.34-.42-.6-.5L20 10.62V6c0-1.1-.9-2-2-2h-3V1H9v3H6c-1.1 0-2 .9-2 2v4.62l-1.29.42a1 1 0 0 0-.66 1.28L3.95 19zM6 6h12v3.97L12 8 6 9.97V6z',
+  ground: 'M12 12.9l-2.13 2.09c-.56.56-.87 1.29-.87 2.07C9 18.68 10.35 20 12 20s3-1.32 3-2.94c0-.78-.31-1.52-.87-2.07L12 12.9zM16 6l-.44.55C14.38 8.02 12 7.19 12 5.3V2S4 6 4 13c0 2.92 1.56 5.47 3.89 6.86-.56-.79-.89-1.76-.89-2.8 0-1.32.52-2.56 1.47-3.5L12 10.1l3.53 3.47c.95.93 1.47 2.17 1.47 3.5 0 1.02-.31 1.96-.85 2.75 1.89-1.15 3.29-3.06 3.71-5.3.66-3.55-1.08-6.9-3.86-8.52z',
+  cyber: 'M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3a4.24 4.24 0 0 0-6 0zm-4-4l2 2a7.07 7.07 0 0 1 10 0l2-2C15.14 9.14 8.87 9.14 5 13z',
+  news: 'M4 4h13v15a1 1 0 0 0 1 1H5a1 1 0 0 1-1-1V4zm15 4h2v11a1 1 0 0 1-2 0V8zM7 7v4h7V7H7zm0 6v1.5h7V13H7zm0 3v1.5h7V16H7z',
+  official: 'M12 2 4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z',
+};
+const famIcon = (f, on, L) =>
+  h(
+    'li',
+    { key: f, className: on ? 'on' : '', title: L.families[f] },
+    h('svg', { viewBox: '0 0 24 24', 'aria-hidden': 'true' }, h('path', { d: ICON[f] })),
+    h('span', null, L.families[f]),
+  );
+// Abstract scheme, not a map: five tiles roughly where the regions lie.
+const TILE = {
+  levant: [6, 56, 106, 58],
+  iraq: [120, 12, 104, 58],
+  iran: [232, 28, 102, 92],
+  gulf: [178, 128, 128, 58],
+  red_sea: [10, 132, 150, 58],
+};
+function Scheme({ regions, L }) {
+  return h(
+    'svg',
+    { className: 'rw-tension-map', viewBox: '0 0 340 200', role: 'img', 'aria-label': regions.map(r => (L.regions[r.id] || r.id) + ': ' + (L.level[r.level] || '')).join('; ') },
+    h('path', { className: 'rw-tension-grid', d: 'M0 40H340M0 100H340M0 160H340M60 0V200M160 0V200M260 0V200' }),
+    ...regions.map(r => {
+      const [x, y, w, hh] = TILE[r.id] || [0, 0, 0, 0];
+      return h(
+        'a',
+        { key: r.id, href: '#ten-' + r.id, className: 'rw-tension-tile rw-tension-l' + r.level },
+        h('rect', { x, y, width: w, height: hh }),
+        h('text', { x: UI_HE ? x + w - 10 : x + 10, y: y + 22, className: 'n', textAnchor: 'start' }, L.short[r.id] || r.id),
+        h('text', { x: UI_HE ? x + w - 10 : x + 10, y: y + 40, className: 'l', textAnchor: 'start' }, L.level[r.level] || ''),
+      );
+    }),
+  );
 }
 
 // Owner 22.11: «абсолютно не понятно что он показывает». The home block now
@@ -116,41 +189,55 @@ export function Tension({ tension }) {
       h('p', { className: 'rw-tension-asof' }, L.asOf, h('bdi', { dir: UI_HE ? 'rtl' : 'ltr' }, fmtTime(tension.as_of))),
     ),
     t('p', 'rw-tension-lead', L.lead),
-    active.length
-      ? h(
-          'ol',
-          { className: 'rw-tension-list' },
-          ...active.map(r => {
-            const lit = new Set(r.families || []);
-            const details = Array.isArray(r.details) && r.details.length ? r.details : (r.signals || []).map(indicator => ({ indicator }));
-            return h(
-              'li',
-              { key: r.id, className: 'rw-tension-region rw-tension-l' + r.level },
-              h(
-                'div',
-                { className: 'rw-tension-rhead' },
-                h('h3', null, L.regions[r.id] || r.id),
-                h('p', { className: 'rw-tension-level', title: r.level + '/5' }, L.level[r.level] || ''),
-              ),
-              h(
-                'ul',
-                { className: 'rw-tension-fam', 'aria-label': (L.level[r.level] || '') + ': ' + [...lit].map(f => L.families[f] || f).join(', ') },
-                ...TENSION_FAMILIES.map(f => h('li', { key: f, className: lit.has(f) ? 'on' : '' }, L.families[f])),
-              ),
-              h('ul', { className: 'rw-tension-why' }, ...details.map(d => h('li', { key: d.indicator }, tensionReason(d, L)))),
-              missing(r) ? t('p', 'rw-tension-seen', L.missing(missing(r))) : null,
-            );
-          }),
-        )
-      : null,
-    quiet.length
-      ? h(
-          'p',
-          { className: 'rw-tension-quiet' },
-          h('b', null, L.quiet + ': '),
-          quiet.map(r => L.regions[r.id] || r.id).join(', '),
-        )
-      : null,
+    h(
+      'div',
+      { className: 'rw-tension-body' },
+      h(
+        'div',
+        { className: 'rw-tension-visual' },
+        h(Scheme, { regions: tension.regions, L }),
+        h(
+          'div',
+          { className: 'rw-tension-legend' },
+          t('p', null, L.legend),
+          h('ul', { className: 'rw-tension-fam' }, ...TENSION_FAMILIES.map(f => famIcon(f, true, L))),
+        ),
+      ),
+      h(
+        'div',
+        { className: 'rw-tension-cards' },
+        active.length
+          ? h(
+              'ol',
+              { className: 'rw-tension-list' },
+              ...active.map(r => {
+                const lit = new Set(r.families || []);
+                const details = Array.isArray(r.details) && r.details.length ? r.details : (r.signals || []).map(indicator => ({ indicator }));
+                return h(
+                  'li',
+                  { key: r.id, id: 'ten-' + r.id, className: 'rw-tension-region rw-tension-l' + r.level },
+                  h(
+                    'div',
+                    { className: 'rw-tension-rhead' },
+                    h('h3', null, L.regions[r.id] || r.id),
+                    h('p', { className: 'rw-tension-level', title: r.level + '/5' }, L.level[r.level] || ''),
+                  ),
+                  h(
+                    'ul',
+                    { className: 'rw-tension-fam rw-tension-fam-sm', 'aria-label': [...lit].map(f => L.families[f] || f).join(', ') },
+                    ...TENSION_FAMILIES.map(f => famIcon(f, lit.has(f), L)),
+                  ),
+                  h('ul', { className: 'rw-tension-why' }, ...details.flatMap(d => tensionReasons(d, L)).map((x, i) => h('li', { key: i }, x))),
+                  missing(r) ? t('p', 'rw-tension-seen', L.missing(missing(r))) : null,
+                );
+              }),
+            )
+          : null,
+        quiet.length
+          ? h('p', { className: 'rw-tension-quiet' }, h('b', null, L.quiet + ': '), quiet.map(r => L.regions[r.id] || r.id).join(', '))
+          : null,
+      ),
+    ),
     tension.calibrating ? t('p', 'rw-tension-note', L.note(tension.baseline_days)) : null,
   );
 }
@@ -218,7 +305,7 @@ export function TensionDetail({ tension }) {
                         h(
                           'tr',
                           { key: d.indicator },
-                          t('td', null, L.signals[d.indicator] || d.indicator),
+                          t('td', null, d.indicator === 'official_notice' && d.refs?.length ? tensionReasons(d, L).join('; ') : L.signals[d.indicator] || d.indicator),
                           t('td', 'num', num(d.value)),
                           t(
                             'td',
