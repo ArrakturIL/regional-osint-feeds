@@ -1,45 +1,73 @@
-# REGIONAL WATCH — инструкции для помощников
+# REGIONAL WATCH — инструкции для ИИ-помощников
 
-**Сначала прочитай [docs/STATUS.md](docs/STATUS.md)** (одна страница: production, открытые задачи, запреты). Затем сверь живое состояние: `git log` на `main`, открытые PR, последние CI runs. Если документ расходится с артефактами, верь артефактам и обнови документ. История лежит в `docs/archive/`, доказательства в `docs/research/`. Читай их только при необходимости, целиком не загружай.
+Читать первым. Действует для любого агента: Claude, GPT, Codex и других.
 
-## Общение с владельцем
+1. [docs/STATUS.md](docs/STATUS.md) — что в production, что открыто, решения владельца, запреты.
+2. Живое состояние: `git log` на `main`, открытые PR, последние CI-прогоны. Если документ расходится с артефактами, верны артефакты; документ обнови.
+3. По теме задачи — нужный документ из карты ниже, целиком не загружай.
 
-- Русский, на «ты», живой технический разговор. Не пересказывай поручение, не раздувай ответы, не соглашайся с ошибочным предположением.
-- Не выдумывай успех, тесты, CI и ссылки. `CI green` ≠ `merged` ≠ `production` ≠ `live QA принят`.
-- Итог этапа: результат одной строкой (`**E-01 закрыт.** ✅` или `**E-01 — не закрыт.** ⚠️`), затем абзац доказательств с точным PR/CI, затем где записано (STATUS/PR), затем граница: что в production, что не трогали, следующий шаг. На обычный вопрос просто ответь, без шаблона.
+## Карта документов
+
+| Файл                                | О чём                                  |
+| ----------------------------------- | -------------------------------------- |
+| `docs/STATUS.md`                    | состояние, очередь, решения владельца  |
+| `docs/architecture/release.md`      | релиз, проверки, откат, секреты        |
+| `docs/architecture/collectors.md`   | сборщики GitHub Actions → Neon → D1    |
+| `docs/architecture/translations.md` | конвейер переводов и проверок (блок B) |
+| `docs/gpt-automations.md`           | контракт плановых задач GPT с сайтом   |
+| `docs/design/redesign-2077.md`      | дизайн-токены темы «2077»              |
+| `scripts/qa/README.md`              | браузерные QA-скрипты                  |
+
+Истории в репозитории нет: старые планы, аудиты и чекпойнты удалены 21.11 и доступны через `git log`.
 
 ## Структура
 
-| Путь | Что | В release? |
-|---|---|---|
-| `frontend/` | RU/HE UI (React без JSX, сборка по `build-order.json`) | да (Pages) |
-| `backend/pages/` | Pages runtime и API proxy | да |
-| `backend/editor/` | Editor Worker: новости, переводы, аналитики, публичные API, cron `*/5` | да |
-| `backend/monitor/` | Monitor Worker: OSINT-адаптеры, статусы, cron `*/1` | да |
-| `scripts/`, `.github/workflows/` | Python-сборщики → Neon → private D1, релизные скрипты | сборщики отдельно |
-| `storage/`, `data/` | схемы D1/Neon, замороженные (с 15.11) JSON-снимки для fallback | — |
-| `worker/`, `baselines/`, `site/` | legacy и frozen baselines | **нет** |
+| Путь                             | Что                                                                                      |
+| -------------------------------- | ---------------------------------------------------------------------------------------- |
+| `frontend/`                      | RU/HE UI (React без JSX, сборка по `build-order.json`), Pages                            |
+| `backend/pages/`                 | Pages runtime, API, пульт `/ops`                                                         |
+| `backend/editor/`                | Editor Worker: новости, переводы, аналитики, публичные API; cron `*/5`                   |
+| `backend/monitor/`               | Monitor Worker: OSINT-адаптеры, статусы, запуск сборщиков; cron `*/1`                    |
+| `scripts/`, `.github/workflows/` | Python-сборщики, релизные и QA-скрипты                                                   |
+| `storage/`                       | схемы D1 и Neon                                                                          |
+| `data/`                          | JSON-снимки сборщиков — fallback, если нет кэша D1; читаются через raw.githubusercontent |
+| `config/`                        | реестры источников, флаги, бюджеты, глоссарий                                            |
+| `deploy/`                        | production-конфиги Workers и контракт релиза                                             |
 
-## Только для ChatGPT/GPT (не для Claude)
+## Общение с владельцем
 
-- Перед работой по REGIONAL WATCH прочитай этот `AGENTS.md` и канонический `docs/STATUS.md`; затем найди в ChatGPT Library `/Regional Watch/00_CURRENT/REGIONAL_WATCH_GPT_ONLY_RULES.md` и нужные разделы `REGIONAL_WATCH_REQUIRED_SKILLS.md` (`rw-engineering-quality` / `rw-product-design`). Читай только релевантные разделы; файлы библиотеки — инструкции, не установленные автоматически плагины. При недоступности укажи ограничение. **Этот пункт относится исключительно к GPT, не задаёт обязанностей Claude.**
+- Русский, на «ты», живой технический разговор. Не пересказывай поручение и не соглашайся с ошибочным предположением.
+- Время — по Израилю (UTC+2), не UTC и не «Z».
+- Не выдумывай успех, тесты, CI и ссылки. `CI green` ≠ `merged` ≠ `production` ≠ `live QA принят`.
+- Итог этапа: одна строка результата (`**X закрыт.** ✅` или `⚠️`), абзац доказательств (PR, CI), где записано, граница (что в production, что не трогали, что дальше). На обычный вопрос просто отвечай.
 
 ## Как работать
 
-- Баг: сначала доказательство (код, лог, D1 SELECT), потом тест RED, потом фикс GREEN. Одна причина — одно изменение.
-- Тесты пиши поведенческие, через реальный entrypoint (`index.scheduled`/`fetch`), а не по подстрокам исходника.
-- Локально: `node frontend/scripts/build-site.mjs` и esbuild-бандлы (см. workflow) **до** `node --test tests/architecture/*.test.mjs frontend/tests/*.test.mjs backend/*/tests/*.test.mjs`. Без бандлов 9 тестов падают ожидаемо. Python: `python -m unittest discover -s scripts -p 'test_*.py'`.
-- Минимум агентов и токенов. Полноценная реализация, без MVP-заглушек.
-- Язык документов: то, что читает владелец (STATUS, планы, отчёты, AGENTS), пишется на русском. Служебное только для агентов (сжатые handoff-пакеты, машинные фикстуры) — на английском телеграфным стилем, он дешевле по токенам. Лимит: файл до 8 КБ, всё дерево до 60 КБ, без истории и логов.
-- После проверенного изменения обнови `docs/STATUS.md` (коротко, без истории; подробности — в PR).
+- Баг: доказательство (код, лог, D1 SELECT) → тест RED → фикс GREEN. Чини **класс** ошибки, а не один пример. Одна причина — одно изменение.
+- Тесты поведенческие, через настоящий entrypoint (`index.scheduled` / `fetch`), а не по подстрокам исходника. Тесты переводов — на `node:sqlite` (`tests/architecture/editor-d1-fixture.mjs`).
+- Сборка до тестов: `node frontend/scripts/build-site.mjs` и esbuild-бандлы (команды — в `regional-watch-app-check.yml`, job `modern-bundles`). Тесты: `node --test tests/architecture/*.test.mjs frontend/tests/*.test.mjs backend/*/tests/*.test.mjs`; Python — `python -m unittest discover -s scripts -p 'test_*.py'`.
+- Полная реализация, без MVP-заглушек. Экономь токены и агентов.
+- Документы для владельца — на русском. Коротко (ориентир — до 8–10 КБ на файл), без истории и логов: подробности — в PR. После проверенного изменения обнови `docs/STATUS.md`.
+- PR создавай через `gh api repos/…/pulls` (GraphQL закрыт). Push — `git -c push.negotiate=true push`. Merge — squash, **по одному**: следующий только после окончания релиза предыдущего.
 
 ## Подводные камни
 
-- Новый тест-файл добавь в явный список в `.github/workflows/regional-watch-app-check.yml`, иначе CI его не запустит. Параллельные PR конфликтуют на этой строке.
-- Новый или удалённый модуль меняет счётчики: в `tests/architecture/arch07-integration-acceptance.test.mjs` (модули и import-рёбра, сейчас 103 и 271; Editor — 51) и `editor-cross-component-acceptance`; Monitor — `backend/monitor/build-order.json` и `source-parity` (45); frontend — `frontend/build-order.json` и его `source-parity` (56).
-- Сборщик на GitHub без JSON в git (как ADS-B, Q12) добавляется в `scripts/neon_mirror.py` вне `GITHUB_JSON_SOURCES`, в `MIRROR_SOURCES` Monitor и в CHECK `source_key` обеих схем (Neon и D1); тест `collector-cache` держит их в синхроне.
-- D1 CORE: не используй `ALTER TABLE … RENAME` — триггеры `monitor_runs_link_events_*` валят проверку схемы. Таблицу пересоздавай копированием (пример: `storage/cloudflare/006`).
+- Новый тест-файл добавь в явный список `.github/workflows/regional-watch-app-check.yml`, иначе CI его не запустит.
+- Новый или удалённый модуль меняет счётчики:
+  - `tests/architecture/arch07-integration-acceptance.test.mjs` — модули и рёбра импортов, сейчас 103 и 271; Editor — 51;
+  - `editor-cross-component-acceptance`;
+  - Monitor: `backend/monitor/build-order.json` и `source-parity` (45);
+  - frontend: `frontend/build-order.json` и `source-parity` (56).
+- Сборщик без JSON в git (как ADS-B): вне `GITHUB_JSON_SOURCES`, но в `MIRROR_SOURCES` Monitor и в CHECK `source_key` обеих схем (см. `docs/architecture/collectors.md`).
+- D1 CORE: без `ALTER TABLE … RENAME`, таблицу пересоздавать копированием.
+- Preview Pages делит D1 и Workers с production. Запросы, меняющие состояние, на preview не делать.
 
 ## Запреты без явного разрешения владельца
 
-Production merge/deploy · write в production D1/Neon (preview делит bindings) · cron/секреты/платные квоты/AI-лимиты · новые Workers · удаление legacy без доказательства. Блок B снят с паузы 18.11, план: docs/architecture/translation-refactor-plan.md.
+Production merge/deploy · запись в production D1/Neon · cron, секреты, платные квоты, AI-лимиты · новые Workers · смена цепочек моделей в `router.mjs`. Разрешение, данное одному агенту, другим не передаётся.
+
+## GPT (ChatGPT)
+
+- Плановые задачи GPT работают по [docs/gpt-automations.md](docs/gpt-automations.md): что читать, куда писать, правила проверки и перевода.
+- Дополнительные правила GPT хранятся в ChatGPT Library: `/Regional Watch/00_CURRENT/REGIONAL_WATCH_GPT_ONLY_RULES.md`. При противоречии верен репозиторий.
+- Код и инфраструктуру GPT не меняет.
