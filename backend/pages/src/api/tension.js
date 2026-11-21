@@ -35,9 +35,11 @@ export function publicTension(index) {
         ...(f.rule !== undefined ? { rule: f.rule } : { p95: f.p95, median: f.median }),
         ...(Array.isArray(f.refs)
           ? {
-              refs: f.refs
-                .slice(0, 4)
-                .map(x => ({ source: String(x.source), at: new Date(Number(x.at)).toISOString() })),
+              refs: f.refs.slice(0, 4).map(x => ({
+                source: String(x.source),
+                at: new Date(Number(x.at)).toISOString(),
+                n: Math.max(1, Number(x.n) || 1),
+              })),
             }
           : {}),
       })),
