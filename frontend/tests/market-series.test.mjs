@@ -16,8 +16,20 @@ const live = [
   mk('3', 'US x Iran Effective Ceasefire by December 31?', 0.715, 35067, '2026-12-31T20:00:00Z'),
   mk('4', 'Will Mojtaba Khamenei be head of state in Iran end of 2026?', 0.4, 9000, '2026-12-31T00:00:00Z'),
   mk('5', 'Will Reza Pahlavi be head of state in Iran end of 2026?', 0.1, 8000, '2026-12-31T00:00:00Z'),
-  mk('6', 'Will Marco Rubio attend a US x Iran diplomatic meeting by November 30?', 0.2, 500, '2026-11-30T00:00:00Z'),
-  mk('7', 'Will J.D. Vance attend a US x Iran diplomatic meeting by November 30?', 0.3, 400, '2026-11-30T00:00:00Z'),
+  mk(
+    '6',
+    'Will Marco Rubio attend a US x Iran diplomatic meeting by November 30?',
+    0.2,
+    500,
+    '2026-11-30T00:00:00Z',
+  ),
+  mk(
+    '7',
+    'Will J.D. Vance attend a US x Iran diplomatic meeting by November 30?',
+    0.3,
+    400,
+    '2026-11-30T00:00:00Z',
+  ),
   mk('8', 'Will the U.S. invade Iran before 2027?', 0.075, 45873, '2026-12-31T00:00:00Z'),
   mk('9', 'Will Kuwait recognize Israel by December 31?', 0.05, 100, '2026-12-31T00:00:00Z'),
   mk('10', 'Will Kuwait recognize Israel by March 31?', 0.08, 50, '2027-03-31T00:00:00Z'),
@@ -26,7 +38,10 @@ const live = [
 test('deadline variants become one series ordered by deadline, with a localized title', () => {
   const s = rwMarketSeries(live).find(x => x.key.includes('ceasefire'));
   assert.equal(s.kind, 'deadline');
-  assert.deepEqual(s.items.map(x => x.m.id), ['2', '1', '3']);
+  assert.deepEqual(
+    s.items.map(x => x.m.id),
+    ['2', '1', '3'],
+  );
   assert.deepEqual(rwMarketTitle(s, false), ['Прекращение огня США–Иран', false]);
   assert.deepEqual(rwMarketTitle(s, true), ['הפסקת אש בין ארה״ב לאיראן', false]);
 });
@@ -34,10 +49,16 @@ test('deadline variants become one series ordered by deadline, with a localized 
 test('person variants become one series ordered by estimate; names are row labels', () => {
   const series = rwMarketSeries(live);
   const head = series.find(x => x.kind === 'head');
-  assert.deepEqual(head.items.map(x => x.label), ['Mojtaba Khamenei', 'Reza Pahlavi']);
+  assert.deepEqual(
+    head.items.map(x => x.label),
+    ['Mojtaba Khamenei', 'Reza Pahlavi'],
+  );
   assert.equal(rwMarketTitle(head, false)[0], 'Кто возглавит Иран к концу 2026');
   const attend = series.find(x => x.kind === 'attend');
-  assert.deepEqual(attend.items.map(x => x.label), ['J.D. Vance', 'Marco Rubio']);
+  assert.deepEqual(
+    attend.items.map(x => x.label),
+    ['J.D. Vance', 'Marco Rubio'],
+  );
   assert.match(rwMarketTitle(attend, false)[0], /^Кто придёт на встречу США–Иран до 30 нояб/);
 });
 
@@ -75,9 +96,21 @@ test('numbers: locale percent, compact money, change with direction and window; 
 
 test('deadline row label comes from the question, not from the close timestamp (Nov 30 ≠ Dec 1)', async () => {
   const { rwMarketDeadline } = await import('../src/utils/marketSeries.js');
-  assert.equal(rwMarketDeadline('Iran full airspace closure by November 30?', '2026-11-30T23:59:00Z', false), 'до 30 нояб.');
-  assert.equal(rwMarketDeadline('Iran leadership change by June 30, 2027?', '2027-06-30T23:00:00Z', false), 'до 30 июн. 2027 г.');
-  assert.equal(rwMarketDeadline('Will the U.S. invade Iran before 2027?', '2026-12-31T00:00:00Z', false), 'до 2027 г.');
-  assert.equal(rwMarketDeadline('Will the U.S. invade Iran before 2027?', '2026-12-31T00:00:00Z', true), 'עד 2027');
+  assert.equal(
+    rwMarketDeadline('Iran full airspace closure by November 30?', '2026-11-30T23:59:00Z', false),
+    'до 30 нояб.',
+  );
+  assert.equal(
+    rwMarketDeadline('Iran leadership change by June 30, 2027?', '2027-06-30T23:00:00Z', false),
+    'до 30 июн. 2027 г.',
+  );
+  assert.equal(
+    rwMarketDeadline('Will the U.S. invade Iran before 2027?', '2026-12-31T00:00:00Z', false),
+    'до 2027 г.',
+  );
+  assert.equal(
+    rwMarketDeadline('Will the U.S. invade Iran before 2027?', '2026-12-31T00:00:00Z', true),
+    'עד 2027',
+  );
   assert.match(rwMarketDeadline('Odd wording?', '2026-11-22T20:29:00Z', false), /^до 22 нояб/);
 });

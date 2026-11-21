@@ -3,7 +3,7 @@ name: Probe additional public OSINT feeds
 on:
   push:
     paths:
-      - ".github/workflows/source-probe.yml"
+      - '.github/workflows/source-probe.yml'
   workflow_dispatch:
 
 permissions:

@@ -15,7 +15,11 @@ import {
 import { translateTitles } from '../../backend/editor/src/translations/scheduled.mjs';
 import { translateScheduled } from '../../backend/editor/src/localization/scheduled.mjs';
 import { isTransientFailure } from '../../backend/editor/src/localization/retry-policy.mjs';
-import { sourceText, fingerprint, legacyNewsPivotText } from '../../backend/editor/src/localization/shared.mjs';
+import {
+  sourceText,
+  fingerprint,
+  legacyNewsPivotText,
+} from '../../backend/editor/src/localization/shared.mjs';
 import { newsTier } from '../../backend/editor/src/news/tier.mjs';
 import { AI_POOL_NEURONS } from '../../backend/editor/src/ai/budget.mjs';
 import { ROUTES } from '../../backend/editor/src/ai/router.mjs';
@@ -107,7 +111,10 @@ test('a rejected job backs off per tier, goes manual after three; a transient fa
   }
   const [n] = await dueJobs(db, 'ru', NOW, 5);
   await settleJob(db, n, 'rejected', { reason: 'x' }, NOW);
-  assert.equal(db.one("SELECT next_at_ms FROM translation_jobs WHERE item_id='n'").next_at_ms, NOW + 30 * MIN);
+  assert.equal(
+    db.one("SELECT next_at_ms FROM translation_jobs WHERE item_id='n'").next_at_ms,
+    NOW + 30 * MIN,
+  );
 });
 
 test('nothing drops out silently: a job older than 72 h moves to the manual queue', async () => {
@@ -138,12 +145,17 @@ test('transient failures are told apart from translation verdicts', () => {
     'no_route_available',
     'model_incomplete',
     'model_invalid_response',
-    "Unexpected token 'x', \"x\" is not valid JSON",
+    'Unexpected token \'x\', "x" is not valid JSON',
     'gemini_429',
     '8004: Internal server error',
   ])
     assert.equal(isTransientFailure(e), true, e);
-  for (const e of ['low_translation_confidence', 'numbers_changed_title', 'body:mixed_script_word', 'title:hamas_name_missing'])
+  for (const e of [
+    'low_translation_confidence',
+    'numbers_changed_title',
+    'body:mixed_script_word',
+    'title:hamas_name_missing',
+  ])
     assert.equal(isTransientFailure(e), false, e);
 });
 
@@ -169,16 +181,21 @@ test('RU: displayed items only — fresh high priority and current event represe
   addGroup(db, { rep: 'stale-rep', priority: 4, last_seen_ms: NOW - 40 * HOUR });
   addNews(db, { id: 'held3', headline: IMPORTANT, priority: 3, published_ms: NOW - HOUR });
   addGroup(db, { rep: 'held3', priority: 3, last_seen_ms: NOW - HOUR });
-  addNews(db, { id: 'spam', headline: 'Sponsored content for fashion week', priority: 9, published_ms: NOW - HOUR });
+  addNews(db, {
+    id: 'spam',
+    headline: 'Sponsored content for fashion week',
+    priority: 9,
+    published_ms: NOW - HOUR,
+  });
   const AI = ruAnswer();
   const out = await translateTitles(ruEnv(db, AI), NOW);
   assert.equal(out.translated, 2);
   assert.deepEqual(
-    db.rows("SELECT id FROM news_items WHERE headline_ru IS NOT NULL ORDER BY id").map(r => r.id),
+    db.rows('SELECT id FROM news_items WHERE headline_ru IS NOT NULL ORDER BY id').map(r => r.id),
     ['high', 'rep4'],
   );
   assert.deepEqual(
-    db.rows("SELECT item_id FROM translation_jobs ORDER BY item_id").map(r => r.item_id),
+    db.rows('SELECT item_id FROM translation_jobs ORDER BY item_id').map(r => r.item_id),
     ['high', 'rep4'],
     'no job for hidden, stale or spam items',
   );
@@ -214,13 +231,20 @@ test('RU: summary-only job keeps the existing Russian headline', async () => {
   });
   const AI = ai(() => ({
     response: JSON.stringify([
-      { id: 's', title_ru: RU[IMPORTANT], summary_ru: 'Региональные представители обсудили сотрудничество и дальнейшие переговоры.' },
+      {
+        id: 's',
+        title_ru: RU[IMPORTANT],
+        summary_ru: 'Региональные представители обсудили сотрудничество и дальнейшие переговоры.',
+      },
     ]),
     usage: { neurons: 30 },
   }));
   const out = await translateTitles(ruEnv(db, AI), NOW);
   assert.deepEqual([out.translated, out.summaries], [0, 1]);
-  assert.equal(db.one("SELECT headline_ru FROM news_items WHERE id='s'").headline_ru, 'Существующий заголовок');
+  assert.equal(
+    db.one("SELECT headline_ru FROM news_items WHERE id='s'").headline_ru,
+    'Существующий заголовок',
+  );
 });
 
 test('RU: a rejected item is retried after the back-off (not tomorrow), manual after three', async () => {
@@ -230,8 +254,14 @@ test('RU: a rejected item is retried after the back-off (not tomorrow), manual a
   // B6: without a Gemini key the chain is llama → gemma; both are tried per attempt.
   const perTry = ROUTES.ru_titles.filter(s => s.provider === 'cloudflare').length;
   await translateTitles(ruEnv(db, bad), NOW);
-  assert.deepEqual([ruJob(db, 'u').state, ruJob(db, 'u').attempts, ruJob(db, 'u').last_reason], ['pending', 1, 'quality_gate']);
-  assert.deepEqual(bad.calls.map(c => c.model), ROUTES.ru_titles.filter(s => s.provider === 'cloudflare').map(s => s.model));
+  assert.deepEqual(
+    [ruJob(db, 'u').state, ruJob(db, 'u').attempts, ruJob(db, 'u').last_reason],
+    ['pending', 1, 'quality_gate'],
+  );
+  assert.deepEqual(
+    bad.calls.map(c => c.model),
+    ROUTES.ru_titles.filter(s => s.provider === 'cloudflare').map(s => s.model),
+  );
   await translateTitles(ruEnv(db, bad), NOW + MIN);
   assert.equal(bad.calls.length, perTry, 'not re-sent inside the back-off');
   await translateTitles(ruEnv(db, bad), NOW + 5 * MIN);
@@ -239,7 +269,11 @@ test('RU: a rejected item is retried after the back-off (not tomorrow), manual a
   assert.equal(bad.calls.length, 3 * perTry);
   assert.equal(ruJob(db, 'u').state, 'manual');
   await translateTitles(ruEnv(db, ruAnswer()), NOW + 60 * MIN);
-  assert.equal(db.one("SELECT headline_ru FROM news_items WHERE id='u'").headline_ru, null, 'manual jobs are not auto-retried');
+  assert.equal(
+    db.one("SELECT headline_ru FROM news_items WHERE id='u'").headline_ru,
+    null,
+    'manual jobs are not auto-retried',
+  );
 });
 
 test('RU: nobody answered (pool spent, provider down) — deferred, no attempt counted, error journaled', async () => {
@@ -251,7 +285,10 @@ test('RU: nobody answered (pool spent, provider down) — deferred, no attempt c
   const out = await translateTitles(ruEnv(db, down), NOW);
   assert.equal(out.error, true);
   assert.deepEqual([ruJob(db, 'i').attempts, ruJob(db, 'i').next_at_ms], [0, NOW + 5 * MIN]);
-  assert.match(db.one("SELECT value FROM editor_state WHERE key='last_translation_error'").value, /budget_exhausted/);
+  assert.match(
+    db.one("SELECT value FROM editor_state WHERE key='last_translation_error'").value,
+    /budget_exhausted/,
+  );
   const malformed = ai(() => ({ response: 'not json at all', usage: { neurons: 10 } }));
   await translateTitles(ruEnv(db, malformed), NOW + 5 * MIN);
   assert.equal(ruJob(db, 'i').attempts, 0, 'a broken answer is not a verdict on the item');
@@ -260,7 +297,13 @@ test('RU: nobody answered (pool spent, provider down) — deferred, no attempt c
 test('RU: a queued job is finished after its item leaves the 36 h selection window', async () => {
   const db = newsDb();
   addNews(db, { id: 'i', headline: IMPORTANT, published_ms: NOW - 35 * HOUR });
-  await translateTitles(ruEnv(db, ruAnswer(h => h)), NOW); // rejected, job stays
+  await translateTitles(
+    ruEnv(
+      db,
+      ruAnswer(h => h),
+    ),
+    NOW,
+  ); // rejected, job stays
   const later = NOW + 2 * HOUR; // the item is now 37 h old
   await translateTitles(ruEnv(db, ruAnswer()), later);
   assert.equal(db.one("SELECT headline_ru FROM news_items WHERE id='i'").headline_ru, RU[IMPORTANT]);
@@ -274,7 +317,10 @@ test('RU: with the pool down to its reserve only urgent/important are served', a
   db.raw.prepare('INSERT INTO ai_daily_neurons VALUES(?,?,1,0)').run(DAY, AI_POOL_NEURONS - 100);
   const AI = ruAnswer();
   await translateTitles(ruEnv(db, AI), NOW);
-  assert.deepEqual(JSON.parse(AI.calls[0].input.messages[1].content).map(x => x.id), ['u']);
+  assert.deepEqual(
+    JSON.parse(AI.calls[0].input.messages[1].content).map(x => x.id),
+    ['u'],
+  );
   assert.equal(ruJob(db, 'n').state, 'pending');
 });
 
@@ -283,7 +329,11 @@ test('RU: daily batch ceiling stops before any source read or AI call', async ()
   addNews(db, { id: 'u', headline: URGENT, published_ms: NOW - HOUR });
   db.raw.prepare('INSERT INTO news_translation_budget VALUES(?,288,0,0)').run(DAY);
   const AI = ruAnswer();
-  assert.deepEqual(await translateTitles(ruEnv(db, AI), NOW), { translated: 0, summaries: 0, budget: 'limit' });
+  assert.deepEqual(await translateTitles(ruEnv(db, AI), NOW), {
+    translated: 0,
+    summaries: 0,
+    budget: 'limit',
+  });
   assert.equal(AI.calls.length, 0);
 });
 
@@ -308,12 +358,23 @@ test('RU: Gemini first, llama only for what Gemini got wrong, in the same tick',
       ? Response.json({
           candidates: [
             {
-              content: { parts: [{ text: JSON.stringify([{ id: 'g', title_ru: RU[URGENT] }, { id: 'l', title_ru: IMPORTANT }]) }] },
+              content: {
+                parts: [
+                  {
+                    text: JSON.stringify([
+                      { id: 'g', title_ru: RU[URGENT] },
+                      { id: 'l', title_ru: IMPORTANT },
+                    ]),
+                  },
+                ],
+              },
               finishReason: 'STOP',
             },
           ],
         })
-      : Response.json({ models: [{ name: 'models/gemini-3.5-flash-lite', supportedGenerationMethods: ['generateContent'] }] });
+      : Response.json({
+          models: [{ name: 'models/gemini-3.5-flash-lite', supportedGenerationMethods: ['generateContent'] }],
+        });
   const llama = ruAnswer();
   try {
     const out = await translateTitles({ NEWS_DB: db, AI: llama, GEMINI_API_KEY: 'K' }, NOW);
@@ -322,7 +383,10 @@ test('RU: Gemini first, llama only for what Gemini got wrong, in the same tick',
   } finally {
     globalThis.fetch = realFetch;
   }
-  assert.deepEqual(llama.calls.map(c => JSON.parse(c.input.messages[1].content).map(x => x.id)), [['l']]);
+  assert.deepEqual(
+    llama.calls.map(c => JSON.parse(c.input.messages[1].content).map(x => x.id)),
+    [['l']],
+  );
   assert.equal(ruJob(db, 'g').last_model.startsWith('gemini'), true);
 });
 
@@ -338,7 +402,10 @@ const atKind = (name, from = BASE) => {
 };
 const heTitle = 'ישראל מדווחת על 7 כטב״מים ליד הגבול';
 const heAnswer = (value = { title: heTitle, body: '', comment: '', confidence: 96 }) =>
-  ai(() => ({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(value) } }], usage: { neurons: 12 } }));
+  ai(() => ({
+    choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(value) } }],
+    usage: { neurons: 12 },
+  }));
 const heEnv = (db, AI, core = coreDb()) => ({ NEWS_DB: db, CORE_DB: core, AI });
 const heJob = (db, id) => db.one("SELECT * FROM translation_jobs WHERE language='he' AND item_id=?", id);
 const drones = 'Israel reports 7 drones near the border';
@@ -349,22 +416,47 @@ test('HE: displayed news only; at most 4 paid attempts per tick, urgent first', 
   addNews(db, { id: 'u', headline: URGENT, published_ms: t - 2 * HOUR });
   for (let i = 0; i < 5; i++) addNews(db, { id: 'd' + i, headline: drones, published_ms: t - i * MIN });
   addNews(db, { id: 'low', headline: drones, priority: 3, published_ms: t - MIN });
-  const AI = heAnswer({ title: 'סירנות נשמעות בצפון ישראל לאחר שיגור רקטה מלבנון', body: '', comment: '', confidence: 95 });
+  const AI = heAnswer({
+    title: 'סירנות נשמעות בצפון ישראל לאחר שיגור רקטה מלבנון',
+    body: '',
+    comment: '',
+    confidence: 95,
+  });
   const AI2 = heAnswer();
-  const env = heEnv(db, { run: (m, i) => (JSON.stringify(i).includes('Sirens') ? AI.run(m, i) : AI2.run(m, i)) });
+  const env = heEnv(db, {
+    run: (m, i) => (JSON.stringify(i).includes('Sirens') ? AI.run(m, i) : AI2.run(m, i)),
+  });
   const out = await translateScheduled(env, t);
   assert.equal(out.attempted, 4);
   assert.equal(heJob(db, 'u').state, 'done', 'urgent item translated in the first tick');
   assert.equal(heJob(db, 'low'), null, 'priority 3, not displayed: no job');
-  assert.equal(db.one("SELECT count(*) n FROM translation_jobs WHERE language='he' AND state='pending'").n, 2);
+  assert.equal(
+    db.one("SELECT count(*) n FROM translation_jobs WHERE language='he' AND state='pending'").n,
+    2,
+  );
 });
 
 test('HE: native Hebrew needs no job; a Hebrew headline with an English summary does', async () => {
   const db = newsDb();
   const t = atKind('news');
-  addNews(db, { id: 'native', headline: 'צה״ל מדווח על יירוט', summary: 'כל הפרטים בהמשך', published_ms: t - MIN });
-  addNews(db, { id: 'mixed', headline: 'צה״ל מדווח על יירוט', summary: 'Details follow in the statement', published_ms: t - MIN });
-  const AI = heAnswer({ title: 'צה״ל מדווח על יירוט', body: 'הפרטים בהמשך ההודעה', comment: '', confidence: 95 });
+  addNews(db, {
+    id: 'native',
+    headline: 'צה״ל מדווח על יירוט',
+    summary: 'כל הפרטים בהמשך',
+    published_ms: t - MIN,
+  });
+  addNews(db, {
+    id: 'mixed',
+    headline: 'צה״ל מדווח על יירוט',
+    summary: 'Details follow in the statement',
+    published_ms: t - MIN,
+  });
+  const AI = heAnswer({
+    title: 'צה״ל מדווח על יירוט',
+    body: 'הפרטים בהמשך ההודעה',
+    comment: '',
+    confidence: 95,
+  });
   const out = await translateScheduled(heEnv(db, AI), t);
   assert.equal(heJob(db, 'native'), null);
   assert.equal(out.attempted, 1);
@@ -375,10 +467,18 @@ test('HE: a changed number is a rejection (attempt logged, retried later, manual
   const db = newsDb();
   let t = atKind('news');
   addNews(db, { id: 'n', headline: drones, published_ms: t - MIN });
-  const wrong = heAnswer({ title: 'ישראל מדווחת על 8 כטב״מים ליד הגבול', body: '', comment: '', confidence: 99 });
+  const wrong = heAnswer({
+    title: 'ישראל מדווחת על 8 כטב״מים ליד הגבול',
+    body: '',
+    comment: '',
+    confidence: 99,
+  });
   await translateScheduled(heEnv(db, wrong), t);
   assert.deepEqual([heJob(db, 'n').attempts, heJob(db, 'n').last_reason], [1, 'numbers_changed_title']);
-  assert.equal(db.one("SELECT state,error FROM regional_i18n_attempts WHERE item_id='n'").error, 'numbers_changed_title');
+  assert.equal(
+    db.one("SELECT state,error FROM regional_i18n_attempts WHERE item_id='n'").error,
+    'numbers_changed_title',
+  );
   assert.equal(db.one("SELECT count(*) n FROM regional_i18n WHERE item_id='n'").n, 0);
   for (const step of [15, 30]) {
     t = heJob(db, 'n').next_at_ms; // important: back-off 15, then 30 min
@@ -393,10 +493,20 @@ test('HE: a transient model failure only defers the job', async () => {
   const db = newsDb();
   const t = atKind('news');
   addNews(db, { id: 'n', headline: drones, published_ms: t - MIN });
-  const cut = ai(() => ({ choices: [{ finish_reason: 'length', message: { content: '{' } }], usage: { neurons: 12 } }));
+  const cut = ai(() => ({
+    choices: [{ finish_reason: 'length', message: { content: '{' } }],
+    usage: { neurons: 12 },
+  }));
   await translateScheduled(heEnv(db, cut), t);
-  assert.deepEqual([heJob(db, 'n').attempts, heJob(db, 'n').state, heJob(db, 'n').next_at_ms], [0, 'pending', t + 5 * 60000]);
-  assert.equal(db.one('SELECT estimated_neurons FROM regional_i18n_budget').estimated_neurons, 12, 'spent neurons are still charged');
+  assert.deepEqual(
+    [heJob(db, 'n').attempts, heJob(db, 'n').state, heJob(db, 'n').next_at_ms],
+    [0, 'pending', t + 5 * 60000],
+  );
+  assert.equal(
+    db.one('SELECT estimated_neurons FROM regional_i18n_budget').estimated_neurons,
+    12,
+    'spent neurons are still charged',
+  );
 });
 
 test('HE: daily ceilings (300 attempts or 6000 neurons) stop before any source read or AI call', async () => {
@@ -407,7 +517,9 @@ test('HE: daily ceilings (300 attempts or 6000 neurons) stop before any source r
     const db = newsDb();
     const t = atKind('news');
     addNews(db, { id: 'n', headline: drones, published_ms: t - MIN });
-    db.raw.prepare('INSERT INTO regional_i18n_budget VALUES(?,?,?,0)').run(new Date(t).toISOString().slice(0, 10), attempts, neurons);
+    db.raw
+      .prepare('INSERT INTO regional_i18n_budget VALUES(?,?,?,0)')
+      .run(new Date(t).toISOString().slice(0, 10), attempts, neurons);
     const AI = heAnswer();
     assert.deepEqual(await translateScheduled(heEnv(db, AI), t), { state: 'budget' });
     assert.equal(AI.calls.length, 0);
@@ -444,7 +556,11 @@ test('HE: legacy pivot translations (made from Russian) stay in the manual backl
   };
   addNews(db, { id: 'legacy', ...row, published_ms: t - MIN });
   const legacy = await fingerprint(legacyNewsPivotText({ ...row, comment: null }));
-  db.raw.prepare("INSERT INTO regional_i18n VALUES('news','legacy','he',?,'ישראל מדווחת על 5 כטב״מים','','',95,'m',0)").run(legacy);
+  db.raw
+    .prepare(
+      "INSERT INTO regional_i18n VALUES('news','legacy','he',?,'ישראל מדווחת על 5 כטב״מים','','',95,'m',0)",
+    )
+    .run(legacy);
   const AI = heAnswer();
   await translateScheduled(heEnv(db, AI), t);
   assert.equal(heJob(db, 'legacy'), null);
@@ -458,7 +574,12 @@ test('HE: analyst publications (CORE_DB) are queued on their turn and written to
   core.raw
     .prepare("INSERT INTO analyst_publications VALUES('a1',?,?,'', 'published',?)")
     .run('Analyst: Israel reports 7 drones near the border', 'Assessment of the border situation', t - HOUR);
-  const AI = heAnswer({ title: 'אנליסט: ישראל מדווחת על 7 כטב״מים ליד הגבול', body: 'הערכה של המצב בגבול', comment: '', confidence: 95 });
+  const AI = heAnswer({
+    title: 'אנליסט: ישראל מדווחת על 7 כטב״מים ליד הגבול',
+    body: 'הערכה של המצב בגבול',
+    comment: '',
+    confidence: 95,
+  });
   const out = await translateScheduled(heEnv(db, AI, core), t);
   assert.equal(out.translated, 1);
   assert.equal(core.one("SELECT count(*) n FROM regional_i18n WHERE kind='analyst'").n, 1);
@@ -474,12 +595,24 @@ test('HE (B6): gemma leads; its answer with Arabic letters is rejected and Gemin
     String(url).includes(':generateContent')
       ? Response.json({
           candidates: [
-            { content: { parts: [{ text: JSON.stringify({ title: heTitle, body: '', comment: '', confidence: 97 }) }] }, finishReason: 'STOP' },
+            {
+              content: {
+                parts: [{ text: JSON.stringify({ title: heTitle, body: '', comment: '', confidence: 97 }) }],
+              },
+              finishReason: 'STOP',
+            },
           ],
         })
-      : Response.json({ models: [{ name: 'models/gemini-3.5-flash-lite', supportedGenerationMethods: ['generateContent'] }] });
+      : Response.json({
+          models: [{ name: 'models/gemini-3.5-flash-lite', supportedGenerationMethods: ['generateContent'] }],
+        });
   const gemma = ai(() => ({
-    choices: [{ finish_reason: 'stop', message: { content: JSON.stringify({ title: heTitle + 'ة', body: '', comment: '', confidence: 97 }) } }],
+    choices: [
+      {
+        finish_reason: 'stop',
+        message: { content: JSON.stringify({ title: heTitle + 'ة', body: '', comment: '', confidence: 97 }) },
+      },
+    ],
     usage: { neurons: 24 },
   }));
   try {
@@ -488,7 +621,10 @@ test('HE (B6): gemma leads; its answer with Arabic letters is rejected and Gemin
   } finally {
     globalThis.fetch = realFetch;
   }
-  assert.deepEqual(gemma.calls.map(c => c.model), ['@cf/google/gemma-4-26b-a4b-it']);
+  assert.deepEqual(
+    gemma.calls.map(c => c.model),
+    ['@cf/google/gemma-4-26b-a4b-it'],
+  );
   assert.deepEqual(db.one("SELECT title,model FROM regional_i18n WHERE item_id='n'"), {
     title: heTitle,
     model: 'gemini-3.5-flash-lite',
@@ -499,8 +635,20 @@ test('HE (B6): gemma leads; its answer with Arabic letters is rejected and Gemin
 // «2 Palestinians» → «שני פלסטינים», «1970s» → «שנות ה־70» (numbers_changed_*).
 test('HE: small numbers as Hebrew words and decades as «שנות ה־70» keep the numbers; a changed number is still rejected', async () => {
   const cases = [
-    ['2 Palestinians said wounded in settler attack on village', '', 'שני פלסטינים נפצעו לפי הדיווח בתקיפת מתנחלים בכפר', '', 'done'],
-    ['Energy crisis in Europe', 'It dwarfs the oil shocks of the 1970s', 'משבר אנרגיה באירופה', 'הוא מגמד את זעזועי הנפט של שנות ה־70', 'done'],
+    [
+      '2 Palestinians said wounded in settler attack on village',
+      '',
+      'שני פלסטינים נפצעו לפי הדיווח בתקיפת מתנחלים בכפר',
+      '',
+      'done',
+    ],
+    [
+      'Energy crisis in Europe',
+      'It dwarfs the oil shocks of the 1970s',
+      'משבר אנרגיה באירופה',
+      'הוא מגמד את זעזועי הנפט של שנות ה־70',
+      'done',
+    ],
     ['3 soldiers wounded in Gaza', '', 'ארבעה חיילים נפצעו בעזה', '', 'pending'],
     ['2 Palestinians said wounded in settler attack', '', 'פלסטינים נפצעו בתקיפת מתנחלים', '', 'pending'],
   ];
@@ -518,7 +666,10 @@ test('HE: a source read failure is journaled and never reported as success', asy
   db.raw.exec('DROP TABLE news_items');
   const out = await translateScheduled(heEnv(db, heAnswer()), atKind('news'));
   assert.equal(out.state, 'error');
-  assert.match(db.one("SELECT value FROM editor_state WHERE key='last_he_localization_error'").value, /news_items/);
+  assert.match(
+    db.one("SELECT value FROM editor_state WHERE key='last_he_localization_error'").value,
+    /news_items/,
+  );
 });
 
 // ---------- B11 part 2: second opinion on who did what ----------
@@ -528,7 +679,9 @@ test('RU: an urgent title the second model calls actor_swapped goes to the next 
   addNews(db, { id: 'n', headline: NORMAL, published_ms: NOW - MIN });
   const AI = ai(
     (model, input) => ({
-      response: JSON.stringify(JSON.parse(input.messages[1].content).map(x => ({ id: x.id, title_ru: RU[x.headline] }))),
+      response: JSON.stringify(
+        JSON.parse(input.messages[1].content).map(x => ({ id: x.id, title_ru: RU[x.headline] })),
+      ),
       usage: { neurons: 60 },
     }),
     () => ({ same_meaning: false, error: 'actor_swapped', evidence: 'Lebanon launched, not Israel' }),
@@ -536,27 +689,55 @@ test('RU: an urgent title the second model calls actor_swapped goes to the next 
   await translateTitles(ruEnv(db, AI), NOW);
   assert.equal(db.one("SELECT headline_ru FROM news_items WHERE id='u'").headline_ru, null);
   assert.deepEqual([ruJob(db, 'u').attempts, ruJob(db, 'u').last_reason], [1, 'meaning:actor_swapped']);
-  assert.equal(db.one("SELECT headline_ru FROM news_items WHERE id='n'").headline_ru, RU[NORMAL], 'normal tier is not second-checked');
+  assert.equal(
+    db.one("SELECT headline_ru FROM news_items WHERE id='n'").headline_ru,
+    RU[NORMAL],
+    'normal tier is not second-checked',
+  );
   // B6 chain llama → gemma: each translation is checked by a model that did not write it.
-  assert.deepEqual(AI.checks.map(c => c.model), ['@cf/google/gemma-4-26b-a4b-it', '@cf/meta/llama-3.3-70b-instruct-fp8-fast']);
-  assert.deepEqual(AI.calls.map(c => c.model), ['@cf/meta/llama-3.3-70b-instruct-fp8-fast', '@cf/google/gemma-4-26b-a4b-it']);
-  assert.deepEqual(JSON.parse(db.one("SELECT value FROM editor_state WHERE key='meaning_check:2026-11-19'").value), { reject: 2 }); // one verdict per provider tried
+  assert.deepEqual(
+    AI.checks.map(c => c.model),
+    ['@cf/google/gemma-4-26b-a4b-it', '@cf/meta/llama-3.3-70b-instruct-fp8-fast'],
+  );
+  assert.deepEqual(
+    AI.calls.map(c => c.model),
+    ['@cf/meta/llama-3.3-70b-instruct-fp8-fast', '@cf/google/gemma-4-26b-a4b-it'],
+  );
+  assert.deepEqual(
+    JSON.parse(db.one("SELECT value FROM editor_state WHERE key='meaning_check:2026-11-19'").value),
+    { reject: 2 },
+  ); // one verdict per provider tried
 });
 
 test('HE: important news — the checker is not the translating model; a meaning error is a rejection', async () => {
   const db = newsDb();
   const t = atKind('news');
   addNews(db, { id: 'i', headline: IMPORTANT, published_ms: t - MIN });
-  const value = { title: 'ישראל ומנהיגים אזוריים דנים במשא ומתן ביטחוני', body: '', comment: '', confidence: 95 };
+  const value = {
+    title: 'ישראל ומנהיגים אזוריים דנים במשא ומתן ביטחוני',
+    body: '',
+    comment: '',
+    confidence: 95,
+  };
   const AI = ai(
-    () => ({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(value) } }], usage: { neurons: 12 } }),
+    () => ({
+      choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(value) } }],
+      usage: { neurons: 12 },
+    }),
     () => ({ same_meaning: false, error: 'participant_dropped', evidence: 'regional leaders missing' }),
   );
   await translateScheduled(heEnv(db, AI), t);
   assert.equal(heJob(db, 'i').last_reason, 'meaning:participant_dropped');
   assert.equal(db.one("SELECT count(*) n FROM regional_i18n WHERE item_id='i'").n, 0);
-  assert.deepEqual(AI.checks.map(c => c.model), ['@cf/meta/llama-3.3-70b-instruct-fp8-fast'], 'gemma translated, so llama checks');
-  const ok = ai(() => ({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(value) } }], usage: { neurons: 12 } }));
+  assert.deepEqual(
+    AI.checks.map(c => c.model),
+    ['@cf/meta/llama-3.3-70b-instruct-fp8-fast'],
+    'gemma translated, so llama checks',
+  );
+  const ok = ai(() => ({
+    choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(value) } }],
+    usage: { neurons: 12 },
+  }));
   await translateScheduled(heEnv(db, ok), heJob(db, 'i').next_at_ms);
   assert.equal(heJob(db, 'i').state, 'done');
 });
@@ -566,7 +747,9 @@ test('no checker available: the translation that passed every deterministic gate
   addNews(db, { id: 'u', headline: URGENT, published_ms: NOW - HOUR });
   const AI = ai(
     (model, input) => ({
-      response: JSON.stringify(JSON.parse(input.messages[1].content).map(x => ({ id: x.id, title_ru: RU[x.headline] }))),
+      response: JSON.stringify(
+        JSON.parse(input.messages[1].content).map(x => ({ id: x.id, title_ru: RU[x.headline] })),
+      ),
       usage: { neurons: 60 },
     }),
     () => {
@@ -575,5 +758,8 @@ test('no checker available: the translation that passed every deterministic gate
   );
   await translateTitles(ruEnv(db, AI), NOW);
   assert.equal(db.one("SELECT headline_ru FROM news_items WHERE id='u'").headline_ru, RU[URGENT]);
-  assert.deepEqual(JSON.parse(db.one("SELECT value FROM editor_state WHERE key='meaning_check:2026-11-19'").value), { unavailable: 1 });
+  assert.deepEqual(
+    JSON.parse(db.one("SELECT value FROM editor_state WHERE key='meaning_check:2026-11-19'").value),
+    { unavailable: 1 },
+  );
 });

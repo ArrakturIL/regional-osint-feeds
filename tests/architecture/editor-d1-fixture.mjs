@@ -37,7 +37,11 @@ export function d1() {
         throw e;
       }
     },
-    rows: (sql, ...a) => db.prepare(sql).all(...a).map(plain),
+    rows: (sql, ...a) =>
+      db
+        .prepare(sql)
+        .all(...a)
+        .map(plain),
     one: (sql, ...a) => plain(db.prepare(sql).get(...a)),
   };
 }
@@ -89,22 +93,33 @@ export function addNews(db, row) {
     .prepare(
       'INSERT INTO news_items(id,source,headline,headline_ru,summary,url,published_ms,discovered_ms,priority,comment,summary_ru) VALUES(?,?,?,?,?,?,?,?,?,?,?)',
     )
-    .run(r.id, r.source, r.headline, r.headline_ru, r.summary, r.url, r.published_ms, r.discovered_ms, r.priority, r.comment, r.summary_ru);
+    .run(
+      r.id,
+      r.source,
+      r.headline,
+      r.headline_ru,
+      r.summary,
+      r.url,
+      r.published_ms,
+      r.discovered_ms,
+      r.priority,
+      r.comment,
+      r.summary_ru,
+    );
   return r.id;
 }
 
 export function addGroup(db, { id, rep, priority = 5, last_seen_ms }) {
   db.raw
-    .prepare(
-      "INSERT INTO news_event_groups VALUES(?,?,'t',?,?,1,1,1,'single','[]','[]','s',?)",
-    )
+    .prepare("INSERT INTO news_event_groups VALUES(?,?,'t',?,?,1,1,1,'single','[]','[]','s',?)")
     .run(id || 'g-' + rep, rep, priority, last_seen_ms, last_seen_ms);
 }
 
 // Workers AI stub: answer(model, input) -> response object; records calls.
 // B11 meaning checks (second opinion) are answered by `verdict` (default: same
 // meaning) and recorded in `checks`, so translation call counts stay exact.
-export const isMeaningCheck = input => /^You check a news translation/.test(input?.messages?.[0]?.content || '');
+export const isMeaningCheck = input =>
+  /^You check a news translation/.test(input?.messages?.[0]?.content || '');
 export function ai(answer, verdict = () => ({ same_meaning: true, error: 'none', evidence: '' })) {
   const calls = [],
     checks = [];
@@ -114,7 +129,10 @@ export function ai(answer, verdict = () => ({ same_meaning: true, error: 'none',
     run: async (model, input) => {
       if (isMeaningCheck(input)) {
         checks.push({ model, input });
-        return { choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(verdict(model, input)) } }], usage: { neurons: 3 } };
+        return {
+          choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(verdict(model, input)) } }],
+          usage: { neurons: 3 },
+        };
       }
       calls.push({ model, input });
       return answer(model, input);

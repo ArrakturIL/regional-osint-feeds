@@ -2,7 +2,7 @@ name: Collect UNOSAT official geospatial analyses
 on:
   workflow_dispatch:
   schedule:
-    - cron: "19 */12 * * *"
+    - cron: '19 */12 * * *'
   push:
     branches: [main]
     paths:
@@ -50,7 +50,7 @@ jobs:
           persist-credentials: true
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
       - name: Offline data contract tests
         run: python -m unittest discover -s scripts -p "test_unosat.py" -v
       - name: Read public UNOSAT ArcGIS service directory

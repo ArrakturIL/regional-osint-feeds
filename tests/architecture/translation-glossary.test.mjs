@@ -1,34 +1,82 @@
 // B3: one entity glossary replaces hand-written per-name regex rules.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {ENTITIES, entityIssue, wikidataEntityIssue} from '../../backend/editor/src/translations/glossary.mjs';
-import {factualTranslationIssue} from '../../backend/editor/src/translations/fact-guard.mjs';
+import {
+  ENTITIES,
+  entityIssue,
+  wikidataEntityIssue,
+} from '../../backend/editor/src/translations/glossary.mjs';
+import { factualTranslationIssue } from '../../backend/editor/src/translations/fact-guard.mjs';
 
-const o = title => ({title, body: '', comment: ''});
+const o = title => ({ title, body: '', comment: '' });
 
 test('every glossary entity has a stable code, a source form and a Hebrew target form', () => {
   const codes = new Set();
   for (const e of ENTITIES) {
     assert.match(e.code, /^[a-z0-9_]+$/, e.id);
-    assert.ok(!codes.has(e.code), 'duplicate code ' + e.code); codes.add(e.code);
+    assert.ok(!codes.has(e.code), 'duplicate code ' + e.code);
+    codes.add(e.code);
     assert.ok(typeof e.source?.test === 'function' && typeof e.he?.test === 'function', e.id);
   }
   // Legacy codes stay stable: D1 attempt history and tests refer to them.
-  for (const c of ['irgc_actor_missing', 'katz_name_corrupted', 'allies_relation_changed', 'idf_actor_missing',
-    'netanyahu_name_missing', 'reuters_attribution_missing', 'raf_misidentified']) assert.ok(codes.has(c), c);
+  for (const c of [
+    'irgc_actor_missing',
+    'katz_name_corrupted',
+    'allies_relation_changed',
+    'idf_actor_missing',
+    'netanyahu_name_missing',
+    'reuters_attribution_missing',
+    'raf_misidentified',
+  ])
+    assert.ok(codes.has(c), c);
 });
 
 const CASES = [
   // [source, good Hebrew, bad Hebrew, code]
-  ['Hezbollah fires rockets at the north', 'חיזבאללה ירה רקטות לצפון', 'הארגון ירה רקטות לצפון', 'hezbollah_name_missing'],
-  ['Удар по позициям «Хезболлы» на юге Ливана', 'תקיפה בעמדות של חיזבאללה בדרום לבנון', 'תקיפה בעמדות בדרום לבנון', 'hezbollah_name_missing'],
+  [
+    'Hezbollah fires rockets at the north',
+    'חיזבאללה ירה רקטות לצפון',
+    'הארגון ירה רקטות לצפון',
+    'hezbollah_name_missing',
+  ],
+  [
+    'Удар по позициям «Хезболлы» на юге Ливана',
+    'תקיפה בעמדות של חיזבאללה בדרום לבנון',
+    'תקיפה בעמדות בדרום לבנון',
+    'hezbollah_name_missing',
+  ],
   ['Hamas rejects the proposal', 'חמאס דוחה את ההצעה', 'הארגון דוחה את ההצעה', 'hamas_name_missing'],
   ['ХАМАСа отверг предложение', 'חמאס דחה את ההצעה', 'הארגון דחה את ההצעה', 'hamas_name_missing'],
-  ['Houthis claim a drone attack', "החות'ים טוענים לתקיפת כטב\"ם", 'המורדים טוענים לתקיפת כטב"ם', 'houthis_name_missing'],
-  ['Tankers rerouted from the Strait of Hormuz', 'מכליות הוסטו ממצר הורמוז', 'מכליות הוסטו מהמפרץ', 'hormuz_name_missing'],
-  ['Explosions reported near Isfahan', 'דווח על פיצוצים ליד אספהאן', 'דווח על פיצוצים ליד טהרן', 'isfahan_name_missing'],
-  ['Khamenei warns Washington', 'חמינאי מזהיר את וושינגטון', 'המנהיג מזהיר את וושינגטון', 'khamenei_name_missing'],
-  ['IDF says the strike hit a depot', 'לפי צה״ל, התקיפה פגעה במחסן', 'לפי הצבא, התקיפה פגעה במחסן', 'idf_actor_missing'],
+  [
+    'Houthis claim a drone attack',
+    'החות\'ים טוענים לתקיפת כטב"ם',
+    'המורדים טוענים לתקיפת כטב"ם',
+    'houthis_name_missing',
+  ],
+  [
+    'Tankers rerouted from the Strait of Hormuz',
+    'מכליות הוסטו ממצר הורמוז',
+    'מכליות הוסטו מהמפרץ',
+    'hormuz_name_missing',
+  ],
+  [
+    'Explosions reported near Isfahan',
+    'דווח על פיצוצים ליד אספהאן',
+    'דווח על פיצוצים ליד טהרן',
+    'isfahan_name_missing',
+  ],
+  [
+    'Khamenei warns Washington',
+    'חמינאי מזהיר את וושינגטון',
+    'המנהיג מזהיר את וושינגטון',
+    'khamenei_name_missing',
+  ],
+  [
+    'IDF says the strike hit a depot',
+    'לפי צה״ל, התקיפה פגעה במחסן',
+    'לפי הצבא, התקיפה פגעה במחסן',
+    'idf_actor_missing',
+  ],
 ];
 
 test('glossary accepts correct Hebrew (incl. prefixes) and rejects a dropped entity', () => {
@@ -36,13 +84,23 @@ test('glossary accepts correct Hebrew (incl. prefixes) and rejects a dropped ent
     assert.equal(entityIssue(src, good, 'he'), null, 'good: ' + src);
     assert.equal(entityIssue(src, bad, 'he'), code, 'bad: ' + src);
   }
-  assert.equal(entityIssue('Hezbollah statement', 'הודעה של לחיזבאללה ולחמאס', 'he'), null, 'Hebrew prefix letters');
+  assert.equal(
+    entityIssue('Hezbollah statement', 'הודעה של לחיזבאללה ולחמאס', 'he'),
+    null,
+    'Hebrew prefix letters',
+  );
 });
 
 test('fact-guard uses the glossary per field and keeps legacy behaviour', () => {
-  assert.equal(factualTranslationIssue(o('Katz: no delay'), o('קטז: אין עיכוב')), 'title:katz_name_corrupted');
+  assert.equal(
+    factualTranslationIssue(o('Katz: no delay'), o('קטז: אין עיכוב')),
+    'title:katz_name_corrupted',
+  );
   assert.equal(factualTranslationIssue(o('Katz: no delay'), o('כ״ץ: אין עיכוב')), null);
-  assert.equal(factualTranslationIssue(o('Hamas rejects the proposal'), o('הארגון דוחה את ההצעה')), 'title:hamas_name_missing');
+  assert.equal(
+    factualTranslationIssue(o('Hamas rejects the proposal'), o('הארגון דוחה את ההצעה')),
+    'title:hamas_name_missing',
+  );
 });
 
 test('words that merely contain an entity string do not trigger it', () => {
@@ -52,7 +110,10 @@ test('words that merely contain an entity string do not trigger it', () => {
 
 test('Russian translations are checked against Russian forms', () => {
   assert.equal(entityIssue('Hezbollah fires rockets', 'Хезболла выпустила ракеты'), null);
-  assert.equal(entityIssue('Hezbollah fires rockets', 'Группировка выпустила ракеты'), 'hezbollah_name_missing');
+  assert.equal(
+    entityIssue('Hezbollah fires rockets', 'Группировка выпустила ракеты'),
+    'hezbollah_name_missing',
+  );
   assert.equal(entityIssue('Tankers in the Strait of Hormuz', 'Танкеры в Ормузском проливе'), null);
 });
 
@@ -65,22 +126,58 @@ test('West Bank is not "western bank" (live Helsinki error 17.11)', () => {
 
 // B11 part 1: entities from Wikidata (glossary-wikidata.mjs).
 test('Wikidata entities: a swapped country, a dropped participant and a lost name are caught', () => {
-  assert.equal(wikidataEntityIssue('Iran fires missiles at Jordan', 'איראן שיגרה טילים לעבר ישראל', 'he'), 'jordan_name_missing');
-  assert.equal(wikidataEntityIssue('x'.repeat(161) + ' Jordan', 'ישראל', 'he'), null, 'long bodies are not checked against Wikidata names');
-  assert.equal(wikidataEntityIssue('Trump meets Erdoğan in Ankara', 'Трамп встретился в Анкаре', 'ru'), 'erdogan_name_missing');
-  assert.equal(wikidataEntityIssue('IAEA inspectors return to Natanz', 'פקחי סבא"א חוזרים למתקן', 'he'), 'natanz_name_missing');
+  assert.equal(
+    wikidataEntityIssue('Iran fires missiles at Jordan', 'איראן שיגרה טילים לעבר ישראל', 'he'),
+    'jordan_name_missing',
+  );
+  assert.equal(
+    wikidataEntityIssue('x'.repeat(161) + ' Jordan', 'ישראל', 'he'),
+    null,
+    'long bodies are not checked against Wikidata names',
+  );
+  assert.equal(
+    wikidataEntityIssue('Trump meets Erdoğan in Ankara', 'Трамп встретился в Анкаре', 'ru'),
+    'erdogan_name_missing',
+  );
+  assert.equal(
+    wikidataEntityIssue('IAEA inspectors return to Natanz', 'פקחי סבא"א חוזרים למתקן', 'he'),
+    'natanz_name_missing',
+  );
 });
 test('Wikidata entities: case endings, Hebrew prefixes, acronyms and Latin originals are accepted', () => {
   assert.equal(wikidataEntityIssue('Strikes near Damascus', 'Удары под Дамаском', 'ru'), null);
   assert.equal(wikidataEntityIssue('Rubio visits Damascus', 'רוביו ביקר בדמשק', 'he'), null);
-  assert.equal(wikidataEntityIssue('Former Mossad official warns', 'בכיר לשעבר במוסד מזהיר', 'he'), null, 'article yields to a prefix');
+  assert.equal(
+    wikidataEntityIssue('Former Mossad official warns', 'בכיר לשעבר במוסד מזהיר', 'he'),
+    null,
+    'article yields to a prefix',
+  );
   assert.equal(wikidataEntityIssue('Iran-backed militias', 'проиранские ополченцы', 'ru'), null);
   assert.equal(wikidataEntityIssue('UNRWA staff detained', 'עובדי UNRWA נעצרו', 'he'), null);
   assert.equal(wikidataEntityIssue('Let us talk', 'בואו נדבר', 'he'), null, 'lowercase "us" is not the US');
-  assert.equal(wikidataEntityIssue('Iranian officials said', 'גורמים איראניים אמרו', 'he'), null, 'an adjective does not demand the noun');
-  assert.equal(wikidataEntityIssue('Kuwait faces new Iran attacks', 'כוויית מתמודדת עם מתקפות איראניות', 'he'), null, 'final nun turns regular');
-  assert.equal(wikidataEntityIssue('Saudi Arabia reports attacks', 'Саудовская Аравия сообщила; удары по Саудовской Аравии', 'ru'), null);
-  assert.equal(wikidataEntityIssue('Israel steps up strikes in Gaza Strip', 'Израиль усиливает удары в Газе', 'ru'), null, 'proper-noun part of a multi-word name');
+  assert.equal(
+    wikidataEntityIssue('Iranian officials said', 'גורמים איראניים אמרו', 'he'),
+    null,
+    'an adjective does not demand the noun',
+  );
+  assert.equal(
+    wikidataEntityIssue('Kuwait faces new Iran attacks', 'כוויית מתמודדת עם מתקפות איראניות', 'he'),
+    null,
+    'final nun turns regular',
+  );
+  assert.equal(
+    wikidataEntityIssue(
+      'Saudi Arabia reports attacks',
+      'Саудовская Аравия сообщила; удары по Саудовской Аравии',
+      'ru',
+    ),
+    null,
+  );
+  assert.equal(
+    wikidataEntityIssue('Israel steps up strikes in Gaza Strip', 'Израиль усиливает удары в Газе', 'ru'),
+    null,
+    'proper-noun part of a multi-word name',
+  );
 });
 
 // B11 acceptance 20.11: manual-queue reasons sanaa_name_missing for «Австралия
@@ -89,10 +186,16 @@ test('Wikidata entities: case endings, Hebrew prefixes, acronyms and Latin origi
 // starts with its stem; indeclinable names (Фордо, НАТО, Рубио) keep their form.
 test('Wikidata: a Russian stem does not match other words or adjectives (live false rejections 20.11)', () => {
   const cases = [
-    ['Мнение: Австралия вводит санкции против израильских деятелей', 'דעה: אוסטרליה מטילה סנקציות על גורמים ישראליים'],
-    ['США и европейские страны потребовали от Ирана возобновить инспекции', 'ארה"ב ומדינות אירופה דרשו מאיראן לחדש את הפיקוח'],
+    [
+      'Мнение: Австралия вводит санкции против израильских деятелей',
+      'דעה: אוסטרליה מטילה סנקציות על גורמים ישראליים',
+    ],
+    [
+      'США и европейские страны потребовали от Ирана возобновить инспекции',
+      'ארה"ב ומדינות אירופה דרשו מאיראן לחדש את הפיקוח',
+    ],
     ['Доходы Хезболлы от золота', 'הכנסות חיזבאללה מזהב'],
-    ['Авианосец «Джеральд Форд» прибыл в регион', 'נושאת המטוסים ג\'רלד פורד הגיעה לאזור'],
+    ['Авианосец «Джеральд Форд» прибыл в регион', "נושאת המטוסים ג'רלד פורד הגיעה לאזור"],
     ['Персонал посольства эвакуирован', 'צוות השגרירות פונה'],
     ['Натиск на юге усилился', 'הלחץ בדרום התגבר'],
     ['Манёвры у берегов', 'תמרונים ליד החוף'],
@@ -107,9 +210,15 @@ test('Wikidata: a Russian stem does not match other words or adjectives (live fa
 test('Wikidata: Russian names with case endings still demand the name', () => {
   assert.equal(wikidataEntityIssue('Удар по Сане', 'תקיפה בעיר', 'he'), 'sanaa_name_missing');
   assert.equal(wikidataEntityIssue('Переговоры в Дохе', 'שיחות בבירה', 'he'), 'doha_name_missing');
-  assert.equal(wikidataEntityIssue('Иран и Россия подписали соглашение', 'איראן חתמה על הסכם', 'he'), 'russia_name_missing');
+  assert.equal(
+    wikidataEntityIssue('Иран и Россия подписали соглашение', 'איראן חתמה על הסכם', 'he'),
+    'russia_name_missing',
+  );
   assert.equal(wikidataEntityIssue('Генсек НАТО прибыл', 'המזכיר הכללי הגיע', 'he'), 'nato_name_missing');
-  assert.equal(wikidataEntityIssue('МАГАТЭ требует доступа к Фордо', 'סבא"א דורשת גישה למתקן', 'he'), 'fordow_name_missing');
+  assert.equal(
+    wikidataEntityIssue('МАГАТЭ требует доступа к Фордо', 'סבא"א דורשת גישה למתקן', 'he'),
+    'fordow_name_missing',
+  );
   assert.equal(wikidataEntityIssue('Санкции США против Ирана', 'סנקציות של ארה"ב נגד איראן', 'he'), null);
   assert.equal(wikidataEntityIssue('Удары по Сирии и Ливану', 'תקיפות בסוריה ובלבנון', 'he'), null);
 });
@@ -125,8 +234,32 @@ test('Wikidata: «Европа» (the continent) is not the European Union', () 
 // whole word, with at most a one-letter prefix (ב/ה/ו/ל/מ/ש/כ).
 test('Wikidata names in Hebrew sources match whole words only', () => {
   const report = 'צה"ל תקף בכיר בחמאס - בעזה מדווחים על חיסול מפקד חטיבת רפיח';
-  assert.equal(wikidataEntityIssue(report, 'ЦАХАЛ атаковал высокопоставленного деятеля ХАМАС — в Газе сообщают о ликвидации командира бригады Рафах', 'ru'), null);
-  assert.equal(wikidataEntityIssue('הכוחות כבר באזור: בארה"ב מדווחים על תקיפה אפשרית', 'Силы уже в регионе: в США сообщают о возможном ударе', 'ru'), null);
-  assert.equal(wikidataEntityIssue('שיחות הפסקת האש בדוחה נתקעו', 'Переговоры о прекращении огня зашли в тупик', 'ru'), 'doha_name_missing');
-  assert.equal(wikidataEntityIssue('שיחות הפסקת האש בדוחה נתקעו', 'Переговоры о прекращении огня в Дохе зашли в тупик', 'ru'), null);
+  assert.equal(
+    wikidataEntityIssue(
+      report,
+      'ЦАХАЛ атаковал высокопоставленного деятеля ХАМАС — в Газе сообщают о ликвидации командира бригады Рафах',
+      'ru',
+    ),
+    null,
+  );
+  assert.equal(
+    wikidataEntityIssue(
+      'הכוחות כבר באזור: בארה"ב מדווחים על תקיפה אפשרית',
+      'Силы уже в регионе: в США сообщают о возможном ударе',
+      'ru',
+    ),
+    null,
+  );
+  assert.equal(
+    wikidataEntityIssue('שיחות הפסקת האש בדוחה נתקעו', 'Переговоры о прекращении огня зашли в тупик', 'ru'),
+    'doha_name_missing',
+  );
+  assert.equal(
+    wikidataEntityIssue(
+      'שיחות הפסקת האש בדוחה נתקעו',
+      'Переговоры о прекращении огня в Дохе зашли в тупик',
+      'ru',
+    ),
+    null,
+  );
 });

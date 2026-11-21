@@ -7,12 +7,24 @@ import editor from '../../backend/editor/src/index.js';
 
 function fakeDb(log) {
   const stmt = sql => ({
-    bind: (...args) => { log.push(sql); return stmt(sql); },
+    bind: (...args) => {
+      log.push(sql);
+      return stmt(sql);
+    },
     first: async () => null,
     all: async () => ({ results: [] }),
-    run: async () => { log.push(sql); return { meta: { changes: 0 } }; },
+    run: async () => {
+      log.push(sql);
+      return { meta: { changes: 0 } };
+    },
   });
-  return { prepare: sql => stmt(sql), batch: async items => { items.forEach(() => log.push('batch')); return []; } };
+  return {
+    prepare: sql => stmt(sql),
+    batch: async items => {
+      items.forEach(() => log.push('batch'));
+      return [];
+    },
+  };
 }
 async function tick(minute) {
   const core = [];
@@ -21,7 +33,9 @@ async function tick(minute) {
   const realFetch = globalThis.fetch;
   globalThis.fetch = async () => new Response('{}', { status: 404 });
   try {
-    await editor.scheduled({ scheduledTime: Date.UTC(2026, 10, 19, 3, minute) }, env, { waitUntil: p => pending.push(Promise.resolve(p)) });
+    await editor.scheduled({ scheduledTime: Date.UTC(2026, 10, 19, 3, minute) }, env, {
+      waitUntil: p => pending.push(Promise.resolve(p)),
+    });
     await Promise.allSettled(pending);
   } finally {
     globalThis.fetch = realFetch;

@@ -1,16 +1,24 @@
 // Owner service page (/ops, 19.11): read-only aggregate behind a server-side login.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {handlePages} from '../../backend/pages/src/index.js';
-import {ownership} from '../../backend/pages/src/routes.js';
+import { handlePages } from '../../backend/pages/src/index.js';
+import { ownership } from '../../backend/pages/src/routes.js';
 
-const db = sqls => ({prepare: sql => { sqls.push(sql); return {bind: () => ({all: async () => ({results: []})})}; }});
-const req = auth => new Request('https://regional-watch.pages.dev/api/ops', {headers: auth ? {Authorization: 'Basic ' + btoa(auth)} : {}});
+const db = sqls => ({
+  prepare: sql => {
+    sqls.push(sql);
+    return { bind: () => ({ all: async () => ({ results: [] }) }) };
+  },
+});
+const req = auth =>
+  new Request('https://regional-watch.pages.dev/api/ops', {
+    headers: auth ? { Authorization: 'Basic ' + btoa(auth) } : {},
+  });
 
 test('/api/ops refuses without or with wrong credentials, never touching D1', async () => {
   for (const auth of [null, 'admin:wrong', 'root:admin']) {
     const sqls = [];
-    const r = await handlePages(req(auth), {DB: db(sqls), NEWS_DB: db(sqls)});
+    const r = await handlePages(req(auth), { DB: db(sqls), NEWS_DB: db(sqls) });
     assert.equal(r.status, 401);
     assert.equal(r.headers.get('Cache-Control'), 'no-store');
     assert.equal(sqls.length, 0);
@@ -19,14 +27,30 @@ test('/api/ops refuses without or with wrong credentials, never touching D1', as
 
 test('/api/ops: admin/admin by default, Pages secrets override; read-only SQL only', async () => {
   const sqls = [];
-  const r = await handlePages(req('admin:admin'), {DB: db(sqls), NEWS_DB: db(sqls)});
+  const r = await handlePages(req('admin:admin'), { DB: db(sqls), NEWS_DB: db(sqls) });
   assert.equal(r.status, 200);
   const body = await r.json();
-  for (const k of ['quotas', 'translations', 'sources', 'collectors', 'gpt', 'limits']) assert.ok(k in body, k);
+  for (const k of ['quotas', 'translations', 'sources', 'collectors', 'gpt', 'limits'])
+    assert.ok(k in body, k);
   assert.ok(sqls.length > 10 && sqls.every(s => /^\s*SELECT\b/i.test(s)), 'read-only');
-  const set = await handlePages(req('admin:admin'), {DB: db([]), NEWS_DB: db([]), OPS_USER: 'boss', OPS_PASSWORD: 's3cret'});
+  const set = await handlePages(req('admin:admin'), {
+    DB: db([]),
+    NEWS_DB: db([]),
+    OPS_USER: 'boss',
+    OPS_PASSWORD: 's3cret',
+  });
   assert.equal(set.status, 401);
-  assert.equal((await handlePages(req('boss:s3cret'), {DB: db([]), NEWS_DB: db([]), OPS_USER: 'boss', OPS_PASSWORD: 's3cret'})).status, 200);
+  assert.equal(
+    (
+      await handlePages(req('boss:s3cret'), {
+        DB: db([]),
+        NEWS_DB: db([]),
+        OPS_USER: 'boss',
+        OPS_PASSWORD: 's3cret',
+      })
+    ).status,
+    200,
+  );
 });
 
 test('/ops is a page, /api/ops is a Pages endpoint', () => {
@@ -36,26 +60,50 @@ test('/ops is a page, /api/ops is a Pages endpoint', () => {
 
 test('/api/ops: B12 translation alert, archive re-check and meaning-check samples', async () => {
   const values = {
-    translation_alert: JSON.stringify({ active: [{ type: 'stalled:ru', language: 'ru', count: 2 }], notified: {} }),
+    translation_alert: JSON.stringify({
+      active: [{ type: 'stalled:ru', language: 'ru', count: 2 }],
+      notified: {},
+    }),
     translation_archive: JSON.stringify({ ru: { last_pass: { checked: 40, redo: 1 } } }),
   };
-  const stub = { prepare: sql => ({ bind: (...a) => ({ all: async () => {
-    const key = (sql.match(/key='([a-z_]+)'/) || [])[1] || (/key=\?/.test(sql) ? a[0] : null);
-    if (key && String(key).startsWith('meaning_check_samples:')) return { results: [{ value: JSON.stringify([{ code: 'meaning:actor_swapped' }]) }] };
-    return { results: values[key] ? [{ value: values[key], updated_ms: 1 }] : [] };
-  } }) }) };
+  const stub = {
+    prepare: sql => ({
+      bind: (...a) => ({
+        all: async () => {
+          const key = (sql.match(/key='([a-z_]+)'/) || [])[1] || (/key=\?/.test(sql) ? a[0] : null);
+          if (key && String(key).startsWith('meaning_check_samples:'))
+            return { results: [{ value: JSON.stringify([{ code: 'meaning:actor_swapped' }]) }] };
+          return { results: values[key] ? [{ value: values[key], updated_ms: 1 }] : [] };
+        },
+      }),
+    }),
+  };
   const body = await (await handlePages(req('admin:admin'), { DB: stub, NEWS_DB: stub })).json();
-  assert.deepEqual(body.translations.alert.active.map(a => a.type), ['stalled:ru']);
+  assert.deepEqual(
+    body.translations.alert.active.map(a => a.type),
+    ['stalled:ru'],
+  );
   assert.equal(body.translations.archive.ru.last_pass.redo, 1);
   assert.equal(body.translations.meaning_samples[0].code, 'meaning:actor_swapped');
 });
 
 test('/api/ops: visitors summary from usage_daily (Web Analytics), null until the first collection', async () => {
   const summary = { visits_24h: 17, pageviews_24h: 41, visits_7d: 95, pageviews_7d: 230, days: [] };
-  const stub = rows => ({ prepare: sql => ({ bind: () => ({ all: async () => ({
-    results: /usage_daily/.test(sql) && /site_visitors/.test(sql) ? rows : [],
-  }) }) }) });
-  const got = await (await handlePages(req('admin:admin'), { DB: stub([{ detail: JSON.stringify(summary), collected_ms: 5 }]), NEWS_DB: stub([]) })).json();
+  const stub = rows => ({
+    prepare: sql => ({
+      bind: () => ({
+        all: async () => ({
+          results: /usage_daily/.test(sql) && /site_visitors/.test(sql) ? rows : [],
+        }),
+      }),
+    }),
+  });
+  const got = await (
+    await handlePages(req('admin:admin'), {
+      DB: stub([{ detail: JSON.stringify(summary), collected_ms: 5 }]),
+      NEWS_DB: stub([]),
+    })
+  ).json();
   assert.equal(got.visitors.visits_24h, 17);
   assert.equal(got.visitors.pageviews_7d, 230);
   assert.equal(got.visitors.collected_ms, 5);
