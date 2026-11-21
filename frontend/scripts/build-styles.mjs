@@ -29,6 +29,7 @@ export function assembleStyles({ includeRefinements = true } = {}) {
     css += readFileSync(resolve(frontendRoot, 'src/components/HomeHero/HomeHero.css'), 'utf8');
     css += readFileSync(resolve(frontendRoot, 'src/components/TopNow/TopNow.css'), 'utf8');
     css += readFileSync(resolve(frontendRoot, 'src/pages/Home/Home.e.css'), 'utf8');
+    css += readFileSync(resolve(frontendRoot, 'src/styles/pages.e.css'), 'utf8');
   }
   return css;
 }
