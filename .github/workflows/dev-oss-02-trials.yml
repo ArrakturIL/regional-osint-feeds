@@ -1,0 +1,33 @@
+name: DEV-OSS-02 isolated OSS candidates (no production)
+on:
+  pull_request:
+    paths: ['trials/dev-oss-02/**', '.github/workflows/dev-oss-02-trials.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-trial:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: trials/dev-oss-02
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned test-only deps with no lifecycle scripts
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Verify baseline gaps and all candidate contract fixtures
+        run: npm test
+      - name: Compare source processing, language detection, segmentation and HTML extraction (synthetic fixtures)
+        run: npm run probe
+      - name: Bundle XML parser for browser-compatible execution (NOT Cloudflare deployment)
+        run: |
+          npm run bundle:xml
+          wc -c tmp/candidate.bundle.mjs
+          ./node_modules/.bin/esbuild candidate.mjs --bundle --minify --format=esm --platform=browser --target=es2022 --outfile=tmp/candidate.min.mjs
+          wc -c tmp/candidate.min.mjs
+      - name: Record non-production limits
+        run: echo 'Node benchmarks are NOT Cloudflare Workers CPU. No source fetch, secrets, deployment, or production write occurred.' >> "$GITHUB_STEP_SUMMARY"

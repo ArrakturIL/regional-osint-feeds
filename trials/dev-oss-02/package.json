@@ -1,0 +1,21 @@
+{
+  "name": "regional-watch-dev-oss-02-trials",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test *.test.mjs",
+    "probe": "node probes.mjs",
+    "bundle:xml": "esbuild candidate.mjs --bundle --format=esm --platform=browser --target=es2022 --outfile=tmp/candidate.bundle.mjs"
+  },
+  "dependencies": {
+    "fast-xml-parser": "5.12.1",
+    "cheerio": "1.2.0",
+    "@mozilla/readability": "0.6.0",
+    "jsdom": "25.0.1",
+    "franc-min": "6.2.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.0"
+  }
+}
