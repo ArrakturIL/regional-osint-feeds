@@ -8,15 +8,16 @@
 
 ## Карта документов
 
-| Файл                                | О чём                                  |
-| ----------------------------------- | -------------------------------------- |
-| `docs/STATUS.md`                    | состояние, очередь, решения владельца  |
-| `docs/architecture/release.md`      | релиз, проверки, откат, секреты        |
-| `docs/architecture/collectors.md`   | сборщики GitHub Actions → Neon → D1    |
-| `docs/architecture/translations.md` | конвейер переводов и проверок (блок B) |
-| `docs/gpt-automations.md`           | контракт плановых задач GPT с сайтом   |
-| `docs/design/redesign-2077.md`      | дизайн-токены темы «2077»              |
-| `scripts/qa/README.md`              | браузерные QA-скрипты                  |
+| Файл                                 | О чём                                   |
+| ------------------------------------ | --------------------------------------- |
+| `docs/STATUS.md`                     | состояние, очередь, решения владельца   |
+| `docs/architecture/release.md`       | релиз, проверки, откат, секреты         |
+| `docs/architecture/collectors.md`    | сборщики GitHub Actions → Neon → D1     |
+| `docs/architecture/translations.md`  | конвейер переводов и проверок (блок B)  |
+| `docs/architecture/tension-index.md` | индекс напряжённости: показатели, норма |
+| `docs/gpt-automations.md`            | контракт плановых задач GPT с сайтом    |
+| `docs/design/redesign-2077.md`       | дизайн-токены темы «2077»               |
+| `scripts/qa/README.md`               | браузерные QA-скрипты                   |
 
 Истории в репозитории нет: старые планы, аудиты и чекпойнты удалены 21.11 и доступны через `git log`.
 
@@ -54,10 +55,10 @@
 
 - Новый тест-файл добавь в явный список `.github/workflows/regional-watch-app-check.yml`, иначе CI его не запустит.
 - Новый или удалённый модуль меняет счётчики:
-  - `tests/architecture/arch07-integration-acceptance.test.mjs` — модули и рёбра импортов, сейчас 103 и 271; Editor — 51;
+  - `tests/architecture/arch07-integration-acceptance.test.mjs` — модули и рёбра импортов, сейчас 106 и 274; Editor — 54;
   - `editor-cross-component-acceptance`;
-  - Monitor: `backend/monitor/build-order.json` и `source-parity` (45);
-  - frontend: `frontend/build-order.json` и `source-parity` (56).
+  - Monitor: `backend/monitor/build-order.json` и `source-parity` (44);
+  - frontend: `frontend/build-order.json` и `source-parity` (58).
 - Сборщик без JSON в git (как ADS-B): вне `GITHUB_JSON_SOURCES`, но в `MIRROR_SOURCES` Monitor и в CHECK `source_key` обеих схем (см. `docs/architecture/collectors.md`).
 - D1 CORE: без `ALTER TABLE … RENAME`, таблицу пересоздавать копированием.
 - Preview Pages делит D1 и Workers с production. Запросы, меняющие состояние, на preview не делать.
