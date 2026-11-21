@@ -4,14 +4,14 @@ on:
   push:
     branches: [main]
     paths:
-      - "scripts/collect_gdelt.py"
-      - "scripts/test_gdelt.py"
-      - "scripts/collector_rollout_flags.py"
-      - "config/collector-rollout.json"
-      - ".github/workflows/gdelt.yml"
+      - 'scripts/collect_gdelt.py'
+      - 'scripts/test_gdelt.py'
+      - 'scripts/collector_rollout_flags.py'
+      - 'config/collector-rollout.json'
+      - '.github/workflows/gdelt.yml'
   workflow_dispatch:
   schedule:
-    - cron: "37 * * * *"
+    - cron: '37 * * * *'
 
 permissions:
   contents: write
@@ -51,7 +51,7 @@ jobs:
           persist-credentials: true
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
       - name: Read per-source approved cutover policy
         id: rollout
         run: python -m scripts.collector_rollout_flags --source gdelt

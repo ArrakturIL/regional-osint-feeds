@@ -4,11 +4,11 @@ on:
   push:
     branches: [main]
     paths:
-      - "scripts/collect_marad.py"
-      - ".github/workflows/marad.yml"
+      - 'scripts/collect_marad.py'
+      - '.github/workflows/marad.yml'
   workflow_dispatch:
   schedule:
-    - cron: "27 1,7,13,19 * * *"
+    - cron: '27 1,7,13,19 * * *'
 
 permissions:
   contents: write

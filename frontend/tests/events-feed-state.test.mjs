@@ -30,7 +30,10 @@ function render({ he = false, cases, error, feed }) {
     Head() {},
     StoryDossier() {},
   };
-  vm.runInNewContext(src + '\nthis.view = CasesPageV2(args);', Object.assign(ctx, { args: { visible: true, cases, error, feed } }));
+  vm.runInNewContext(
+    src + '\nthis.view = CasesPageV2(args);',
+    Object.assign(ctx, { args: { visible: true, cases, error, feed } }),
+  );
   const nodes = [];
   const walk = n => {
     if (!n || typeof n !== 'object') return;
@@ -39,7 +42,14 @@ function render({ he = false, cases, error, feed }) {
   };
   walk(ctx.view);
   const text = n => (typeof n === 'string' ? n : (n?.children || []).map(text).join(''));
-  return { nodes, FeedState, text: nodes.filter(n => n.type === 'p').map(text).join('\n') };
+  return {
+    nodes,
+    FeedState,
+    text: nodes
+      .filter(n => n.type === 'p')
+      .map(text)
+      .join('\n'),
+  };
 }
 
 const story = { id: 's1', group: 'other' };
@@ -49,11 +59,19 @@ for (const he of [false, true]) {
   const lang = he ? 'HE' : 'RU';
   test(`${lang}: last-good list with failed refresh shows FeedState, not a raw error`, () => {
     const r = render({ he, cases: { stories: [story] }, error: 'HTTP 503', feed: failedFeed });
-    assert.ok(r.nodes.some(n => n.type === r.FeedState), 'FeedState note is rendered');
+    assert.ok(
+      r.nodes.some(n => n.type === r.FeedState),
+      'FeedState note is rendered',
+    );
     assert.doesNotMatch(r.text, /HTTP 503|Ошибка загрузки событий|שגיאה בטעינת אירועים/);
   });
   test(`${lang}: nothing loaded shows exactly one FeedState and no raw parser text`, () => {
-    const r = render({ he, cases: null, error: "Unexpected token '<'", feed: { ...failedFeed, value: null } });
+    const r = render({
+      he,
+      cases: null,
+      error: "Unexpected token '<'",
+      feed: { ...failedFeed, value: null },
+    });
     assert.equal(r.nodes.filter(n => n.type === r.FeedState).length, 1);
     assert.doesNotMatch(r.text, /Unexpected token/);
   });

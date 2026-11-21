@@ -1,11 +1,81 @@
 name: Regional Watch application source checks
 on:
   push:
-    branches: [refactor/regional-watch-modular-20261114, feature/integrated-data-quality-neon-20261115, release/regional-watch-architecture-20261115, main]
+    branches:
+      [
+        refactor/regional-watch-modular-20261114,
+        feature/integrated-data-quality-neon-20261115,
+        release/regional-watch-architecture-20261115,
+        main,
+      ]
     # Data collectors commit JSON to main frequently. Never rebuild/redeploy for data-only commits.
-    paths: ['backend/**', 'frontend/**', 'shared/**', 'tests/**', 'deploy/**', 'scripts/release/**', 'scripts/audit_collector_cache.py', 'scripts/test_audit_collector_cache.py', 'scripts/test_p1_backup_contract.py', 'scripts/sync_collector_shadows.py', 'scripts/sync_neon_primary_to_d1.py', 'scripts/test_sync_neon_primary_to_d1.py', 'scripts/collector_rollout_flags.py', 'scripts/test_collector_rollout_flags.py', 'config/collector-rollout.json', 'config/source-controls.json', 'config/usage-budgets.json', 'scripts/source_control.py', 'scripts/source_gate.py', 'scripts/test_source_gate.py', 'scripts/test_source_control.py', 'scripts/usage_report.py', 'scripts/test_usage_report.py', 'storage/cloudflare/004_source_controls.sql', '.github/workflows/gdelt.yml', 'scripts/test_collector_shadow_pipeline.py', '.github/workflows/collector-shadow-sync.yml', 'storage/cloudflare/002_p1_translation_repair_backups.sql', 'storage/cloudflare/003_p1_translation_backup_capture.sql', '.github/workflows/regional-watch-app-check.yml']
+    paths:
+      [
+        'backend/**',
+        'frontend/**',
+        'shared/**',
+        'tests/**',
+        'deploy/**',
+        'scripts/release/**',
+        'scripts/audit_collector_cache.py',
+        'scripts/test_audit_collector_cache.py',
+        'scripts/test_p1_backup_contract.py',
+        'scripts/sync_collector_shadows.py',
+        'scripts/sync_neon_primary_to_d1.py',
+        'scripts/test_sync_neon_primary_to_d1.py',
+        'scripts/collector_rollout_flags.py',
+        'scripts/test_collector_rollout_flags.py',
+        'config/collector-rollout.json',
+        'config/source-controls.json',
+        'config/usage-budgets.json',
+        'scripts/source_control.py',
+        'scripts/source_gate.py',
+        'scripts/test_source_gate.py',
+        'scripts/test_source_control.py',
+        'scripts/usage_report.py',
+        'scripts/test_usage_report.py',
+        'storage/cloudflare/004_source_controls.sql',
+        '.github/workflows/gdelt.yml',
+        'scripts/test_collector_shadow_pipeline.py',
+        '.github/workflows/collector-shadow-sync.yml',
+        'storage/cloudflare/002_p1_translation_repair_backups.sql',
+        'storage/cloudflare/003_p1_translation_backup_capture.sql',
+        '.github/workflows/regional-watch-app-check.yml',
+      ]
   pull_request:
-    paths: ['backend/**', 'frontend/**', 'shared/**', 'tests/**', 'deploy/**', 'scripts/release/**', 'scripts/audit_collector_cache.py', 'scripts/test_audit_collector_cache.py', 'scripts/test_p1_backup_contract.py', 'scripts/sync_collector_shadows.py', 'scripts/sync_neon_primary_to_d1.py', 'scripts/test_sync_neon_primary_to_d1.py', 'scripts/collector_rollout_flags.py', 'scripts/test_collector_rollout_flags.py', 'config/collector-rollout.json', 'config/source-controls.json', 'config/usage-budgets.json', 'scripts/source_control.py', 'scripts/source_gate.py', 'scripts/test_source_gate.py', 'scripts/test_source_control.py', 'scripts/usage_report.py', 'scripts/test_usage_report.py', 'storage/cloudflare/004_source_controls.sql', '.github/workflows/gdelt.yml', 'scripts/test_collector_shadow_pipeline.py', '.github/workflows/collector-shadow-sync.yml', 'storage/cloudflare/002_p1_translation_repair_backups.sql', 'storage/cloudflare/003_p1_translation_backup_capture.sql', '.github/workflows/regional-watch-app-check.yml']
+    paths:
+      [
+        'backend/**',
+        'frontend/**',
+        'shared/**',
+        'tests/**',
+        'deploy/**',
+        'scripts/release/**',
+        'scripts/audit_collector_cache.py',
+        'scripts/test_audit_collector_cache.py',
+        'scripts/test_p1_backup_contract.py',
+        'scripts/sync_collector_shadows.py',
+        'scripts/sync_neon_primary_to_d1.py',
+        'scripts/test_sync_neon_primary_to_d1.py',
+        'scripts/collector_rollout_flags.py',
+        'scripts/test_collector_rollout_flags.py',
+        'config/collector-rollout.json',
+        'config/source-controls.json',
+        'config/usage-budgets.json',
+        'scripts/source_control.py',
+        'scripts/source_gate.py',
+        'scripts/test_source_gate.py',
+        'scripts/test_source_control.py',
+        'scripts/usage_report.py',
+        'scripts/test_usage_report.py',
+        'storage/cloudflare/004_source_controls.sql',
+        '.github/workflows/gdelt.yml',
+        'scripts/test_collector_shadow_pipeline.py',
+        '.github/workflows/collector-shadow-sync.yml',
+        'storage/cloudflare/002_p1_translation_repair_backups.sql',
+        'storage/cloudflare/003_p1_translation_backup_capture.sql',
+        '.github/workflows/regional-watch-app-check.yml',
+      ]
 permissions:
   contents: read
 jobs:
@@ -186,7 +256,19 @@ jobs:
     if: >-
       (github.event_name == 'push' && (github.ref == 'refs/heads/refactor/regional-watch-modular-20261114' || github.ref == 'refs/heads/feature/integrated-data-quality-neon-20261115' || github.ref == 'refs/heads/release/regional-watch-architecture-20261115'))
       || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'release/regional-watch-architecture-20261115' && github.base_ref == 'main')
-    needs: [editor-source, frontend-source, monitor-source, modern-bundles, pages-documents, pages-static, pages-routing, pages-overview, pages-data, pages-runtime]
+    needs:
+      [
+        editor-source,
+        frontend-source,
+        monitor-source,
+        modern-bundles,
+        pages-documents,
+        pages-static,
+        pages-routing,
+        pages-overview,
+        pages-data,
+        pages-runtime,
+      ]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -297,10 +379,21 @@ jobs:
           echo "Preview release source: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
           echo 'Preview branch: rw-integrated-preview or rw-modular-preview (production branch remains main)' >> "$GITHUB_STEP_SUMMARY"
 
-
   release-bundle:
     name: Build immutable three-component release
-    needs: [editor-source, frontend-source, monitor-source, modern-bundles, pages-documents, pages-static, pages-routing, pages-overview, pages-data, pages-runtime]
+    needs:
+      [
+        editor-source,
+        frontend-source,
+        monitor-source,
+        modern-bundles,
+        pages-documents,
+        pages-static,
+        pages-routing,
+        pages-overview,
+        pages-data,
+        pages-runtime,
+      ]
     runs-on: ubuntu-latest
     timeout-minutes: 12
     permissions:

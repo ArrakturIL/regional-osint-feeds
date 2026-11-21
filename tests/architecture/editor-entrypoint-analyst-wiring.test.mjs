@@ -9,25 +9,33 @@ import editor from '../../backend/editor/src/index.js';
 
 function fakeDb(log) {
   const stmt = sql => ({
-    bind: (...args) => { log.push({sql, args}); return stmt(sql); },
+    bind: (...args) => {
+      log.push({ sql, args });
+      return stmt(sql);
+    },
     first: async () => null,
-    all: async () => ({results: []}),
-    run: async () => ({meta: {changes: 1}}),
+    all: async () => ({ results: [] }),
+    run: async () => ({ meta: { changes: 1 } }),
   });
-  return {prepare: sql => stmt(sql), batch: async () => []};
+  return { prepare: sql => stmt(sql), batch: async () => [] };
 }
 
 test('scheduled analyst run at :30 reads the analysts cache through CORE_DB', async () => {
   const log = [];
   const db = fakeDb(log);
-  const env = {CORE_DB: db, NEWS_DB: fakeDb([]), AI: {run: async () => ({})},
-    REGIONAL_EDITOR_CACHE_SOURCES: 'analysts,news_translation'};
+  const env = {
+    CORE_DB: db,
+    NEWS_DB: fakeDb([]),
+    AI: { run: async () => ({}) },
+    REGIONAL_EDITOR_CACHE_SOURCES: 'analysts,news_translation',
+  };
   const pending = [];
   const realFetch = globalThis.fetch;
-  globalThis.fetch = async () => new Response('{}', {status: 404});
+  globalThis.fetch = async () => new Response('{}', { status: 404 });
   try {
-    await editor.scheduled({scheduledTime: Date.UTC(2026, 10, 17, 13, 30)}, env,
-      {waitUntil: p => pending.push(Promise.resolve(p))});
+    await editor.scheduled({ scheduledTime: Date.UTC(2026, 10, 17, 13, 30) }, env, {
+      waitUntil: p => pending.push(Promise.resolve(p)),
+    });
     await Promise.allSettled(pending);
   } finally {
     globalThis.fetch = realFetch;

@@ -11,15 +11,31 @@ const src = readFileSync(new URL('../src/components/Header/Header.js', import.me
 function render(he, go) {
   const h = (type, props, ...children) => ({ type, props: props || {}, children: children.flat() });
   const ctx = {
-    UI_HE: he, h, t: (type, className, ...c) => h(type, { className }, ...c),
-    useState: v => [v, () => {}], useRef: v => ({ current: v }), useEffect: () => {},
-    UiIcon() {}, location: { pathname: he ? '/he' : '/', search: '', hash: '' }, localStorage: { setItem() {} },
+    UI_HE: he,
+    h,
+    t: (type, className, ...c) => h(type, { className }, ...c),
+    useState: v => [v, () => {}],
+    useRef: v => ({ current: v }),
+    useEffect: () => {},
+    UiIcon() {},
+    location: { pathname: he ? '/he' : '/', search: '', hash: '' },
+    localStorage: { setItem() {} },
   };
-  vm.runInNewContext(src + '\nthis.view = GlobalHeader(args);', Object.assign(ctx, { args: { active: '/', overview: null, go } }));
+  vm.runInNewContext(
+    src + '\nthis.view = GlobalHeader(args);',
+    Object.assign(ctx, { args: { active: '/', overview: null, go } }),
+  );
   const out = [];
-  const walk = n => { if (n && typeof n === 'object') { out.push(n); (n.children || []).forEach(walk); } };
+  const walk = n => {
+    if (n && typeof n === 'object') {
+      out.push(n);
+      (n.children || []).forEach(walk);
+    }
+  };
   walk(ctx.view);
-  return out.find(n => n.type === 'nav' && n.props.id === 'rw-site-links').children.filter(n => n.type === 'a');
+  return out
+    .find(n => n.type === 'nav' && n.props.id === 'rw-site-links')
+    .children.filter(n => n.type === 'a');
 }
 const click = (link, mods = {}) => {
   let prevented = false;
@@ -39,7 +55,8 @@ for (const he of [false, true]) {
 test('modifier / middle clicks keep native behaviour (new tab)', () => {
   const calls = [];
   const [, events] = render(false, p => calls.push(p));
-  for (const m of [{ ctrlKey: true }, { metaKey: true }, { shiftKey: true }, { button: 1 }]) assert.equal(click(events, m), false);
+  for (const m of [{ ctrlKey: true }, { metaKey: true }, { shiftKey: true }, { button: 1 }])
+    assert.equal(click(events, m), false);
   assert.equal(calls.length, 0);
 });
 test('without a router the links stay plain hrefs', () => {

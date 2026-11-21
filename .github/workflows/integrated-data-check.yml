@@ -3,85 +3,85 @@ on:
   push:
     branches: [feature/integrated-data-quality-neon-20261115]
     paths:
-      - "storage/neon/**"
-      - "backend/monitor/src/mirrors/**"
-      - "tests/architecture/collector-cache.test.mjs"
-      - "tests/architecture/collector-fallback-policy.test.mjs"
-      - ".github/workflows/news-open-source-translation.yml"
-      - ".github/workflows/unosat-analyses.yml"
-      - ".github/workflows/satellite.yml"
-      - ".github/workflows/marad.yml"
-      - ".github/workflows/copernicus-analytics.yml"
-      - ".github/workflows/centcom-test.yml"
-      - ".github/workflows/analysts.yml"
-      - ".github/workflows/gdelt.yml"
-      - "scripts/neon_mirror.py"
-      - "scripts/neon_to_d1.py"
-      - "scripts/test_neon_to_d1.py"
-      - "scripts/test_gdelt_cursor.py"
-      - "scripts/test_satellite_status_heartbeat.py"
-      - "scripts/collect_satellite.py"
-      - "storage/cloudflare/**"
-      - "scripts/publish_neon_mirror.py"
-      - "scripts/test_neon_mirror.py"
-      - "scripts/test_live_smoke_contract.py"
-      - "scripts/test_live_regional_watch.py"
-      - "scripts/test_publish_neon_mirror.py"
-      - "tests/architecture/translation-semantics.test.mjs"
-      - "scripts/translate_news_open_source.py"
-      - "scripts/translation_semantics.py"
-      - "scripts/test_translate_news_open_source.py"
-      - "backend/editor/src/translations/**"
-      - "backend/editor/src/mirrors/**"
-      - "tests/architecture/editor-mirror-cache.test.mjs"
-      - "backend/editor/src/news/**"
-      - "tests/architecture/news-quality.test.mjs"
-      - "tests/architecture/news-localization-provenance.test.mjs"
-      - "backend/editor/src/localization/**"
-      - "frontend/src/**"
-      - "frontend/tests/ui-qa.test.mjs"
-      - "tests/architecture/editor-modules.test.mjs"
-      - ".github/workflows/integrated-data-check.yml"
+      - 'storage/neon/**'
+      - 'backend/monitor/src/mirrors/**'
+      - 'tests/architecture/collector-cache.test.mjs'
+      - 'tests/architecture/collector-fallback-policy.test.mjs'
+      - '.github/workflows/news-open-source-translation.yml'
+      - '.github/workflows/unosat-analyses.yml'
+      - '.github/workflows/satellite.yml'
+      - '.github/workflows/marad.yml'
+      - '.github/workflows/copernicus-analytics.yml'
+      - '.github/workflows/centcom-test.yml'
+      - '.github/workflows/analysts.yml'
+      - '.github/workflows/gdelt.yml'
+      - 'scripts/neon_mirror.py'
+      - 'scripts/neon_to_d1.py'
+      - 'scripts/test_neon_to_d1.py'
+      - 'scripts/test_gdelt_cursor.py'
+      - 'scripts/test_satellite_status_heartbeat.py'
+      - 'scripts/collect_satellite.py'
+      - 'storage/cloudflare/**'
+      - 'scripts/publish_neon_mirror.py'
+      - 'scripts/test_neon_mirror.py'
+      - 'scripts/test_live_smoke_contract.py'
+      - 'scripts/test_live_regional_watch.py'
+      - 'scripts/test_publish_neon_mirror.py'
+      - 'tests/architecture/translation-semantics.test.mjs'
+      - 'scripts/translate_news_open_source.py'
+      - 'scripts/translation_semantics.py'
+      - 'scripts/test_translate_news_open_source.py'
+      - 'backend/editor/src/translations/**'
+      - 'backend/editor/src/mirrors/**'
+      - 'tests/architecture/editor-mirror-cache.test.mjs'
+      - 'backend/editor/src/news/**'
+      - 'tests/architecture/news-quality.test.mjs'
+      - 'tests/architecture/news-localization-provenance.test.mjs'
+      - 'backend/editor/src/localization/**'
+      - 'frontend/src/**'
+      - 'frontend/tests/ui-qa.test.mjs'
+      - 'tests/architecture/editor-modules.test.mjs'
+      - '.github/workflows/integrated-data-check.yml'
   pull_request:
     branches: [main]
     paths:
-      - "storage/neon/**"
-      - "backend/monitor/src/mirrors/**"
-      - "tests/architecture/collector-cache.test.mjs"
-      - "tests/architecture/collector-fallback-policy.test.mjs"
-      - ".github/workflows/news-open-source-translation.yml"
-      - ".github/workflows/unosat-analyses.yml"
-      - ".github/workflows/satellite.yml"
-      - ".github/workflows/marad.yml"
-      - ".github/workflows/copernicus-analytics.yml"
-      - ".github/workflows/centcom-test.yml"
-      - ".github/workflows/analysts.yml"
-      - ".github/workflows/gdelt.yml"
-      - "scripts/neon_mirror.py"
-      - "scripts/neon_to_d1.py"
-      - "scripts/test_neon_to_d1.py"
-      - "scripts/test_gdelt_cursor.py"
-      - "scripts/test_satellite_status_heartbeat.py"
-      - "scripts/collect_satellite.py"
-      - "storage/cloudflare/**"
-      - "scripts/test_neon_mirror.py"
-      - "scripts/test_live_smoke_contract.py"
-      - "scripts/test_live_regional_watch.py"
-      - "tests/architecture/translation-semantics.test.mjs"
-      - "scripts/translate_news_open_source.py"
-      - "scripts/translation_semantics.py"
-      - "scripts/test_translate_news_open_source.py"
-      - "backend/editor/src/translations/**"
-      - "backend/editor/src/mirrors/**"
-      - "tests/architecture/editor-mirror-cache.test.mjs"
-      - "backend/editor/src/news/**"
-      - "tests/architecture/news-quality.test.mjs"
-      - "tests/architecture/news-localization-provenance.test.mjs"
-      - "backend/editor/src/localization/**"
-      - "frontend/src/**"
-      - "frontend/tests/ui-qa.test.mjs"
-      - "tests/architecture/editor-modules.test.mjs"
-      - ".github/workflows/integrated-data-check.yml"
+      - 'storage/neon/**'
+      - 'backend/monitor/src/mirrors/**'
+      - 'tests/architecture/collector-cache.test.mjs'
+      - 'tests/architecture/collector-fallback-policy.test.mjs'
+      - '.github/workflows/news-open-source-translation.yml'
+      - '.github/workflows/unosat-analyses.yml'
+      - '.github/workflows/satellite.yml'
+      - '.github/workflows/marad.yml'
+      - '.github/workflows/copernicus-analytics.yml'
+      - '.github/workflows/centcom-test.yml'
+      - '.github/workflows/analysts.yml'
+      - '.github/workflows/gdelt.yml'
+      - 'scripts/neon_mirror.py'
+      - 'scripts/neon_to_d1.py'
+      - 'scripts/test_neon_to_d1.py'
+      - 'scripts/test_gdelt_cursor.py'
+      - 'scripts/test_satellite_status_heartbeat.py'
+      - 'scripts/collect_satellite.py'
+      - 'storage/cloudflare/**'
+      - 'scripts/test_neon_mirror.py'
+      - 'scripts/test_live_smoke_contract.py'
+      - 'scripts/test_live_regional_watch.py'
+      - 'tests/architecture/translation-semantics.test.mjs'
+      - 'scripts/translate_news_open_source.py'
+      - 'scripts/translation_semantics.py'
+      - 'scripts/test_translate_news_open_source.py'
+      - 'backend/editor/src/translations/**'
+      - 'backend/editor/src/mirrors/**'
+      - 'tests/architecture/editor-mirror-cache.test.mjs'
+      - 'backend/editor/src/news/**'
+      - 'tests/architecture/news-quality.test.mjs'
+      - 'tests/architecture/news-localization-provenance.test.mjs'
+      - 'backend/editor/src/localization/**'
+      - 'frontend/src/**'
+      - 'frontend/tests/ui-qa.test.mjs'
+      - 'tests/architecture/editor-modules.test.mjs'
+      - '.github/workflows/integrated-data-check.yml'
   workflow_dispatch:
 
 permissions:
@@ -96,7 +96,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
       - name: Canonical external-smoke contract (offline)
         run: python -m unittest scripts.test_live_smoke_contract -v
       - name: Install image library for NASA collector offline tests
@@ -137,7 +137,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
       - name: Check repository secret presence without disclosing its value
         env:
           NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}

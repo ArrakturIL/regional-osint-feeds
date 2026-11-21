@@ -8,19 +8,19 @@ on:
   push:
     branches: [main]
     paths:
-      - "scripts/collect_adsb.py"
-      - "scripts/test_collect_adsb.py"
-      - "config/adsb-collector.json"
-      - ".github/workflows/adsb.yml"
+      - 'scripts/collect_adsb.py'
+      - 'scripts/test_collect_adsb.py'
+      - 'config/adsb-collector.json'
+      - '.github/workflows/adsb.yml'
   pull_request:
     paths:
-      - "scripts/collect_adsb.py"
-      - "scripts/test_collect_adsb.py"
-      - "config/adsb-collector.json"
-      - ".github/workflows/adsb.yml"
+      - 'scripts/collect_adsb.py'
+      - 'scripts/test_collect_adsb.py'
+      - 'config/adsb-collector.json'
+      - '.github/workflows/adsb.yml'
   workflow_dispatch:
   schedule:
-    - cron: "7,22,37,52 * * * *"
+    - cron: '7,22,37,52 * * * *'
 
 permissions:
   contents: read
@@ -59,7 +59,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
       - name: Offline collector checks
         run: python -m unittest scripts.test_collect_adsb
       - name: Collect point ADS-B snapshot

@@ -12,7 +12,10 @@ async function query(sql) {
     `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/d1/database/${NEWS_DB}/query`,
     {
       method: 'POST',
-      headers: { authorization: 'Bearer ' + process.env.CLOUDFLARE_D1_API_TOKEN, 'content-type': 'application/json' },
+      headers: {
+        authorization: 'Bearer ' + process.env.CLOUDFLARE_D1_API_TOKEN,
+        'content-type': 'application/json',
+      },
       body: JSON.stringify({ sql, params: [since] }),
     },
   );
@@ -45,7 +48,10 @@ for (const [field, source, target] of pairs) {
 }
 console.log('checked', JSON.stringify(counts));
 const sorted = Object.entries(hits).sort((a, b) => b[1].length - a[1].length);
-console.log('new rejections', sorted.reduce((n, [, v]) => n + v.length, 0));
+console.log(
+  'new rejections',
+  sorted.reduce((n, [, v]) => n + v.length, 0),
+);
 for (const [key, list] of sorted) {
   console.log(`${list.length}\t${key}`);
   for (const ex of list.slice(0, 2)) console.log('\t- ' + ex.replace(/\s+/g, ' '));

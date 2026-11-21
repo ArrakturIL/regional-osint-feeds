@@ -1,16 +1,50 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync,existsSync} from 'node:fs';
-import {spawnSync} from 'node:child_process';
-import {dirname,resolve} from 'node:path';
-import {fileURLToPath} from 'node:url';
-import {assemble} from '../scripts/build.mjs';
-const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
-const repo=resolve(root,'../..');
-const manifest=JSON.parse(readFileSync(resolve(root,'build-order.json'),'utf8'));
-test('all 45 monitored source modules exist (incl. SYS-01 dispatch, H-04 source-controls; centcom-rss retired in Q12)',()=>{assert.equal(manifest.order.length,45);for(const x of manifest.order)assert.ok(existsSync(resolve(root,'src',x)),x)});
-test('assembled Monitor includes the gated D1 collector-cache reader',()=>{const current=assemble();assert.ok(current.includes('async function readD1CollectorSnapshot('));assert.ok(current.includes('COLLECTOR_CACHE_SOURCES'));assert.ok(current.replace(/\s+/g,'').replace(/"/g,"'").includes("readCollectorPair(env,'gdelt'"));});
-test('every module parses as an ES module',()=>{for(const x of manifest.order){const r=spawnSync(process.execPath,['--check',resolve(root,'src',x)],{encoding:'utf8'});assert.equal(r.status,0,x+': '+r.stderr)}});
-test('all named local imports resolve and their symbol is exported',()=>{for(const x of manifest.order){const path=resolve(root,'src',x),s=readFileSync(path,'utf8');for(const m of s.matchAll(/^import \{ ([^}]+) \} from '([^']+)';$/gm)){const target=resolve(dirname(path),m[2]);assert.ok(existsSync(target),x+' -> '+m[2]);const contents=readFileSync(target,'utf8');for(const sym of m[1].split(',').map(t=>t.trim()))assert.ok(contents.includes(sym),x+' -> '+sym);}}});
-test('scheduled and fetch entrypoints remain present',()=>{const entry=readFileSync(resolve(root,'src/index.js'),'utf8');assert.ok(entry.includes('export default {'));assert.ok(entry.includes('runSchedule(controller, env)'));assert.ok(entry.includes('fetch: read'));});
-test('Polymarket source and expiration protection still present',()=>{const p=readFileSync(resolve(root,'src/collectors/markets/polymarket.js'),'utf8');assert.ok(p.includes('polymarketSnapshots('));assert.ok(p.includes('end'));});
+import { readFileSync, existsSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { assemble } from '../scripts/build.mjs';
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const repo = resolve(root, '../..');
+const manifest = JSON.parse(readFileSync(resolve(root, 'build-order.json'), 'utf8'));
+test('all 45 monitored source modules exist (incl. SYS-01 dispatch, H-04 source-controls; centcom-rss retired in Q12)', () => {
+  assert.equal(manifest.order.length, 45);
+  for (const x of manifest.order) assert.ok(existsSync(resolve(root, 'src', x)), x);
+});
+test('assembled Monitor includes the gated D1 collector-cache reader', () => {
+  const current = assemble();
+  assert.ok(current.includes('async function readD1CollectorSnapshot('));
+  assert.ok(current.includes('COLLECTOR_CACHE_SOURCES'));
+  assert.ok(current.replace(/\s+/g, '').replace(/"/g, "'").includes("readCollectorPair(env,'gdelt'"));
+});
+test('every module parses as an ES module', () => {
+  for (const x of manifest.order) {
+    const r = spawnSync(process.execPath, ['--check', resolve(root, 'src', x)], { encoding: 'utf8' });
+    assert.equal(r.status, 0, x + ': ' + r.stderr);
+  }
+});
+test('all named local imports resolve and their symbol is exported', () => {
+  for (const x of manifest.order) {
+    const path = resolve(root, 'src', x),
+      s = readFileSync(path, 'utf8');
+    for (const m of s.matchAll(/^import \{ ([^}]+) \} from '([^']+)';$/gm)) {
+      const target = resolve(dirname(path), m[2]);
+      assert.ok(existsSync(target), x + ' -> ' + m[2]);
+      const contents = readFileSync(target, 'utf8');
+      for (const sym of m[1].split(',').map(t => t.trim()))
+        assert.ok(contents.includes(sym), x + ' -> ' + sym);
+    }
+  }
+});
+test('scheduled and fetch entrypoints remain present', () => {
+  const entry = readFileSync(resolve(root, 'src/index.js'), 'utf8');
+  assert.ok(entry.includes('export default {'));
+  assert.ok(entry.includes('runSchedule(controller, env)'));
+  assert.ok(entry.includes('fetch: read'));
+});
+test('Polymarket source and expiration protection still present', () => {
+  const p = readFileSync(resolve(root, 'src/collectors/markets/polymarket.js'), 'utf8');
+  assert.ok(p.includes('polymarketSnapshots('));
+  assert.ok(p.includes('end'));
+});

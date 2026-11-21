@@ -4,13 +4,13 @@ on:
   push:
     branches: [main]
     paths:
-      - "scripts/collect_centcom.py"
-      - "scripts/centcom_writeback.py"
-      - "scripts/test_centcom_writeback.py"
-      - ".github/workflows/centcom-test.yml"
+      - 'scripts/collect_centcom.py'
+      - 'scripts/centcom_writeback.py'
+      - 'scripts/test_centcom_writeback.py'
+      - '.github/workflows/centcom-test.yml'
   workflow_dispatch:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: '*/15 * * * *'
 
 permissions:
   contents: write

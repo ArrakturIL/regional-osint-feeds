@@ -3,7 +3,7 @@ name: Collect Copernicus EMS analysis metadata
 on:
   workflow_dispatch:
   schedule:
-    - cron: "13 */6 * * *"
+    - cron: '13 */6 * * *'
   push:
     branches: [main]
     paths:
@@ -54,7 +54,7 @@ jobs:
           persist-credentials: true
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
       - name: Validate collector without network
         run: python -m unittest discover -s scripts -p "test_copernicus.py" -v
       - name: Harvest public Copernicus EMS API

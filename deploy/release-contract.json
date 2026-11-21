@@ -43,9 +43,7 @@
         }
       ],
       "secrets": [],
-      "vars": [
-        "REGIONAL_EDITOR_CACHE_SOURCES"
-      ]
+      "vars": ["REGIONAL_EDITOR_CACHE_SOURCES"]
     },
     {
       "key": "monitor",
@@ -58,16 +56,8 @@
           "database_id": "c052acf3-b821-444a-92e4-ffd472a131f0"
         }
       ],
-      "secrets": [
-        "AIS_KEY",
-        "FIRMS_KEY",
-        "GFW_API_TOKEN",
-        "SUMMARY_TOKEN"
-      ],
-      "vars": [
-        "COLLECTOR_CACHE_SOURCES",
-        "REGION"
-      ]
+      "secrets": ["AIS_KEY", "FIRMS_KEY", "GFW_API_TOKEN", "SUMMARY_TOKEN"],
+      "vars": ["COLLECTOR_CACHE_SOURCES", "REGION"]
     }
   ],
   "schemas": [
@@ -84,42 +74,17 @@
           "status_sha256",
           "synced_at_ms"
         ],
-        "observations": [
-          "source",
-          "id",
-          "observed_at",
-          "payload"
-        ],
-        "analyst_items": [
-          "id",
-          "analyst_id",
-          "canonical_url",
-          "content_hash"
-        ]
+        "observations": ["source", "id", "observed_at", "payload"],
+        "analyst_items": ["id", "analyst_id", "canonical_url", "content_hash"]
       }
     },
     {
       "key": "news",
       "database_id": "d9ba2c51-d551-4615-bbe2-37e76e2d668a",
       "tables": {
-        "news_items": [
-          "id",
-          "headline",
-          "source",
-          "published_ms"
-        ],
-        "regional_translation_repair_backups": [
-          "batch_id",
-          "item_id",
-          "news_json",
-          "hebrew_json"
-        ],
-        "regional_i18n": [
-          "kind",
-          "item_id",
-          "language",
-          "source_hash"
-        ]
+        "news_items": ["id", "headline", "source", "published_ms"],
+        "regional_translation_repair_backups": ["batch_id", "item_id", "news_json", "hebrew_json"],
+        "regional_i18n": ["kind", "item_id", "language", "source_hash"]
       }
     }
   ]

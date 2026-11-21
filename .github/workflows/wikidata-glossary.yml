@@ -8,15 +8,15 @@ name: Wikidata glossary refresh (B11)
 on:
   push:
     paths:
-      - "scripts/build_wikidata_glossary.py"
-      - "scripts/glossary-fp-report.mjs"
-      - "backend/editor/src/translations/glossary.mjs"
-      - "tests/architecture/translation-glossary.test.mjs"
-      - "config/glossary-wikidata.json"
-      - ".github/workflows/wikidata-glossary.yml"
+      - 'scripts/build_wikidata_glossary.py'
+      - 'scripts/glossary-fp-report.mjs'
+      - 'backend/editor/src/translations/glossary.mjs'
+      - 'tests/architecture/translation-glossary.test.mjs'
+      - 'config/glossary-wikidata.json'
+      - '.github/workflows/wikidata-glossary.yml'
   workflow_dispatch:
   schedule:
-    - cron: "41 3 1 * *"
+    - cron: '41 3 1 * *'
 
 permissions:
   contents: write
@@ -33,10 +33,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: '22'
       - name: Offline generator checks
         run: python -m unittest scripts.test_build_wikidata_glossary
       - name: Build glossary from Wikidata

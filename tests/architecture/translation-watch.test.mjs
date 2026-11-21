@@ -4,7 +4,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { newsDb, coreDb, addNews, ai } from './editor-d1-fixture.mjs';
 import { enqueueJobs, settleJob } from '../../backend/editor/src/translations/jobs.mjs';
-import { translationAlerts, recheckArchive, translationWatch, ALERT, ARCHIVE } from '../../backend/editor/src/translations/watch.mjs';
+import {
+  translationAlerts,
+  recheckArchive,
+  translationWatch,
+  ALERT,
+  ARCHIVE,
+} from '../../backend/editor/src/translations/watch.mjs';
 import { translateTitles } from '../../backend/editor/src/translations/scheduled.mjs';
 import { meaningCheck } from '../../backend/editor/src/translations/meaning-check.mjs';
 import { fingerprint, sourceText } from '../../backend/editor/src/localization/shared.mjs';
@@ -18,8 +24,16 @@ const atLane = (name, base = T0) => {
   while (LANES[Math.floor(t / 300000) % 3] !== name) t += 300000;
   return t;
 };
-const state = (db, key) => JSON.parse(db.one('SELECT value FROM editor_state WHERE key=?', key)?.value || 'null');
-const job = (id, language, tier, createdAt) => ({ kind: 'news', id, language, sourceHash: 'h-' + id, tier, discoveredMs: createdAt });
+const state = (db, key) =>
+  JSON.parse(db.one('SELECT value FROM editor_state WHERE key=?', key)?.value || 'null');
+const job = (id, language, tier, createdAt) => ({
+  kind: 'news',
+  id,
+  language,
+  sourceHash: 'h-' + id,
+  tier,
+  discoveredMs: createdAt,
+});
 
 // ---------- (a) alerts ----------
 test('alert: an urgent/important job pending over an hour, or 3+ manual in 24 h, per language', async () => {
@@ -29,7 +43,14 @@ test('alert: an urgent/important job pending over an hour, or 3+ manual in 24 h,
   await enqueueJobs(db, [job('n-old', 'he', 'normal')], T0 - 5 * HOUR); // normal: by quota, no alert
   for (const id of ['m1', 'm2', 'm3']) {
     await enqueueJobs(db, [job(id, 'he', 'normal')], T0 - 2 * HOUR);
-    for (let i = 0; i < 3; i++) await settleJob(db, { ...job(id, 'he', 'normal'), attempts: i }, 'rejected', { reason: 'x' }, T0 - HOUR);
+    for (let i = 0; i < 3; i++)
+      await settleJob(
+        db,
+        { ...job(id, 'he', 'normal'), attempts: i },
+        'rejected',
+        { reason: 'x' },
+        T0 - HOUR,
+      );
   }
   const out = await translationAlerts(db, T0);
   assert.deepEqual(out.active.map(a => a.type).sort(), ['manual:he', 'stalled:ru']);
@@ -51,21 +72,40 @@ test('alert: each type is announced at most once an hour and clears when the que
 });
 
 // ---------- (b) archive ----------
-const BAD_RU = { id: 'bad', headline: 'Iran fires missiles at Jordan', headline_ru: 'Иран выпустил ракеты по Израилю' };
-const GOOD_RU = { id: 'good', headline: 'Iran fires missiles at Jordan', headline_ru: 'Иран выпустил ракеты по Иордании' };
+const BAD_RU = {
+  id: 'bad',
+  headline: 'Iran fires missiles at Jordan',
+  headline_ru: 'Иран выпустил ракеты по Израилю',
+};
+const GOOD_RU = {
+  id: 'good',
+  headline: 'Iran fires missiles at Jordan',
+  headline_ru: 'Иран выпустил ракеты по Иордании',
+};
 
-test('archive RU: an accepted title that fails today\'s gates is queued again as a normal redo job', async () => {
+test("archive RU: an accepted title that fails today's gates is queued again as a normal redo job", async () => {
   const db = newsDb();
   const t = atLane('ru');
   addNews(db, { ...BAD_RU, published_ms: t - 2 * 86400000 });
   addNews(db, { ...GOOD_RU, published_ms: t - 86400000 });
-  addNews(db, { id: 'old', headline: BAD_RU.headline, headline_ru: BAD_RU.headline_ru, published_ms: t - 8 * 86400000 });
+  addNews(db, {
+    id: 'old',
+    headline: BAD_RU.headline,
+    headline_ru: BAD_RU.headline_ru,
+    published_ms: t - 8 * 86400000,
+  });
   const out = await recheckArchive({ NEWS_DB: db, CORE_DB: coreDb() }, t);
   assert.deepEqual([out.lane, out.state, out.queued], ['ru', 'pass_done', 1]);
   const j = db.one("SELECT * FROM translation_jobs WHERE language='ru'");
-  assert.deepEqual([j.item_id, j.tier, j.state, JSON.parse(j.payload_json).redo], ['bad', 'normal', 'pending', true]);
+  assert.deepEqual(
+    [j.item_id, j.tier, j.state, JSON.parse(j.payload_json).redo],
+    ['bad', 'normal', 'pending', true],
+  );
   const s = state(db, 'translation_archive').ru;
-  assert.deepEqual([s.last_pass.checked, s.last_pass.redo, s.examples[0].reason], [2, 1, 'jordan_name_missing']);
+  assert.deepEqual(
+    [s.last_pass.checked, s.last_pass.redo, s.examples[0].reason],
+    [2, 1, 'jordan_name_missing'],
+  );
   assert.ok(s.paused_until_ms >= t + ARCHIVE.pauseMs, 'next pass after a pause');
   assert.equal((await recheckArchive({ NEWS_DB: db, CORE_DB: coreDb() }, t + 15 * MIN)).state, 'paused');
 });
@@ -76,15 +116,22 @@ test('archive RU: the redo replaces the failing title in the normal queue, witho
   addNews(db, { ...BAD_RU, published_ms: t - HOUR });
   await recheckArchive({ NEWS_DB: db, CORE_DB: coreDb() }, t);
   const AI = ai((model, input) => ({
-    response: JSON.stringify(JSON.parse(input.messages[1].content).map(x => ({ id: x.id, title_ru: GOOD_RU.headline_ru }))),
+    response: JSON.stringify(
+      JSON.parse(input.messages[1].content).map(x => ({ id: x.id, title_ru: GOOD_RU.headline_ru })),
+    ),
     usage: { neurons: 40 },
   }));
   const out = await translateTitles({ NEWS_DB: db, AI }, t + MIN);
   assert.equal(out.translated, 1);
   assert.equal(db.one("SELECT headline_ru FROM news_items WHERE id='bad'").headline_ru, GOOD_RU.headline_ru);
   assert.equal(db.one("SELECT state FROM translation_jobs WHERE item_id='bad'").state, 'done');
-  assert.equal(db.one("SELECT count(*) n FROM sqlite_master WHERE name='translation_latency'").n
-    ? db.one("SELECT count(*) n FROM translation_latency").n : 0, 0, 'a redo is not a first display');
+  assert.equal(
+    db.one("SELECT count(*) n FROM sqlite_master WHERE name='translation_latency'").n
+      ? db.one('SELECT count(*) n FROM translation_latency').n
+      : 0,
+    0,
+    'a redo is not a first display',
+  );
   // The repaired title passes the next pass.
   db.raw.exec("DELETE FROM editor_state WHERE key='translation_archive'");
   assert.equal((await recheckArchive({ NEWS_DB: db, CORE_DB: coreDb() }, t + 2 * MIN + 15 * MIN)).queued, 0);
@@ -96,7 +143,9 @@ test('archive RU: a redo whose new title is rejected keeps the old row and count
   addNews(db, { ...BAD_RU, published_ms: t - HOUR });
   await recheckArchive({ NEWS_DB: db, CORE_DB: coreDb() }, t);
   const AI = ai((model, input) => ({
-    response: JSON.stringify(JSON.parse(input.messages[1].content).map(x => ({ id: x.id, title_ru: BAD_RU.headline_ru }))),
+    response: JSON.stringify(
+      JSON.parse(input.messages[1].content).map(x => ({ id: x.id, title_ru: BAD_RU.headline_ru })),
+    ),
     usage: { neurons: 40 },
   }));
   await translateTitles({ NEWS_DB: db, AI }, t + MIN);
@@ -125,11 +174,22 @@ test('archive HE: script and glossary failures in NEWS and CORE go back to the q
   const a = await recheckArchive(env, t);
   assert.deepEqual([a.lane, a.queued], ['he_news', 1]);
   const j = db.one("SELECT * FROM translation_jobs WHERE language='he'");
-  assert.deepEqual([j.item_id, j.tier, JSON.parse(j.payload_json).title], ['n-ar', 'normal', 'Iran warns Israel']);
+  assert.deepEqual(
+    [j.item_id, j.tier, JSON.parse(j.payload_json).title],
+    ['n-ar', 'normal', 'Iran warns Israel'],
+  );
 
   t = atLane('he_core', t);
-  core.raw.prepare("INSERT INTO analyst_publications VALUES('7','Iran fires missiles at Jordan','','','published',?)").run(t - HOUR);
-  const aText = sourceText('analyst', { headline: 'Iran fires missiles at Jordan', summary: '', short_quote: '' });
+  core.raw
+    .prepare(
+      "INSERT INTO analyst_publications VALUES('7','Iran fires missiles at Jordan','','','published',?)",
+    )
+    .run(t - HOUR);
+  const aText = sourceText('analyst', {
+    headline: 'Iran fires missiles at Jordan',
+    summary: '',
+    short_quote: '',
+  });
   await heRow(core, 'analyst', '7', aText, { title: 'איראן שיגרה טילים לעבר ישראל' }, t - HOUR);
   const b = await recheckArchive(env, t);
   assert.deepEqual([b.lane, b.queued], ['he_core', 1]);
@@ -147,7 +207,7 @@ test('archive: at most a few redo jobs per tick, the cursor resumes where it sto
   t = atLane('ru', t + 300000);
   const second = await recheckArchive({ NEWS_DB: db, CORE_DB: coreDb() }, t);
   assert.deepEqual([second.state, second.queued], ['pass_done', 3]);
-  assert.equal(db.one("SELECT count(*) n FROM translation_jobs").n, ARCHIVE.redoPerTick + 3);
+  assert.equal(db.one('SELECT count(*) n FROM translation_jobs').n, ARCHIVE.redoPerTick + 3);
 });
 
 test('watch: one failing part never stops the other', async () => {
@@ -160,7 +220,10 @@ test('watch: one failing part never stops the other', async () => {
 // ---------- meaning-check samples (acceptance of B11 part 2) ----------
 test('meaning check: a rejection keeps both titles and the evidence, at most 20 a day', async () => {
   const db = newsDb();
-  const AI = ai(() => null, () => ({ same_meaning: false, error: 'entity_replaced', evidence: 'Jordan became Israel' }));
+  const AI = ai(
+    () => null,
+    () => ({ same_meaning: false, error: 'entity_replaced', evidence: 'Jordan became Israel' }),
+  );
   const args = {
     original: { title: 'Iran fires missiles at Jordan' },
     translation: { title: 'איראן שיגרה טילים לעבר ישראל' },
@@ -168,12 +231,19 @@ test('meaning check: a rejection keeps both titles and the evidence, at most 20 
     translatorModel: 'gemini-3.5-flash-lite',
     tier: 'urgent',
   };
-  for (let i = 0; i < 22; i++) assert.equal((await meaningCheck({ NEWS_DB: db, AI }, args, T0)).verdict, 'reject');
+  for (let i = 0; i < 22; i++)
+    assert.equal((await meaningCheck({ NEWS_DB: db, AI }, args, T0)).verdict, 'reject');
   const samples = state(db, 'meaning_check_samples:2026-11-20');
   assert.equal(samples.length, 20);
   assert.deepEqual(
     [samples[0].code, samples[0].evidence, samples[0].original, samples[0].translation, samples[0].tier],
-    ['meaning:entity_replaced', 'Jordan became Israel', args.original.title, args.translation.title, 'urgent'],
+    [
+      'meaning:entity_replaced',
+      'Jordan became Israel',
+      args.original.title,
+      args.translation.title,
+      'urgent',
+    ],
   );
   assert.equal(state(db, 'meaning_check:2026-11-20').reject, 22);
 });
