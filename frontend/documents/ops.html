@@ -128,11 +128,12 @@ const stateTag=s=>{const k=/^(ok)$/.test(s)?'ok':/partial|stale|degraded/.test(s
 const COLLECTOR_MIN={analysts:15,centcom:15,gdelt:60,translation:120,shadow:120,copernicus:360,marad:360,unosat:720,satellite:1440};
 const expectMin=k=>{for(const[n,m]of Object.entries(COLLECTOR_MIN))if(String(k).includes(n))return m;return 120};
 
+const TEN_W=['','как обычно','одно отклонение','два независимых','три независимых','много отклонений'];
 function uniquesLine(u){
  if(!u||!(u.days||[]).length)return '';
  const D=ms=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jerusalem'}).format(ms), td=D(Date.now()), y=D(Date.now()-864e5);
- const get=d=>(u.days.find(x=>x.day===d)||{}).uniques||0, wk=(u.weeks||[]).slice(-1)[0], prev=(u.weeks||[]).slice(-2)[0];
- return `<p class="meta" style="margin:6px 0 0"><b>${fmt(get(td))}</b> уникальных сегодня · <b>${fmt(get(y))}</b> вчера · <b>${fmt(wk?.uniques||0)}</b> за эту неделю${prev&&prev!==wk?' · '+fmt(prev.uniques)+' за прошлую':''}</p>${help('Уникальные посетители','Один человек — один отпечаток за день и один за неделю (неделя с воскресенья): хэш от IP и браузера с солью, своей для каждого дня и каждой недели. IP не хранится; когда день или неделя кончаются, соль удаляется, и отпечатки больше не связать. Боты и /ops не считаются.')}`;
+ const start=u.days[0].day, get=d=>(u.days.find(x=>x.day===d)||{}).uniques||0, wk=(u.weeks||[]).slice(-1)[0], prev=(u.weeks||[]).slice(-2)[0];
+ return `<p class="meta" style="margin:6px 0 0"><b>${fmt(get(td))}</b> уникальных сегодня · <b>${fmt(get(y))}</b> вчера · <b>${fmt(wk?.uniques||0)}</b> за эту неделю${prev&&prev!==wk?' · '+fmt(prev.uniques)+' за прошлую':''}${start>D(Date.now()-7*864e5)?' · считаем с '+start.slice(8)+'.'+start.slice(5,7)+', первый день и первая неделя неполные':''}</p>${help('Уникальные посетители','Один человек — один отпечаток за день и один за неделю (неделя с воскресенья): хэш от IP и браузера с солью, своей для каждого дня и каждой недели. IP не хранится; когда день или неделя кончаются, соль удаляется, и отпечатки больше не связать. Боты и /ops не считаются.')}`;
 }
 function visitorsCard(v,u){
  if(!v)return `<div class="card"><h2>Посетители</h2><p class="explain">Счётчик Cloudflare Web Analytics включён 20.11. Цифры появятся в течение получаса после первых визитов (сборщик раз в 30 минут).</p>${uniquesLine(u)}</div>`;
@@ -172,7 +173,7 @@ function render(d,error){
   ['src',lvl(problems.length>3,problems.length>0),problems.length?problems.length+' с проблемой':'все в норме','источники данных'],
   ['col',lvl(late.length>2,late.length>0),late.length?late.length+' отстают':'все в срок','сборщики GitHub'],
   ['gpt',lvl(gptOld,gptLate||noteOld),ago(gptAge),'GPT-монитор'],
-  ['ten',lvl((ten?.level||0)>=4,(ten?.level||0)>=3),ten?ten.level+' из 5':'—','индекс напряжённости'],
+  ['ten',lvl((ten?.level||0)>=4,(ten?.level||0)>=3),ten?TEN_W[ten.level]||'—':'—','необычная активность'],
   ['pause','',fmt((d.paused_feeds||[]).length),'лент на паузе'],
  ].map(([id,k,b,s])=>`<button class="pill" data-go="${id}"><span class="dot ${k}"></span><span><b>${esc(b)}</b><span>${esc(s)}</span></span></button>`).join('');
 
@@ -228,9 +229,9 @@ function render(d,error){
  ${sec('col','Сборщики на GitHub',lvl(late.length>2,late.length>0),late.length?late.length+' отстают из '+cols.length:'все '+cols.length+' в срок',
  `<p class="explain">Скрипты в GitHub Actions по расписанию складывают данные в базу. Полоска заполняется до конца, когда прошло вдвое больше нормы — тогда точка краснеет.</p>${colRows||'<p class="meta">Нет данных.</p>'}`,late.length>0)}
 
- ${sec('ten','Индекс напряжённости',lvl((ten?.level||0)>=4,(ten?.level||0)>=3),ten?`макс. ${ten.level} из 5 · ${ten.calibrating?'калибровка, норма по '+ten.baseline_days+' дн.':'норма по 14 дн.'} · ${ago(ten.hour_ms)}`:'ещё не посчитан',
- `<p class="explain">Каждый час: показатели по регионам сравниваются со своей нормой за 14 дней (без последних суток). Уровень — сколько <b>разных семейств</b> (небо, море, земля, связь, новости, официальное) одновременно вышли за норму: 1 — тихо, 5 — четыре семейства или три с официальным предупреждением. Это отклонение от обычного, а не прогноз.</p>
- ${ten?`<div class="tw"><table><thead><tr><th>Регион</th><th>Ур.</th><th>Сигналы</th><th>Покрытие</th></tr></thead><tbody>${(ten.regions||[]).map(r=>`<tr><td>${esc(TEN_R[r.id]||r.id)}</td><td class="num">${r.level}</td><td>${(r.flagged||[]).map(f=>esc(TEN_I[f.indicator]||f.indicator)+': '+fmt(f.value)+(f.rule!==undefined?'':' (норма до '+fmt(f.p95)+', медиана '+fmt(f.median)+')')).join('<br>')||'—'}</td><td class="num">${r.coverage?.seen}/${r.coverage?.total}</td></tr>`).join('')}</tbody></table></div>`:'<p class="meta">Editor считает индекс каждые 5 минут; первые запуски дозаполняют историю.</p>'}`,(ten?.level||0)>=3)}
+ ${sec('ten','Необычная активность (индекс)',lvl((ten?.level||0)>=4,(ten?.level||0)>=3),ten?`максимум: ${TEN_W[ten.level]||ten.level} · ${ten.calibrating?'калибровка, норма по '+ten.baseline_days+' дн.':'норма по 14 дн.'} · ${ago(ten.hour_ms)}`:'ещё не посчитан',
+ `<p class="explain">Каждый час: показатели по регионам сравниваются со своей нормой за 14 дней (без последних суток). Уровень — сколько <b>разных семейств</b> (небо, море, земля, связь, новости, официальное) одновременно вышли за норму: как обычно → одно отклонение → два → три независимых → много (четыре семейства или три с официальным). Это отклонение от обычного, а не прогноз и не опасность.</p>
+ ${ten?`<div class="tw"><table><thead><tr><th>Регион</th><th>Уровень</th><th>Что выше нормы</th><th>Есть данные</th></tr></thead><tbody>${(ten.regions||[]).map(r=>`<tr><td>${esc(TEN_R[r.id]||r.id)}</td><td>${TEN_W[r.level]||r.level}</td><td>${(r.flagged||[]).map(f=>esc(TEN_I[f.indicator]||f.indicator)+': '+fmt(f.value)+(f.rule!==undefined?'':', обычно до '+fmt(f.p95)+' (медиана '+fmt(f.median)+')')).join('<br>')||'всё как обычно'}</td><td class="num">${r.coverage?.seen} из ${r.coverage?.total}</td></tr>`).join('')}</tbody></table></div>`:'<p class="meta">Editor считает индекс каждые 5 минут; первые запуски дозаполняют историю.</p>'}`,(ten?.level||0)>=3)}
 
  ${sec('gpt','GPT и аналитики',lvl(gptOld,gptLate||noteOld||(anPending||0)>=10),`монитор ${ago(gptAge)} · реплика ${ago(noteAge)} · аналитики ${fmt(anPending)}`,
  kv([['GPT-монитор, последний анализ',`${esc(ago(gpt.last_monitor_run?.recorded_at_ms))} · итог: ${esc(gpt.last_monitor_run?.outcome||'—')}`],['Последнее досье',`${esc(ago(gpt.last_dossier?.updated_at_ms))} · ${esc(gpt.last_dossier?.event_id||'—')}`],['Последняя реплика редактора',esc(ago(noteAge))+(noteOld?' — больше 10 ч (норма 3–4 в сутки), проверь задачу GPT':'')],['Аналитики, последний прогон',`${esc(ago(an.started_at_ms))} · ${esc(an.status||'—')}${an.error_message?' · '+esc(an.error_message):''}`],['Аналитики в очереди',`${fmt(anPending)} (норма — меньше 10)`],b6?['Сравнение моделей B6',`${esc(b6.status||'—')} · ${esc(b6.run_id||'')}`]:null])+
