@@ -14,3 +14,5 @@ frontend/src/
 release/
 # Entity list read by scripts/build_wikidata_glossary.py (hand-edited tuples).
 config/glossary-wikidata.json
+# Parsed with JSON.parse by tests; Prettier would add trailing commas.
+backend/editor/wrangler.jsonc
