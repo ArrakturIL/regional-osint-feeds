@@ -6,6 +6,7 @@ import localization from './localization/localization.mjs';
 import { readNewsEvents } from './news/api.mjs';
 import { translationQueue, importTranslationMirror } from './translations/news-mirror.mjs';
 import { translationWatch } from './translations/watch.mjs';
+import { tensionTick } from './tension/tick.mjs';
 import { articlePriority } from './news/normalization.mjs';
 import { scan } from './news/scan.mjs';
 import { readOfficialPosts } from './api/official-posts.mjs';
@@ -73,6 +74,17 @@ export default {
     ctx.waitUntil(localization.scheduled(aiEnv, event.scheduledTime));
     // B12: RU/HE stall alerts and the archive re-check through today's gates.
     ctx.waitUntil(translationWatch(env, event.scheduledTime).catch(() => null));
+    // Tension index (21.11): hourly indicators and the 1–5 level; back-fills history.
+    ctx.waitUntil(
+      tensionTick(env, event.scheduledTime).catch(e =>
+        env.NEWS_DB?.prepare(
+          "INSERT INTO editor_state(key,value,updated_ms) VALUES('tension_error',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_ms=excluded.updated_ms",
+        )
+          .bind(String(e?.message || e).slice(0, 200), Date.now())
+          .run()
+          .catch(() => null),
+      ),
+    );
     // B6: blind model A/B, only while an evaluation is requested (editor_state).
     ctx.waitUntil(runEvalTick(aiEnv, event.scheduledTime).catch(() => null));
     if (new Date(event.scheduledTime).getUTCMinutes() % 15 === 0) ctx.waitUntil(importTranslationMirror(env));
