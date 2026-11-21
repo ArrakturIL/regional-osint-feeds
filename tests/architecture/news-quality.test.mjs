@@ -1207,3 +1207,33 @@ test('D1 budget: a changed group is rewritten alone; hourly safety pass still ru
     'hourly safety pass keeps orphan cleanup',
   );
 });
+
+test('21.11: one Gaza strike told by two outlets merges by struck object and death toll; a different toll does not', async () => {
+  const { analyze: an, sameEvent: same } = await import('../../backend/editor/src/news/events.mjs');
+  const aj = an({
+    id: 'aj',
+    source: 'Al Jazeera',
+    headline: 'Israeli strike hits food aid vehicle in Gaza, killing three',
+    summary: 'Three Palestinians were killed in an Israeli air attack on a vehicle carrying food.',
+    published_ms: 1795283659000,
+  });
+  const toi = an({
+    id: 'toi',
+    source: 'Times of Israel',
+    headline: 'Israeli strike in Gaza City kills 3; IDF says it hit terrorists masquerading as aid workers',
+    summary:
+      'Army says unmarked vehicle it struck was ferrying Islamic Jihad operatives, one of whom was fired by aid group for terror ties, as they were bringing food and supplies to comrades',
+    published_ms: 1795285971000,
+  });
+  assert.deepEqual(same(aj, toi), { ok: true, why: 'same_struck_object' });
+  const other = an({
+    id: 'other',
+    source: 'Times of Israel',
+    headline: 'Israeli strike on vehicle in Gaza kills 5',
+    summary: 'Five people were killed when a car was hit in Khan Younis.',
+    published_ms: 1795285971000,
+  });
+  assert.equal(same(aj, other).ok, false, 'a different death toll is a different strike');
+  const late = an({ ...toi, id: 'late', published_ms: 1795283659000 + 8 * 3600000 });
+  assert.equal(same(aj, late).ok, false, 'beyond 6 h the rule does not apply');
+});
