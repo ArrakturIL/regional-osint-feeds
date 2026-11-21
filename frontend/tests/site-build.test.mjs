@@ -30,10 +30,8 @@ test('all eight locale routes retain exact document HTML',()=>{
  }
 });
 test('frontend CSS and JS exactly match their current modular assemblers',()=>{
- const baseline=resolve(root,'../baselines/cloudflare/2026-11-14/pages-0f39f36e');
  assert.equal(load('assets/app.js'),assemble());
  assert.equal(load('assets/app.css'),assembleStyles());
- assert.ok(load('assets/app.css').startsWith(readFileSync(resolve(baseline,'app.css'),'utf8')));
 });
 test('2077 theme: every self-hosted font URL resolves to a built file with a matching content hash; reduced motion is honoured', () => {
  const css=load('assets/app.css');

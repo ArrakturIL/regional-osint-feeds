@@ -1,6 +1,5 @@
 {
   "source": "Cloudflare Monitor v47",
-  "snapshot": "baselines/cloudflare/2026-11-14/monitor-v47/worker.js",
   "order": [
     "config/constants.js",
     "network/provider-client.js",
