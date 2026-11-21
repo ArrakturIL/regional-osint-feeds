@@ -232,7 +232,7 @@ export function TensionDetail({ tension }) {
                     ),
                   )
                 : t('p', 'hint', D.calm),
-              r.coverage ? t('p', 'rw-tension-seen', L.seen(r.coverage.seen, r.coverage.total)) : null,
+              r.coverage && r.coverage.total > r.coverage.seen ? t('p', 'rw-tension-seen', L.missing(r.coverage.total - r.coverage.seen)) : null,
             ),
           ),
         ),
