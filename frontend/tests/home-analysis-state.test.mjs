@@ -68,16 +68,3 @@ test('/api/overview: monitor outcome partial is a known state, not "unavailable"
   assert.equal(o.analysis.title, 'Последний анализ выполнен частично');
   assert.equal(assembleOverview({ latestRun: { outcome: 'garbage' } }).analysis.state, 'unknown');
 });
-
-test('home says "compared" only when two checks were actually compared', () => {
-  const insufficient = { digestState: 'insufficient_comparison', sourceComparable: 0 };
-  const ok = { digestState: 'ok', sourceComparable: 7 };
-  assert.doesNotMatch(render(false, insufficient), /сравнение выполнено/);
-  assert.match(render(false, insufficient), /Сравнить с прошлой проверкой не удалось/);
-  assert.match(render(false, ok), /Последнее сравнение выполнено/);
-  assert.match(render(true, insufficient), /לא ניתן היה להשוות/);
-  assert.match(render(true, insufficient), /ניתוח חלקי/);
-  // While loading there is nothing to claim either way.
-  assert.doesNotMatch(render(false, { digestState: 'loading' }), /сравнен|Сравнить/i);
-  assert.doesNotMatch(render(false, null), /сравнен|Сравнить/i);
-});

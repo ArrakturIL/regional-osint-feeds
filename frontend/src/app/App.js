@@ -90,7 +90,6 @@ export function App() {
     60000,
     route === '/' || route === '/events',
   );
-  const digest = useFeed('/api/changes?lang=' + (UI_HE ? 'he' : 'ru'), 60000, route === '/');
   const editorial = useFeed(
     '/api/editorial-notes?lang=' + (UI_HE ? 'he' : 'ru') + '&limit=20',
     120000,
@@ -138,13 +137,6 @@ export function App() {
   const normalizedCases = cases.value
     ? {
         stories: readyCases,
-        changes: Array.isArray(digest.value?.changes) ? digest.value.changes : [],
-        lastCheck: digest.value?.lastCheck || overview.value?.analysis?.time,
-        previousCheck: digest.value?.previousCheck,
-        digestState: digest.value?.status || (digest.error ? 'error' : 'loading'),
-        digestError: digest.error,
-        sourceUpdates: digest.value?.sourceUpdates || 0,
-        sourceComparable: digest.value?.sourceComparable || 0,
         sourceCoverage: {
           hasKnownGaps:
             Array.isArray(overview.value?.sources) &&

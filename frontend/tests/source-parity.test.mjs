@@ -16,7 +16,7 @@ const code = s =>
     .replace(/'/g, '"')
     .replace(/,([)\]}])/g, '$1');
 test('all ordered source modules exist', () => {
-  assert.equal(manifest.order.length, 58);
+  assert.equal(manifest.order.length, 57);
   for (const p of manifest.order) assert.ok(existsSync(resolve(here, 'src', p)), p + ' is missing');
 });
 test('bundle contains the intentional news/grid fixes', () => {

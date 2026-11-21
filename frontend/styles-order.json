@@ -14,8 +14,6 @@
     "styles/responsive-foundation.css",
     "components/NewsMasonry/NewsMasonry.css",
     "components/Aviation/Aviation.css",
-    "pages/Home/Home.situation.css",
-    "components/Digest/Digest.css",
     "components/StoryTeaser/StoryTeaser.css",
     "components/StoryDossier/StoryDossier.css",
     "pages/DataRoom/DataRoom.details.css",

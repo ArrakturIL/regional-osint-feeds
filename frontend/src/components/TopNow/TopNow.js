@@ -1,4 +1,4 @@
-import { UI_HE, h, t } from '../../app/runtime.js';
+import { UI_HE, h, simpleTime, t } from '../../app/runtime.js';
 import { GoLink } from '../Navigation/GoLink.js';
 // Concept E «Главное сейчас» (owner 21.11): one lead story and four more, by
 // urgency then freshness, beside the source network strip and the reading
@@ -38,6 +38,8 @@ export function TopNow({ stories, overview, go }) {
         net: 'רשת המקורות',
         st: { ok: 'תקינים', partial: 'חלקיים', empty: 'ללא רשומות', error: 'שגיאה' },
         data: 'לעמוד הנתונים ←',
+        mon: 'בדיקת ניטור אחרונה',
+        monState: { normal: 'ללא התרעות', attention: 'דורש תשומת לב', partial: 'חלקית' },
         proto: 'פרוטוקול קריאה',
         protoText:
           'דחיפות היא הערכת נושא הדיווח, לא את אמינותו. מספר המקורות מראה כמה גופים דיווחו באופן בלתי תלוי.',
@@ -52,6 +54,8 @@ export function TopNow({ stories, overview, go }) {
         net: 'Сеть источников',
         st: { ok: 'норма', partial: 'частично', empty: 'пусто', error: 'ошибка' },
         data: 'Раздел «Данные» →',
+        mon: 'Последняя проверка мониторинга',
+        monState: { normal: 'без тревог', attention: 'есть изменения', partial: 'частичная' },
         proto: 'Протокол чтения',
         protoText:
           'Срочность — оценка темы сообщения, а не его достоверности. Число источников показывает, сколько изданий сообщило независимо.',
@@ -136,6 +140,17 @@ export function TopNow({ stories, overview, go }) {
             ),
           ),
         ),
+        // 21.11: the old «Главное из последнего анализа» card said little more
+        // than this line; it moved here.
+        overview?.analysis?.time
+          ? h(
+              'p',
+              { className: 'rw-net-mon' },
+              L.mon + ': ',
+              h('bdi', { dir: 'ltr' }, simpleTime(overview.analysis.time)),
+              L.monState[overview.analysis.state] ? ' · ' + L.monState[overview.analysis.state] : '',
+            )
+          : null,
         h(GoLink, { to: (he ? '/he' : '') + '/data', go, className: 'rw-net-link' }, L.data),
       ),
       h(
