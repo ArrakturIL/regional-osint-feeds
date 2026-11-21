@@ -37,6 +37,7 @@ test('stylesheet cascade: component sources, then refinements in a fixed order',
       source('src/components/Header/Header.css') +
       source('src/components/HomeHero/HomeHero.css') +
       source('src/components/TopNow/TopNow.css') +
+      source('src/components/Tension/Tension.css') +
       source('src/pages/Home/Home.e.css') +
       source('src/styles/pages.e.css'),
   );
@@ -116,6 +117,7 @@ test('eight RU/HE documents contain no duplicated inline CSS', () => {
       source('src/components/Header/Header.css') +
       source('src/components/HomeHero/HomeHero.css') +
       source('src/components/TopNow/TopNow.css') +
+      source('src/components/Tension/Tension.css') +
       source('src/pages/Home/Home.e.css') +
       source('src/styles/pages.e.css'),
   );
@@ -134,6 +136,7 @@ test('concept E header: one row on desktop, ☰ list below 1000px, 44px targets,
       header +
         source('src/components/HomeHero/HomeHero.css') +
         source('src/components/TopNow/TopNow.css') +
+        source('src/components/Tension/Tension.css') +
         source('src/pages/Home/Home.e.css') +
         source('src/styles/pages.e.css'),
     ),
