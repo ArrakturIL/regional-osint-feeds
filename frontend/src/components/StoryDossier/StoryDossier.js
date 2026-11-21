@@ -9,6 +9,10 @@ import {
   relatedCount,
   sourceCount,
 } from '../../utils/dossierMeta.js';
+const RTL_LANGS = new Set(['he', 'ar', 'fa']);
+export function titleDir(lang) {
+  return lang ? (RTL_LANGS.has(lang) ? 'rtl' : 'ltr') : 'auto';
+}
 export function StoryDossier({ story, open, onToggle }) {
   const labels = UI_HE
     ? {
@@ -62,7 +66,12 @@ export function StoryDossier({ story, open, onToggle }) {
           status.text,
         ),
       ),
-      h('h3', { dir: 'auto', lang: story.content_language || undefined }, story.title),
+      h(
+        'h3',
+        // 21.11: dir=auto read a Hebrew title that opens with «AP:» as LTR.
+        { dir: titleDir(story.content_language), lang: story.content_language || undefined },
+        story.title,
+      ),
       story.content_language && story.content_language !== (UI_HE ? 'he' : 'ru')
         ? h(
             'small',

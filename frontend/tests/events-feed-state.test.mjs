@@ -23,6 +23,7 @@ function render({ he = false, cases, error, feed }) {
     location: { search: '' },
     URLSearchParams,
     normalizeCase: x => x,
+    ruPlural: (n, f) => f[2],
     FeedState,
     Loading() {},
     NewsArchive() {},

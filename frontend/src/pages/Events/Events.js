@@ -5,6 +5,7 @@ import { Loading } from '../../components/Loading/Loading.js';
 import { NewsArchive } from '../../components/NewsArchive/NewsArchive.js';
 import { Intro } from '../../components/PageIntro/Intro.js';
 import { Head } from '../../components/SectionHead/Head.js';
+import { ruPlural } from '../../utils/ruPlural.js';
 import { StoryDossier } from '../../components/StoryDossier/StoryDossier.js';
 export function CasesPageV2({ visible, cases, error, feed }) {
   const [group, setGroup] = useState('all'),
@@ -17,7 +18,6 @@ export function CasesPageV2({ visible, cases, error, feed }) {
         title: 'אירועים',
         accent: 'והקשר.',
         desc: 'לא רק כותרות: תיעוד האירועים, מועד התרחשותם ומי דיווח מה.',
-        meta: 'תיקים במעקב: ',
         head: 'תיקי אירוע',
         sub: 'כל תיק מאחד מקורות ופרסומים.',
         all: 'הכול',
@@ -25,7 +25,7 @@ export function CasesPageV2({ visible, cases, error, feed }) {
         aviation: 'תעופה',
         maritime: 'ים',
         other: 'אחר',
-        count: ' תיקים',
+        count: n => (n === 1 ? 'תיק אחד' : n + ' תיקים'),
         missing: 'התרגום לתיק המבוקש אינו זמין כרגע.',
         switchOriginal: 'הצג את הגרסה הרוסית',
         empty: 'אין כרגע תיקים בקטגוריה זו.',
@@ -37,7 +37,6 @@ export function CasesPageV2({ visible, cases, error, feed }) {
         title: 'События',
         accent: 'и контекст.',
         desc: 'Не просто поток заголовков: история каждого эпизода, дата события и кто что сообщил.',
-        meta: 'Журнал: ',
         head: 'Досье мониторинга',
         sub: 'Каждая история объединяет наблюдения и публикации.',
         all: 'Все',
@@ -45,7 +44,7 @@ export function CasesPageV2({ visible, cases, error, feed }) {
         aviation: 'Авиация',
         maritime: 'Море',
         other: 'Прочее',
-        count: ' историй',
+        count: n => n + ' ' + ruPlural(n, ['история', 'истории', 'историй']),
         missing: 'Запрашиваемое досье отсутствует в этой ленте.',
         switchOriginal: 'Открыть оригинал',
         empty: 'В этой категории пока нет записей.',
@@ -54,7 +53,10 @@ export function CasesPageV2({ visible, cases, error, feed }) {
       };
   const list = Array.isArray(cases?.stories) ? cases.stories : [];
   const all = list.map(normalizeCase);
-  const filtered = all.filter(x => group === 'all' || x.group === group);
+  // Owner 21.11: a chip shows how many stories it holds, so a rare group
+  // (aviation is often one story) reads as rare rather than broken.
+  const inGroup = key => all.filter(x => key === 'all' || x.group === key);
+  const filtered = inGroup(group);
   const id = new URLSearchParams(location.search).get('story');
   useEffect(() => {
     if (!id || deepLinkVisited.current === id || !all.some(x => x.id === id)) return;
@@ -83,7 +85,6 @@ export function CasesPageV2({ visible, cases, error, feed }) {
       title: strings.title,
       accent: strings.accent,
       desc: strings.desc,
-      meta: cases ? strings.meta + all.length + strings.count : '',
     }),
     h(
       'section',
@@ -92,24 +93,27 @@ export function CasesPageV2({ visible, cases, error, feed }) {
         title: strings.head,
         sub: strings.sub,
         icon: 'files',
-        right: t('span', 'hint', filtered.length + strings.count),
+        right: t('span', 'hint', strings.count(filtered.length)),
       }),
       h(
         'div',
         { className: 'filters' },
-        ...cats.map(([key, label]) =>
-          h(
+        ...cats.map(([key, label]) => {
+          const n = inGroup(key).length;
+          return h(
             'button',
             {
               type: 'button',
               key,
               'aria-pressed': group === key,
-              className: group === key ? 'active' : '',
+              className: (group === key ? 'active' : '') + (cases && !n ? ' rw-filter-empty' : ''),
+              disabled: !!cases && !n && group !== key,
               onClick: () => setGroup(key),
             },
             label,
-          ),
-        ),
+            cases ? h('b', { className: 'rw-filter-count' }, String(n)) : null,
+          );
+        }),
       ),
       cases && error ? h(FeedState, { feed }) : null,
       id && cases && !all.some(s => s.id === id)

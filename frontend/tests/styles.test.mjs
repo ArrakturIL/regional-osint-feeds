@@ -37,7 +37,8 @@ test('stylesheet cascade: component sources, then refinements in a fixed order',
       source('src/components/Header/Header.css') +
       source('src/components/HomeHero/HomeHero.css') +
       source('src/components/TopNow/TopNow.css') +
-      source('src/pages/Home/Home.e.css'),
+      source('src/pages/Home/Home.e.css') +
+      source('src/styles/pages.e.css'),
   );
 });
 test('both locales share one explicit rhythm for main sections', () => {
@@ -115,7 +116,8 @@ test('eight RU/HE documents contain no duplicated inline CSS', () => {
       source('src/components/Header/Header.css') +
       source('src/components/HomeHero/HomeHero.css') +
       source('src/components/TopNow/TopNow.css') +
-      source('src/pages/Home/Home.e.css'),
+      source('src/pages/Home/Home.e.css') +
+      source('src/styles/pages.e.css'),
   );
 });
 
@@ -132,7 +134,8 @@ test('concept E header: one row on desktop, ☰ list below 1000px, 44px targets,
       header +
         source('src/components/HomeHero/HomeHero.css') +
         source('src/components/TopNow/TopNow.css') +
-        source('src/pages/Home/Home.e.css'),
+        source('src/pages/Home/Home.e.css') +
+        source('src/styles/pages.e.css'),
     ),
     'header comes after every older layer',
   );
@@ -181,4 +184,17 @@ test('Q7: the 16px field floor on touch screens outranks component field rules',
       file + ': an id selector would outrank the floor',
     );
   }
+});
+
+test('concept E pages layer: shared kicker heads, filter chips with counts, no !important', () => {
+  const pages = source('src/styles/pages.e.css');
+  assert.match(pages, /\.rw-page \.section-head h2\s*\{[^}]*var\(--rw7-mono\)/);
+  assert.match(pages, /\.rw-filter-count/);
+  assert.match(pages, /@media \(hover: hover\)/);
+  assert.doesNotMatch(pages, /!important/);
+  assert.doesNotMatch(
+    source('src/pages/Home/Home.e.css'),
+    /\.section-head/,
+    'heads live in the shared layer',
+  );
 });

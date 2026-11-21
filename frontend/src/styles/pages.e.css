@@ -1,0 +1,351 @@
+/* Concept E beyond the home page (owner 21.11): the same mono kicker section
+   heads on every page, calm filter chips with counts, and dossier cards in
+   the home-card language. Loaded last, after Home.e.css. */
+
+/* Section heads: «// ГЛАВНЫЕ ИСТОРИИ ———» */
+.rw-page .section-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 18px;
+  padding: 0;
+  border: 0;
+}
+.rw-page .section-head .rw-title-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.rw-page .section-head .rw-title-with-icon .rw-ui-icon {
+  display: none;
+}
+.rw-page .section-head h2 {
+  margin: 0;
+  color: var(--rw7-mint);
+  font: 600 12px var(--rw7-mono);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+html[lang='he'] .rw-page .section-head h2 {
+  font-size: 13px;
+  letter-spacing: 0.06em;
+}
+.rw-page .section-head .rw-title-with-icon::after {
+  content: '';
+  width: 80px;
+  border-top: 1px dashed var(--rw7-mint-dim);
+}
+.rw-page .section-head p {
+  margin: 8px 0 0;
+  max-width: 640px;
+  color: var(--rw7-text-3);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.rw-page .section-head .rw-more-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font: 600 12px var(--rw7-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .rw-page .section-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+.rw-page .section-head > .hint {
+  color: var(--rw7-text-3);
+  font: 500 12px var(--rw7-mono);
+  letter-spacing: 0.06em;
+}
+
+/* Filter chips: mono labels with a count; an empty group is dimmed. */
+.rw-page .filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 20px;
+}
+.rw-page .filters button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--rw7-line-strong);
+  border-radius: 0;
+  background: transparent;
+  color: var(--rw7-text-2);
+  font: 500 12px var(--rw7-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    color 0.2s;
+}
+html[lang='he'] .rw-page .filters button {
+  letter-spacing: 0.03em;
+  font-size: 13px;
+}
+.rw-page .filters button.active {
+  border-color: var(--rw7-mint);
+  background: transparent;
+  color: var(--rw7-mint);
+}
+.rw-page .filters button:focus-visible {
+  outline: 2px solid var(--rw7-mint);
+  outline-offset: 2px;
+}
+@media (hover: hover) {
+  .rw-page .filters button:not(:disabled):hover {
+    border-color: var(--rw7-mint-dim);
+    color: var(--rw7-text);
+  }
+}
+.rw-filter-count {
+  color: var(--rw7-text-3);
+  font-weight: 500;
+}
+.rw-page .filters button.active .rw-filter-count {
+  color: var(--rw7-mint);
+}
+.rw-page .filters button.rw-filter-empty {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Dossier cards: category as a kicker, the attribution as a plain mono line. */
+.rw-page .rw-dossier-list {
+  gap: 14px;
+}
+.rw-page .rw-dossier {
+  padding: 24px 26px 18px;
+  border-radius: 0;
+  border-color: var(--rw7-line-strong);
+  background: linear-gradient(180deg, var(--rw7-panel-2), var(--rw7-panel));
+}
+.rw-page .rw-dossier-top {
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 16px;
+  margin-bottom: 14px;
+}
+.rw-page .rw-dossier .rw-story-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  font: 500 11px var(--rw7-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+html[lang='he'] .rw-page .rw-dossier .rw-story-meta {
+  letter-spacing: 0.04em;
+  font-size: 12px;
+}
+.rw-page .rw-dossier .rw-story-meta > span:first-child {
+  color: var(--rw7-mint);
+}
+.rw-page .rw-dossier .rw-story-meta > span + span {
+  color: var(--rw7-text-3);
+}
+.rw-page .rw-dossier .rw-verification-tags {
+  max-width: none;
+  justify-content: flex-start;
+}
+.rw-page .rw-dossier .rw-verification-tags .rw-status-tag {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--rw7-text-3);
+  font: 500 11px var(--rw7-mono);
+  letter-spacing: 0.04em;
+  text-align: start;
+}
+.rw-page .rw-dossier .rw-verification-tags .rw-status-tag.uncertain {
+  color: var(--rw7-important);
+}
+.rw-page .rw-dossier h3 {
+  flex-basis: 100%;
+  margin: 4px 0 0;
+  max-width: 820px;
+  font-size: clamp(19px, 2vw, 23px);
+  line-height: 1.3;
+}
+.rw-page .rw-dossier .rw-event-meta {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--rw7-text-3);
+  font: 500 12px var(--rw7-mono);
+  letter-spacing: 0.03em;
+}
+.rw-page .rw-dossier-top > p:not(.rw-event-meta) {
+  flex-basis: 100%;
+  max-width: 820px;
+  margin: 8px 0 0;
+  color: var(--rw7-text-2);
+  font-size: 15px;
+  line-height: 1.6;
+}
+.rw-page .rw-dossier-actions {
+  flex-basis: 100%;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--rw7-line);
+  color: var(--rw7-text-3);
+  font: 500 12px var(--rw7-mono);
+}
+.rw-page .rw-dossier-actions button {
+  min-height: 44px;
+  color: var(--rw7-mint);
+  font: 600 12px var(--rw7-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+html[lang='he'] .rw-page .rw-dossier-actions button {
+  letter-spacing: 0.03em;
+}
+@media (max-width: 640px) {
+  .rw-page .rw-dossier {
+    padding: 20px 18px 14px;
+  }
+  .rw-page .rw-dossier-actions {
+    flex-wrap: wrap;
+    gap: 0 12px;
+  }
+}
+
+/* Feed cards: urgency as a mono label, no coloured side bar. */
+.rw-page .news-card[data-rw-importance] {
+  border-left-width: 1px;
+  border-inline-start-color: var(--rw7-line-strong);
+}
+.rw-page .news-card .rw-importance-badge {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: 500 11px var(--rw7-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+html[lang='he'] .rw-page .news-card .rw-importance-badge {
+  letter-spacing: 0.04em;
+}
+.rw-page .news-card[data-rw-importance='critical'] .rw-importance-badge {
+  color: var(--rw7-urgent);
+}
+.rw-page .news-card[data-rw-importance='high'] .rw-importance-badge {
+  color: var(--rw7-important);
+}
+.rw-page .news-card[data-rw-importance='normal'] .rw-importance-badge,
+.rw-page .news-card[data-rw-importance='medium'] .rw-importance-badge {
+  color: var(--rw7-text-3);
+}
+.rw-page .news-card .news-head span {
+  font: 500 12px var(--rw7-mono);
+  letter-spacing: 0.06em;
+}
+
+/* «+ Что известно» and «Читать первоисточник» on one baseline. */
+.rw-page .news-card .news-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+}
+.rw-page .news-card .news-actions > * {
+  margin: 0;
+}
+
+/* Expanded dossier: source lists as plain mono links under kicker labels. */
+.rw-page .rw-dossier-detail {
+  border-top: 1px solid var(--rw7-line);
+}
+.rw-page .rw-dossier-detail > strong {
+  color: var(--rw7-mint);
+  font: 600 11px var(--rw7-mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+html[lang='he'] .rw-page .rw-dossier-detail > strong {
+  letter-spacing: 0.04em;
+  font-size: 12px;
+}
+.rw-page .rw-link-list {
+  gap: 6px 18px;
+}
+.rw-page .rw-link-list a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--rw7-text-2);
+  font: 500 13px var(--rw7-mono);
+  text-decoration: underline;
+  text-decoration-color: var(--rw7-line-strong);
+  text-underline-offset: 4px;
+}
+.rw-page .rw-link-list a:focus-visible {
+  color: var(--rw7-mint);
+}
+@media (hover: hover) {
+  .rw-page .rw-link-list a:hover {
+    color: var(--rw7-mint);
+    text-decoration-color: currentColor;
+  }
+}
+
+/* News archive filter panel: square controls, mono buttons. */
+.rw-page .rw-news-archive .rw-archive-controls {
+  border-color: var(--rw7-line-strong);
+  border-radius: 0;
+  background: var(--rw7-panel);
+}
+.rw-page .rw-archive-sort button,
+.rw-page .rw-archive-actions button {
+  border-color: var(--rw7-line-strong);
+  border-radius: 0;
+  background: transparent;
+  color: var(--rw7-text-2);
+  font: 500 12px var(--rw7-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+html[lang='he'] .rw-page :is(.rw-archive-sort, .rw-archive-actions) button {
+  letter-spacing: 0.03em;
+  font-size: 13px;
+}
+.rw-page .rw-archive-sort button.active,
+.rw-page .rw-archive-actions button[type='submit'] {
+  border-color: var(--rw7-mint);
+  background: transparent;
+  color: var(--rw7-mint);
+}
+.rw-page .rw-archive-sort > span,
+.rw-page .rw-archive-field > span {
+  color: var(--rw7-text-3);
+  font: 500 11px var(--rw7-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+html[lang='he'] .rw-page :is(.rw-archive-sort > span, .rw-archive-field > span) {
+  letter-spacing: 0.03em;
+  font-size: 12px;
+}
+.rw-page .rw-archive-field :is(input, select) {
+  border-color: var(--rw7-line-strong);
+  border-radius: 0;
+  background: var(--rw7-bg);
+}
