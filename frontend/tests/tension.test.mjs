@@ -16,7 +16,7 @@ const render = he => {
     h: (tag, props, ...children) => ({ tag, props, children: children.flat() }),
     t: (tag, cls, content) => ({ tag, props: { className: cls }, children: [content] }),
   };
-  vm.runInNewContext(src + '\nthis.Tension = Tension; this.L = TENSION_L; this.tensionReason = tensionReason; this.TensionDetail = TensionDetail;', ctx);
+  vm.runInNewContext(src + '\nthis.Tension = Tension; this.L = TENSION_L; this.tensionReason = tensionReason; this.tensionReasons = tensionReasons; this.TensionDetail = TensionDetail;', ctx);
   return ctx;
 };
 const text = node =>
@@ -63,8 +63,8 @@ test('no tension, no block; calibrating shows the demo badge and the note with d
   assert.match(ru, /по 11 дн\. из 30/);
   assert.match(ru, /Необычная активность/);
   assert.match(ru, /два независимых отклонения/);
-  assert.match(ru, /военные борта: 14, обычно до 6/);
-  assert.match(ru, /срочные новости: 5, обычно до 2\.4/);
+  assert.match(ru, /военные борта: 14 · обычно не больше 6/);
+  assert.match(ru, /срочные новости: 5 · обычно не больше 2\.4/);
   assert.match(ru, /Как обычно:\s+Иран/);
   assert.match(ru, /нет данных по 1 сигн\./);
   const he = text(render(true).Tension({ tension }));
@@ -79,8 +79,12 @@ test('rule signals show the count without a norm; lit families match the region'
     tension: { as_of: 'x', calibrating: false, regions: [{ id: 'gulf', level: 2, families: ['official'], signals: ['official_notice'], details: [{ indicator: 'official_notice', value: 2, rule: 1 }] }] },
   });
   const find = (n, cls) => (n && typeof n === 'object' ? (n.props?.className === cls ? [n] : (n.children || []).flatMap(c => find(c, cls))) : []);
-  const lit = find(tree, 'on').map(text);
-  assert.deepEqual(lit, ['официальные']);
+  const card = find(tree, 'rw-tension-fam rw-tension-fam-sm')[0];
+  assert.deepEqual(find(card, 'on').map(text).map(x => x.trim()), ['официальные']);
+  assert.deepEqual(
+    ctx.tensionReasons({ indicator: 'official_notice', value: 2, rule: 1, refs: [{ source: 'fcdo', at: '2026-11-18T10:00:00Z' }] }, ctx.L.ru),
+    ['МИД Великобритании обновил рекомендации для поездок, 18.11'],
+  );
 });
 
 test('the Data page detail renders in RU and HE (22.11: a removed label crashed «Данные»)', () => {

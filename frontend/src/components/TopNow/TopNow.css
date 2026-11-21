@@ -210,16 +210,6 @@ html[lang='he'] .rw-top-meta {
   margin-top: 14px;
   font-size: 14px;
 }
-.rw-proto {
-  padding-top: 20px;
-  border-top: 1px solid var(--rw7-line);
-}
-.rw-proto p {
-  margin: 0;
-  color: var(--rw7-text-2);
-  font-size: 15px;
-  line-height: 1.65;
-}
 @media (max-width: 900px) {
   .rw-top {
     grid-template-columns: minmax(0, 1fr);
@@ -275,4 +265,19 @@ html[lang='he'] .rw-top-meta {
   line-height: 1.55;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
+}
+
+/* Reading protocol above the cards (owner 22.11). */
+.rw-proto-note {
+  margin: -4px 0 16px;
+  padding: 10px 14px;
+  border-inline-start: 3px solid var(--rw7-important);
+  background: var(--rw7-panel);
+  color: var(--rw7-text-2);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.rw-proto-note b {
+  color: var(--rw7-text);
+  font-weight: 600;
 }

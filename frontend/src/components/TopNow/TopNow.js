@@ -130,6 +130,14 @@ export function TopNow({ stories, overview, go }) {
       'div',
       { className: 'rw-top-main' },
       h('h2', { className: 'rw-top-head', id: 'rw-top-head' }, L.head),
+      // Owner 22.11: the reading protocol must be seen before the cards, not
+      // after them in the side column.
+      h(
+        'p',
+        { className: 'rw-proto-note', role: 'note' },
+        h('b', null, L.proto + '. '),
+        L.protoText,
+      ),
       lead
         ? h(
             'article',
@@ -187,12 +195,6 @@ export function TopNow({ stories, overview, go }) {
             )
           : null,
         h(GoLink, { to: (he ? '/he' : '') + '/data', go, className: 'rw-net-link' }, L.data),
-      ),
-      h(
-        'div',
-        { className: 'rw-proto' },
-        t('h2', 'rw-top-head', L.proto),
-        t('p', null, L.protoText),
       ),
     ),
   );
