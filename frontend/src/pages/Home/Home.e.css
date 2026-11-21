@@ -1,0 +1,162 @@
+/* Home sections in concept E (owner 21.11): mono kicker heads with a dashed
+   rule instead of display headings with icons, calmer cards, clamped dossier
+   text. Scoped to the home page; loaded after the theme and component layers. */
+
+#overview > .section,
+#overview > .rw-home-news-editorial,
+#overview > .rw-editorial-lead {
+  margin-block: 48px;
+}
+
+/* Section heads: «// ГЛАВНЫЕ ИСТОРИИ ———» */
+#overview .section-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 18px;
+  padding: 0;
+  border: 0;
+}
+#overview .section-head .rw-title-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+#overview .section-head .rw-title-with-icon .rw-ui-icon {
+  display: none;
+}
+#overview .section-head h2 {
+  margin: 0;
+  color: var(--rw7-mint);
+  font: 600 12px var(--rw7-mono);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+html[lang='he'] #overview .section-head h2 {
+  font-size: 13px;
+  letter-spacing: 0.06em;
+}
+#overview .section-head .rw-title-with-icon::after {
+  content: '';
+  width: 80px;
+  border-top: 1px dashed var(--rw7-mint-dim);
+}
+#overview .section-head p {
+  margin: 8px 0 0;
+  max-width: 640px;
+  color: var(--rw7-text-3);
+  font-size: 14px;
+  line-height: 1.55;
+}
+#overview .section-head .rw-more-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font: 600 12px var(--rw7-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Main stories: equal cards, the text stops at six lines. */
+#overview .rw-feature-grid {
+  gap: 14px;
+}
+#overview .rw-story-teaser > p {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+  line-clamp: 6;
+  overflow: hidden;
+  color: var(--rw7-text-2);
+  font-size: 15px;
+}
+#overview .rw-story-teaser h3 {
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+/* Feed cards: urgency as a mono label, no coloured side bar. */
+#overview .news-card[data-rw-importance] {
+  border-left-width: 1px;
+  border-inline-start-color: var(--rw7-line-strong);
+}
+#overview .news-card .rw-importance-badge {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: 500 11px var(--rw7-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+html[lang='he'] #overview .news-card .rw-importance-badge {
+  letter-spacing: 0.04em;
+}
+#overview .news-card[data-rw-importance='critical'] .rw-importance-badge {
+  color: var(--rw7-urgent);
+}
+#overview .news-card[data-rw-importance='high'] .rw-importance-badge {
+  color: var(--rw7-important);
+}
+#overview .news-card[data-rw-importance='normal'] .rw-importance-badge,
+#overview .news-card[data-rw-importance='medium'] .rw-importance-badge {
+  color: var(--rw7-text-3);
+}
+#overview .news-card .news-head span {
+  font: 500 12px var(--rw7-mono);
+  letter-spacing: 0.06em;
+}
+
+/* Editorial note: one quiet panel, the label in the E kicker style. */
+#overview .rw-editorial-kicker {
+  font: 600 12px var(--rw7-mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+html[lang='he'] #overview .rw-editorial-kicker {
+  letter-spacing: 0.04em;
+}
+#overview .rw-editorial-panel p {
+  max-width: 760px;
+}
+
+/* «Как работает мониторинг»: a plain closing line. */
+#overview .rw-service-line {
+  border-color: var(--rw7-line);
+  background: transparent;
+}
+
+@media (max-width: 640px) {
+  #overview > .section,
+  #overview > .rw-home-news-editorial,
+  #overview > .rw-editorial-lead {
+    margin-block: 36px;
+  }
+  #overview .section-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
+/* Right under «Главное сейчас» the editorial note needs no extra gap. */
+#overview > .rw-editorial-lead {
+  margin-block-start: 8px;
+}
+/* «+ Что известно» and «Читать первоисточник» on one baseline. */
+#overview .news-card .news-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+}
+#overview .news-card .news-actions > * {
+  margin: 0;
+}
+#overview > .rw-top {
+  margin-block-end: 16px;
+}
+#overview > .rw-editorial-lead > .section {
+  margin-block-start: 0;
+}

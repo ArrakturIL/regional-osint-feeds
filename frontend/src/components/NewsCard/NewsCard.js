@@ -27,8 +27,15 @@ export function NewsCard({ item, open, onToggle, read, markRead }) {
   const priority = Number(item.priority);
   const verified = item.verified === true || item.confirmed === true || item.confidence === 'confirmed';
   const risk = String(item.severity || item.riskLevel || '').toLowerCase();
-  const tone =
-    verified && ['critical', 'imminent', 'emergency'].includes(risk)
+  // 21.11: the badge shows the same urgency as «Главное сейчас» (tier) when the
+  // API provides it; the old priority scale stays only as a fallback.
+  const tone = item.tier
+    ? item.tier === 'urgent'
+      ? [UI_HE ? 'דחוף' : 'Срочно', 'critical']
+      : item.tier === 'important'
+        ? [UI_HE ? 'חשוב' : 'Важно', 'high']
+        : [UI_HE ? 'רגיל' : 'Обычное', 'normal']
+    : verified && ['critical', 'imminent', 'emergency'].includes(risk)
       ? [UI_HE ? 'קריטי' : 'Критично', 'critical']
       : priority >= 9
         ? [UI_HE ? 'חשיבות גבוהה' : 'Высокий приоритет', 'high']
@@ -51,7 +58,7 @@ export function NewsCard({ item, open, onToggle, read, markRead }) {
       {
         className: 'rw-importance-badge',
         'data-tone': tone[1],
-        'aria-label': UI_HE ? 'עדיפות מערכתית של הידיעה' : 'Редакционный приоритет новости',
+        'aria-label': UI_HE ? 'דחיפות הידיעה' : 'Срочность новости',
       },
       tone[0],
     ),

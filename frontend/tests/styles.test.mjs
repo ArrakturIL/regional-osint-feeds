@@ -36,7 +36,8 @@ test('stylesheet cascade: component sources, then refinements in a fixed order',
       themeWithFonts() +
       source('src/components/Header/Header.css') +
       source('src/components/HomeHero/HomeHero.css') +
-      source('src/components/TopNow/TopNow.css'),
+      source('src/components/TopNow/TopNow.css') +
+      source('src/pages/Home/Home.e.css'),
   );
 });
 test('both locales share one explicit rhythm for main sections', () => {
@@ -113,7 +114,8 @@ test('eight RU/HE documents contain no duplicated inline CSS', () => {
       themeWithFonts() +
       source('src/components/Header/Header.css') +
       source('src/components/HomeHero/HomeHero.css') +
-      source('src/components/TopNow/TopNow.css'),
+      source('src/components/TopNow/TopNow.css') +
+      source('src/pages/Home/Home.e.css'),
   );
 });
 
@@ -127,7 +129,10 @@ test('concept E header: one row on desktop, ☰ list below 1000px, 44px targets,
   assert.doesNotMatch(header, /!important/, 'the header layer needs no !important');
   assert.ok(
     assembleStyles().endsWith(
-      header + source('src/components/HomeHero/HomeHero.css') + source('src/components/TopNow/TopNow.css'),
+      header +
+        source('src/components/HomeHero/HomeHero.css') +
+        source('src/components/TopNow/TopNow.css') +
+        source('src/pages/Home/Home.e.css'),
     ),
     'header comes after every older layer',
   );
