@@ -11,9 +11,11 @@
 @font-face{font-family:"Rubik";font-style:normal;font-display:swap;font-weight:300 900;src:url(__FONT_rubik-latin__) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212}
 
 :root{
-  --rw7-bg:#050b09;--rw7-panel:#08130f;--rw7-panel-2:#0b1813;--rw7-hover:#0e1d17;
-  --rw7-line:#1f4031;--rw7-line-strong:#2b5642;--rw7-mint:#9ff5c6;--rw7-mint-dim:#4d7a63;
-  --rw7-text:#e9fbf1;--rw7-text-2:#c4e0d0;--rw7-text-3:#8fb8a2;--rw7-urgent:#f3a59b;--rw7-important:#efd09a;
+  /* 21.11 owner: «почти чёрный» on dim screens. Surfaces lifted a step, card
+     borders to ~3:1 against the page (WCAG 1.4.11), muted text a touch lighter. */
+  --rw7-bg:#07110d;--rw7-panel:#0c1a15;--rw7-panel-2:#10221b;--rw7-hover:#15291f;
+  --rw7-line:#2a5241;--rw7-line-strong:#3d7058;--rw7-mint:#9ff5c6;--rw7-mint-dim:#5f927a;
+  --rw7-text:#e9fbf1;--rw7-text-2:#c4e0d0;--rw7-text-3:#9cc5af;--rw7-urgent:#f3a59b;--rw7-important:#efd09a;
   --rw7-display:"Unbounded","Manrope",system-ui,sans-serif;--rw7-body:"Manrope",system-ui,"Segoe UI",Arial,sans-serif;
   --rw7-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;--rw7-cut:14px;
   --rw7-ease:cubic-bezier(.2,.7,.2,1);
@@ -149,5 +151,5 @@ html[dir="rtl"] :is(.news-card,.rw-story-teaser,.rw-dossier,.rw-situation,.panel
 /* 19.11: one base look for every content button; component rules override it
    (zero specificity). Unstyled buttons (analysts "Обновить") fell back to the
    browser's grey. */
-main :where(button){background:transparent;color:var(--rw7-mint,#9ff5c6);border:1px solid var(--rw7-line-strong,#2b5642);font:600 13px var(--rw7-mono,monospace);letter-spacing:.04em;padding:0 16px;min-height:44px;cursor:pointer;transition:background .2s,border-color .2s}
-main :where(button):hover{background:var(--rw7-hover,#0e1d17);border-color:var(--rw7-mint-dim,#4d7a63)}
+main :where(button){background:transparent;color:var(--rw7-mint,#9ff5c6);border:1px solid var(--rw7-line-strong,#3d7058);font:600 13px var(--rw7-mono,monospace);letter-spacing:.04em;padding:0 16px;min-height:44px;cursor:pointer;transition:background .2s,border-color .2s}
+main :where(button):hover{background:var(--rw7-hover,#15291f);border-color:var(--rw7-mint-dim,#5f927a)}
