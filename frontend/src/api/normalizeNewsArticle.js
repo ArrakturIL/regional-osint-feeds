@@ -10,6 +10,7 @@ export function rwNormalizeNewsArticle(x) {
     url: x.url,
     time: Number.isFinite(x.published_ms) ? new Date(x.published_ms).toISOString() : null,
     priority: x.priority,
+    tier: x.tier,
     verification_status: x.verification_status,
     source_count: x.source_count,
     reporting_origin_count: x.reporting_origin_count,

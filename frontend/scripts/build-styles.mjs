@@ -27,6 +27,7 @@ export function assembleStyles({ includeRefinements = true } = {}) {
     css += themeWithFonts(); // redesign «2077»
     // Concept E components, written clean; they come after the theme layer.
     css += readFileSync(resolve(frontendRoot, 'src/components/Header/Header.css'), 'utf8');
+    css += readFileSync(resolve(frontendRoot, 'src/components/HomeHero/HomeHero.css'), 'utf8');
   }
   return css;
 }

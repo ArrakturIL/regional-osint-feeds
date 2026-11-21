@@ -103,10 +103,9 @@ html[dir='rtl'] .rw-global-header .rw-site-links a.active,
 html[lang='he'] .rw-global-header .rw-site-links a.active {
   clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);
 }
+/* No icons in the section links (mockup): they only cost width. */
 .rw-global-header .rw-site-links .rw-ui-icon {
-  flex: none;
-  width: 16px;
-  height: 16px;
+  display: none;
 }
 
 /* Actions: sources · language · ops · menu. */
@@ -142,7 +141,8 @@ html[lang='he'] .rw-global-header .rw-site-links a.active {
 }
 .rw-global-header .rw-site-source {
   gap: 8px;
-  padding: 0 12px;
+  padding: 0 8px;
+  border-color: transparent;
   white-space: nowrap;
   text-transform: uppercase;
 }
