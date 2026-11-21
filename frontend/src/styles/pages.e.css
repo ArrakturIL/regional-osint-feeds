@@ -349,3 +349,113 @@ html[lang='he'] .rw-page :is(.rw-archive-sort > span, .rw-archive-field > span) 
   border-radius: 0;
   background: var(--rw7-bg);
 }
+
+/* «Данные»: anchor chips, link buttons and «show more» share the chip look. */
+.rw-page .rw-data-nav {
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 0;
+}
+.rw-page :is(.rw-data-nav a, .links a, button.more) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--rw7-line-strong);
+  border-radius: 0;
+  background: transparent;
+  color: var(--rw7-text-2);
+  font: 500 12px var(--rw7-mono);
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+html[lang='he'] .rw-page :is(.rw-data-nav a, .links a, button.more) {
+  letter-spacing: 0.02em;
+  font-size: 13px;
+}
+.rw-page :is(.rw-data-nav a, .links a, button.more):focus-visible {
+  outline: 2px solid var(--rw7-mint);
+  outline-offset: 2px;
+}
+@media (hover: hover) {
+  .rw-page :is(.rw-data-nav a, .links a, button.more):hover {
+    border-color: var(--rw7-mint-dim);
+    background: transparent;
+    color: var(--rw7-mint);
+  }
+}
+.rw-page button.more {
+  margin-top: 16px;
+}
+
+/* Civil defence: alert links beside the IDF list. */
+.rw-civil-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 14px;
+  align-items: start;
+}
+.rw-civil-grid > * {
+  margin: 0;
+}
+.rw-civil-grid .links {
+  flex-direction: column;
+  align-items: stretch;
+}
+@media (max-width: 900px) {
+  .rw-civil-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rw-civil-grid .links {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+/* Official lists (IDF, MARAD, CENTCOM): title, one mono meta line, text. */
+.rw-page .rw-official-row {
+  padding-top: 14px;
+  border-top: 1px dashed var(--rw7-line);
+}
+.rw-page .rw-official-row:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+.rw-page .rw-official-row > strong {
+  display: block;
+  color: var(--rw7-text);
+  font-size: 16px;
+  line-height: 1.4;
+}
+.rw-official-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  margin: 6px 0 0;
+  color: var(--rw7-text-3);
+  font: 500 12px var(--rw7-mono);
+  letter-spacing: 0.03em;
+}
+.rw-official-note {
+  color: var(--rw7-important);
+}
+.rw-page .rw-official-row > p {
+  margin: 8px 0 6px;
+  color: var(--rw7-text-2);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.rw-page .panel > h3,
+.rw-page .card > h3 {
+  margin: 0 0 16px;
+  color: var(--rw7-mint);
+  font: 600 12px var(--rw7-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+html[lang='he'] .rw-page :is(.panel, .card) > h3 {
+  letter-spacing: 0.04em;
+  font-size: 13px;
+}

@@ -62,7 +62,7 @@ export function DataRoomV2({
         marad: 'MARAD — אזהרות ימיות',
         centcom: 'CENTCOM / DVIDS',
         origin: 'כותרות המקור מוצגות כפי שפורסמו.',
-        sources: 'מקורות',
+        issues: (n, all) => 'מקורות עם תקלה: ' + n + ' מתוך ' + all,
         sourceState: 'מצב מקורות הנתונים',
         sourceUnknown: 'סטטוס לא ידוע',
         sourceDisabled: 'מושבת זמנית',
@@ -112,7 +112,7 @@ export function DataRoomV2({
         marad: 'MARAD — морские предупреждения',
         centcom: 'CENTCOM / DVIDS',
         origin: 'Заголовки источников приведены в оригинале.',
-        sources: 'Источники',
+        issues: (n, all) => 'С перебоями: ' + n + ' из ' + all,
         sourceState: 'Состояние источников данных',
         sourceUnknown: 'Статус неизвестен',
         sourceDisabled: 'Временно отключён',
@@ -152,29 +152,38 @@ export function DataRoomV2({
                 'article',
                 { className: 'rw-official-row', key: x.id || i },
                 h('strong', { lang: language, dir: 'auto' }, x.title || name),
-                pending
-                  ? h(
-                      'small',
-                      { className: 'rw-translation-state', role: 'status' },
-                      isHe
-                        ? language === 'en'
-                          ? 'המקור באנגלית · התרגום ממתין'
-                          : 'המקור ברוסית · התרגום ממתין'
-                        : language === 'en'
-                          ? 'Оригинал на английском · перевод ожидается'
-                          : 'Оригинал на иврите · перевод ожидается',
-                    )
-                  : null,
-                idfofficial && x.translation_status === 'available'
-                  ? h(
-                      'small',
-                      { className: 'rw-translation-state' },
-                      isHe
-                        ? 'תרגום מכונה · יש לבדוק מול המקור'
-                        : 'Автоматический перевод · сверяй с оригиналом',
-                    )
-                  : null,
-                x.published ? t('small', 'hint', L.publish + fmtTime(x.published)) : null,
+                // 21.11 (concept E): time and translation state on one mono line
+                // under the title instead of badges inside the title line.
+                (() => {
+                  const parts = [];
+                  if (x.published)
+                    parts.push(h('time', { key: 't', dateTime: x.published }, fmtTime(x.published)));
+                  if (pending)
+                    parts.push(
+                      h(
+                        'span',
+                        { key: 'p', className: 'rw-official-note', role: 'status' },
+                        isHe
+                          ? language === 'en'
+                            ? 'המקור באנגלית · התרגום ממתין'
+                            : 'המקור ברוסית · התרגום ממתין'
+                          : language === 'en'
+                            ? 'Оригинал на английском · перевод ожидается'
+                            : 'Оригинал на иврите · перевод ожидается',
+                      ),
+                    );
+                  else if (idfofficial && x.translation_status === 'available')
+                    parts.push(
+                      h(
+                        'span',
+                        { key: 'm', className: 'rw-official-note' },
+                        isHe
+                          ? 'תרגום מכונה · יש לבדוק מול המקור'
+                          : 'Автоматический перевод · сверяй с оригиналом',
+                      ),
+                    );
+                  return parts.length ? h('p', { className: 'rw-official-meta' }, ...parts) : null;
+                })(),
                 x.description ? h('p', { lang: language, dir: 'auto' }, x.description) : null,
                 x.url ? h(External, { url: x.url }, isHe ? 'למקור ↗' : 'Первоисточник ↗') : null,
               );
@@ -278,21 +287,24 @@ export function DataRoomV2({
       'section',
       { className: 'section', id: 'civil' },
       h(Head, { title: L.safety, icon: 'activity', sub: L.safetySub }),
+      // 21.11: one panel with the alert links, the IDF list beside it; the
+      // IDF heading used to appear twice (outer card and inner card).
       h(
-        Card,
-        null,
-        t('span', 'notice', L.noAlerts),
+        'div',
+        { className: 'rw-civil-grid' },
         h(
-          'div',
-          { className: 'links' },
-          h(External, { url: 'https://www.oref.org.il/' }, L.oref + ' ↗'),
-          h(External, { url: 'https://alerts-history.oref.org.il/' }, L.history + ' ↗'),
-          h(External, { url: 'https://t.me/PikudHaOref_all' }, L.officialNotices + ' ↗'),
+          Card,
+          null,
+          t('span', 'notice', L.noAlerts),
+          h(
+            'div',
+            { className: 'links' },
+            h(External, { url: 'https://www.oref.org.il/' }, L.oref + ' ↗'),
+            h(External, { url: 'https://alerts-history.oref.org.il/' }, L.history + ' ↗'),
+            h(External, { url: 'https://t.me/PikudHaOref_all' }, L.officialNotices + ' ↗'),
+          ),
         ),
-        t('h3', null, L.idf),
-        Array.isArray(data?.home) && data.home.length
-          ? official(L.idf, data.home)
-          : t('p', 'hint', L.emptyTelemetry),
+        official(L.idf, data?.home),
       ),
     ),
     h(
@@ -373,7 +385,7 @@ export function DataRoomV2({
         Card,
         null,
         t('h3', null, L.sourceState),
-        t('p', null, issues.length + ' / ' + allSources.length + ' ' + L.sources),
+        t('p', null, L.issues(issues.length, allSources.length)),
         h(
           'details',
           { className: 'rw-technical-details' },
