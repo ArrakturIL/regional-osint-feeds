@@ -29,6 +29,8 @@ const EDITOR = new Set(EDITOR_ENDPOINTS),
 export const PAGE_PATHS = Object.freeze({
   '/': 'index.html',
   '/he': 'he/index.html',
+  '/feed': 'feed/index.html',
+  '/he/feed': 'he/feed/index.html',
   '/events': 'events/index.html',
   '/he/events': 'he/events/index.html',
   '/data': 'data/index.html',

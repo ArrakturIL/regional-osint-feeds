@@ -8,6 +8,7 @@ import { HE_TEXT } from '../i18n/meta.js';
 import { AnalystShared } from '../pages/Analysts/Analysts.js';
 import { DataRoomV2 } from '../pages/DataRoom/DataRoom.js';
 import { CasesPageV2 } from '../pages/Events/Events.js';
+import { FeedPage } from '../pages/Feed/Feed.js';
 import { HomeV2 } from '../pages/Home/Home.js';
 export function App() {
   const normalizePath = () => {
@@ -18,12 +19,14 @@ export function App() {
         ? '/data'
         : p.startsWith('/events')
           ? '/events'
-          : '/';
+          : p.startsWith('/feed')
+            ? '/feed'
+            : '/';
   };
   const [route, setRoute] = useState(normalizePath);
   const current = useRef(route);
   current.current = route;
-  const scrollPositions = useRef({ '/': 0, '/events': 0, '/data': 0, '/analysts': 0 });
+  const scrollPositions = useRef({ '/': 0, '/feed': 0, '/events': 0, '/data': 0, '/analysts': 0 });
   function switchRoute(path, fromPop) {
     const nextPath = new URL(path, location.origin),
       p = UI_HE ? nextPath.pathname.replace(/^\/he(?=\/|$)/, '') || '/' : nextPath.pathname;
@@ -33,7 +36,9 @@ export function App() {
         ? '/data'
         : p.startsWith('/events')
           ? '/events'
-          : '/';
+          : p.startsWith('/feed')
+            ? '/feed'
+            : '/';
     if (target === current.current && nextPath.href === location.href) return;
     scrollPositions.current[current.current] = window.scrollY;
     if (!fromPop)
@@ -65,7 +70,9 @@ export function App() {
         ? HE_TEXT[
             route === '/events'
               ? 'events'
-              : route === '/data'
+              : route === '/feed'
+                ? 'feed'
+                : route === '/data'
                 ? 'data'
                 : route === '/analysts'
                   ? 'analysts'
@@ -73,7 +80,9 @@ export function App() {
           ][0]
         : route === '/events'
           ? 'События и контекст'
-          : route === '/data'
+          : route === '/feed'
+            ? 'Лента публикаций'
+            : route === '/data'
             ? 'Данные и источники'
             : route === '/analysts'
               ? 'Аналитики и публикации'
@@ -168,6 +177,7 @@ export function App() {
         route === '/events'
           ? h(CasesPageV2, { visible: true, cases: normalizedCases, error: cases.error, feed: cases })
           : null,
+        route === '/feed' ? h(FeedPage, {}) : null,
         route === '/data'
           ? h(DataRoomV2, {
               visible: true,

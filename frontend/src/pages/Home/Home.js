@@ -38,7 +38,7 @@ export function HomeV2({ visible, overview, news, cases, go, errors, feeds }) {
   const stories = (Array.isArray(news?.stories) ? news.stories : []).slice(0, 6);
   const featured = Array.isArray(cases?.stories) ? cases.stories.slice(0, 3) : [];
   const toEvents = (UI_HE ? '/he' : '') + '/events',
-    toFeed = toEvents + '#all-news',
+    toFeed = (UI_HE ? '/he' : '') + '/feed',
     toData = (UI_HE ? '/he' : '') + '/data';
   const labels = UI_HE
     ? {

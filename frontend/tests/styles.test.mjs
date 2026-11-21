@@ -123,10 +123,10 @@ test('eight RU/HE documents contain no duplicated inline CSS', () => {
   );
 });
 
-test('concept E header: one row on desktop, ☰ list below 1000px, 44px targets, loaded last', () => {
+test('concept E header: one row on desktop, ☰ list below 1100px, 44px targets, loaded last', () => {
   const header = source('src/components/Header/Header.css');
   assert.match(header, /grid-template-areas:\s*'brand nav actions'/);
-  assert.match(header, /@media \(max-width: 999px\)[\s\S]*?\.rw-site-links\s*\{\s*display: none;/);
+  assert.match(header, /@media \(max-width: 1099px\)[\s\S]*?\.rw-site-links\s*\{\s*display: none;/);
   assert.match(header, /\.rw-site-links\[data-open='true'\]\s*\{\s*display: grid;/);
   assert.match(header, /\.rw-site-menu\s*\{\s*display: inline-flex;/);
   assert.match(header, /min-height: 44px/);

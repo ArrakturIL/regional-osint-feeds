@@ -47,20 +47,22 @@ for (const he of [false, true]) {
   test(`${he ? 'HE' : 'RU'}: section link click routes in-app`, () => {
     const calls = [];
     const links = render(he, p => calls.push(p));
-    assert.equal(links.length, 4);
+    assert.equal(links.length, 5, 'Обстановка, Лента, События, Данные, Аналитики (21.11)');
     assert.equal(click(links[1]), true);
-    assert.deepEqual(calls, [he ? '/he/events' : '/events']);
+    assert.equal(click(links[2]), true);
+    assert.deepEqual(calls, he ? ['/he/feed', '/he/events'] : ['/feed', '/events']);
   });
 }
 test('modifier / middle clicks keep native behaviour (new tab)', () => {
   const calls = [];
-  const [, events] = render(false, p => calls.push(p));
+  const [, , events] = render(false, p => calls.push(p));
   for (const m of [{ ctrlKey: true }, { metaKey: true }, { shiftKey: true }, { button: 1 }])
     assert.equal(click(events, m), false);
   assert.equal(calls.length, 0);
 });
 test('without a router the links stay plain hrefs', () => {
-  const [, events] = render(false, undefined);
+  const [, feed, events] = render(false, undefined);
+  assert.equal(feed.props.href, '/feed');
   assert.equal(click(events), false);
   assert.equal(events.props.href, '/events');
 });

@@ -1,7 +1,7 @@
 /* Site header, concept E «2077» (owner 21.11). One file replaces the former
    Header.navigation / .mobile / .status layers and the header part of the theme.
    Loaded last, so plain selectors win; no important-flags needed.
-   Desktop (≥ 1000px): one row — brand · sections · sources · language · ops.
+   Desktop (≥ 1100px, five sections since 21.11): one row — brand · sections · sources · language · ops.
    Below: brand + actions in one row; sections open as a vertical list (☰).
    Direction follows the page: RTL in Hebrew, the menu sits at the inline end. */
 
@@ -267,7 +267,7 @@ html[lang='he'] .rw-global-header .rw-site-source {
 }
 
 /* Below desktop: sections move into the ☰ list. */
-@media (max-width: 999px) {
+@media (max-width: 1099px) {
   .rw-global-header.rw-header {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:

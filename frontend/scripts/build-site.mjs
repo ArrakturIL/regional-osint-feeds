@@ -42,7 +42,7 @@ export function versionDocument(html, map = hashes) {
   );
 }
 for (const lang of ['ru', 'he'])
-  for (const page of ['home', 'events', 'data', 'analysts']) {
+  for (const page of ['home', 'feed', 'events', 'data', 'analysts']) {
     const html = readFileSync(resolve(root, 'documents', lang, page + '.html'), 'utf8');
     const path = (lang === 'he' ? 'he/' : '') + (page === 'home' ? '' : page + '/') + 'index.html';
     const out = withBeacon(versionDocument(html));
@@ -66,4 +66,4 @@ for (const lang of ['ru', 'he'])
   if (out === html) throw Error('asset version not applied: 404.html');
   write('404.html', out);
 }
-console.log('Built standalone static Pages payload: 8 locale routes + /ops + 404 + modular frontend assets.');
+console.log('Built standalone static Pages payload: 10 locale routes + /ops + 404 + modular frontend assets.');

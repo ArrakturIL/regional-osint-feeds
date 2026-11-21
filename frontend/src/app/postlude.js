@@ -33,7 +33,7 @@
     frame = 0;
   const key = () => location.pathname + location.search + location.hash;
   function findTarget() {
-    if (!/\/events$/.test(location.pathname)) return null;
+    if (!/\/(events|feed)$/.test(location.pathname)) return null;
     const story = new URLSearchParams(location.search).get('story');
     if (story) {
       const article = document.getElementById('case-' + story);

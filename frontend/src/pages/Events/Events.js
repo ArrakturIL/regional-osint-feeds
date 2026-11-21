@@ -2,7 +2,6 @@ import { FeedState } from '../../components/FeedState/FeedState.js';
 import { normalizeCase } from '../../api/normalizeCase.js';
 import { UI_HE, h, t, useEffect, useRef, useState } from '../../app/runtime.js';
 import { Loading } from '../../components/Loading/Loading.js';
-import { NewsArchive } from '../../components/NewsArchive/NewsArchive.js';
 import { Intro } from '../../components/PageIntro/Intro.js';
 import { Head } from '../../components/SectionHead/Head.js';
 import { ruPlural } from '../../utils/ruPlural.js';
@@ -139,7 +138,6 @@ export function CasesPageV2({ visible, cases, error, feed }) {
           : h(Loading, { label: strings.load }),
       cases && !filtered.length ? t('p', 'hint', strings.empty) : null,
     ),
-    h(NewsArchive, {}),
     t('p', 'rw-fineprint', strings.disclaimer),
   );
 }
