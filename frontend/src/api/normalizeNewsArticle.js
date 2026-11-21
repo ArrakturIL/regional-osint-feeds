@@ -1,3 +1,11 @@
+// Owner 21.11: «Срочно» ages out. After URGENT_TTL_MS an urgent item reads as
+// «Важно» everywhere on the site; the stored tier is unchanged.
+export const URGENT_TTL_MS = 6 * 3600e3;
+export function effectiveTier(tier, publishedMs, now = Date.now()) {
+  return tier === 'urgent' && Number.isFinite(publishedMs) && now - publishedMs > URGENT_TTL_MS
+    ? 'important'
+    : tier;
+}
 export function rwNormalizeNewsArticle(x) {
   return {
     id: x.event_id || x.id,
@@ -10,7 +18,7 @@ export function rwNormalizeNewsArticle(x) {
     url: x.url,
     time: Number.isFinite(x.published_ms) ? new Date(x.published_ms).toISOString() : null,
     priority: x.priority,
-    tier: x.tier,
+    tier: effectiveTier(x.tier, x.published_ms),
     verification_status: x.verification_status,
     source_count: x.source_count,
     reporting_origin_count: x.reporting_origin_count,
