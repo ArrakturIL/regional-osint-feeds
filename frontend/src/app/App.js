@@ -79,7 +79,7 @@ export function App() {
               ? 'Аналитики и публикации'
               : 'Обстановка в регионе') + ' — REGIONAL WATCH';
   }, [route]);
-  const overview = useFeed('/api/overview', 60000, true);
+  const overview = useFeed('/api/overview' + (UI_HE ? '?lang=he' : ''), 60000, true);
   const news = useFeed(
     '/api/news?lang=' + (UI_HE ? 'he' : 'ru') + '&limit=40&sort=latest',
     60000,
@@ -95,7 +95,7 @@ export function App() {
     120000,
     route === '/',
   );
-  const data = useFeed('/api/data', 120000, route === '/data');
+  const data = useFeed('/api/data' + (UI_HE ? '?lang=he' : ''), 120000, route === '/data');
   const officialPosts = useFeed(
     '/api/official-posts?lang=' + (UI_HE ? 'he' : 'ru') + '&limit=5',
     120000,

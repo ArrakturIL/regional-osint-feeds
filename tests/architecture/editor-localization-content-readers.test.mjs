@@ -136,7 +136,12 @@ test('editorial HE cache missing keeps field-level statuses, metadata and source
   assert.equal(x.notes[0].content_language, 'ru');
   assert.equal(x.notes[0].translation_status, 'pending');
   assert.equal(x.notes[0].localization_complete, false);
-  assert.equal(x.notes[0].field_translation_status.verified_note, 'pending');
+  assert.equal(
+    x.notes[0].field_translation_status.verified_note,
+    undefined,
+    'Russian-only note is not in ?lang=he',
+  );
+  assert.equal(x.notes[0].verified_note, null);
   assert.equal(x.localized_count, 0);
   assert.match(f.queries[0].sql, /LEFT JOIN regional_i18n/);
 });
@@ -198,7 +203,7 @@ test('common facade retains 400/405/204/404 validation before three public reade
   assert.equal(f.queries.length, 0);
 });
 
-test('B-04 ready Hebrew editorial headline/body remain field-available when unlocalized verified note is pending', async () => {
+test('B-04 + 21.11: a ready Hebrew editorial note is complete; the Russian-only verified note is left out of ?lang=he', async () => {
   const n = {
     id: 'field-note',
     headline: 'Ситуация в регионе',
@@ -219,18 +224,9 @@ test('B-04 ready Hebrew editorial headline/body remain field-available when unlo
   assert.equal(response.status, 200);
   assert.equal(result.field_translation_status.headline, 'available');
   assert.equal(result.field_translation_status.text, 'available');
-  assert.equal(result.field_translation_status.verified_note, 'pending');
-  assert.equal(
-    result.localization_complete,
-    false,
-    'untranslated verified note still prevents full completeness',
-  );
-  assert.equal(result.translation_status, 'pending');
-  assert.equal(
-    result.core_translation_status,
-    'available',
-    'primary editorial article should not be mislabeled as untranslated',
-  );
-  assert.deepEqual(result.pending_fields, ['verified_note']);
-  assert.equal(result.verified_note, n.verified_note, 'do not invent an Hebrew translation');
+  assert.equal(result.field_translation_status.verified_note, undefined);
+  assert.equal(result.localization_complete, true);
+  assert.equal(result.core_translation_status, 'available');
+  assert.deepEqual(result.pending_fields, []);
+  assert.equal(result.verified_note, null, 'no Russian text and no invented Hebrew');
 });

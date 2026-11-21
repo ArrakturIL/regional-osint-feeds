@@ -84,3 +84,15 @@ test('D1 read-only aggregator uses three existing production tables', async () =
   assert.equal(v.analysis.state, 'attention');
   assert.equal(v.total, 3);
 });
+test('21.11: ?lang=he carries the analysis time and state only, no Russian events or labels', () => {
+  const v = assembleOverview({
+    latestRun: { outcome: 'alert', recorded_at_ms: timestamp },
+    eventRows: fixtureEvents,
+    statusRows: [{ source: 'adsb', state: 'ok', attempted_at: null }],
+    lang: 'he',
+  });
+  assert.deepEqual(Object.keys(v.analysis).sort(), ['state', 'time']);
+  assert.equal(v.analysis.state, 'attention');
+  assert.deepEqual(v.events, []);
+  assert.doesNotMatch(JSON.stringify(v), /[Ѐ-ӿ]/u, 'no Cyrillic in the HE overview');
+});

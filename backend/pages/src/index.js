@@ -54,8 +54,10 @@ export async function handlePages(request, env) {
     if (route.kind === 'monitor') return await monitorPublic(request, env, route);
     if (route.kind === 'pages') {
       if (Object.hasOwn(alias, route.upstream)) return await editor(request, env, alias[route.upstream]);
-      if (route.upstream === '/api/overview') return Response.json(await overviewFromD1(env));
-      if (route.upstream === '/api/data') return Response.json(await dataFromD1(env));
+      const lang = url.searchParams.get('lang') === 'he' ? 'he' : 'ru';
+      if (route.upstream === '/api/overview')
+        return Response.json(await overviewFromD1(env, Date.now(), lang));
+      if (route.upstream === '/api/data') return Response.json(await dataFromD1(env, Date.now(), lang));
       if (route.upstream === '/api/ops') return await opsFromD1(request, env);
     }
     if (path.startsWith('/api/') || path === '/summary') return jsonError('not_found', 404);

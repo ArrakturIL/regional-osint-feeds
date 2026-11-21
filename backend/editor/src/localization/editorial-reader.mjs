@@ -32,10 +32,16 @@ export async function readLocalizedEditorialNotes(env, lang, lim) {
         source_url: n.source_url,
         published_ms: n.published_ms,
         author: n.author,
-        verified_note: n.verified_note,
+        // 21.11: verified_note is written in Russian only; ?lang=he leaves it out.
+        verified_note: lang === 'he' ? null : n.verified_note,
         content_language: t.content_language,
       };
-      const locale = fieldLocale(note, ['headline', 'text', 'verified_note'], lang, t.translation_status);
+      const locale = fieldLocale(
+        note,
+        lang === 'he' ? ['headline', 'text'] : ['headline', 'text', 'verified_note'],
+        lang,
+        t.translation_status,
+      );
       const status = locale.field_translation_status;
       const good = new Set(['source', 'available', 'not_applicable']);
       const coreReady = ['headline', 'text'].every(k => good.has(status[k]));

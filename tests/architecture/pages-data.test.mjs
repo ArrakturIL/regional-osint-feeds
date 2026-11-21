@@ -244,3 +244,12 @@ test('E-05: YES-token semantics respect outcomes order and are not a verified pr
   assert.equal(result[0].independent_probability, false);
   assert.equal(result[0].market_status, 'active');
 });
+test('21.11: ?lang=he drops the Russian market caveat and Russian source labels', () => {
+  const d = assembleData({ nowMs: now, marketRows: [row('A', at, 0.03, 100)], lang: 'he' });
+  assert.equal(d.markets.length, 1);
+  assert.equal('caveat' in d.markets[0], false);
+  assert.ok(
+    assembleData({ nowMs: now, marketRows: [row('A', at, 0.03, 100)] }).markets[0].caveat,
+    'RU keeps it',
+  );
+});
