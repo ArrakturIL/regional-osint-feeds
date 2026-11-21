@@ -150,7 +150,7 @@ function render(d,error){
  const ruOver=(sla.ru?.urgent?.overdue||0)+(sla.ru?.important?.overdue||0), heOver=(sla.he?.urgent?.overdue||0)+(sla.he?.important?.overdue||0);
  const pool=q.pool?.neurons||0, poolP=Math.round(pool/(L.aiPool||1)*100), gemP=Math.round((gem?.calls||0)/(L.gemini||1)*100);
  const gpt=d.gpt||{}, gptAge=ms(gpt.last_monitor_run?.recorded_at_ms), gptOld=!gptAge||Date.now()-gptAge>3*3600e3, gptLate=gptAge&&Date.now()-gptAge>90*60e3;
- const noteAge=ms(gpt.last_editorial_note?.created_ms), noteOld=!noteAge||Date.now()-noteAge>36*3600e3;
+ const noteAge=ms(gpt.last_editorial_note?.created_ms), noteOld=!noteAge||Date.now()-noteAge>10*3600e3;
  const lvl=(bad,warn)=>bad?'bad':warn?'warn':'';
  const al=(t.alert?.active)||[], AL={stalled:'стоит больше часа: срочное или важное ждёт в очереди',manual:'3+ задания ушли в ручную очередь за сутки'};
  const alertBox=al.length?`<div class="alert" role="alert"><h2 style="color:var(--bad);margin:0 0 4px">Тревога переводов</h2>${al.map(a=>{const[k,l]=a.type.split(':');return `<p style="margin:3px 0;font-size:13px"><b>${l.toUpperCase()}</b> — ${esc(AL[k]||k)}: ${fmt(a.count)}${a.oldest_ms?' · старейшее '+ago(a.oldest_ms):''}${t.alert.notified?.[a.type]?' · объявлено '+ago(t.alert.notified[a.type].at_ms):''}</p>`}).join('')}<p class="meta" style="margin:4px 0 0">Проверка раз в 5 минут, повтор не чаще раза в час на тип.</p></div>`:'';
@@ -218,7 +218,7 @@ function render(d,error){
  `<p class="explain">Скрипты в GitHub Actions по расписанию складывают данные в базу. Полоска заполняется до конца, когда прошло вдвое больше нормы — тогда точка краснеет.</p>${colRows||'<p class="meta">Нет данных.</p>'}`,late.length>0)}
 
  ${sec('gpt','GPT и аналитики',lvl(gptOld,gptLate||noteOld||(anPending||0)>=10),`монитор ${ago(gptAge)} · реплика ${ago(noteAge)} · аналитики ${fmt(anPending)}`,
- kv([['GPT-монитор, последний анализ',`${esc(ago(gpt.last_monitor_run?.recorded_at_ms))} · итог: ${esc(gpt.last_monitor_run?.outcome||'—')}`],['Последнее досье',`${esc(ago(gpt.last_dossier?.updated_at_ms))} · ${esc(gpt.last_dossier?.event_id||'—')}`],['Последняя реплика редактора',esc(ago(noteAge))+(noteOld?' — дольше полутора суток, проверь задачу GPT':'')],['Аналитики, последний прогон',`${esc(ago(an.started_at_ms))} · ${esc(an.status||'—')}${an.error_message?' · '+esc(an.error_message):''}`],['Аналитики в очереди',`${fmt(anPending)} (норма — меньше 10)`],b6?['Сравнение моделей B6',`${esc(b6.status||'—')} · ${esc(b6.run_id||'')}`]:null])+
+ kv([['GPT-монитор, последний анализ',`${esc(ago(gpt.last_monitor_run?.recorded_at_ms))} · итог: ${esc(gpt.last_monitor_run?.outcome||'—')}`],['Последнее досье',`${esc(ago(gpt.last_dossier?.updated_at_ms))} · ${esc(gpt.last_dossier?.event_id||'—')}`],['Последняя реплика редактора',esc(ago(noteAge))+(noteOld?' — больше 10 ч (норма 3–4 в сутки), проверь задачу GPT':'')],['Аналитики, последний прогон',`${esc(ago(an.started_at_ms))} · ${esc(an.status||'—')}${an.error_message?' · '+esc(an.error_message):''}`],['Аналитики в очереди',`${fmt(anPending)} (норма — меньше 10)`],b6?['Сравнение моделей B6',`${esc(b6.status||'—')} · ${esc(b6.run_id||'')}`]:null])+
  help('Что значит «итог» анализа','no_alert — сравнил, тревоги нет. alert — есть важное изменение. partial — часть источников сравнить не удалось. Анализ старше двух часов — GPT-задача, скорее всего, не запускалась.'),gptOld)}
 
  ${sec('pause','Ленты на паузе','',(d.paused_feeds||[]).length?(d.paused_feeds||[]).length+' лент':'нет',
