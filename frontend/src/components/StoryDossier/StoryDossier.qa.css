@@ -11,4 +11,3 @@
 .rw-dossier-top>.rw-dossier-actions{margin:5px 0 0;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .rw-dossier-top>.rw-dossier-actions button{white-space:normal;text-align:start}
 @media(max-width:700px){.rw-dossier .rw-dossier-top{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:12px!important}.rw-dossier-top>.rw-verification-tags{max-width:100%;justify-content:flex-start}.rw-dossier-top>.rw-dossier-actions{width:100%}}
-html[lang=he] .rw-global-header{direction:ltr}html[lang=he] .rw-global-header .brand{direction:ltr;text-align:left}html[lang=he] .rw-global-header .rw-site-links{direction:rtl;text-align:start}html[lang=he] .rw-global-header .rw-site-actions{direction:ltr}

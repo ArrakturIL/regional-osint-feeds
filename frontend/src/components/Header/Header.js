@@ -59,8 +59,13 @@ export function GlobalHeader({ active, overview, go }) {
     h(
       'a',
       { className: 'brand', href: href(he ? 'he' : 'ru', '', false) },
-      t('span', 'logo', '◎'),
-      h('span', null, t('strong', null, 'REGIONAL WATCH'), t('small', null, 'ISRAEL / OSINT MONITORING')),
+      h(
+        'svg',
+        { className: 'rw-brand-mark', viewBox: '0 0 30 30', 'aria-hidden': 'true', focusable: 'false' },
+        h('path', { d: 'M15 2 L28 9.5 L28 20.5 L15 28 L2 20.5 L2 9.5 Z', fill: 'none', stroke: 'currentColor', strokeWidth: '1.2' }),
+        h('circle', { cx: '15', cy: '15', r: '3', fill: 'currentColor' }),
+      ),
+      t('strong', null, 'REGIONAL WATCH'),
     ),
     h(
       'div',

@@ -30,13 +30,12 @@ test('stylesheet cascade: component sources, then refinements in a fixed order',
     baseline +
       refined +
       source('src/styles/document-shell.css') +
-      source('src/components/Header/Header.mobile.css') +
       source('src/components/NewsMasonry/NewsMasonry.layout.css') +
       source('src/components/NewsArchive/NewsArchive.filters.css') +
-      source('src/components/Header/Header.status.css') +
       source('src/components/Digest/Digest.qa.css') +
       source('src/components/FeedState/FeedState.css') +
-      themeWithFonts(),
+      themeWithFonts() +
+      source('src/components/Header/Header.css'),
   );
 });
 test('both locales share one explicit rhythm for main sections', () => {
@@ -107,27 +106,26 @@ test('eight RU/HE documents contain no duplicated inline CSS', () => {
     baseline +
       refined +
       shared +
-      source('src/components/Header/Header.mobile.css') +
       source('src/components/NewsMasonry/NewsMasonry.layout.css') +
       source('src/components/NewsArchive/NewsArchive.filters.css') +
-      source('src/components/Header/Header.status.css') +
       source('src/components/Digest/Digest.qa.css') +
       source('src/components/FeedState/FeedState.css') +
-      themeWithFonts(),
+      themeWithFonts() +
+      source('src/components/Header/Header.css'),
   );
 });
 
-test('small screen navigation has two readable columns in both locales', () => {
-  const mobile = source('src/components/Header/Header.mobile.css');
-  assert.match(mobile, /@media\s*\(max-width:\s*430px\)/);
-  assert.match(mobile, /grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)\s*!important/);
-  assert.match(mobile, /min-height:\s*44px\s*!important/);
-  assert.match(mobile, /font-size:\s*0\.875rem\s*!important/);
-  const css = assembleStyles();
-  assert.ok(
-    css.indexOf(mobile) > css.indexOf(source('src/styles/document-shell.css')),
-    'mobile navigation must load after older inline shell cascade',
-  );
+test('concept E header: one row on desktop, ☰ list below 1000px, 44px targets, loaded last', () => {
+  const header = source('src/components/Header/Header.css');
+  assert.match(header, /grid-template-areas:\s*'brand nav actions'/);
+  assert.match(header, /@media \(max-width: 999px\)[\s\S]*?\.rw-site-links\s*\{\s*display: none;/);
+  assert.match(header, /\.rw-site-links\[data-open='true'\]\s*\{\s*display: grid;/);
+  assert.match(header, /\.rw-site-menu\s*\{\s*display: inline-flex;/);
+  assert.match(header, /min-height: 44px/);
+  assert.doesNotMatch(header, /!important/, 'the header layer needs no !important');
+  assert.ok(assembleStyles().endsWith(header), 'header comes after every older layer');
+  for (const old of ['Header.navigation.css', 'Header.mobile.css', 'Header.status.css'])
+    assert.equal(existsSync(resolve(frontend, 'src/components/Header', old)), false, old);
 });
 
 test('news order and sources count regression: stable grid and isolated LTR numbers', () => {
@@ -147,17 +145,10 @@ test('news order and sources count regression: stable grid and isolated LTR numb
   const count = code(source('src/components/Header/Header.js'));
   assert.match(count, /h\("bdi",\{className:"rw-site-source-count",dir:"ltr"\},status\)/);
   assert.match(count, /h\("bdi",\{className:"rw-dlg-counter",dir:"ltr"\},status\)/);
-  const countStyle =
-    source('src/components/NewsArchive/NewsArchive.filters.css') +
-    source('src/components/Header/Header.status.css') +
-    source('src/components/Digest/Digest.qa.css');
-  assert.match(countStyle, /\.rw-global-header\s+\.rw-site-source\s*\{[\s\S]*?display:\s*inline-flex/);
-  assert.match(countStyle, /\.rw-global-header\s+\.rw-site-source-count\s*\{[\s\S]*?unicode-bidi:\s*isolate/);
+  const header = source('src/components/Header/Header.css');
+  assert.match(header, /\.rw-global-header \.rw-site-source \{[\s\S]*?display: inline-flex/);
+  assert.match(header, /\.rw-global-header \.rw-site-source-count,[\s\S]*?unicode-bidi: isolate/);
   const bundle = assembleStyles();
-  assert.ok(
-    bundle.endsWith(countStyle + source('src/components/FeedState/FeedState.css') + themeWithFonts()),
-    'bidi fix must take precedence after legacy header rules (only F-04 FeedState.css and the 2077 theme layer follow)',
-  );
   assert.ok(bundle.includes(layout), 'news grid must be present in emitted CSS');
 });
 
