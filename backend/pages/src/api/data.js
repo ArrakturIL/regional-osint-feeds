@@ -159,7 +159,11 @@ function advisoryGroups(rows) {
   }
   // Newest first by the source's own date, three per body.
   for (const k of Object.keys(out))
-    out[k] = out[k].sort((a, b) => Date.parse(b.published || 0) - Date.parse(a.published || 0)).slice(0, 3);
+    out[k] = out[k]
+      .sort((a, b) => Date.parse(b.published || 0) - Date.parse(a.published || 0))
+      // EASA keeps one URL per revision (…-r3, …-r4): the newest of a title wins.
+      .filter((x, i, all) => all.findIndex(y => y.title === x.title) === i)
+      .slice(0, 3);
   return out;
 }
 function satelliteItems(rows) {
