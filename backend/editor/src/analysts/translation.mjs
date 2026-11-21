@@ -28,23 +28,55 @@ export function splitSource(text, max = MAX_CHUNK_CHARS) {
   return result;
 }
 function numericTokens(text, isTranslation = false) {
-  return (String(text).match(/\d+(?:[.,\u00a0 ]\d+)*/g) || []).map(raw => {
+  // 21.11: digits glued to letters («Airforce1») are names, not quantities;
+  // leading zeros are formatting (03:30 = 3:30).
+  return (String(text).match(/(?<!\p{L})\d+(?:[.,\u00a0 ]\d+)*/gu) || []).map(raw => {
     let value = raw.replace(/(?<=\d)[\u00a0 ](?=\d{3}(?:\D|$))/g, '').trim();
     if (!isTranslation) {
       // Public Hebrew/English sources commonly use a comma for thousands.
       value = value.replace(/(?<=\d),(?=\d{3}(?:\D|$))/g, '');
     }
-    return value.replace(/,/g, '.');
+    return value.replace(/,/g, '.').replace(/^0+(?=\d)/, '');
   });
 }
+// 21.11: small numbers may be spelled out in Russian («3 המנהיגים» → «трёх
+// лидеров»); a different number still fails because only the same value's word
+// is accepted.
+const RU_NUMBER_WORDS = {
+  1: 'одн|один',
+  2: 'два|две|двух|двум',
+  3: 'три|тр[её]х|тр[её]м',
+  4: 'четыр',
+  5: 'пят[ьиюе]',
+  6: 'шест[ьиюе]',
+  7: 'сем[ьиюе]',
+  8: 'восем|восьм',
+  9: 'девят[ьиюе]',
+  10: 'десят[ьиюе]',
+};
+const ruWord = n => RU_NUMBER_WORDS[n] && new RegExp('(?<![а-яё])(?:' + RU_NUMBER_WORDS[n] + ')', 'iu');
+// Enumeration markers («: 1. … 2. …») may be dropped or rendered as a list.
+const listMarkers = text =>
+  (String(text).match(/(?:^|[\s:;])\d{1,2}\.(?=\s)/gu) || []).map(m => m.replace(/\D/g, ''));
 export function numbersPreserved(original, translated) {
   // Compare number multisets, not verbatim locale formatting (4,000 = 4000,
   // 1.7 = 1,7). A missing or changed number must still fail.
   const available = numericTokens(translated, true);
+  const markers = listMarkers(original);
   for (const value of numericTokens(original)) {
     const position = available.indexOf(value);
-    if (position < 0) return false;
-    available.splice(position, 1);
+    if (position >= 0) {
+      available.splice(position, 1);
+      continue;
+    }
+    const marker = markers.indexOf(value);
+    if (marker >= 0) {
+      markers.splice(marker, 1);
+      continue;
+    }
+    const word = ruWord(Number(value));
+    if (word && word.test(translated)) continue;
+    return false;
   }
   return true;
 }
