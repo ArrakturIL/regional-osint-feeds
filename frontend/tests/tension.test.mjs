@@ -16,7 +16,7 @@ const render = he => {
     h: (tag, props, ...children) => ({ tag, props, children: children.flat() }),
     t: (tag, cls, content) => ({ tag, props: { className: cls }, children: [content] }),
   };
-  vm.runInNewContext(src + '\nthis.Tension = Tension; this.L = TENSION_L; this.tensionReason = tensionReason;', ctx);
+  vm.runInNewContext(src + '\nthis.Tension = Tension; this.L = TENSION_L; this.tensionReason = tensionReason; this.TensionDetail = TensionDetail;', ctx);
   return ctx;
 };
 const text = node =>
@@ -81,4 +81,13 @@ test('rule signals show the count without a norm; lit families match the region'
   const find = (n, cls) => (n && typeof n === 'object' ? (n.props?.className === cls ? [n] : (n.children || []).flatMap(c => find(c, cls))) : []);
   const lit = find(tree, 'on').map(text);
   assert.deepEqual(lit, ['официальные']);
+});
+
+test('the Data page detail renders in RU and HE (22.11: a removed label crashed «Данные»)', () => {
+  const tension = { as_of: 'x', calibrating: true, baseline_days: 9, regions: [
+    { id: 'gulf', level: 2, families: ['official'], signals: ['official_notice'], details: [{ indicator: 'official_notice', value: 2, rule: 1 }], coverage: { seen: 9, total: 10 } },
+    { id: 'iran', level: 1, families: [], signals: [], details: [], coverage: { seen: 9, total: 9 } },
+  ] };
+  for (const he of [false, true]) assert.ok(text(render(he).TensionDetail({ tension })).length > 50);
+  assert.ok(render(false).TensionDetail({ tension: null }));
 });
