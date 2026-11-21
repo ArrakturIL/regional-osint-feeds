@@ -295,4 +295,20 @@ test('21.11: advisories for «Лента» — UKMTO title and date from the fil
   });
   assert.equal(many.advisories.ukmto.length, 3, 'three per body');
   assert.equal(many.advisories.ukmto[0].title, 'UKMTO Advisory 106/26');
+  const easa = assembleData({
+    advisoryRows: [
+      r('easa', {
+        url: 'https://www.easa.europa.eu/czib-2026-03-r3',
+        title: 'Airspace of Saudi Arabia',
+        published: 'Mon, 01 Jun 2026 00:00:00 +0300',
+      }),
+      r('easa', {
+        url: 'https://www.easa.europa.eu/czib-2026-03-r4',
+        title: 'Airspace of Saudi Arabia',
+        published: 'Tue, 14 Jul 2026 00:00:00 +0300',
+      }),
+    ],
+  }).advisories.easa;
+  assert.equal(easa.length, 1, 'one bulletin, its newest revision');
+  assert.match(easa[0].url, /-r4$/);
 });
