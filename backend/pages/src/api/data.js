@@ -157,8 +157,9 @@ function advisoryGroups(rows) {
     };
     if (item.title) out[k].push(item);
   }
-  for (const list of Object.values(out))
-    list.sort((a, b) => Date.parse(b.published || 0) - Date.parse(a.published || 0));
+  // Newest first by the source's own date, three per body.
+  for (const k of Object.keys(out))
+    out[k] = out[k].sort((a, b) => Date.parse(b.published || 0) - Date.parse(a.published || 0)).slice(0, 3);
   return out;
 }
 function satelliteItems(rows) {
