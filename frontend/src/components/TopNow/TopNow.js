@@ -1,4 +1,4 @@
-import { UI_HE, h, simpleTime, t } from '../../app/runtime.js';
+import { UI_HE, fmtTime, h, simpleTime, t } from '../../app/runtime.js';
 import { GoLink } from '../Navigation/GoLink.js';
 // Concept E «Главное сейчас» (owner 21.11): one lead story and four more, by
 // urgency then freshness, beside the source network strip and the reading
@@ -17,6 +17,19 @@ export function topStories(stories, lang) {
     )
     .slice(0, 5)
     .map(x => x.s);
+}
+// Owner 21.11: a top card must say when the news is from. Age is relative to
+// render time; the absolute stamp (Israel time) sits beside it.
+export function topAge(time, now, he) {
+  const n = now - Date.parse(time);
+  if (!Number.isFinite(n) || n < 0) return '';
+  const m = Math.floor(n / 60000);
+  if (m < 1) return he ? 'עכשיו' : 'только что';
+  if (m < 60) return he ? 'לפני ' + m + ' דק׳' : m + ' мин назад';
+  const hr = Math.floor(m / 60);
+  if (hr < 24) return he ? 'לפני ' + hr + ' שע׳' : hr + ' ч назад';
+  const d = Math.floor(hr / 24);
+  return he ? 'לפני ' + d + ' ימים' : d + ' дн назад';
 }
 const TOP_STATES = ['ok', 'partial', 'empty', 'error'];
 export function networkCounts(sources) {
@@ -68,6 +81,14 @@ export function TopNow({ stories, overview, go }) {
       { className: 'rw-top-meta' },
       h('span', { className: 'rw-top-tier rw-top-tier-' + tierOf(s) }, L.tier[tierOf(s)]),
       h('span', { className: 'rw-top-src' }, s.source || ''),
+      s.time
+        ? h(
+            'time',
+            { className: 'rw-top-time', dateTime: s.time, title: fmtTime(s.time) },
+            h('bdi', { dir: he ? 'rtl' : 'ltr' }, fmtTime(s.time)),
+            topAge(s.time, Date.now(), he) ? ' · ' + topAge(s.time, Date.now(), he) : '',
+          )
+        : null,
     );
   const title = (s, tag) =>
     h(
@@ -102,6 +123,7 @@ export function TopNow({ stories, overview, go }) {
             { className: 'rw-top-lead rw-top-' + tierOf(lead) },
             meta(lead),
             title(lead, 'h3'),
+            lead.excerpt ? t('p', 'rw-top-excerpt', lead.excerpt) : null,
             t('p', 'rw-top-verify', independent > 1 ? L.many(independent) : L.single),
           )
         : t('p', 'hint', L.wait),

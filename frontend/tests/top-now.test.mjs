@@ -8,8 +8,18 @@ import { readFileSync } from 'node:fs';
 const src = readFileSync(new URL('../src/components/TopNow/TopNow.js', import.meta.url), 'utf8')
   .replace(/^import[\s\S]*?from\s+['"][^'"]+['"];?\n/gm, '')
   .replace(/^export /gm, '');
-const ctx = { UI_HE: false, h: () => null, t: () => null, GoLink: () => null, simpleTime: () => '' };
-vm.runInNewContext(src + '\nthis.topStories = topStories; this.networkCounts = networkCounts;', ctx);
+const ctx = {
+  UI_HE: false,
+  h: () => null,
+  t: () => null,
+  GoLink: () => null,
+  simpleTime: () => '',
+  fmtTime: () => '',
+};
+vm.runInNewContext(
+  src + '\nthis.topStories = topStories; this.networkCounts = networkCounts; this.topAge = topAge;',
+  ctx,
+);
 const ids = list => JSON.stringify(list.map(s => s.id));
 
 test('lead is the first urgent item; then important, then normal, keeping feed order', () => {
@@ -57,4 +67,16 @@ test('network counts by state, unknown states ignored', () => {
     null,
   ]);
   assert.equal(JSON.stringify(c), '{"ok":2,"partial":1,"empty":0,"error":1}');
+});
+
+test('top cards say how old the news is, in both languages', () => {
+  const now = Date.parse('2026-11-21T17:00:00Z');
+  const at = min => new Date(now - min * 60000).toISOString();
+  assert.equal(ctx.topAge(at(0.5), now, false), 'только что');
+  assert.equal(ctx.topAge(at(42), now, false), '42 мин назад');
+  assert.equal(ctx.topAge(at(185), now, false), '3 ч назад');
+  assert.equal(ctx.topAge(at(60 * 50), now, false), '2 дн назад');
+  assert.equal(ctx.topAge(at(42), now, true), 'לפני 42 דק׳');
+  assert.equal(ctx.topAge(at(-5), now, false), '');
+  assert.equal(ctx.topAge('bad', now, false), '');
 });
