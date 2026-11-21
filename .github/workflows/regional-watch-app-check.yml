@@ -168,7 +168,7 @@ jobs:
       - name: Verify production provider client backoff and D1 quota safety
         run: node --test backend/monitor/tests/provider-client-runtime.test.mjs
       - name: Editor translation and news invariants
-        run: node --test tests/architecture/editor-translation-invariants.test.mjs
+        run: node --test tests/architecture/editor-translation-invariants.test.mjs tests/architecture/tension-index.test.mjs
 
   pages-documents:
     runs-on: ubuntu-latest
