@@ -29,7 +29,15 @@ test('normal response preserves all API fields and does not call empty data risk
     statusRows: fixtureSources,
     nowMs: timestamp,
   });
-  assert.deepEqual(Object.keys(v), ['generatedAt', 'analysis', 'events', 'sources', 'available', 'total']);
+  assert.deepEqual(Object.keys(v), [
+    'generatedAt',
+    'analysis',
+    'events',
+    'sources',
+    'tension',
+    'available',
+    'total',
+  ]);
   assert.equal(v.analysis.state, 'normal');
   assert.equal(v.analysis.badge, 'БЕЗ НОВЫХ ПРЕДУПРЕЖДЕНИЙ');
   assert.equal(v.events[0].description, 'Независимого подтверждения нет');
@@ -60,7 +68,7 @@ test('missing monitoring outcome never produces false reassurance', () => {
   assert.equal(v.analysis.time, null);
   assert.equal(v.available, 0);
 });
-test('D1 read-only aggregator uses three existing production tables', async () => {
+test('D1 read-only aggregator uses three production tables plus the tension index', async () => {
   const seen = [],
     db = {
       prepare(sql) {
@@ -76,11 +84,12 @@ test('D1 read-only aggregator uses three existing production tables', async () =
       },
     };
   const v = await overviewFromD1({ DB: db }, timestamp);
-  assert.equal(seen.length, 3);
+  assert.equal(seen.length, 4);
   assert.deepEqual(
     seen.map(x => x.split(' FROM ')[1].split(' ')[0]),
-    ['monitor_runs', 'monitor_events', 'source_status'],
+    ['monitor_runs', 'monitor_events', 'source_status', 'tension_hours'],
   );
+  assert.equal(v.tension, null, 'the mock has no tension row: null, not an error');
   assert.equal(v.analysis.state, 'attention');
   assert.equal(v.total, 3);
 });
@@ -95,4 +104,31 @@ test('21.11: ?lang=he carries the analysis time and state only, no Russian event
   assert.equal(v.analysis.state, 'attention');
   assert.deepEqual(v.events, []);
   assert.doesNotMatch(JSON.stringify(v), /[Ѐ-ӿ]/u, 'no Cyrillic in the HE overview');
+});
+test('tension index (21.11): codes and numbers only; a missing table gives null, not an error', async () => {
+  const index = {
+    hour_ms: timestamp,
+    level: 3,
+    calibrating: true,
+    baseline_days: 11,
+    regions: [
+      {
+        id: 'gulf',
+        level: 3,
+        families: ['air', 'news'],
+        flagged: [{ indicator: 'mil_aircraft', family: 'air', value: 9, p95: 4, median: 2 }],
+        coverage: { seen: 7, total: 9 },
+      },
+    ],
+  };
+  const v = assembleOverview({ latestRun: null, tension: index, lang: 'he' });
+  assert.deepEqual(v.tension.regions[0], {
+    id: 'gulf',
+    level: 3,
+    families: ['air', 'news'],
+    signals: ['mil_aircraft'],
+    coverage: { seen: 7, total: 9 },
+  });
+  assert.equal(v.tension.calibrating, true);
+  assert.equal(assembleOverview({}).tension, null);
 });

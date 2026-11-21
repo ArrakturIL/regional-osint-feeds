@@ -2,6 +2,7 @@
 // Source-of-truth: monitor_runs, monitor_events, source_status.
 // Keep public API keys stable; never infer confirmed incidents from monitor claims.
 import { ISO, assembleSources } from './sources.js';
+import { publicTension, readTension } from './tension.js';
 export { SOURCE_LABELS } from './sources.js';
 const parse = s => {
   try {
@@ -41,6 +42,7 @@ export function assembleOverview({
   statusRows = [],
   nowMs = Date.now(),
   lang = 'ru',
+  tension = null,
 } = {}) {
   const outcome = text(latestRun?.outcome);
   const base = analysisSchema[outcome] || {
@@ -72,6 +74,8 @@ export function assembleOverview({
     analysis: he ? { time: analysis.time, state: analysis.state } : analysis,
     events: he ? [] : events,
     sources: he ? sources.map(x => ({ ...x, label: x.label_he })) : sources,
+    // Tension index (21.11): codes only, so RU and HE share one shape.
+    tension: publicTension(tension),
     available: sources.filter(x => x.state === 'ok' || x.state === 'partial').length,
     total: sources.length,
   };
@@ -94,5 +98,6 @@ export async function overviewFromD1(env, nowMs = Date.now(), lang = 'ru') {
     statusRows: status.results || [],
     lang,
     nowMs,
+    tension: await readTension(db, nowMs),
   });
 }

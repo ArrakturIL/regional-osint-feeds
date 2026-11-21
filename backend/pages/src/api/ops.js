@@ -3,6 +3,8 @@
 // The login is checked here, on the server, so it is not in the public JS.
 // Credentials: OPS_USER / OPS_PASSWORD Pages secrets; until the owner sets
 // them the owner asked for admin / admin.
+import { readTension } from './tension.js';
+
 const LIMITS = Object.freeze({
   aiPool: 8500, // ai_daily_neurons: shared Workers AI pool (B1), Free plan 10 000
   gemini: 450, // ai_provider_calls gemini:flash-lite per day (B2)
@@ -154,6 +156,7 @@ export async function opsFromD1(request, env, now = Date.now()) {
     // Visitors (owner 20.11): Web Analytics summary from scripts/site_visitors.py.
     one(core, "SELECT detail,collected_ms FROM usage_daily WHERE day='latest' AND metric='site_visitors'"),
   ]);
+  const tension = await readTension(core, now);
   const analyst = analystRun ? { ...analystRun, stats: parse(analystRun.stats_json) } : null;
   if (analyst) delete analyst.stats_json;
   return json({
@@ -186,5 +189,6 @@ export async function opsFromD1(request, env, now = Date.now()) {
     gpt: { last_monitor_run: lastRun, last_dossier: lastEvent, last_editorial_note: lastNote },
     b6: eval6 ? { ...parse(eval6.value), updated_ms: eval6.updated_ms } : null,
     visitors: visitorsRow ? { ...parse(visitorsRow.detail), collected_ms: visitorsRow.collected_ms } : null,
+    tension,
   });
 }

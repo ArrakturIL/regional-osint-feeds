@@ -157,12 +157,16 @@ function render(d,error){
  const alertBox=al.length?`<div class="alert" role="alert"><h2 style="color:var(--bad);margin:0 0 4px">Тревога переводов</h2>${al.map(a=>{const[k,l]=a.type.split(':');return `<p style="margin:3px 0;font-size:13px"><b>${l.toUpperCase()}</b> — ${esc(AL[k]||k)}: ${fmt(a.count)}${a.oldest_ms?' · старейшее '+ago(a.oldest_ms):''}${t.alert.notified?.[a.type]?' · объявлено '+ago(t.alert.notified[a.type].at_ms):''}</p>`}).join('')}<p class="meta" style="margin:4px 0 0">Проверка раз в 5 минут, повтор не чаще раза в час на тип.</p></div>`:'';
  const ar=t.archive||{}, arLine=['ru','he_news','he_core'].map(k=>{const x=ar[k];if(!x)return null;const p=x.last_pass;return `${k}: ${p?'проход '+ago(p.finished_ms)+', проверено '+fmt(p.checked)+', заново '+fmt(p.redo):'идёт, проверено '+fmt(x.pass?.checked||0)+', заново '+fmt(x.pass?.redo||0)}`}).filter(Boolean).join('<br>')||'ещё не запускался';
  const mSamples=(t.meaning_samples||[]).slice(-3).map(x=>`<br><span class="meta">${esc(x.code)} · ${esc(x.language)}: «${esc(x.original)}» → «${esc(x.translation)}»${x.evidence?' — '+esc(x.evidence):''}</span>`).join('');
+ const ten=d.tension;
+ const TEN_R={iran:'Иран',levant:'Израиль, Ливан, Сирия',gulf:'Залив и Ормуз',red_sea:'Красное море и Йемен',iraq:'Ирак'};
+ const TEN_I={mil_aircraft:'военные борта',mil_tanker_airlift:'заправщики и транспортники',adsb_military:'военные в выборке ADS-B',sar_dark_vessels:'«тёмные» суда (к прошлой неделе)',firms_hotspots:'тепловые точки FIRMS',copernicus_activation:'активация Copernicus',internet_outage:'отключение интернета',urgent_news:'срочные и важные новости',gdelt_conflict:'события GDELT',official_notice:'официальное предупреждение'};
  const pills=[
   ['tr',lvl(ruOver+heOver>2||al.length,ruOver+heOver>0),al.length?al.length+' '+(al.length===1?'тревога':al.length<5?'тревоги':'тревог'):ruOver+heOver?(ruOver+heOver)+' просрочено':'в срок','переводы'],
   ['q',lvl(poolP>=95,poolP>=75||gemP>=80),poolP+'%','пул нейронов AI'],
   ['src',lvl(problems.length>3,problems.length>0),problems.length?problems.length+' с проблемой':'все в норме','источники данных'],
   ['col',lvl(late.length>2,late.length>0),late.length?late.length+' отстают':'все в срок','сборщики GitHub'],
   ['gpt',lvl(gptOld,gptLate||noteOld),ago(gptAge),'GPT-монитор'],
+  ['ten',lvl((ten?.level||0)>=4,(ten?.level||0)>=3),ten?ten.level+' из 5':'—','индекс напряжённости'],
   ['pause','',fmt((d.paused_feeds||[]).length),'лент на паузе'],
  ].map(([id,k,b,s])=>`<button class="pill" data-go="${id}"><span class="dot ${k}"></span><span><b>${esc(b)}</b><span>${esc(s)}</span></span></button>`).join('');
 
@@ -217,6 +221,10 @@ function render(d,error){
 
  ${sec('col','Сборщики на GitHub',lvl(late.length>2,late.length>0),late.length?late.length+' отстают из '+cols.length:'все '+cols.length+' в срок',
  `<p class="explain">Скрипты в GitHub Actions по расписанию складывают данные в базу. Полоска заполняется до конца, когда прошло вдвое больше нормы — тогда точка краснеет.</p>${colRows||'<p class="meta">Нет данных.</p>'}`,late.length>0)}
+
+ ${sec('ten','Индекс напряжённости',lvl((ten?.level||0)>=4,(ten?.level||0)>=3),ten?`макс. ${ten.level} из 5 · ${ten.calibrating?'калибровка, норма по '+ten.baseline_days+' дн.':'норма по 14 дн.'} · ${ago(ten.hour_ms)}`:'ещё не посчитан',
+ `<p class="explain">Каждый час: показатели по регионам сравниваются со своей нормой за 14 дней (без последних суток). Уровень — сколько <b>разных семейств</b> (небо, море, земля, связь, новости, официальное) одновременно вышли за норму: 1 — тихо, 5 — четыре семейства или три с официальным предупреждением. Это отклонение от обычного, а не прогноз.</p>
+ ${ten?`<div class="tw"><table><thead><tr><th>Регион</th><th>Ур.</th><th>Сигналы</th><th>Покрытие</th></tr></thead><tbody>${(ten.regions||[]).map(r=>`<tr><td>${esc(TEN_R[r.id]||r.id)}</td><td class="num">${r.level}</td><td>${(r.flagged||[]).map(f=>esc(TEN_I[f.indicator]||f.indicator)+': '+fmt(f.value)+(f.rule!==undefined?'':' (норма до '+fmt(f.p95)+', медиана '+fmt(f.median)+')')).join('<br>')||'—'}</td><td class="num">${r.coverage?.seen}/${r.coverage?.total}</td></tr>`).join('')}</tbody></table></div>`:'<p class="meta">Editor считает индекс каждые 5 минут; первые запуски дозаполняют историю.</p>'}`,(ten?.level||0)>=3)}
 
  ${sec('gpt','GPT и аналитики',lvl(gptOld,gptLate||noteOld||(anPending||0)>=10),`монитор ${ago(gptAge)} · реплика ${ago(noteAge)} · аналитики ${fmt(anPending)}`,
  kv([['GPT-монитор, последний анализ',`${esc(ago(gpt.last_monitor_run?.recorded_at_ms))} · итог: ${esc(gpt.last_monitor_run?.outcome||'—')}`],['Последнее досье',`${esc(ago(gpt.last_dossier?.updated_at_ms))} · ${esc(gpt.last_dossier?.event_id||'—')}`],['Последняя реплика редактора',esc(ago(noteAge))+(noteOld?' — больше 10 ч (норма 3–4 в сутки), проверь задачу GPT':'')],['Аналитики, последний прогон',`${esc(ago(an.started_at_ms))} · ${esc(an.status||'—')}${an.error_message?' · '+esc(an.error_message):''}`],['Аналитики в очереди',`${fmt(anPending)} (норма — меньше 10)`],b6?['Сравнение моделей B6',`${esc(b6.status||'—')} · ${esc(b6.run_id||'')}`]:null])+
