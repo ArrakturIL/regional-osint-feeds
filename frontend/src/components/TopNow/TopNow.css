@@ -281,3 +281,33 @@ html[lang='he'] .rw-top-meta {
   color: var(--rw7-text);
   font-weight: 600;
 }
+
+/* Owner 22.11: the lead looks like the other cards (same frame, corner and
+   meta line); it differs only by a larger title and the summary, and a line
+   above it says why it is first. */
+.rw-top-lead {
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+  padding: 20px 22px 20px;
+}
+.rw-top-lead .rw-top-meta {
+  justify-content: flex-start;
+}
+.rw-top-lead .rw-top-src::before {
+  content: '·';
+  margin-inline-end: 10px;
+  color: var(--rw7-text-3);
+}
+.rw-top-lead .rw-top-tier::before {
+  content: none;
+}
+.rw-top-leadhead {
+  margin: 0 0 8px;
+  color: var(--rw7-text-3);
+  font: 500 12px/1.4 var(--rw7-mono);
+  letter-spacing: 0.04em;
+}
+@media (max-width: 560px) {
+  .rw-top-lead {
+    padding: 18px 18px 18px;
+  }
+}

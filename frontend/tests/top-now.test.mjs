@@ -17,7 +17,8 @@ const ctx = {
   fmtTime: () => '',
 };
 vm.runInNewContext(
-  src + '\nthis.topStories = topStories; this.networkCounts = networkCounts; this.topAge = topAge; this.leadExcerpt = leadExcerpt;',
+  src +
+    '\nthis.topStories = topStories; this.topLead = topLead; this.sourcesOf = sourcesOf; this.networkCounts = networkCounts; this.topAge = topAge; this.leadExcerpt = leadExcerpt;',
   ctx,
 );
 const ids = list => JSON.stringify(list.map(s => s.id));
@@ -89,4 +90,31 @@ test('lead excerpt that only repeats the title is dropped', () => {
   const real = 'Министерство внутренних дел сообщило о пожаре на заводе в Ситре, пострадавших нет.';
   assert.equal(ctx.leadExcerpt({ title, excerpt: real }), real);
   assert.equal(ctx.leadExcerpt({ title }), '');
+});
+
+test('lead rule 22.11: fresh urgent, confirmed first; nothing fresh → no lead', () => {
+  const now = Date.parse('2026-11-22T20:00:00Z');
+  const ago = h => new Date(now - h * 3600e3).toISOString();
+  const s = (id, tier, h, n = 1) => ({
+    id,
+    tier,
+    title: id,
+    time: ago(h),
+    reporting_origin_count: n,
+    translation_state: 'translated',
+  });
+  const pick = list => ctx.topLead(list, 'ru', now).lead?.id || null;
+  assert.equal(pick([s('i2', 'important', 1, 3), s('u1', 'urgent', 2, 1), s('u2', 'urgent', 3, 2)]), 'u2');
+  assert.equal(pick([s('u1', 'urgent', 1, 1), s('u0', 'urgent', 0.5, 1)]), 'u0');
+  assert.equal(pick([s('u-old', 'urgent', 7, 4), s('n', 'normal', 0.1, 5)]), null);
+  assert.equal(
+    JSON.stringify(
+      ctx.sourcesOf({
+        source: 'AJ',
+        related: [{ title: 'Al Jazeera' }, { title: 'Times of Israel' }, { title: 'Al Jazeera' }],
+      }),
+    ),
+    '["Al Jazeera","Times of Israel"]',
+  );
+  assert.equal(JSON.stringify(ctx.sourcesOf({ source: 'BBC' })), '["BBC"]');
 });
