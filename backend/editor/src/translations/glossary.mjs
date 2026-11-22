@@ -145,23 +145,27 @@ export const ENTITIES = [
   {
     id: 'centcom',
     code: 'centcom_name_missing',
-    source: /(?<![\p{L}])(?:(?:US)?CENTCOM|ЦЕНТКОМ|[ובהלמשכ]?סנטקום)(?![\p{L}])/iu,
+    source:
+      /(?<![\p{L}])(?:(?:US)?CENTCOM|ЦЕНТКОМ|[ובהלמשכ]?סנטקום)(?![\p{L}])/iu,
     he: /סנטקום|CENTCOM/iu,
     ru: /ЦЕНТКОМ|CENTCOM/iu,
   },
   {
     id: 'unifil',
     code: 'unifil_name_missing',
-    source: /(?<![\p{L}])(?:UNIFIL|ЮНИФИЛ|ВСООНЛ|[ובהלמשכ]?יוניפי["״]?ל)(?![\p{L}])/iu,
+    source:
+      /(?<![\p{L}])(?:UNIFIL|ЮНИФИЛ|ВСООНЛ|[ובהלמשכ]?יוניפי["״]?ל)(?![\p{L}])/iu,
     he: /יוניפי["״]?ל|UNIFIL/iu,
     ru: /ЮНИФИЛ|ВСООНЛ|UNIFIL/iu,
   },
   {
     id: 'pmf',
     code: 'pmf_name_missing',
-    source: /(?<![\p{L}])(?:Popular\s+Mobilization\s+Forces|Hashd[\s-]+(?:al[\s-]+)?Shaabi|Хашд[\s-]+(?:аш[\s-]+)?Шааби|[ובהלמשכ]?חשד\s+א[\s-]שעבי)(?![\p{L}])/iu,
+    source:
+      /(?<![\p{L}])(?:Popular\s+Mobilization\s+Forces|Hashd[\s-]+(?:al[\s-]+)?Shaabi|Хашд[\s-]+(?:аш[\s-]+)?Шааби|[ובהלמשכ]?חשד\s+א[\s-]שעבי)(?![\p{L}])/iu,
     he: /חשד\s+(?:א[\s-])?שעבי|הגיוס\s+העממי|PMF/iu,
-    ru: /Хашд[\s-]+(?:аш[\s-]+)?Шааби|Сил\p{L}*\s+народн\p{L}*\s+мобилизаци|PMF/iu,
+    ru:
+      /Хашд[\s-]+(?:аш[\s-]+)?Шааби|Сил\p{L}*\s+народн\p{L}*\s+мобилизаци|PMF/iu,
   },
   {
     id: 'knesset',
@@ -180,28 +184,32 @@ export const ENTITIES = [
   {
     id: 'f35i',
     code: 'f35i_name_missing',
-    source: /(?<![\p{L}])(?:F[\s-]?35I\b|Ф[\s-]?35I\b|[ובהלמשכ]?אדיר\s+F[\s-]?35)(?![\p{L}])/iu,
+    source:
+      /(?<![\p{L}])(?:F[\s-]?35I\b|Ф[\s-]?35I\b|[ובהלמשכ]?אדיר\s+F[\s-]?35)(?![\p{L}])/iu,
     he: /אדיר|F[\s-]?35I/iu,
     ru: /(?:F|Ф)[\s-]?35I|Адир/iu,
   },
   {
     id: 'shahed_drone',
     code: 'shahed_drone_name_missing',
-    source: /(?<![\p{L}])(?:Shahed[\s-]?(?:\d{2,3}|drone|UAV)|Шахед[\s-]?(?:\d{2,3}|дрон|БПЛА)|[ובהלמשכ]?שאהד[\s-]?\d{2,3})(?![\p{L}])/iu,
+    source:
+      /(?<![\p{L}])(?:Shahed[\s-]?(?:\d{2,3}|drone|UAV)|Шахед[\s-]?(?:\d{2,3}|дрон|БПЛА)|[ובהלמשכ]?שאהד[\s-]?\d{2,3})(?![\p{L}])/iu,
     he: /שאהד|שהאד|Shahed/iu,
     ru: /Шахед|Shahed/iu,
   },
   {
     id: 'arrow_missile',
     code: 'arrow_missile_name_missing',
-    source: /(?<![\p{L}])(?:Arrow[\s-]?(?:2|3)\b|Arrow\s+(?:missile|interceptor|air[\s-]defen[cs]e\s+system)|Хец[\s-]?[23]\b|[ובהלמשכ]?חץ[\s-]?[23])(?![\p{L}])/iu,
+    source:
+      /(?<![\p{L}])(?:Arrow[\s-]?(?:2|3)\b|Arrow\s+(?:missile|interceptor|air[\s-]defen[cs]e\s+system)|Хец[\s-]?[23]\b|[ובהלמשכ]?חץ[\s-]?[23])(?![\p{L}])/iu,
     he: /חץ[\s-]?[23]|מערכת\s+חץ|Arrow[\s-]?[23]/iu,
     ru: /Хец[\s-]?[23]|Arrow[\s-]?[23]/iu,
   },
   {
     id: 'khan_younis',
     code: 'khan_younis_name_missing',
-    source: /(?<![\p{L}])(?:Khan[\s-]+You?nis|Khan[\s-]+Yunis|Хан[\s-]+Юнис\p{L}{0,3}|[ובהלמשכ]?חאן[\s-]+יונס)(?![\p{L}])/iu,
+    source:
+      /(?<![\p{L}])(?:Khan[\s-]+You?nis|Khan[\s-]+Yunis|Хан[\s-]+Юнис\p{L}{0,3}|[ובהלמשכ]?חאן[\s-]+יונס)(?![\p{L}])/iu,
     he: /חאן[\s-]+יונס|Khan[\s-]+You?nis/iu,
     ru: /Хан[\s-]+Юнис|Хан[\s-]+Юнус/iu,
   },
@@ -215,79 +223,93 @@ export const ENTITIES = [
   {
     id: 'jabalia',
     code: 'jabalia_name_missing',
-    source: /(?<![\p{L}])(?:Jabalia|Jabalya|Джабали\p{L}{0,3}|[ובהלמשכ]?ג[׳']?באליה)(?![\p{L}])/iu,
+    source:
+      /(?<![\p{L}])(?:Jabalia|Jabalya|Джабали\p{L}{0,3}|[ובהלמשכ]?ג[׳']?באליה)(?![\p{L}])/iu,
     he: /ג[׳']?באליה|Jabalia/iu,
     ru: /Джабали\p{L}*|Jabalia/iu,
   },
   {
     id: 'jenin',
     code: 'jenin_name_missing',
-    source: /(?<![\p{L}])(?:Jenin|Дженин\p{L}{0,3}|[ובהלמשכ]?ג[׳']?נין)(?![\p{L}])/iu,
+    source:
+      /(?<![\p{L}])(?:Jenin|Дженин\p{L}{0,3}|[ובהלמשכ]?ג[׳']?נין)(?![\p{L}])/iu,
     he: /ג[׳']?נין|Jenin/iu,
     ru: /Дженин|Jenin/iu,
   },
   {
     id: 'nablus',
     code: 'nablus_name_missing',
-    source: /(?<![\p{L}])(?:Nablus|Шхем\p{L}{0,3}|Наблус\p{L}{0,3}|[ובהלמשכ]?שכם)(?![\p{L}])/iu,
+    source:
+      /(?<![\p{L}])(?:Nablus|Шхем\p{L}{0,3}|Наблус\p{L}{0,3}|[ובהלמשכ]?שכם)(?![\p{L}])/iu,
     he: /שכם|Nablus/iu,
     ru: /Шхем|Наблус|Nablus/iu,
   },
   {
     id: 'ramallah',
     code: 'ramallah_name_missing',
-    source: /(?<![\p{L}])(?:Ramallah|Рамалл\p{L}{0,3}|[ובהלמשכ]?רמאללה)(?![\p{L}])/iu,
+    source:
+      /(?<![\p{L}])(?:Ramallah|Рамалл\p{L}{0,3}|[ובהלמשכ]?רמאללה)(?![\p{L}])/iu,
     he: /רמאללה|Ramallah/iu,
     ru: /Рамалл|Ramallah/iu,
   },
   {
     id: 'hebron',
     code: 'hebron_name_missing',
-    source: /(?<![\p{L}])(?:Hebron|Хеврон\p{L}{0,3}|[ובהלמשכ]?חברון)(?![\p{L}])/iu,
+    source:
+      /(?<![\p{L}])(?:Hebron|Хеврон\p{L}{0,3}|[ובהלמשכ]?חברון)(?![\p{L}])/iu,
     he: /חברון|Hebron/iu,
     ru: /Хеврон|Hebron/iu,
   },
   {
     id: 'litani',
     code: 'litani_name_missing',
-    source: /(?<![\p{L}])(?:Litani(?:\s+River)?|Литани|[ובהלמשכ]?ליטני)(?![\p{L}])/iu,
+    source:
+      /(?<![\p{L}])(?:Litani(?:\s+River)?|Литани|[ובהלמשכ]?ליטני)(?![\p{L}])/iu,
     he: /ליטני|Litani/iu,
     ru: /Литани|Litani/iu,
   },
   {
     id: 'hodeidah',
     code: 'hodeidah_name_missing',
-    source: /(?<![\p{L}])(?:Hodeidah|Hudaydah|Ходейд\p{L}{0,3}|Худайд\p{L}{0,3}|[ובהלמשכ]?חודיידה)(?![\p{L}])/iu,
+    source:
+      /(?<![\p{L}])(?:Hodeidah|Hudaydah|Ходейд\p{L}{0,3}|Худайд\p{L}{0,3}|[ובהלמשכ]?חודיידה)(?![\p{L}])/iu,
     he: /חודיידה|חודידה|Hodeidah/iu,
     ru: /Ходейд|Худайд|Hodeidah/iu,
   },
   {
     id: 'bab_mandeb',
     code: 'bab_mandeb_name_missing',
-    source: /(?<![\p{L}])(?:Bab[\s-]+(?:el[\s-]+|al[\s-]+)?Mandeb|Баб[\s-]+эль[\s-]+Мандеб|[ובהלמשכ]?באב[\s-]+אל[\s-]+מנדב)(?![\p{L}])/iu,
+    source:
+      /(?<![\p{L}])(?:Bab[\s-]+(?:el[\s-]+|al[\s-]+)?Mandeb|Баб[\s-]+эль[\s-]+Мандеб|[ובהלמשכ]?באב[\s-]+אל[\s-]+מנדב)(?![\p{L}])/iu,
     he: /באב[\s-]+אל[\s-]+מנדב|Bab[\s-]+(?:el[\s-]+)?Mandeb/iu,
-    ru: /Баб[\s-]+эль[\s-]+Мандеб|Баб[\s-]+аль[\s-]+Мандеб|Bab[\s-]+(?:el[\s-]+)?Mandeb/iu,
+    ru:
+      /Баб[\s-]+эль[\s-]+Мандеб|Баб[\s-]+аль[\s-]+Мандеб|Bab[\s-]+(?:el[\s-]+)?Mandeb/iu,
   },
   {
     id: 'gofman',
     code: 'gofman_name_missing',
-    source: /(?<![\p{L}])(?:Roman\s+Gofman|Roman\s+Hofman|Роман\s+Гофман|[ובהלמשכ]?רומן\s+גופמן)(?![\p{L}])/iu,
+    source:
+      /(?<![\p{L}])(?:Roman\s+Gofman|Roman\s+Hofman|Роман\s+Гофман|[ובהלמשכ]?רומן\s+גופמן)(?![\p{L}])/iu,
     he: /גופמן|גופמאן|Roman\s+(?:Gofman|Hofman)|ראש\s+המוסד/iu,
     ru: /Гофман|Гофманн|Roman\s+(?:Gofman|Hofman)|глав\p{L}*\s+Моссад/iu,
   },
   {
     id: 'zini',
     code: 'zini_name_missing',
-    source: /(?<![\p{L}])(?:David\s+Zini|Давид\s+Зини|[ובהלמשכ]?דוד\s+זיני)(?![\p{L}])/iu,
+    source:
+      /(?<![\p{L}])(?:David\s+Zini|Давид\s+Зини|[ובהלמשכ]?דוד\s+זיני)(?![\p{L}])/iu,
     he: /דוד\s+זיני|זיני|David\s+Zini|ראש\s+(?:ה)?שב["״]?כ/iu,
     ru: /Давид\s+Зини|Зини|David\s+Zini|глав\p{L}*\s+(?:ШАБАК|Шин[\s-]?Бет)/iu,
   },
   {
     id: 'cooper_centcom',
     code: 'cooper_centcom_name_missing',
-    source: /(?<![\p{L}])(?:Brad\s+Cooper|Брэд\s+Купер|[ובהלמשכ]?בראד\s+קופר)(?![\p{L}])/iu,
-    he: /בראד\s+קופר|ברד\s+קופר|Brad\s+Cooper|מפקד\s+(?:סנטקום|פיקוד\s+המרכז)/iu,
-    ru: /Брэд\s+Купер|Бред\s+Купер|Brad\s+Cooper|командующ\p{L}*\s+(?:ЦЕНТКОМ|CENTCOM)/iu,
+    source:
+      /(?<![\p{L}])(?:Brad\s+Cooper|Брэд\s+Купер|[ובהלמשכ]?בראד\s+קופר)(?![\p{L}])/iu,
+    he:
+      /בראד\s+קופר|ברד\s+קופר|Brad\s+Cooper|מפקד\s+(?:סנטקום|פיקוד\s+המרכז)/iu,
+    ru:
+      /Брэд\s+Купер|Бред\s+Купер|Brad\s+Cooper|командующ\p{L}*\s+(?:ЦЕНТКОМ|CENTCOM)/iu,
   },
 ];
 
