@@ -3,7 +3,7 @@ import { ruTitlesInput } from './prompts.mjs';
 import { ROUTES, runStep } from '../ai/router.mjs';
 import { newsTier } from '../news/tier.mjs';
 import { recordShown } from '../news/sla.mjs';
-import { enqueueJobs, dueJobs, settleJob, normalAllowed } from './jobs.mjs';
+import { enqueueJobs, dueJobs, settleJob, normalAllowed, MAX_ATTEMPTS } from './jobs.mjs';
 import { fingerprint } from '../localization/shared.mjs';
 import { meaningCheck } from './meaning-check.mjs';
 
@@ -219,7 +219,21 @@ export async function translateTitles(env, now) {
           if (title && (row.redo || !row.headline_ru)) translated++;
           if (summary) summaries++;
         }
-        await settleJob(db, row.job, 'done', { model: out.model || null }, now);
+        // 22.11: a title saved without its summary left the job «done» and the
+        // card in English for good (the reader needs both). Retry the summary;
+        // after the last attempt keep the title alone.
+        const summaryMissing =
+          Boolean(row.summary) && String(row.summary).length > 10 && !summary && !row.summary_ru;
+        if (summaryMissing && row.job && (row.job.attempts || 0) + 1 < MAX_ATTEMPTS)
+          await settleJob(db, row.job, 'rejected', { reason: 'summary_gate', model: out.model || null }, now);
+        else
+          await settleJob(
+            db,
+            row.job,
+            'done',
+            { reason: summaryMissing ? 'title_only' : null, model: out.model || null },
+            now,
+          );
         if (write.meta?.changes && title && !row.headline_ru)
           await recordShown(db, {
             id: row.id,

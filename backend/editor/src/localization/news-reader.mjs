@@ -26,8 +26,8 @@ export async function localizeNewsRow(db, row, lang) {
       return { ...original, content_language: 'ru', source_language: 'ru', translation_status: 'source' };
     const title = val(row.headline_ru, 260),
       body = val(row.summary_ru, 650);
-    // A partly translated record is not presented as a complete translation.
-    if (!title || !/[\u0400-\u04ff]/u.test(title) || (sourceBody && !body))
+    // No Russian title — the original stays with «перевод ожидается».
+    if (!title || !/[\u0400-\u04ff]/u.test(title))
       return {
         ...original,
         content_language: originalLanguage,
@@ -47,10 +47,12 @@ export async function localizeNewsRow(db, row, lang) {
         translation_status: 'needs_review',
         review_reason: issue,
       };
+    // 22.11: a Russian title without its summary is shown alone (the English
+    // summary is not passed off as Russian); the summary follows on retry.
     return {
       ...original,
       title,
-      body: body || sourceBody,
+      body: body || '',
       content_language: 'ru',
       source_language: originalLanguage,
       translation_status: 'available',
