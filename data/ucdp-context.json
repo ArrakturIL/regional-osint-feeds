@@ -1,14 +1,40 @@
 {
   "source": "ucdp_ged_candidate",
   "version": "26.0.10",
-  "generated_at": "2026-11-22T23:24:36Z",
-  "window": {
-    "start": "2026-08-01",
-    "end": "2026-11-22"
-  },
-  "events_total": 501,
+  "generated_at": "2026-11-22T23:28:59Z",
+  "releases": [
+    "26.0.10",
+    "26.0.9",
+    "26.0.8",
+    "26.0.7"
+  ],
+  "events_total": 1383,
   "regions": {
     "israel": {
+      "2026-07": {
+        "events": 99,
+        "deaths_best": 177,
+        "deaths_civilians": 31,
+        "state": 93,
+        "nonstate": 0,
+        "onesided": 6
+      },
+      "2026-08": {
+        "events": 60,
+        "deaths_best": 101,
+        "deaths_civilians": 16,
+        "state": 57,
+        "nonstate": 1,
+        "onesided": 2
+      },
+      "2026-09": {
+        "events": 97,
+        "deaths_best": 131,
+        "deaths_civilians": 40,
+        "state": 95,
+        "nonstate": 0,
+        "onesided": 2
+      },
       "2026-10": {
         "events": 107,
         "deaths_best": 147,
@@ -19,6 +45,30 @@
       }
     },
     "lebanon_syria": {
+      "2026-07": {
+        "events": 65,
+        "deaths_best": 2382,
+        "deaths_civilians": 54,
+        "state": 24,
+        "nonstate": 9,
+        "onesided": 32
+      },
+      "2026-08": {
+        "events": 62,
+        "deaths_best": 90,
+        "deaths_civilians": 55,
+        "state": 18,
+        "nonstate": 9,
+        "onesided": 35
+      },
+      "2026-09": {
+        "events": 25,
+        "deaths_best": 81,
+        "deaths_civilians": 19,
+        "state": 20,
+        "nonstate": 1,
+        "onesided": 4
+      },
       "2026-10": {
         "events": 100,
         "deaths_best": 126,
@@ -29,6 +79,30 @@
       }
     },
     "iran": {
+      "2026-07": {
+        "events": 39,
+        "deaths_best": 98,
+        "deaths_civilians": 19,
+        "state": 32,
+        "nonstate": 0,
+        "onesided": 7
+      },
+      "2026-08": {
+        "events": 12,
+        "deaths_best": 15,
+        "deaths_civilians": 1,
+        "state": 11,
+        "nonstate": 0,
+        "onesided": 1
+      },
+      "2026-09": {
+        "events": 16,
+        "deaths_best": 46,
+        "deaths_civilians": 7,
+        "state": 15,
+        "nonstate": 0,
+        "onesided": 1
+      },
       "2026-10": {
         "events": 17,
         "deaths_best": 30,
@@ -39,6 +113,14 @@
       }
     },
     "gulf": {
+      "2026-09": {
+        "events": 2,
+        "deaths_best": 25,
+        "deaths_civilians": 1,
+        "state": 2,
+        "nonstate": 0,
+        "onesided": 0
+      },
       "2026-10": {
         "events": 11,
         "deaths_best": 32,
@@ -49,6 +131,30 @@
       }
     },
     "red_sea": {
+      "2026-07": {
+        "events": 43,
+        "deaths_best": 166,
+        "deaths_civilians": 17,
+        "state": 31,
+        "nonstate": 9,
+        "onesided": 3
+      },
+      "2026-08": {
+        "events": 115,
+        "deaths_best": 697,
+        "deaths_civilians": 57,
+        "state": 105,
+        "nonstate": 6,
+        "onesided": 4
+      },
+      "2026-09": {
+        "events": 236,
+        "deaths_best": 3691,
+        "deaths_civilians": 266,
+        "state": 221,
+        "nonstate": 5,
+        "onesided": 10
+      },
       "2026-10": {
         "events": 262,
         "deaths_best": 1747,
@@ -59,6 +165,30 @@
       }
     },
     "iraq": {
+      "2026-07": {
+        "events": 6,
+        "deaths_best": 44,
+        "deaths_civilians": 0,
+        "state": 5,
+        "nonstate": 0,
+        "onesided": 1
+      },
+      "2026-08": {
+        "events": 1,
+        "deaths_best": 2,
+        "deaths_civilians": 0,
+        "state": 1,
+        "nonstate": 0,
+        "onesided": 0
+      },
+      "2026-09": {
+        "events": 4,
+        "deaths_best": 6,
+        "deaths_civilians": 1,
+        "state": 4,
+        "nonstate": 0,
+        "onesided": 0
+      },
       "2026-10": {
         "events": 4,
         "deaths_best": 7,

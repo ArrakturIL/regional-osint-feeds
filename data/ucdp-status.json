@@ -1,8 +1,8 @@
 {
   "source": "ucdp_ged_candidate",
-  "checked_at": "2026-11-22T23:24:36Z",
+  "checked_at": "2026-11-22T23:28:59Z",
   "version": "26.0.10",
   "state": "ok",
-  "requests": 3,
-  "events": 501
+  "requests": 6,
+  "events": 1383
 }
