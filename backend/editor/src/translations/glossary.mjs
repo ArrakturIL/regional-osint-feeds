@@ -130,6 +130,15 @@ export const ENTITIES = [
     he: /כיפת\s+ברזל|Iron\s+Dome/iu,
     ru: /Железн\p{L}*\s+купол|Iron\s+Dome/iu,
   },
+  // Owner 22.11: «displaced Palestinians» came out as «перемещённые
+  // палестинцы» — a calque. Russian says переселенцы / лишившиеся крова / беженцы.
+  {
+    id: 'displaced',
+    code: 'displaced_calque',
+    source: src('displaced|עקורים|עקורי'),
+    he: /עקור|מפונ|פליט/iu,
+    ru: /переселен|лишивш\p{L}*\s+(?:крова|дом|жиль)|беженц|покинувш\p{L}*\s+дом|бездомн|вынужденн\p{L}*\s+(?:покинуть|уйти|бежать)|перемещ\p{L}*\s+лиц/iu,
+  },
 ];
 
 // B11 part 1: entities whose names come from Wikidata (labels + aliases in

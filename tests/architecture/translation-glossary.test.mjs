@@ -276,3 +276,24 @@ test('B11 audit 21.11: air-defence systems are not swapped (David’s Sling ≠ 
   assert.equal(entityIssue('Iron Dome intercepts rockets', '«Железный купол» перехватил ракеты'), null);
   assert.equal(entityIssue('Iron Dome intercepts rockets', 'קלע דוד יירט רקטות'), 'iron_dome_name_missing');
 });
+
+test('displaced (22.11): «перемещённые» is a calque; переселенцы / лишившиеся крова pass', () => {
+  const src = 'Displaced Palestinians protest amid continuing Israeli air strikes on Gaza';
+  assert.equal(
+    entityIssue(
+      src,
+      'Перемещенные палестинцы протестуют на фоне продолжающихся израильских авиаударов в Газе',
+    ),
+    'displaced_calque',
+  );
+  assert.equal(
+    entityIssue(src, 'Вынужденные переселенцы в Газе протестуют на фоне израильских авиаударов'),
+    null,
+  );
+  assert.equal(entityIssue(src, 'Палестинцы, лишившиеся крова, протестуют на фоне авиаударов'), null);
+  // The UN legal term stays allowed.
+  assert.equal(
+    entityIssue('UN: 1.9 million displaced people in Gaza', 'ООН: в Газе 1,9 млн внутренне перемещённых лиц'),
+    null,
+  );
+});
