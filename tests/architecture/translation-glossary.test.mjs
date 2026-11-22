@@ -520,3 +520,26 @@ test('regional names accept role-only paraphrases and do not confuse systems', (
   assert.equal(entityIssue('Follow the arrow', 'עקבו אחר החץ', 'he'), null);
   assert.equal(entityIssue('F-35 took off', 'מטוס המריא', 'he'), null);
 });
+
+test('review 22.11: CENTCOM, UNIFIL and Arrow accept common descriptive forms', () => {
+  assert.equal(
+    entityIssue(
+      'CENTCOM says it struck Houthi targets',
+      'Центральное командование США нанесло удары по хуситам',
+    ),
+    null,
+  );
+  assert.equal(
+    entityIssue('CENTCOM says it struck Houthi targets', 'פיקוד המרכז האמריקאי תקף מטרות של החות׳ים'),
+    null,
+  );
+  assert.equal(
+    entityIssue('UNIFIL patrol came under fire', 'Патруль миротворцев ООН попал под обстрел'),
+    null,
+  );
+  assert.equal(entityIssue('Arrow 3 intercepted the missile', 'Ракету перехватила система «Стрела-3»'), null);
+  assert.equal(
+    entityIssue('CENTCOM says it struck Houthi targets', 'Американские военные нанесли удары по хуситам'),
+    'centcom_name_missing',
+  );
+});

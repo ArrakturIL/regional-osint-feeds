@@ -154,15 +154,15 @@ export const ENTITIES = [
     id: 'centcom',
     code: 'centcom_name_missing',
     source: /(?<![\p{L}])(?:(?:US)?CENTCOM|ЦЕНТКОМ|[ובהלמשכ]?סנטקום)(?![\p{L}])/iu,
-    he: /סנטקום|CENTCOM/iu,
-    ru: /ЦЕНТКОМ|CENTCOM/iu,
+    he: /סנטקום|CENTCOM|פיקוד\s+(?:ה)?מרכז/iu,
+    ru: /ЦЕНТКОМ|CENTCOM|Центральн\p{L}*\s+командовани/iu,
   },
   {
     id: 'unifil',
     code: 'unifil_name_missing',
     source: /(?<![\p{L}])(?:UNIFIL|ЮНИФИЛ|ВСООНЛ|[ובהלמשכ]?יוניפי["״]?ל)(?![\p{L}])/iu,
-    he: /יוניפי["״]?ל|UNIFIL/iu,
-    ru: /ЮНИФИЛ|ВСООНЛ|UNIFIL/iu,
+    he: /יוניפי["״]?ל|UNIFIL|כוח\s+(?:ה)?או["״]ם|שומרי\s+(?:ה)?שלום/iu,
+    ru: /ЮНИФИЛ|ВСООНЛ|UNIFIL|миротвор\p{L}*|Временн\p{L}*\s+сил\p{L}*\s+ООН/iu,
   },
   {
     id: 'pmf',
@@ -207,7 +207,7 @@ export const ENTITIES = [
     source:
       /(?<![\p{L}])(?:Arrow[\s-]?(?:2|3)\b|Arrow\s+(?:missile|interceptor|air[\s-]defen[cs]e\s+system)|Хец[\s-]?[23]\b|[ובהלמשכ]?חץ[\s-]?[23])(?![\p{L}])/iu,
     he: /חץ[\s-]?[23]|מערכת\s+חץ|Arrow[\s-]?[23]/iu,
-    ru: /Хец[\s-]?[23]|Arrow[\s-]?[23]/iu,
+    ru: /Хец[\s-]?[23]|Arrow[\s-]?[23]|Стрел\p{L}*[\s-]?[23]/iu,
   },
   {
     id: 'khan_younis',
