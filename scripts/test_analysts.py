@@ -15,6 +15,17 @@ TELE={"id":"auslender-telegram","type":"telegram_public","canonical_prefix":"htt
 YT={"id":"auslender-youtube","type":"youtube_rss","canonical_prefix":"https://www.youtube.com/watch?v=","channel_id":"UCygnHvXjsEa_gLMH-WmzeXQ"}
 
 class Tests(unittest.TestCase):
+ def test_comment_counter_tail_is_not_content(self):
+  # 22.11: «3 תגובות» → «4 תגובות» re-decided the same post with AI.
+  a = m.strip_tail_noise("איראן תקפה בסיס אמריקאי. 3 תגובות")
+  b = m.strip_tail_noise("איראן תקפה בסיס אמריקאי. 15 תגובות")
+  c = m.strip_tail_noise("איראן תקפה בסיס אמריקאי. כדי להגיב לכתבה לחצו כאן")
+  self.assertEqual(a, "איראן תקפה בסיס אמריקאי.")
+  self.assertEqual(a, b)
+  self.assertEqual(a, c)
+  # A number inside the text stays.
+  self.assertEqual(m.strip_tail_noise("נהרגו 3 אנשים בהתקפה"), "נהרגו 3 אנשים בהתקפה")
+
  def test_telegram_only_signed_post(self):
   raw='<html><div class="tgme_widget_message js-widget_message" data-post="voinasordoy/124"><div class="tgme_widget_message_text js-message_text">Обзор Ирана <b>и Израиля</b>. Развитие событий в регионе.</div><time datetime="2026-11-11T19:20:00+00:00">19:20</time></div><div data-post="other/111" class="tgme_widget_message"><div class="tgme_widget_message_text">NOT OUR CONTENT</div></div></html>'
   got=m.telegram_posts(raw,TELE,"sergey-auslender",NOW)
