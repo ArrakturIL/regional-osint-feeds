@@ -115,8 +115,9 @@ class Client:
                     raise StopRun(f"auth refused (HTTP {e.code})")
                 if e.code == 429:
                     raise StopRun("daily limit reached (HTTP 429)")
-                if e.code == 404:
-                    raise LookupError("not found")
+                if e.code in (400, 404):
+                    # Unknown version answers 400; a retry would only burn quota.
+                    raise LookupError(f"HTTP {e.code}")
                 last = f"HTTP {e.code}"
             except (urllib.error.URLError, TimeoutError, ValueError) as e:
                 last = type(e).__name__
@@ -256,10 +257,10 @@ def collect(token: str, opener=None, now=None) -> int:
         emit(status, None)
         print(f"::error::UCDP stopped: {e} after {client.used} requests")
         return 1
-    except LookupError:
-        status.update(state="error", detail=f"version {known} not found", requests=client.used)
+    except LookupError as e:
+        status.update(state="error", detail=f"version {known} rejected: {e}", requests=client.used)
         emit(status, None)
-        print(f"::error::UCDP version {known} not found")
+        print(f"::error::UCDP version {known} rejected: {e} after {client.used} requests")
         return 1
     except (RuntimeError, ValueError) as e:
         status.update(state="error", detail=str(e)[:200], requests=client.used)

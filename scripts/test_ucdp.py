@@ -103,6 +103,11 @@ class UcdpTest(unittest.TestCase):
         self.assertEqual(json.loads(u.SNAP.read_text()), {"old": True})
         self.assertEqual(json.loads(u.STATUS.read_text())["state"], "error")
 
+    def test_unreleased_version_answering_400_is_skipped_without_retry(self):
+        op = Opener([("26.0.11", 400), ("27.0.1", 400), ("26.0.10", lambda: page([event(1, 666, "2026-11-09")]))])
+        self.assertEqual(u.collect("tok", op, self.now), 0)
+        self.assertEqual(len(op.calls), 3)
+
     def test_server_error_retried_once_then_fails(self):
         op = Opener([("26.0.11", 404), ("27.0.1", 404), ("26.0.10", 500)])
         self.assertEqual(u.collect("tok", op, self.now), 1)
