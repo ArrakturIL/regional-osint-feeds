@@ -172,3 +172,17 @@ test('approved P1 D1 replacement rows preserve RU/HE provenance and matching Heb
     assert.equal(stale.source_language, 'en');
   }
 });
+
+test('RU title without its summary (22.11): Russian title alone, no English summary', async () => {
+  const row = {
+    id: 'x1',
+    headline: 'Lebanese president demands Israel withdrawal, decries Iran’s interference',
+    headline_ru: 'Президент Ливана требует вывода войск Израиля и осуждает вмешательство Ирана',
+    summary: "Joseph Aoun says 'two fundamental obstacles, inseparably linked' mean Lebanon cannot fully celebrate.",
+    summary_ru: null,
+  };
+  const r = await localizeNewsRow(null, row, 'ru');
+  assert.equal(r.title, row.headline_ru);
+  assert.equal(r.body, '');
+  assert.equal(r.content_language, 'ru');
+});
