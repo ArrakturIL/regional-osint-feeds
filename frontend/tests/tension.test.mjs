@@ -69,7 +69,7 @@ test('no tension, no block; calibrating shows the demo badge and the note with d
   assert.match(ru, /два независимых отклонения/);
   assert.match(ru, /военные борта: 14 · обычно не больше 6/);
   assert.match(ru, /срочные новости: 5 · обычно не больше 2\.4/);
-  assert.match(ru, /Как обычно:\s+Иран/);
+  assert.match(ru, /Иран\s+как обычно/);
   assert.match(ru, /нет данных по 1 сигн\./);
   const he = text(render(true).Tension({ tension }));
   assert.doesNotMatch(he, /[Ѐ-ӿ]/u, 'no Cyrillic on the HE page');
