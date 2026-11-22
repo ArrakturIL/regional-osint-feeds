@@ -311,7 +311,7 @@ test('regional glossary additions preserve names without homonym false positives
     ["centcom","CENTCOM reported","סנטקום דיווח","הפיקוד דיווח","ЦЕНТКОМ сообщил","Командование сообщило","centcomet"],
     ["unifil","UNIFIL patrols","יוניפי״ל מסייר","כוח מסייר","ЮНИФИЛ патрулирует","Силы патрулируют","unifilarly"],
     ["pmf","Popular Mobilization Forces deploy","הגיוס העממי נפרס","הכוחות נפרסו","Силы народной мобилизации развёрнуты","Войска развёрнуты","Popular mobilization for a charity"],
-    ["knesset","Knesset votes","הכנסת מצביעה","הפרלמנט מצביע","Кнессет голосует","Парламент голосует","Knessetarian"],
+    ["knesset","Knesset votes","הכנסת מצביעה","הממשלה מצביעה","Кнессет голосует","Правительство голосует","Knessetarian"],
     ["thaad","THAAD deployed","THAAD הוצב","פטריוט הוצב","THAAD развёрнут","Patriot развёрнут","thadding"],
     ["f35i","F-35I took off","מטוס אדיר המריא","מטוס סופה המריא","F-35I «Адир» взлетел","F-16 взлетел","F-35 took off"],
     ["shahed_drone","Shahed-136 launched","שאהד 136 שוגר","כטב״ם שוגר","Шахед-136 запущен","Беспилотник запущен","Shahed is a person"],
@@ -326,8 +326,8 @@ test('regional glossary additions preserve names without homonym false positives
     ["litani","Litani River crossed","נהר הליטני נחצה","הנהר נחצה","Река Литани пересечена","Река пересечена","Litanic"],
     ["hodeidah","Hodeidah port struck","חודיידה הותקפה","הנמל הותקף","Ходейда атакована","Порт атакован","Hodeidahan"],
     ["bab_mandeb","Bab el-Mandeb closed","באב אל-מנדב נסגר","המצר נסגר","Баб-эль-Мандеб закрыт","Пролив закрыт","Mandebian"],
-    ["gofman","Roman Gofman spoke","רומן גופמן אמר","ראש המוסד אמר","Роман Гофман заявил","Глава Моссада заявил","Roman history"],
-    ["zini","David Zini spoke","דוד זיני אמר","ראש השב״כ אמר","Давид Зини заявил","Глава ШАБАК заявил","Zininess"],
+    ["gofman","Roman Gofman spoke","רומן גופמן אמר","הקצין אמר","Роман Гофман заявил","Чиновник заявил","Roman history"],
+    ["zini","David Zini spoke","דוד זיני אמר","הקצין אמר","Давид Зини заявил","Чиновник заявил","Zininess"],
     ["cooper_centcom","Brad Cooper visited","בראד קופר ביקר","המפקד ביקר","Брэд Купер приехал","Командующий приехал","Cooperation"],
   ];
   for (const [id, original, goodHe, badHe, goodRu, badRu, other] of cases) {
