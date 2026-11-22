@@ -72,7 +72,7 @@ test('public analyst directory queries only enabled profiles in original display
   assert.equal(x.analysts[1].description, 'Исследователь');
   assert.match(
     f.calls[0].sql,
-    /SELECT id,display_name,description FROM analysts WHERE enabled=1 ORDER BY display_name/,
+    /SELECT a\.id,a\.display_name,a\.description,.*AS posts FROM analysts a WHERE a\.enabled=1 ORDER BY a\.display_name/,
   );
   assert.equal(f.calls[0].method, 'all');
 });
@@ -101,13 +101,13 @@ test('public analyst posts preserve status, exact provenance and bounded paginat
   const x = await res.json();
   assert.deepEqual(x.posts, [post]);
   assert.match(x.disclaimer, /Attributed analyst interpretations/);
-  assert.deepEqual(f.calls[0].args, [40, 2000]);
+  assert.deepEqual(f.calls[0].args, [41, 2000]); // one extra row = has_more
   assert.match(f.calls[0].sql, /p\.status IN \('published','corrected'\)/);
   assert.match(f.calls[0].sql, /ORDER BY p\.published_at_ms DESC,p\.id DESC LIMIT \? OFFSET \?/);
   const normal = makeDb({ posts: [post] });
   const result = await analystService.fetch(request('/api/analyst-posts'), normal.env);
   assert.equal((await result.json()).posts[0].original_url, post.original_url);
-  assert.deepEqual(normal.calls[0].args, [20, 0]);
+  assert.deepEqual(normal.calls[0].args, [21, 0]);
 });
 
 test('post detail returns single row, rejects missing ID and excludes unpublished', async () => {
@@ -135,4 +135,53 @@ test('read-only method and unmatched route never hit D1', async () => {
   assert.equal(unknown.status, 404);
   assert.deepEqual(await unknown.json(), { error: 'not_found' });
   assert.equal(f.calls.length, 0);
+});
+
+// 22.11: author filter, search over all publications (Cyrillic case), next page.
+import { d1 } from './editor-d1-fixture.mjs';
+test('posts: filter by author, search any case, has_more', async () => {
+  const db = d1();
+  db.raw.exec(`
+CREATE TABLE analysts (id TEXT PRIMARY KEY, display_name TEXT, description TEXT, enabled INTEGER);
+CREATE TABLE analyst_sources (id TEXT PRIMARY KEY, language TEXT);
+CREATE TABLE analyst_items (id TEXT PRIMARY KEY, source_id TEXT);
+CREATE TABLE analyst_publications (id TEXT PRIMARY KEY, analyst_id TEXT, item_id TEXT, headline TEXT, summary TEXT, short_quote TEXT,
+  original_url TEXT, original_published_at_ms INTEGER, published_at_ms INTEGER, source_type TEXT, fact_check_status TEXT,
+  authorship_status TEXT, importance_score INTEGER, status TEXT, version INTEGER, editor_version TEXT);
+INSERT INTO analysts VALUES ('dina','«Война и мир на Ближнем Востоке»','d',1),('abu','Абу Али Экспресс','a',1);
+INSERT INTO analyst_sources VALUES ('s','ru');
+`);
+  for (let i = 0; i < 5; i++) {
+    const who = i < 3 ? 'abu' : 'dina';
+    db.raw.exec(`INSERT INTO analyst_items VALUES ('i${i}','s')`);
+    db.raw
+      .prepare(
+        `INSERT INTO analyst_publications VALUES (?,?,?,?,?,'', 'https://x', 1, ?, 'telegram','unverified','attributed',1,'published',1,'v')`,
+      )
+      .run('p' + i, who, 'i' + i, i === 4 ? 'Иран и Залив' : 'Заголовок ' + i, 'текст', 1000 + i);
+  }
+  const get = async q => (await readApi(request('/api/analyst-posts' + q), { DB: db })).json();
+  const byAuthor = await get('?author=dina');
+  assert.deepEqual(
+    byAuthor.posts.map(p => p.id),
+    ['p4', 'p3'],
+  );
+  assert.equal(byAuthor.has_more, false);
+  assert.deepEqual(
+    (await get('?q=иран')).posts.map(p => p.id),
+    ['p4'],
+  );
+  assert.deepEqual((await get('?q=50%25')).posts, []);
+  const page = await get('?limit=2');
+  assert.equal(page.posts.length, 2);
+  assert.equal(page.has_more, true);
+  assert.equal((await get('?limit=2&offset=4')).has_more, false);
+  const people = await (await readApi(request('/api/analysts'), { DB: db })).json();
+  assert.deepEqual(
+    people.analysts.map(a => [a.id, a.posts]),
+    [
+      ['dina', 2],
+      ['abu', 3],
+    ],
+  );
 });
