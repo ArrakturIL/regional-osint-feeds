@@ -34,7 +34,12 @@ function mockEnv() {
     DB: {
       prepare(sql) {
         seen.sql.push(sql);
-        return { sql };
+        return {
+          sql,
+          bind() {
+            return this;
+          },
+        };
       },
       async batch(statements) {
         return statements.length === 3

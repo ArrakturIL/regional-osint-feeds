@@ -214,7 +214,7 @@ export async function dataFromD1(env, nowMs = Date.now(), lang = 'ru') {
   const db = env.DB;
   if (!db?.batch) throw new Error('Missing CORE DB binding');
   const marketSql =
-    "WITH ranked AS (SELECT observed_at,payload,ROW_NUMBER() OVER(PARTITION BY json_extract(payload,'$.market_id') ORDER BY observed_at DESC) n FROM observations WHERE source='polymarket') SELECT observed_at,payload FROM ranked WHERE n<=2";
+    "WITH ranked AS (SELECT observed_at,payload,ROW_NUMBER() OVER(PARTITION BY json_extract(payload,'$.market_id') ORDER BY observed_at DESC) n FROM observations WHERE source='polymarket' AND observed_at>?) SELECT observed_at,payload FROM ranked WHERE n<=2";
   const officialSql =
     "WITH latest AS (SELECT source,observed_at,payload,ROW_NUMBER() OVER(PARTITION BY source,json_extract(payload,'$.url') ORDER BY observed_at DESC) ver FROM observations WHERE source IN ('idf_official','marad_official','centcom_dvids')), unique_rows AS (SELECT source,observed_at,payload,ROW_NUMBER() OVER(PARTITION BY source ORDER BY observed_at DESC) n FROM latest WHERE ver=1) SELECT source,observed_at,payload FROM unique_rows WHERE n<=3 ORDER BY source,observed_at DESC";
   const scenesSql =
@@ -224,7 +224,9 @@ export async function dataFromD1(env, nowMs = Date.now(), lang = 'ru') {
     ADVISORY_SOURCES.join("','") +
     "')), unique_rows AS (SELECT source,observed_at,payload,ROW_NUMBER() OVER(PARTITION BY source ORDER BY observed_at DESC) n FROM latest WHERE ver=1) SELECT source,observed_at,payload FROM unique_rows WHERE n<=40 ORDER BY source,observed_at DESC";
   const [markets, official, scenes, status, advisories] = await db.batch([
-    db.prepare(marketSql),
+    // 22.11: only the last 72 h — the full history (~2k rows, growing) was
+    // scanned on every /api/data call; a market with no quote in 72 h is stale.
+    db.prepare(marketSql).bind(nowMs - 72 * 3600 * 1000),
     db.prepare(officialSql),
     db.prepare(scenesSql),
     db.prepare('SELECT source,attempted_at,succeeded_at,state,detail FROM source_status ORDER BY source'),

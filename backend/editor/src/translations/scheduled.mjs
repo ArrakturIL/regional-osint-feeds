@@ -22,7 +22,7 @@ const SPAM =
 // representatives; that is what gets a RU job. A job, once created, stays in
 // the queue after the item leaves this window (until done, manual or 72 h).
 const CANDIDATES =
-  'SELECT n.id,n.headline,n.summary,n.headline_ru,n.summary_ru,n.discovered_ms FROM news_items n WHERE ((n.priority>=7 AND n.published_ms>?) OR n.id IN (SELECT g.representative_id FROM news_event_groups g WHERE g.priority>=4 AND g.last_seen_ms>?)) AND (n.headline_ru IS NULL OR (n.summary_ru IS NULL AND length(n.summary)>10)) ORDER BY n.published_ms DESC LIMIT 60';
+  'SELECT n.id,n.headline,n.summary,n.headline_ru,n.summary_ru,n.discovered_ms FROM news_items n WHERE n.id IN (SELECT id FROM news_items INDEXED BY news_items_priority_published WHERE priority>=7 AND published_ms>? UNION ALL SELECT g.representative_id FROM news_event_groups g WHERE g.last_seen_ms>? AND g.priority>=4) AND (n.headline_ru IS NULL OR (n.summary_ru IS NULL AND length(n.summary)>10)) ORDER BY n.published_ms DESC LIMIT 60';
 const needsRu = r => !r.headline_ru || (!r.summary_ru && String(r.summary || '').length > 10);
 const ruHash = r => fingerprint({ title: r.headline, body: r.summary || '', comment: '' });
 

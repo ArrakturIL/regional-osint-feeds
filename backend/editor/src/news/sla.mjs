@@ -66,10 +66,11 @@ export async function slaSummary(db, now = Date.now()) {
       await db
         .prepare(
           'SELECT n.id,n.headline,n.summary,n.headline_ru,n.discovered_ms,t.item_id he_id FROM news_items n ' +
-            "LEFT JOIN regional_i18n t ON t.kind='news' AND t.item_id=n.id AND t.language='he' WHERE n.discovered_ms>? AND (n.priority>=7 OR " +
-            'n.id IN (SELECT g.representative_id FROM news_event_groups g WHERE g.priority>=4 AND g.last_seen_ms>?))',
+            "LEFT JOIN regional_i18n t ON t.kind='news' AND t.item_id=n.id AND t.language='he' WHERE n.discovered_ms>? AND " +
+            'n.id IN (SELECT id FROM news_items INDEXED BY news_items_priority_discovered WHERE priority>=7 AND discovered_ms>? UNION ALL ' +
+            'SELECT g.representative_id FROM news_event_groups g WHERE g.last_seen_ms>? AND g.priority>=4)',
         )
-        .bind(since, since)
+        .bind(since, since, since)
         .all()
     ).results || [];
   const out = {

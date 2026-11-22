@@ -56,6 +56,9 @@ CREATE TABLE regional_i18n (kind TEXT NOT NULL,item_id TEXT NOT NULL,language TE
 CREATE TABLE regional_i18n_attempts(kind TEXT NOT NULL,item_id TEXT NOT NULL,language TEXT NOT NULL,source_hash TEXT NOT NULL,day_utc TEXT NOT NULL,attempted_at_ms INTEGER NOT NULL,state TEXT NOT NULL DEFAULT 'running',error TEXT, retry_count INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(kind,item_id,language,source_hash,day_utc));
 CREATE TABLE regional_i18n_budget(day_utc TEXT PRIMARY KEY,attempts INTEGER NOT NULL DEFAULT 0,estimated_neurons REAL NOT NULL DEFAULT 0,updated_at_ms INTEGER NOT NULL);
 CREATE TABLE news_event_groups(event_id TEXT PRIMARY KEY,representative_id TEXT NOT NULL,topic TEXT NOT NULL,priority INTEGER NOT NULL,last_seen_ms INTEGER NOT NULL,member_count INTEGER NOT NULL,source_count INTEGER NOT NULL,origin_count INTEGER NOT NULL,verification_status TEXT NOT NULL,reason_codes TEXT NOT NULL,sources_json TEXT NOT NULL,signature TEXT NOT NULL,updated_ms INTEGER NOT NULL);
+CREATE INDEX news_items_priority_published ON news_items(priority, published_ms);
+CREATE INDEX news_items_priority_discovered ON news_items(priority, discovered_ms);
+CREATE INDEX news_event_groups_last_seen ON news_event_groups(last_seen_ms);
 CREATE TABLE ai_daily_neurons(day_utc TEXT PRIMARY KEY,neurons REAL NOT NULL DEFAULT 0,calls INTEGER NOT NULL DEFAULT 0,updated_ms INTEGER NOT NULL);
 CREATE TABLE ai_provider_calls(day_utc TEXT NOT NULL,provider_model TEXT NOT NULL,calls INTEGER NOT NULL DEFAULT 0,updated_ms INTEGER NOT NULL,PRIMARY KEY(day_utc,provider_model));
 CREATE TABLE editorial_notes (id TEXT PRIMARY KEY, headline TEXT, text TEXT, published_ms INTEGER);
