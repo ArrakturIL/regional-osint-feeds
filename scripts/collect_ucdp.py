@@ -280,7 +280,7 @@ def collect(token: str, opener=None, now=None) -> int:
     }
     status.update(state="ok", version=version, requests=client.used, events=data["events_total"])
     emit(status, data)
-    print(f"UCDP {version}: {data['events_total']} events, {client.used} requests")
+    print(f"::notice::UCDP {version}: {data['events_total']} events, {client.used} requests")
     return 0
 
 
