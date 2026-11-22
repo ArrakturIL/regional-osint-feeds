@@ -122,7 +122,12 @@ test('read-only D1 API uses canonical sources and never mutates database', async
     db = {
       prepare(q) {
         sql.push(q);
-        return { sql: q };
+        return {
+          sql: q,
+          bind() {
+            return this;
+          },
+        };
       },
       async batch() {
         return [
@@ -201,7 +206,12 @@ test('Sentinel SQL breaks same-snapshot ties by acquisition time descending', as
     db = {
       prepare(sql) {
         queries.push(sql);
-        return { sql };
+        return {
+          sql,
+          bind() {
+            return this;
+          },
+        };
       },
       async batch() {
         return [{ results: [] }, { results: [] }, { results: [] }, { results: [] }];

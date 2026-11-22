@@ -167,7 +167,7 @@ test('SLA counts only displayed items (translator eligibility)', async () => {
   await slaSummary(db, Date.now());
   assert.match(
     sql,
-    /n\.priority>=7 OR n\.id IN \(SELECT g\.representative_id FROM news_event_groups g WHERE g\.priority>=4/,
+    /priority>=7 AND discovered_ms>\? UNION ALL SELECT g\.representative_id FROM news_event_groups g WHERE g\.last_seen_ms>\? AND g\.priority>=4/,
   );
 });
 

@@ -84,9 +84,11 @@ async function localeCandidates(env, kind, now) {
       (
         await db
           .prepare(
-            "SELECT n.id,n.headline,n.headline_ru,n.summary,n.summary_ru,n.comment,n.discovered_ms,t.source_hash cached_he_hash,t.title he_title,t.body he_body,t.commentary he_comment FROM news_items n LEFT JOIN regional_i18n t ON t.kind='news' AND t.item_id=n.id AND t.language='he' WHERE ((n.priority>=7 AND n.published_ms>?) OR n.id IN (SELECT g.representative_id FROM news_event_groups g WHERE g.priority>=4 AND g.last_seen_ms>?)) ORDER BY (t.item_id IS NULL) DESC,n.published_ms DESC,n.priority DESC LIMIT 120",
+            "SELECT n.id,n.headline,n.headline_ru,n.summary,n.summary_ru,n.comment,n.discovered_ms,t.source_hash cached_he_hash,t.title he_title,t.body he_body,t.commentary he_comment FROM news_items n LEFT JOIN regional_i18n t ON t.kind='news' AND t.item_id=n.id AND t.language='he' WHERE n.id IN (SELECT id FROM news_items INDEXED BY news_items_priority_published WHERE priority>=7 AND published_ms>? UNION ALL SELECT g.representative_id FROM news_event_groups g WHERE g.last_seen_ms>? AND g.priority>=4) ORDER BY (t.item_id IS NULL) DESC,n.published_ms DESC,n.priority DESC LIMIT 120",
           )
-          .bind(now - 7 * DAY, now - 36 * 3600000)
+          // 22.11 (D1 budget): 72 h, the lifetime of a translation job — an item
+          // older than that is not re-queued anyway; 7 days read ~1.6k rows per call.
+          .bind(now - 72 * 3600000, now - 36 * 3600000)
           .all()
       ).results || [];
   else if (kind === 'editorial')
