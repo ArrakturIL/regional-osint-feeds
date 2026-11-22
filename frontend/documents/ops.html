@@ -18,6 +18,11 @@ h2{font:600 14px/1.3 var(--display);margin:0;letter-spacing:.03em}
 .card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);padding:14px;min-width:0}
 .top{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:10px;margin-bottom:10px}
 .vis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:10px 0 8px}
+.uq{margin:2px 0 10px}.uq h3{margin:0 0 6px;font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--text3)}
+.uq-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);background:var(--panel)}
+.uq-row div{padding:6px 8px;border-inline-start:1px solid var(--line)}.uq-row div:first-child{border-inline-start:0}
+.uq-row b{display:block;font:600 17px/1.1 var(--display)}.uq-row div:first-child b{color:var(--mint)}.uq-row span{font-size:11px;color:var(--text3)}
+.uq-note{margin:4px 0 0;font-size:11px;color:var(--text3)}
 .vis div{border:1px solid var(--line);background:var(--panel);padding:8px}.vis b{display:block;font:600 22px/1.1 var(--display)}.vis span{font-size:11.5px;color:var(--text3)}
 .spark{display:flex;gap:3px;align-items:flex-end;height:42px;margin-top:6px}.spark i{flex:1;background:var(--mint2);min-height:2px;position:relative}.spark i.today{background:var(--mint)}
 .spark-l{display:flex;gap:3px}.spark-l span{flex:1;text-align:center;font:9.5px var(--mono);color:var(--text3)}
@@ -133,7 +138,9 @@ function uniquesLine(u){
  if(!u||!(u.days||[]).length)return '';
  const D=ms=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jerusalem'}).format(ms), td=D(Date.now()), y=D(Date.now()-864e5);
  const start=u.days[0].day, get=d=>(u.days.find(x=>x.day===d)||{}).uniques||0, wk=(u.weeks||[]).slice(-1)[0], prev=(u.weeks||[]).slice(-2)[0];
- return `<p class="meta" style="margin:6px 0 0"><b>${fmt(get(td))}</b> уникальных сегодня · <b>${fmt(get(y))}</b> вчера · <b>${fmt(wk?.uniques||0)}</b> за эту неделю${prev&&prev!==wk?' · '+fmt(prev.uniques)+' за прошлую':''}${start>D(Date.now()-7*864e5)?' · считаем с '+start.slice(8)+'.'+start.slice(5,7)+', первый день и первая неделя неполные':''}</p>${help('Уникальные посетители','Один человек — один отпечаток за день и один за неделю (неделя с воскресенья): хэш от IP и браузера с солью, своей для каждого дня и каждой недели. IP не хранится; когда день или неделя кончаются, соль удаляется, и отпечатки больше не связать. Боты и /ops не считаются.')}`;
+ const partial=start>D(Date.now()-7*864e5);
+ const cell=(n,l,mark)=>`<div><b>${fmt(n)}</b><span>${l}${mark&&partial?'*':''}</span></div>`;
+ return `<div class="uq"><h3>Уникальные посетители</h3><div class="uq-row">${cell(get(td),'сегодня')}${cell(get(y),'вчера',y<=start)}${cell(wk?.uniques||0,'эта неделя',(wk?.week||'')<=start)}${cell(prev&&prev!==wk?prev.uniques:0,'прошлая',true)}</div>${partial?`<p class="uq-note">* счёт идёт с ${start.slice(8)}.${start.slice(5,7)} — эти периоды неполные</p>`:''}${help('Как считаем уникальных','Один человек — один отпечаток за день и один за неделю (неделя с воскресенья): хэш от IP и браузера с солью, своей для каждого дня и каждой недели. IP не хранится; когда день или неделя кончаются, соль удаляется. Боты и /ops не считаются.')}</div>`;
 }
 function visitorsCard(v,u){
  if(!v)return `<div class="card"><h2>Посетители</h2><p class="explain">Счётчик Cloudflare Web Analytics включён 20.11. Цифры появятся в течение получаса после первых визитов (сборщик раз в 30 минут).</p>${uniquesLine(u)}</div>`;
@@ -142,9 +149,9 @@ function visitorsCard(v,u){
  const top=(v.top_paths||[]).map(x=>`${esc(x.path)} — ${fmt(x.pageviews)}`).join('<br>')||'—';
  const geo=(v.top_countries||[]).map(x=>`${esc(x.country)} — ${fmt(x.pageviews)}`).join('<br>')||'—';
  return `<div class="card"><h2>Посетители</h2>
- <div class="vis"><div><b>${fmt(v.visits_24h)}</b><span>визитов за 24 ч</span></div><div><b>${fmt(v.pageviews_24h)}</b><span>просмотров за 24 ч</span></div><div><b>${fmt(v.visits_7d)}</b><span>визитов за 7 дней</span></div><div><b>${fmt(v.pageviews_7d)}</b><span>просмотров за 7 дней</span></div></div>
+ <div class="vis"><div><b>${fmt(v.visits_24h)}</b><span>визитов за 24 ч</span></div><div><b>${fmt(v.pageviews_24h)}</b><span>просмотров за 24 ч</span></div><div><b>${fmt(v.visits_7d)}</b><span>визитов за 7 дней</span></div><div><b>${fmt(v.pageviews_7d)}</b><span>просмотров за 7 дней</span></div></div>${uniquesLine(u)}
  ${days.length?`<div class="spark" aria-label="Просмотры по дням">${days.map(x=>`<i class="${x.date===today?'today':''}" style="height:${Math.round(x.pageviews/max*100)}%" title="${x.date}: ${x.pageviews} просмотров, ${x.visits} визитов"></i>`).join('')}</div><div class="spark-l">${days.map(x=>`<span>${wd(x.date)}</span>`).join('')}</div>`:''}
- <p class="meta" style="margin:6px 0 0">обновлено ${ago(v.collected_ms)} · без cookies</p>${uniquesLine(u)}
+ <p class="meta" style="margin:6px 0 0">обновлено ${ago(v.collected_ms)} · без cookies</p>
  ${help('Страницы и страны за неделю','Визит — заход на сайт извне (по ссылке или вручную набранным адресом); просмотр — каждая открытая страница. Свои заходы на /ops не считаются: счётчика там нет.',`<b>Страницы:</b><br>${top}`,`<b>Страны:</b><br>${geo}`)}</div>`;
 }
 function render(d,error){
