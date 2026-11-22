@@ -600,3 +600,102 @@ html[lang='he'] .rw-page .rw-analyst-links a {
 .rw-civil .links {
   margin: 0;
 }
+
+/* «Аналитики» (22.11): authors as compact chips on top; a tap filters. */
+.rw-page .rw-authors {
+  margin: 0 0 14px;
+}
+.rw-page .rw-author-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.rw-page .rw-author-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 4px 12px 4px 4px;
+  border: 1px solid var(--rw7-line);
+  border-radius: 999px;
+  background: var(--rw7-panel);
+  color: var(--rw7-text-2);
+  font: 500 13px/1.2 var(--rw7-body);
+  cursor: pointer;
+}
+.rw-page .rw-author-chip:first-child {
+  padding-inline-start: 14px;
+}
+.rw-page .rw-author-ini {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--rw7-panel-2);
+  color: var(--rw7-mint);
+  font: 600 11px var(--rw7-mono);
+}
+.rw-page .rw-author-n {
+  color: var(--rw7-text-3);
+  font: 500 11px var(--rw7-mono);
+}
+.rw-page .rw-author-chip.on {
+  border-color: var(--rw7-mint);
+  background: var(--rw7-hover);
+  color: var(--rw7-text);
+}
+.rw-page .rw-author-chip.on .rw-author-ini {
+  background: var(--rw7-mint);
+  color: var(--rw7-bg);
+}
+.rw-page .rw-author-chip:focus-visible {
+  outline: 2px solid var(--rw7-mint);
+  outline-offset: 2px;
+}
+@media (hover: hover) {
+  .rw-page .rw-author-chip:hover {
+    border-color: var(--rw7-line-strong);
+    color: var(--rw7-text);
+  }
+}
+.rw-page .rw-author-desc {
+  margin: 8px 0 0;
+  color: var(--rw7-text-3);
+  font-size: 13px;
+  line-height: 1.5;
+}
+/* Phones: one scrollable row instead of a wall of chips. */
+@media (max-width: 640px) {
+  .rw-page .rw-author-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-inline: -16px;
+    padding-inline: 16px;
+  }
+  .rw-page .rw-author-row::-webkit-scrollbar {
+    display: none;
+  }
+  .rw-page .rw-author-chip {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
+.rw-page .rw-analyst-more {
+  display: block;
+  margin: 16px auto 0;
+  min-height: 44px;
+  padding: 0 22px;
+  border: 1px solid var(--rw7-line-strong);
+  background: transparent;
+  color: var(--rw7-mint);
+  font: 600 12px var(--rw7-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.rw-page .rw-analyst-more:disabled {
+  color: var(--rw7-text-3);
+  cursor: default;
+}

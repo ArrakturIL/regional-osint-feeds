@@ -114,7 +114,6 @@ export function App() {
   const heSatellite = useFeed('/api/rw-localized/satellite', 180000, UI_HE && route === '/data');
   const ruAviation = useFeed('/api/rw/aviation', 180000, !UI_HE && route === '/data');
   const ruSatellite = useFeed('/api/rw/satellite', 180000, !UI_HE && route === '/data');
-  const hePosts = useFeed('/api/rw-localized/analysts', 90000, UI_HE && route === '/analysts');
   const heProfiles = useFeed('/api/rw-localized/profiles', 300000, UI_HE && route === '/analysts');
   const readyNews = Array.isArray(news.value?.articles)
     ? news.value.articles.map(rwNormalizeNewsArticle)
@@ -197,7 +196,7 @@ export function App() {
                 : !ruSatellite.value && !ruSatellite.error,
             })
           : null,
-        route === '/analysts' ? h(AnalystShared, { hePosts, heProfiles }) : null,
+        route === '/analysts' ? h(AnalystShared, { heProfiles }) : null,
       ),
     ),
   );

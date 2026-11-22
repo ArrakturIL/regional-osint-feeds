@@ -1,17 +1,58 @@
-import { UI_HE, fmtTime, h, t, useState } from '../../app/runtime.js';
+import { UI_HE, fmtTime, h, t, useEffect, useState } from '../../app/runtime.js';
 import { External } from '../../components/External/External.js';
 import { Intro } from '../../components/PageIntro/Intro.js';
 import { Head } from '../../components/SectionHead/Head.js';
 import { useFeed } from '../../hooks/useFeed.js';
 import { HE_ITEMS } from '../../i18n/meta.js';
-export function AnalystShared({ hePosts, heProfiles }) {
+export function AnalystShared({ heProfiles }) {
   const [search, setSearch] = useState(''),
+    [query, setQuery] = useState(''),
+    [author, setAuthor] = useState(() => new URLSearchParams(location.search).get('author') || ''),
+    [extra, setExtra] = useState({ key: '', posts: [], more: null, busy: false }),
     [refresh, setRefresh] = useState(0);
   const parts = location.pathname.split('/').filter(Boolean),
     idx = parts.indexOf('analysts'),
     slug = idx < 0 ? null : parts[idx + 1] || null,
     he = UI_HE;
-  const posts = useFeed('/api/analyst-posts?lang=ru&refresh=' + refresh, 120000, !he && !slug);
+  // 22.11: the list is asked from the server with the author filter and the
+  // search, so both reach every publication, not only the first page. Hebrew
+  // search stays in the browser (the stored text is Russian).
+  useEffect(() => {
+    const id = setTimeout(() => setQuery(search.trim()), 350);
+    return () => clearTimeout(id);
+  }, [search]);
+  const listUrl =
+    '/api/analyst-posts?lang=' +
+    (he ? 'he' : 'ru') +
+    (author ? '&author=' + encodeURIComponent(author) : '') +
+    (!he && query ? '&q=' + encodeURIComponent(query) : '');
+  const posts = useFeed(listUrl + '&refresh=' + refresh, 120000, !slug);
+  const pickAuthor = id => {
+    const next = author === id ? '' : id;
+    setAuthor(next);
+    const u = new URL(location.href);
+    if (next) u.searchParams.set('author', next);
+    else u.searchParams.delete('author');
+    history.replaceState(history.state, '', u);
+  };
+  const firstPage = Array.isArray(posts.value?.posts) ? posts.value.posts : HE_ITEMS(posts.value);
+  const pages = extra.key === listUrl ? extra : { key: listUrl, posts: [], more: null, busy: false };
+  const hasMore = pages.more === null ? Boolean(posts.value?.has_more) : pages.more;
+  const loadMore = async () => {
+    if (pages.busy) return;
+    setExtra({ ...pages, busy: true });
+    try {
+      const r = await fetch(listUrl + '&offset=' + (firstPage.length + pages.posts.length), {
+        cache: 'no-store',
+        headers: { Accept: 'application/json' },
+      });
+      const j = await r.json();
+      const got = Array.isArray(j?.posts) ? j.posts : HE_ITEMS(j);
+      setExtra({ key: listUrl, posts: [...pages.posts, ...got], more: Boolean(j?.has_more), busy: false });
+    } catch {
+      setExtra({ ...pages, busy: false });
+    }
+  };
   const people = useFeed('/api/analysts?lang=ru&refresh=' + refresh, 300000, !he && !slug);
   const detail = useFeed(
     '/api/analyst-posts/' +
@@ -23,13 +64,7 @@ export function AnalystShared({ hePosts, heProfiles }) {
     120000,
     !!slug,
   );
-  const raw = he
-    ? Array.isArray(hePosts?.value?.posts)
-      ? hePosts.value.posts
-      : Array.isArray(hePosts?.value?.items)
-        ? hePosts.value.items
-        : []
-    : [];
+  const raw = he ? [...firstPage, ...pages.posts] : [];
   const list = slug
     ? detail.value?.id === slug
       ? [detail.value]
@@ -40,9 +75,7 @@ export function AnalystShared({ hePosts, heProfiles }) {
           title: x.title || x.headline || '',
           excerpt: x.excerpt || x.summary || x.body || '',
         }))
-      : Array.isArray(posts.value?.posts)
-        ? posts.value.posts
-        : [];
+      : [...firstPage, ...pages.posts];
   const profiles = he
     ? Array.isArray(heProfiles?.value?.analysts)
       ? heProfiles.value.analysts.map(x => ({
@@ -65,6 +98,9 @@ export function AnalystShared({ hePosts, heProfiles }) {
         posts: 'פרסומי פרשנים',
         sub: 'כל חומר מתפרסם עם ציון המחבר',
         profiles: 'מקורות ופרשנים',
+        all: 'כולם',
+        more: 'עוד פרסומים',
+        nothing: 'לא נמצאו פרסומים.',
         search: 'חיפוש בפרסומים',
         refresh: 'רענון',
         back: 'לכל הפרסומים',
@@ -87,6 +123,9 @@ export function AnalystShared({ hePosts, heProfiles }) {
         posts: 'Лента аналитиков',
         sub: 'Материалы публикуются с указанием авторства',
         profiles: 'Источники и авторы',
+        all: 'Все',
+        more: 'Показать ещё',
+        nothing: 'Ничего не нашлось.',
         search: 'Поиск по публикациям',
         refresh: 'Обновить',
         back: 'К списку аналитиков',
@@ -121,9 +160,49 @@ export function AnalystShared({ hePosts, heProfiles }) {
     .filter(
       x =>
         (!slug || slug === x.id) &&
-        (x.title + ' ' + x.summary + ' ' + x.author).toLocaleLowerCase().includes(search.toLocaleLowerCase()),
+        (!he || (x.title + ' ' + x.summary + ' ' + x.author).toLocaleLowerCase().includes(search.toLocaleLowerCase())),
     );
   const base = he ? '/he/analysts' : '/analysts';
+  // 22.11 (owner): authors on top as compact chips; a tap filters the list.
+  const initials = name =>
+    String(name || '')
+      .replace(/[«»"]/g, '')
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(w => w[0])
+      .join('')
+      .toLocaleUpperCase();
+  const authorChips = () => {
+    const chosen = profiles.find(x => x.id === author);
+    const chip = (id, name, count) =>
+      h(
+        'button',
+        {
+          type: 'button',
+          key: id || 'all',
+          className: 'rw-author-chip' + ((id || '') === author ? ' on' : ''),
+          'aria-pressed': (id || '') === author,
+          onClick: () => pickAuthor(id || ''),
+        },
+        id ? h('span', { className: 'rw-author-ini', 'aria-hidden': 'true' }, initials(name)) : null,
+        h('span', { className: 'rw-author-name' }, name),
+        typeof count === 'number' ? h('span', { className: 'rw-author-n' }, count) : null,
+      );
+    return h(
+      'div',
+      { className: 'rw-authors' },
+      h(
+        'div',
+        { className: 'rw-author-row', role: 'group', 'aria-label': L.profiles },
+        chip('', L.all),
+        ...[...profiles]
+          .sort((a, b) => (b.posts || 0) - (a.posts || 0))
+          .map(x => chip(x.id, he ? x.title : x.display_name, x.posts)),
+      ),
+      chosen ? t('p', 'rw-author-desc', he ? chosen.body || chosen.excerpt : chosen.description || '') : null,
+    );
+  };
   const entry = x =>
     h(
       'article',
@@ -164,6 +243,7 @@ export function AnalystShared({ hePosts, heProfiles }) {
       'section',
       { className: 'section' },
       h(Head, { title: slug ? L.detail : L.posts, sub: L.sub, icon: 'users' }),
+      slug ? null : authorChips(),
       slug
         ? h('a', { className: 'rw-more-link', href: base }, L.back)
         : h(
@@ -182,7 +262,7 @@ export function AnalystShared({ hePosts, heProfiles }) {
         slug
           ? detail.error && !/HTTP 404/.test(detail.error)
           : he
-            ? hePosts?.error || heProfiles?.error
+            ? posts.error || heProfiles?.error
             : posts.error || people.error
       )
         ? h(
@@ -202,7 +282,18 @@ export function AnalystShared({ hePosts, heProfiles }) {
         ? t('p', 'rw-analyst-notice', raw.filter(x => x.content_language !== 'he').length + L.pending)
         : null,
       normalized.length
-        ? h('div', { className: 'rw-analyst-grid' }, ...normalized.map(entry))
+        ? h(
+            'div',
+            null,
+            h('div', { className: 'rw-analyst-grid' }, ...normalized.map(entry)),
+            !slug && hasMore
+              ? h(
+                  'button',
+                  { type: 'button', className: 'rw-analyst-more', onClick: loadMore, disabled: pages.busy },
+                  pages.busy ? L.loading : L.more,
+                )
+              : null,
+          )
         : h(
             'div',
             { className: 'rw-analyst-empty', role: 'status' },
@@ -214,29 +305,12 @@ export function AnalystShared({ hePosts, heProfiles }) {
                 : detail.value
                   ? L.notFound
                   : L.loading
-              : hePosts?.value || posts.value
-                ? L.empty
+              : posts.value
+                ? query || search || author
+                  ? L.nothing
+                  : L.empty
                 : L.loading,
           ),
     ),
-    !slug
-      ? h(
-          'section',
-          { className: 'section rw-analyst-profiles' },
-          h(Head, { title: L.profiles, icon: 'users' }),
-          h(
-            'div',
-            { className: 'rw-analyst-grid' },
-            ...profiles.map(x =>
-              h(
-                'article',
-                { className: 'rw-analyst-article', key: x.id },
-                t('h3', null, he ? x.title : x.display_name),
-                t('p', null, he ? x.body || x.excerpt : x.description || ''),
-              ),
-            ),
-          ),
-        )
-      : null,
   );
 }
