@@ -11,6 +11,7 @@
 
 - Восемь источников с JSON (`analysts`, `centcom`, `copernicus`, `gdelt`, `marad`, `satellite`, `unosat`, `news_translation`) — `graduated` (`config/collector-rollout.json`). Читаются из D1 с проверкой хэша. При пропаже или порче кэша срабатывает fallback на снимок в `data/`.
 - `ucdp` (`ucdp.yml`, раз в сутки) — только JSON в `data/`, без Neon/D1 и без source gate: фон для страницы «Данные», не для индекса. Токен в заголовке `x-ucdp-access-token`, бюджет 40 запросов за запуск.
+- `airlabs` (`airlabs.yml`, ежечасно) — только JSON в `data/`. Ключ идёт в адресе (`api_key`), поэтому адреса не печатаются. Счётчики запросов за сутки и месяц живут в `data/airlabs-status.json` и коммитятся после каждого запуска, даже частичного.
 - `adsb` и `adsb_mil` (с 19.11) идут только через Actions → Neon → D1, JSON в git нет. Их нет в `GITHUB_JSON_SOURCES` (`scripts/neon_mirror.py`), но они есть в `MIRROR_SOURCES` Monitor и в CHECK `source_key` обеих схем. Тест `collector-cache` держит это в синхроне.
 - Посетители сайта (`site-visitors.yml`): Cloudflare Web Analytics → `usage_daily`. Neon здесь не участвует.
 
