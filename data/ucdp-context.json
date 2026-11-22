@@ -1,0 +1,219 @@
+{
+  "source": "ucdp_ged_candidate",
+  "version": "26.0.10",
+  "generated_at": "2026-11-22T23:24:36Z",
+  "window": {
+    "start": "2026-08-01",
+    "end": "2026-11-22"
+  },
+  "events_total": 501,
+  "regions": {
+    "israel": {
+      "2026-10": {
+        "events": 107,
+        "deaths_best": 147,
+        "deaths_civilians": 33,
+        "state": 107,
+        "nonstate": 0,
+        "onesided": 0
+      }
+    },
+    "lebanon_syria": {
+      "2026-10": {
+        "events": 100,
+        "deaths_best": 126,
+        "deaths_civilians": 85,
+        "state": 27,
+        "nonstate": 13,
+        "onesided": 60
+      }
+    },
+    "iran": {
+      "2026-10": {
+        "events": 17,
+        "deaths_best": 30,
+        "deaths_civilians": 1,
+        "state": 16,
+        "nonstate": 0,
+        "onesided": 1
+      }
+    },
+    "gulf": {
+      "2026-10": {
+        "events": 11,
+        "deaths_best": 32,
+        "deaths_civilians": 24,
+        "state": 11,
+        "nonstate": 0,
+        "onesided": 0
+      }
+    },
+    "red_sea": {
+      "2026-10": {
+        "events": 262,
+        "deaths_best": 1747,
+        "deaths_civilians": 301,
+        "state": 252,
+        "nonstate": 3,
+        "onesided": 7
+      }
+    },
+    "iraq": {
+      "2026-10": {
+        "events": 4,
+        "deaths_best": 7,
+        "deaths_civilians": 0,
+        "state": 4,
+        "nonstate": 0,
+        "onesided": 0
+      }
+    }
+  },
+  "latest": [
+    {
+      "id": 650492,
+      "date": "2026-10-31",
+      "region": "red_sea",
+      "country": "Yemen (North Yemen)",
+      "where": "Heijah Al-Abd valley and the Al-Duhay-Karbah area, towards the Al-Rubu’ market area and the Al-Muqatara area",
+      "side_a": "Government of Yemen (North Yemen)",
+      "side_b": "Forces of the Presidential Leadership Council",
+      "type": "state",
+      "deaths_best": 24,
+      "deaths_civilians": 0
+    },
+    {
+      "id": 650498,
+      "date": "2026-10-31",
+      "region": "red_sea",
+      "country": "Yemen (North Yemen)",
+      "where": "Al-Rubu’ market (area)",
+      "side_a": "Government of Yemen (North Yemen)",
+      "side_b": "Forces of the Presidential Leadership Council",
+      "type": "state",
+      "deaths_best": 5,
+      "deaths_civilians": 0
+    },
+    {
+      "id": 647725,
+      "date": "2026-10-31",
+      "region": "lebanon_syria",
+      "country": "Syria",
+      "where": "Al-Nafous neighborhood of Manbij",
+      "side_a": "XXX652",
+      "side_b": "Civilians",
+      "type": "onesided",
+      "deaths_best": 2,
+      "deaths_civilians": 2
+    },
+    {
+      "id": 647834,
+      "date": "2026-10-31",
+      "region": "red_sea",
+      "country": "Yemen (North Yemen)",
+      "where": "Al Marar in Hayfan.",
+      "side_a": "Government of Yemen (North Yemen)",
+      "side_b": "Forces of the Presidential Leadership Council",
+      "type": "state",
+      "deaths_best": 2,
+      "deaths_civilians": 2
+    },
+    {
+      "id": 648190,
+      "date": "2026-10-31",
+      "region": "israel",
+      "country": "Israel",
+      "where": "Al-Balakhia area in Al-Shati camp",
+      "side_a": "Government of Israel",
+      "side_b": "Hamas",
+      "type": "state",
+      "deaths_best": 2,
+      "deaths_civilians": 0
+    },
+    {
+      "id": 648507,
+      "date": "2026-10-31",
+      "region": "red_sea",
+      "country": "Yemen (North Yemen)",
+      "where": "Al-Jawf province",
+      "side_a": "Government of Yemen (North Yemen)",
+      "side_b": "Forces of the Presidential Leadership Council",
+      "type": "state",
+      "deaths_best": 2,
+      "deaths_civilians": 0
+    },
+    {
+      "id": 650501,
+      "date": "2026-10-31",
+      "region": "red_sea",
+      "country": "Yemen (North Yemen)",
+      "where": "\"Huwaishian\" mountains in the Khabb wa ash-Sha'af district",
+      "side_a": "Government of Yemen (North Yemen)",
+      "side_b": "Forces of the Presidential Leadership Council",
+      "type": "state",
+      "deaths_best": 2,
+      "deaths_civilians": 0
+    },
+    {
+      "id": 647727,
+      "date": "2026-10-31",
+      "region": "lebanon_syria",
+      "country": "Syria",
+      "where": "Qamishli",
+      "side_a": "XXX652",
+      "side_b": "Civilians",
+      "type": "onesided",
+      "deaths_best": 1,
+      "deaths_civilians": 1
+    },
+    {
+      "id": 647732,
+      "date": "2026-10-31",
+      "region": "lebanon_syria",
+      "country": "Syria",
+      "where": "Al-Jabriyah neighborhood of Aleppo city",
+      "side_a": "XXX652",
+      "side_b": "Civilians",
+      "type": "onesided",
+      "deaths_best": 1,
+      "deaths_civilians": 1
+    },
+    {
+      "id": 648186,
+      "date": "2026-10-31",
+      "region": "israel",
+      "country": "Israel",
+      "where": "near Tibah Towers, northwest of al-Mawasi in Khan Younis",
+      "side_a": "Government of Israel",
+      "side_b": "Hamas",
+      "type": "state",
+      "deaths_best": 1,
+      "deaths_civilians": 0
+    },
+    {
+      "id": 648187,
+      "date": "2026-10-31",
+      "region": "israel",
+      "country": "Israel",
+      "where": "near the Electricity Company in the northern part of al-Nusseirat refugee camp",
+      "side_a": "Government of Israel",
+      "side_b": "Hamas",
+      "type": "state",
+      "deaths_best": 1,
+      "deaths_civilians": 0
+    },
+    {
+      "id": 647830,
+      "date": "2026-10-30",
+      "region": "red_sea",
+      "country": "Yemen (North Yemen)",
+      "where": "Al Masahin in Ash Samayatayn",
+      "side_a": "Government of Yemen (North Yemen)",
+      "side_b": "Forces of the Presidential Leadership Council",
+      "type": "state",
+      "deaths_best": 6,
+      "deaths_civilians": 6
+    }
+  ],
+  "citation": "UCDP Georeferenced Event Dataset (GED) Candidate, Uppsala University"
+}
