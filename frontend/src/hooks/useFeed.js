@@ -8,6 +8,17 @@ export function useFeed(endpoint, interval, enabled) {
     cache = useRef({ last: 0, ctrl: null });
   useEffect(() => {
     if (!enabled) return;
+    // 22.11: a new endpoint (author filter, search) is a new feed: load it now
+    // and drop the old answer. Before, a switch within 10 s of the last load
+    // waited for the 30 s timer and kept showing the previous list.
+    if (cache.current.endpoint !== endpoint) {
+      if (cache.current.endpoint !== undefined) {
+        cache.current.last = 0;
+        setValue(null);
+        setError(null);
+      }
+      cache.current.endpoint = endpoint;
+    }
     let active = true,
       pending = false;
     async function pull(force) {
