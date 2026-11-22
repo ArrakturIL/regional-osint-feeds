@@ -145,11 +145,13 @@ export function createAnalystQueue({
         // it without AI keeps the daily cap for fresh posts.
         .bind(now, now - 2 * DAY)
         .run();
+      // 22.11 (owner): newest first — on a heavy day the AI cap goes to fresh
+      // posts, not to ones about to leave the 48 h window.
       const pending = await db
         .prepare(
           `SELECT i.*,a.display_name AS analyst_name,s.language AS original_language FROM analyst_items i JOIN analysts a ON a.id=i.analyst_id JOIN analyst_sources s ON s.id=i.source_id
        WHERE i.state='pending' AND s.enabled=1 AND i.source_published_at_ms>=?
-       ORDER BY i.source_published_at_ms ASC LIMIT 80`,
+       ORDER BY i.source_published_at_ms DESC LIMIT 80`,
         )
         .bind(now - 7 * DAY)
         .all();
