@@ -143,6 +143,14 @@ export const ENTITIES = [
   },
   // 22.11: bounded regional names; avoid matching ordinary words.
   {
+    id: 'iron_beam',
+    code: 'iron_beam_name_missing',
+    // Capitalized weapon name only: an ordinary "iron beam" is not a laser system.
+    source: /(?<![\p{L}])(?:Iron[\s-]+Beam|Железн\p{L}*\s+луч\p{L}*|[ובהלמשכ]?מגן\s+אור)(?![\p{L}])/u,
+    he: /מגן\s+אור|קרן\s+ברזל|Iron[\s-]+Beam/iu,
+    ru: /Железн\p{L}*\s+луч|Маген[\s-]+Ор|Iron[\s-]+Beam/iu,
+  },
+  {
     id: 'centcom',
     code: 'centcom_name_missing',
     source: /(?<![\p{L}])(?:(?:US)?CENTCOM|ЦЕНТКОМ|[ובהלמשכ]?סנטקום)(?![\p{L}])/iu,
