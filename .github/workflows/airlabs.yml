@@ -1,0 +1,59 @@
+name: AirLabs airport departures (cancellations and delays)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/collect_airlabs.py'
+      - 'scripts/test_airlabs.py'
+      - '.github/workflows/airlabs.yml'
+  pull_request:
+    paths:
+      - 'scripts/collect_airlabs.py'
+      - 'scripts/test_airlabs.py'
+      - '.github/workflows/airlabs.yml'
+  workflow_dispatch:
+  schedule:
+    # Hourly trigger; the collector itself fetches only airports that are due,
+    # within 30 requests a day and 950 a month (free key: 1 000 a month).
+    - cron: '17 * * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: airlabs-departures
+  cancel-in-progress: false
+
+jobs:
+  airlabs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: ${{ github.event_name != 'pull_request' }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Offline tests
+        run: python -m unittest scripts.test_airlabs -v
+      - name: Read departure boards of due airports (PR - one airport, no commit)
+        id: collect
+        env:
+          AIRLABS_API_KEY: ${{ secrets.AIRLABS_API_KEY }}
+          AIRLABS_PROBE: ${{ github.event_name == 'pull_request' && '1' || '' }}
+        run: python -m scripts.collect_airlabs
+      - name: Commit snapshot and request counters
+        # Counters must be committed even after a partial run, or the budget resets.
+        if: always() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/airlabs-status.json
+          if [ -f data/airlabs-context.json ]; then git add data/airlabs-context.json; fi
+          if ! git diff --cached --quiet; then
+            git commit -m "Update AirLabs airport departures"
+            git pull --rebase -q origin main
+            git push
+          fi
