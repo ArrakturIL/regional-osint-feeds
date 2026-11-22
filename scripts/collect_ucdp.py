@@ -19,7 +19,7 @@ import sys
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 DATA = Path(__file__).resolve().parents[1] / "data"
@@ -30,7 +30,7 @@ BASE = f"https://{HOST}/api/gedevents/"
 DEFAULT_VERSION = "26.0.10"  # GED Candidate monthly release named on apidocs, 23.11.2026
 MAX_REQUESTS = 40
 PAGE_SIZE = 1000
-MONTHS_BACK = 3  # current month plus the three before it
+MONTHS = 4  # each monthly Candidate release holds ONE month of events
 MAX_PAGES = 30
 SAMPLE = 12
 UA = "RegionalWatch/1.0 (public noncommercial research; cite UCDP, Uppsala University)"
@@ -79,12 +79,19 @@ def next_versions(version: str) -> list[str]:
     return out
 
 
-def window_start(today: date) -> date:
-    y, m = today.year, today.month - MONTHS_BACK
-    while m < 1:
-        m += 12
-        y -= 1
-    return date(y, m, 1)
+def previous_versions(version: str, count: int = MONTHS) -> list[str]:
+    """`version` and the monthly releases before it, newest first (26.0.1 -> 25.0.12)."""
+    m = VERSION_RE.match(version)
+    if not m:
+        return []
+    yy, n = int(m[1]), int(m[2])
+    out = []
+    for _ in range(count):
+        out.append(f"{yy}.0.{n}")
+        n -= 1
+        if n < 1:
+            yy, n = yy - 1, 12
+    return out
 
 
 class Client:
@@ -124,23 +131,20 @@ class Client:
         raise RuntimeError(f"UCDP request failed twice: {last}")
 
 
-def query_url(version: str, start: date, end: date, page_size: int = PAGE_SIZE) -> str:
+def query_url(version: str, page_size: int = PAGE_SIZE) -> str:
     countries = ",".join(str(c) for c in sorted(REGION_BY_GW))
-    q = urllib.parse.urlencode(
-        {"pagesize": page_size, "page": 0, "Country": countries, "StartDate": start.isoformat(), "EndDate": end.isoformat()},
-        safe=",",
-    )
+    q = urllib.parse.urlencode({"pagesize": page_size, "page": 0, "Country": countries}, safe=",")
     return f"{BASE}{version}?{q}"
 
 
-def discover_version(client: Client, known: str, today: date) -> str:
+def discover_version(client: Client, known: str) -> str:
     """Probe newer Candidate releases with one-row requests; keep `known` if none."""
     version = known
     for _ in range(3):  # at most a few months of catch-up per run
         found = None
         for cand in next_versions(version):
             try:
-                body = client.get(query_url(cand, window_start(today), today, page_size=1))
+                body = client.get(query_url(cand, page_size=1))
             except LookupError:
                 continue
             if isinstance(body, dict) and int(body.get("TotalCount") or 0) > 0:
@@ -152,8 +156,8 @@ def discover_version(client: Client, known: str, today: date) -> str:
     return version
 
 
-def fetch_events(client: Client, version: str, start: date, end: date) -> list[dict]:
-    url = query_url(version, start, end)
+def fetch_events(client: Client, version: str) -> list[dict]:
+    url = query_url(version)
     events: list[dict] = []
     for _ in range(MAX_PAGES):
         body = client.get(url)
@@ -237,7 +241,6 @@ def emit(status: dict, data: dict | None) -> None:
 
 def collect(token: str, opener=None, now=None) -> int:
     now = now or utcnow()
-    today = now.date()
     previous = load_previous()
     known = previous.get("version") if VERSION_RE.match(str(previous.get("version") or "")) else DEFAULT_VERSION
     status = {"source": "ucdp_ged_candidate", "checked_at": iso(now), "version": known}
@@ -248,9 +251,14 @@ def collect(token: str, opener=None, now=None) -> int:
         return 1
     client = Client(token, opener)
     try:
-        version = discover_version(client, known, today)
-        start = window_start(today)
-        events = fetch_events(client, version, start, today)
+        version = discover_version(client, known)
+        events, months = fetch_events(client, version), [version]
+        for older in previous_versions(version)[1:]:
+            try:
+                events += fetch_events(client, older)
+                months.append(older)
+            except LookupError:
+                continue  # an older release withdrawn: keep the rest
     except StopRun as e:
         # Keep the previous snapshot: a partial page set would undercount.
         status.update(state="error" if "auth" in str(e) else "partial", detail=str(e), requests=client.used)
@@ -272,7 +280,7 @@ def collect(token: str, opener=None, now=None) -> int:
         "source": "ucdp_ged_candidate",
         "version": version,
         "generated_at": iso(now),
-        "window": {"start": start.isoformat(), "end": today.isoformat()},
+        "releases": months,
         "events_total": sum(m["events"] for r in regions.values() for m in r.values()),
         "regions": regions,
         "latest": sample,

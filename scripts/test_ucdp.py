@@ -3,7 +3,7 @@ import json
 import tempfile
 import unittest
 import urllib.error
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest import mock
 
@@ -63,7 +63,8 @@ class UcdpTest(unittest.TestCase):
     def test_next_versions_and_window(self):
         self.assertEqual(u.next_versions("26.0.10"), ["26.0.11", "27.0.1"])
         self.assertEqual(u.next_versions("26.0.12"), ["27.0.1"])
-        self.assertEqual(u.window_start(date(2026, 2, 5)), date(2025, 11, 1))
+        self.assertEqual(u.previous_versions("26.0.10"), ["26.0.10", "26.0.9", "26.0.8", "26.0.7"])
+        self.assertEqual(u.previous_versions("27.0.2"), ["27.0.2", "27.0.1", "26.0.12", "26.0.11"])
 
     def test_summarize_groups_by_region_month_and_dedupes(self):
         regions, sample = u.summarize([
@@ -79,19 +80,23 @@ class UcdpTest(unittest.TestCase):
 
     def test_collect_sends_token_follows_pages_and_writes_pair(self):
         p2 = "https://ucdpapi.pcr.uu.se/api/gedevents/26.0.10?page=1"
-        op = Opener([("26.0.11", 404), ("27.0.1", 404), ("page=1", lambda: page([event(2, 645, "2026-11-10")])),
-                     ("26.0.10", lambda: page([event(1, 666, "2026-11-09")], p2))])
+        op = Opener([("26.0.11", 400), ("27.0.1", 400), ("page=1", lambda: page([event(2, 645, "2026-10-10")])),
+                     ("26.0.10?", lambda: page([event(1, 666, "2026-10-09")], p2)),
+                     ("26.0.9?", lambda: page([event(3, 630, "2026-09-03")])),
+                     ("26.0.8?", lambda: page([event(4, 678, "2026-08-03")])), ("26.0.7?", 400)])
         self.assertEqual(u.collect("tok", op, self.now), 0)
         self.assertTrue(all(r.get_header("X-ucdp-access-token") == "tok" for r in op.calls))
         data = json.loads(u.SNAP.read_text())
-        self.assertEqual(data["events_total"], 2)
-        self.assertEqual(data["window"], {"start": "2026-08-01", "end": "2026-11-23"})
+        self.assertEqual(data["events_total"], 4)
+        self.assertEqual(data["releases"], ["26.0.10", "26.0.9", "26.0.8"])
+        self.assertEqual(sorted(data["regions"]["iran"]), ["2026-09"])
         st = json.loads(u.STATUS.read_text())
-        self.assertEqual((st["state"], st["requests"]), ("ok", 4))
+        self.assertEqual((st["state"], st["requests"]), ("ok", 7))
 
     def test_newer_release_is_adopted(self):
         op = Opener([("26.0.11?pagesize=1&", lambda: page([event(9, 666, "2026-11-01")])),
-                     ("26.0.11?pagesize=1000", lambda: page([event(9, 666, "2026-11-01")]))])
+                     ("26.0.11?pagesize=1000", lambda: page([event(9, 666, "2026-11-01")])),
+                     ("26.0.10?", lambda: page([])), ("26.0.9?", lambda: page([])), ("26.0.8?", lambda: page([]))])
         self.assertEqual(u.collect("tok", op, self.now), 0)
         self.assertEqual(json.loads(u.STATUS.read_text())["version"], "26.0.11")
 
@@ -104,9 +109,9 @@ class UcdpTest(unittest.TestCase):
         self.assertEqual(json.loads(u.STATUS.read_text())["state"], "error")
 
     def test_unreleased_version_answering_400_is_skipped_without_retry(self):
-        op = Opener([("26.0.11", 400), ("27.0.1", 400), ("26.0.10", lambda: page([event(1, 666, "2026-11-09")]))])
+        op = Opener([("26.0.11", 400), ("27.0.1", 400), ("26.0.", lambda: page([event(1, 666, "2026-11-09")]))])
         self.assertEqual(u.collect("tok", op, self.now), 0)
-        self.assertEqual(len(op.calls), 3)
+        self.assertEqual(len(op.calls), 6)
 
     def test_server_error_retried_once_then_fails(self):
         op = Opener([("26.0.11", 404), ("27.0.1", 404), ("26.0.10", 500)])
