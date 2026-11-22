@@ -139,9 +139,11 @@ export function createAnalystQueue({
       // Close records that are too old to process; never leave eternal pending rows.
       await db
         .prepare(
-          "UPDATE analyst_items SET state='skipped',processed_at_ms=?,last_error='Outside seven-day freshness window' WHERE state='pending' AND source_published_at_ms<?",
+          "UPDATE analyst_items SET state='skipped',processed_at_ms=?,last_error='Outside 48-hour freshness window' WHERE state='pending' AND source_published_at_ms<?",
         )
-        .bind(now, now - 7 * DAY)
+        // 22.11 (owner): analysis older than 48 h is not published late; skipping
+        // it without AI keeps the daily cap for fresh posts.
+        .bind(now, now - 2 * DAY)
         .run();
       const pending = await db
         .prepare(

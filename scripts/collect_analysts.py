@@ -136,6 +136,22 @@ def clean_text(s: str) -> str:
     return re.sub(r"\s+", " ", html.unescape(s)).strip()
 
 
+# 22.11: Telegram previews end Abu Ali posts with a live comment counter
+# («3 תגובות», later «4 תגובות») or «כדי להגיב לכתבה לחצו כאן». It changed the
+# content hash, so the editor re-decided the same post with AI. Not the author's text.
+TAIL_NOISE = re.compile(
+    r"\s*(?:\d[\d,.]*\s*(?:תגובות|comments?|комментари\w*)|תגובה\s+אחת|one\s+comment|כדי\s+להגיב\s+לכתבה\s+לחצו\s+כאן)\s*$",
+    re.IGNORECASE,
+)
+
+
+def strip_tail_noise(body: str) -> str:
+    prev = None
+    while prev != body:
+        prev, body = body, TAIL_NOISE.sub("", body).rstrip()
+    return body
+
+
 def telegram_posts(markup: str, source: dict, analyst_id: str, now: datetime) -> list[dict]:
     channel = source["canonical_prefix"].rstrip("/").rsplit("/", 1)[-1]
     parser = PublicTelegramParser(channel)
@@ -147,7 +163,7 @@ def telegram_posts(markup: str, source: dict, analyst_id: str, now: datetime) ->
         published = utc_parse(row["published_at"] or "")
         if not published or published > now + timedelta(hours=3) or published < now - timedelta(days=MAX_DAYS):
             continue
-        body = clean_text(" ".join(row["text"]))
+        body = strip_tail_noise(clean_text(" ".join(row["text"])))
         if not body or row["forwarded"]:
             continue
         truncated = len(body) > MAX_BODY
