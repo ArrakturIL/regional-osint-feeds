@@ -1,0 +1,55 @@
+name: UCDP conflict events (monthly background)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/collect_ucdp.py'
+      - 'scripts/test_ucdp.py'
+      - '.github/workflows/ucdp.yml'
+  pull_request:
+    paths:
+      - 'scripts/collect_ucdp.py'
+      - 'scripts/test_ucdp.py'
+      - '.github/workflows/ucdp.yml'
+  workflow_dispatch:
+  schedule:
+    # Daily: UCDP Candidate is released monthly; ~4 of 5 000 daily requests per run.
+    - cron: '41 2 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ucdp-events
+  cancel-in-progress: false
+
+jobs:
+  ucdp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: ${{ github.event_name != 'pull_request' }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Offline tests
+        run: python -m unittest scripts.test_ucdp -v
+      - name: Read UCDP GED Candidate events (token check on PRs, no commit)
+        id: collect
+        env:
+          UCDP_ACCESS_TOKEN: ${{ secrets.UCDP_ACCESS_TOKEN }}
+        run: python -m scripts.collect_ucdp
+      - name: Commit small aggregated snapshot
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && steps.collect.outcome == 'success'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/ucdp-context.json data/ucdp-status.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Update UCDP conflict events"
+            git pull --rebase -q origin main
+            git push
+          fi
