@@ -308,15 +308,15 @@ test('IDF (22.11): «הרמטכ״ל לשעבר» carries the IDF in Hebrew', () 
 // Each new entry: correct RU/HE, dropped entity RU/HE, and a non-trigger.
 test('regional glossary additions preserve names without homonym false positives', () => {
   const cases = [
-      [
-        'iron_beam',
-        'Iron Beam intercepts a drone',
-        'מגן אור מיירט כטב״ם',
-        'כיפת ברזל מיירטת כטב״ם',
-        '«Железный луч» перехватывает беспилотник',
-        '«Железный купол» перехватывает беспилотник',
-        'An iron beam supports the ceiling',
-      ],
+    [
+      'iron_beam',
+      'Iron Beam intercepts a drone',
+      'מגן אור מיירט כטב״ם',
+      'כיפת ברזל מיירטת כטב״ם',
+      '«Железный луч» перехватывает беспилотник',
+      '«Железный купол» перехватывает беспилотник',
+      'An iron beam supports the ceiling',
+    ],
     [
       'centcom',
       'CENTCOM reported',
