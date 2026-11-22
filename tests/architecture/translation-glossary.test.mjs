@@ -338,3 +338,16 @@ test('regional glossary additions preserve names without homonym false positives
     assert.equal(entityIssue(other, 'הודעה כללית', 'he'), null, id + ': homonym');
   }
 });
+
+test('regional names accept role-only paraphrases and do not confuse systems', () => {
+  assert.equal(entityIssue('Roman Gofman spoke', 'ראש המוסד אמר', 'he'), null);
+  assert.equal(entityIssue('Roman Gofman spoke', 'Глава Моссада заявил', 'ru'), null);
+  assert.equal(entityIssue('David Zini spoke', 'ראש השב״כ אמר', 'he'), null);
+  assert.equal(entityIssue('David Zini spoke', 'Глава ШАБАК заявил', 'ru'), null);
+  assert.equal(entityIssue('Brad Cooper visited', 'מפקד סנטקום ביקר', 'he'), null);
+  assert.equal(entityIssue('Brad Cooper visited', 'Командующий CENTCOM приехал', 'ru'), null);
+  assert.equal(entityIssue('Knesset votes', 'הפרלמנט מצביע', 'he'), null);
+  assert.equal(entityIssue('Knesset votes', 'Парламент голосует', 'ru'), null);
+  assert.equal(entityIssue('Follow the arrow', 'עקבו אחר החץ', 'he'), null);
+  assert.equal(entityIssue('F-35 took off', 'מטוס המריא', 'he'), null);
+});
