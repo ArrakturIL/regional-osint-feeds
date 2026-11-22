@@ -4,7 +4,7 @@ import { GoLink } from '../Navigation/GoLink.js';
 // urgency then freshness, beside the source network strip and the reading
 // protocol. Items without a page-language title go last, not first.
 const TOP_RANK = { urgent: 0, important: 1 };
-export function topStories(stories, lang) {
+export function topStories(stories, lang, count = 5) {
   const list = (Array.isArray(stories) ? stories : []).filter(s => s && s.title);
   const shown = s => s.translation_state !== 'pending' || s.content_language === lang;
   return list
@@ -15,8 +15,36 @@ export function topStories(stories, lang) {
         (TOP_RANK[a.s.tier] ?? 2) - (TOP_RANK[b.s.tier] ?? 2) ||
         a.i - b.i,
     )
-    .slice(0, 5)
+    .slice(0, count)
     .map(x => x.s);
+}
+// Owner 22.11: the lead must earn its place. Only «срочно»/«важно» from the last
+// 6 h; urgent first, then confirmed by ≥2 independent outlets, then the freshest.
+// Nothing qualifies — no lead, all cards equal.
+const LEAD_WINDOW_MS = 6 * 3600 * 1000;
+export const sourcesOf = s =>
+  [...new Set((Array.isArray(s?.related) ? s.related : []).map(r => r && r.title).filter(Boolean))].length
+    ? [...new Set(s.related.map(r => r && r.title).filter(Boolean))]
+    : s?.source
+      ? [s.source]
+      : [];
+export function topLead(items, lang, now = Date.now()) {
+  const list = Array.isArray(items) ? items : [];
+  const fresh = s => now - Date.parse(s.time) <= LEAD_WINDOW_MS;
+  const shown = s => s.translation_state !== 'pending' || s.content_language === lang;
+  const confirmed = s => Number(s.reporting_origin_count || s.source_count || 1) >= 2;
+  const pool = list
+    .map((s, i) => ({ s, i }))
+    .filter(({ s }) => (s.tier === 'urgent' || s.tier === 'important') && shown(s) && fresh(s))
+    .sort(
+      (a, b) =>
+        (TOP_RANK[a.s.tier] ?? 2) - (TOP_RANK[b.s.tier] ?? 2) ||
+        Number(!confirmed(a.s)) - Number(!confirmed(b.s)) ||
+        Date.parse(b.s.time) - Date.parse(a.s.time) ||
+        a.i - b.i,
+    );
+  const lead = pool.length ? pool[0].s : null;
+  return { lead, rest: list.filter(s => s !== lead) };
 }
 // Owner 21.11: a top card must say when the news is from. Age is relative to
 // render time; the absolute stamp (Israel time) sits beside it.
@@ -52,14 +80,18 @@ export function networkCounts(sources) {
 }
 export function TopNow({ stories, overview, go }) {
   const he = UI_HE;
-  const items = topStories(stories, he ? 'he' : 'ru');
-  const [lead, ...rest] = items;
+  const ordered = topStories(stories, he ? 'he' : 'ru', 6);
+  const picked = topLead(ordered, he ? 'he' : 'ru');
+  const lead = picked.lead;
+  const rest = picked.rest.slice(0, lead ? 4 : 5);
   const L = he
     ? {
         head: 'עיקר הדברים עכשיו',
         tier: { urgent: 'דחוף', important: 'חשוב', normal: 'רגיל' },
-        single: 'מקור אחד · עדיין אין אימות בלתי תלוי',
-        many: n => n + ' מקורות בלתי תלויים',
+        leadHead: 'העיקר בשעות האחרונות',
+        leadWhy: 'הדחוף ביותר, ומאומת בכמה כלי תקשורת כשאפשר',
+        many: names => 'דיווחו: ' + names.join(', '),
+        single: name => 'בינתיים רק ' + name + ' — כלי תקשורת אחרים עוד לא אישרו',
         all: 'לכל העדכונים ←',
         net: 'רשת המקורות',
         st: { ok: 'תקינים', partial: 'חלקיים', empty: 'ללא רשומות', error: 'שגיאה' },
@@ -74,8 +106,10 @@ export function TopNow({ stories, overview, go }) {
     : {
         head: 'Главное сейчас',
         tier: { urgent: 'Срочно', important: 'Важно', normal: 'Обычное' },
-        single: 'Один источник · независимого подтверждения пока нет',
-        many: n => 'Независимых источников: ' + n,
+        leadHead: 'Главное за последние часы',
+        leadWhy: 'самая срочная новость, по возможности подтверждённая несколькими изданиями',
+        many: names => 'Сообщили: ' + names.join(', '),
+        single: name => 'Пока только ' + name + ' — другие издания не подтвердили',
         all: 'Вся лента →',
         net: 'Сеть источников',
         st: { ok: 'норма', partial: 'частично', empty: 'пусто', error: 'ошибка' },
@@ -122,7 +156,7 @@ export function TopNow({ stories, overview, go }) {
         }),
       ),
   );
-  const independent = Number(lead?.reporting_origin_count || lead?.source_count || 1);
+  const leadSources = lead ? sourcesOf(lead) : [];
   return h(
     'section',
     { className: 'rw-top', 'aria-labelledby': 'rw-top-head' },
@@ -138,6 +172,7 @@ export function TopNow({ stories, overview, go }) {
         h('b', null, L.proto + '. '),
         L.protoText,
       ),
+      lead ? t('p', 'rw-top-leadhead', L.leadHead + ' · ' + L.leadWhy) : null,
       lead
         ? h(
             'article',
@@ -145,9 +180,15 @@ export function TopNow({ stories, overview, go }) {
             meta(lead),
             title(lead, 'h3'),
             leadExcerpt(lead) ? t('p', 'rw-top-excerpt', leadExcerpt(lead)) : null,
-            t('p', 'rw-top-verify', independent > 1 ? L.many(independent) : L.single),
+            leadSources.length > 1
+              ? t('p', 'rw-top-verify', L.many(leadSources))
+              : leadSources.length
+                ? t('p', 'rw-top-verify', L.single(leadSources[0]))
+                : null,
           )
-        : t('p', 'hint', L.wait),
+        : rest.length
+          ? null
+          : t('p', 'hint', L.wait),
       rest.length
         ? h(
             'div',
