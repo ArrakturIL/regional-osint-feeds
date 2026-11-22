@@ -125,11 +125,56 @@ const ddmm = iso => {
     ? new Intl.DateTimeFormat('ru-RU', { timeZone: 'Asia/Jerusalem', day: '2-digit', month: '2-digit' }).format(x)
     : '';
 };
+// Advisory countries (FCDO slugs, State names, lower-case with hyphens).
+const COUNTRY = {
+  ru: {
+    israel: 'Израиль',
+    'the-occupied-palestinian-territories': 'палестинские территории',
+    'israel-and-the-west-bank': 'Израиль и Западный берег',
+    lebanon: 'Ливан',
+    syria: 'Сирия',
+    jordan: 'Иордания',
+    iran: 'Иран',
+    iraq: 'Ирак',
+    'saudi-arabia': 'Саудовская Аравия',
+    'united-arab-emirates': 'ОАЭ',
+    qatar: 'Катар',
+    bahrain: 'Бахрейн',
+    kuwait: 'Кувейт',
+    oman: 'Оман',
+    yemen: 'Йемен',
+    egypt: 'Египет',
+  },
+  he: {
+    israel: 'ישראל',
+    'the-occupied-palestinian-territories': 'השטחים הפלסטיניים',
+    'israel-and-the-west-bank': 'ישראל והגדה המערבית',
+    lebanon: 'לבנון',
+    syria: 'סוריה',
+    jordan: 'ירדן',
+    iran: 'איראן',
+    iraq: 'עיראק',
+    'saudi-arabia': 'ערב הסעודית',
+    'united-arab-emirates': 'איחוד האמירויות',
+    qatar: 'קטאר',
+    bahrain: 'בחריין',
+    kuwait: 'כווית',
+    oman: 'עומאן',
+    yemen: 'תימן',
+    egypt: 'מצרים',
+  },
+};
+// Owner 22.11: say whose notice it is and for which countries, not «2 обновл.».
 export function tensionReasons(d, L) {
-  if (d.indicator === 'official_notice' && Array.isArray(d.refs) && d.refs.length)
-    return d.refs.map(
-      r => (L.bodies[r.source] || r.source) + (r.n > 1 ? L.times(r.n) : '') + (ddmm(r.at) ? ', ' + (r.n > 1 ? L.last : '') + ddmm(r.at) : ''),
-    );
+  if (d.indicator === 'official_notice' && Array.isArray(d.refs) && d.refs.length) {
+    const names = L === TENSION_L.he ? COUNTRY.he : COUNTRY.ru;
+    return d.refs.map(r => {
+      const places = (Array.isArray(r.places) ? r.places : []).map(p => names[p]).filter(Boolean);
+      const when = ddmm(r.at) ? ' — ' + ddmm(r.at) : '';
+      if (places.length) return (L.bodies[r.source] || r.source) + ': ' + places.join(', ') + when;
+      return (L.bodies[r.source] || r.source) + (r.n > 1 ? L.times(r.n) : '') + when;
+    });
+  }
   return [tensionReason(d, L)];
 }
 // Six family icons (Material Icons, Apache 2.0), 24×24.
