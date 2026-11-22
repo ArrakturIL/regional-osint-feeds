@@ -1,0 +1,17 @@
+name: AirLabs probe (PR only)
+on:
+  pull_request:
+    paths: ['scripts/probe_airlabs.py', '.github/workflows/airlabs-probe.yml']
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - env:
+          AIRLABS_API_KEY: ${{ secrets.AIRLABS_API_KEY }}
+        run: python3 scripts/probe_airlabs.py
