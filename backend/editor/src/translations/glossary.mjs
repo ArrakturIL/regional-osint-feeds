@@ -41,7 +41,9 @@ export const ENTITIES = [
     id: 'idf',
     code: 'idf_actor_missing',
     source: /(?:ЦАХАЛ|(?<![\p{L}])IDF(?![\p{L}]))/iu,
-    he: /(?:צה[״"']?ל|IDF|צבא\s+ההגנה\s+לישראל)/iu,
+    // 22.11: «former IDF chief of staff» is «הרמטכ״ל לשעבר» in Hebrew — the
+    // title already means the IDF; the job stalled on a correct translation.
+    he: /(?:צה[״"']?ל|IDF|צבא\s+ההגנה\s+לישראל|רמטכ[״"']?ל|ראש\s+(?:ה)?מטה\s+(?:ה)?כללי)/iu,
     ru: /ЦАХАЛ|Арми\p{L}*\s+(?:обороны\s+)?Израил|Израильск\p{L}*\s+(?:военн|арми)|Генштаб|IDF/iu,
   },
   {
