@@ -39,6 +39,9 @@ export function publicTension(index) {
                 source: String(x.source),
                 at: new Date(Number(x.at)).toISOString(),
                 n: Math.max(1, Number(x.n) || 1),
+                ...(Array.isArray(x.places)
+                  ? { places: x.places.filter(v => typeof v === 'string').slice(0, 6) }
+                  : {}),
               })),
             }
           : {}),

@@ -256,7 +256,14 @@ export function hourValues(h, data, tierOf) {
             p.country,
             s === 'mscio' ? 'gulf of aden red sea persian gulf' : '',
           ].join(' ');
-          return { text, source: s, at: r.observed_at };
+          // Country of a travel advisory (FCDO slug, State «Iran - Level 4»).
+          const raw =
+            s === 'fcdo' ? p.country : s === 'state_dept' ? String(p.title || '').split(' - ')[0] : '';
+          const place = String(raw || '')
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, '-');
+          return { text, source: s, at: r.observed_at, place };
         }),
     );
   // Owner 22.11: say whose notice it is. refs: the latest notice per source
@@ -265,13 +272,20 @@ export function hourValues(h, data, tierOf) {
     const hit = notices.filter(n => textRegions(n.text).includes(region));
     const latest = new Map();
     const count = new Map();
+    const places = new Map();
     for (const n of hit) {
       count.set(n.source, (count.get(n.source) || 0) + 1);
+      if (n.place) places.set(n.source, new Set([...(places.get(n.source) || []), n.place]));
       if (!(latest.get(n.source)?.at >= n.at)) latest.set(n.source, n);
     }
     const refs = [...latest.values()]
       .sort((a, b) => b.at - a.at)
-      .map(n => ({ source: n.source, at: n.at, n: count.get(n.source) }));
+      .map(n => ({
+        source: n.source,
+        at: n.at,
+        n: count.get(n.source),
+        ...(places.has(n.source) ? { places: [...places.get(n.source)].slice(0, 6) } : {}),
+      }));
     put(region, 'official_notice', hit.length, true, refs);
   }
   return out;

@@ -16,7 +16,11 @@ const render = he => {
     h: (tag, props, ...children) => ({ tag, props, children: children.flat() }),
     t: (tag, cls, content) => ({ tag, props: { className: cls }, children: [content] }),
   };
-  vm.runInNewContext(src + '\nthis.Tension = Tension; this.L = TENSION_L; this.tensionReason = tensionReason; this.tensionReasons = tensionReasons; this.TensionDetail = TensionDetail;', ctx);
+  vm.runInNewContext(
+    src +
+      '\nthis.Tension = Tension; this.L = TENSION_L; this.tensionReason = tensionReason; this.tensionReasons = tensionReasons; this.TensionDetail = TensionDetail;',
+    ctx,
+  );
   return ctx;
 };
 const text = node =>
@@ -74,31 +78,103 @@ test('no tension, no block; calibrating shows the demo badge and the note with d
 
 test('rule signals show the count without a norm; lit families match the region', () => {
   const ctx = render(false);
-  assert.equal(ctx.tensionReason({ indicator: 'official_notice', value: 3, rule: 1 }, ctx.L.ru), 'официальные предупреждения: 3');
+  assert.equal(
+    ctx.tensionReason({ indicator: 'official_notice', value: 3, rule: 1 }, ctx.L.ru),
+    'официальные предупреждения: 3',
+  );
   const tree = ctx.Tension({
-    tension: { as_of: 'x', calibrating: false, regions: [{ id: 'gulf', level: 2, families: ['official'], signals: ['official_notice'], details: [{ indicator: 'official_notice', value: 2, rule: 1 }] }] },
+    tension: {
+      as_of: 'x',
+      calibrating: false,
+      regions: [
+        {
+          id: 'gulf',
+          level: 2,
+          families: ['official'],
+          signals: ['official_notice'],
+          details: [{ indicator: 'official_notice', value: 2, rule: 1 }],
+        },
+      ],
+    },
   });
-  const find = (n, cls) => (n && typeof n === 'object' ? (n.props?.className === cls ? [n] : (n.children || []).flatMap(c => find(c, cls))) : []);
+  const find = (n, cls) =>
+    n && typeof n === 'object'
+      ? n.props?.className === cls
+        ? [n]
+        : (n.children || []).flatMap(c => find(c, cls))
+      : [];
   const card = find(tree, 'rw-tension-fam rw-tension-fam-sm')[0];
-  assert.deepEqual(find(card, 'on').map(text).map(x => x.trim()), ['официальные']);
   assert.deepEqual(
-    ctx.tensionReasons({ indicator: 'official_notice', value: 2, rule: 1, refs: [{ source: 'fcdo', at: '2026-11-18T10:00:00Z' }] }, ctx.L.ru),
-    ['МИД Великобритании обновил рекомендации для поездок, 18.11'],
+    find(card, 'on')
+      .map(text)
+      .map(x => x.trim()),
+    ['официальные'],
   );
   assert.deepEqual(
-    ctx.tensionReasons({ indicator: 'official_notice', value: 4, rule: 1, refs: [
-      { source: 'fcdo', at: '2026-11-18T10:00:00Z', n: 3 },
-      { source: 'state_dept', at: '2026-11-17T10:00:00Z', n: 1 },
-    ] }, ctx.L.ru),
-    ['МИД Великобритании обновил рекомендации для поездок (3 обновл.), последнее 18.11', 'Госдеп США обновил предупреждение для поездок, 17.11'],
+    ctx.tensionReasons(
+      {
+        indicator: 'official_notice',
+        value: 2,
+        rule: 1,
+        refs: [{ source: 'fcdo', at: '2026-11-18T10:00:00Z' }],
+      },
+      ctx.L.ru,
+    ),
+    ['МИД Великобритании обновил рекомендации для поездок — 18.11'],
+  );
+  assert.deepEqual(
+    ctx.tensionReasons(
+      {
+        indicator: 'official_notice',
+        value: 4,
+        rule: 1,
+        refs: [
+          { source: 'fcdo', at: '2026-11-18T10:00:00Z', n: 3 },
+          { source: 'state_dept', at: '2026-11-17T10:00:00Z', n: 1 },
+        ],
+      },
+      ctx.L.ru,
+    ),
+    [
+      'МИД Великобритании обновил рекомендации для поездок (3 обновл.) — 18.11',
+      'Госдеп США обновил предупреждение для поездок — 17.11',
+    ],
   );
 });
 
 test('the Data page detail renders in RU and HE (22.11: a removed label crashed «Данные»)', () => {
-  const tension = { as_of: 'x', calibrating: true, baseline_days: 9, regions: [
-    { id: 'gulf', level: 2, families: ['official'], signals: ['official_notice'], details: [{ indicator: 'official_notice', value: 2, rule: 1 }], coverage: { seen: 9, total: 10 } },
-    { id: 'iran', level: 1, families: [], signals: [], details: [], coverage: { seen: 9, total: 9 } },
-  ] };
+  const tension = {
+    as_of: 'x',
+    calibrating: true,
+    baseline_days: 9,
+    regions: [
+      {
+        id: 'gulf',
+        level: 2,
+        families: ['official'],
+        signals: ['official_notice'],
+        details: [{ indicator: 'official_notice', value: 2, rule: 1 }],
+        coverage: { seen: 9, total: 10 },
+      },
+      { id: 'iran', level: 1, families: [], signals: [], details: [], coverage: { seen: 9, total: 9 } },
+    ],
+  };
   for (const he of [false, true]) assert.ok(text(render(he).TensionDetail({ tension })).length > 50);
   assert.ok(render(false).TensionDetail({ tension: null }));
+});
+
+test('official notices name the countries (22.11)', () => {
+  const ctx = render(false);
+  assert.deepEqual(
+    ctx.tensionReasons(
+      {
+        indicator: 'official_notice',
+        value: 2,
+        rule: 1,
+        refs: [{ source: 'fcdo', at: '2026-11-19T01:00:00Z', n: 2, places: ['bahrain', 'qatar'] }],
+      },
+      ctx.L.ru,
+    ),
+    ['МИД Великобритании обновил рекомендации для поездок: Бахрейн, Катар — 19.11'],
+  );
 });
