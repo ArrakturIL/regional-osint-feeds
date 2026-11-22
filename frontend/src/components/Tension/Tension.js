@@ -42,6 +42,7 @@ export const TENSION_L = {
     legend: 'Значок горит — этого сейчас больше обычного:',
     open: 'подробнее',
     times: n => ' (' + n + ' обновл.)',
+    darkRatio: x => 'Судов с выключенным маячком — в ' + x.replace('.', ',') + ' раза больше, чем неделю назад',
     last: 'последнее ',
     bodies: {
       fcdo: 'МИД Великобритании обновил рекомендации для поездок',
@@ -94,6 +95,7 @@ export const TENSION_L = {
     legend: 'סמל דולק — יש מזה כעת יותר מהרגיל:',
     open: 'פרטים',
     times: n => ' (' + n + ' עדכונים)',
+    darkRatio: x => 'כלי שיט עם משדר כבוי — פי ' + x + ' יותר מלפני שבוע',
     last: 'אחרון ',
     bodies: {
       fcdo: 'משרד החוץ הבריטי עדכן את המלצות הנסיעה',
@@ -113,6 +115,8 @@ const roundNum = v => (typeof v === 'number' ? String(Math.round(v * 10) / 10) :
 // One reason line: «военные борта: 14, обычно до 6». Rule signals (events)
 // have no norm, so only the count.
 export function tensionReason(d, L) {
+  // «Тёмные» суда are a ratio to the week before, not a count (owner 22.11).
+  if (d.indicator === 'sar_dark_vessels' && typeof d.value === 'number') return L.darkRatio(roundNum(d.value));
   const name = L.signals[d.indicator] || d.indicator;
   const v = roundNum(d.value);
   if (d.rule !== undefined || typeof d.p95 !== 'number') return v ? name + ': ' + v : name;

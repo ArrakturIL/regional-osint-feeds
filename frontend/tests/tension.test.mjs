@@ -178,3 +178,11 @@ test('official notices name the countries (22.11)', () => {
     ['МИД Великобритании обновил рекомендации для поездок: Бахрейн, Катар — 19.11'],
   );
 });
+
+test('dark vessels read as a ratio to the week before (22.11)', () => {
+  const ctx = render(false);
+  assert.equal(
+    ctx.tensionReason({ indicator: 'sar_dark_vessels', value: 1.6, rule: 1.3 }, ctx.L.ru),
+    'Судов с выключенным маячком — в 1,6 раза больше, чем неделю назад',
+  );
+});
