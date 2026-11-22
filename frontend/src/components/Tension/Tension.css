@@ -210,3 +210,12 @@ html[lang='he'] .rw-tension-level {
   font-family: var(--rw7-mono);
   white-space: nowrap;
 }
+
+/* Regions as usual keep their card, quieter (22.11). */
+.rw-tension-region.rw-tension-l1 {
+  border-color: var(--rw7-line);
+  background: var(--rw7-panel);
+}
+.rw-tension-l1 .rw-tension-level {
+  color: var(--rw7-text-3);
+}

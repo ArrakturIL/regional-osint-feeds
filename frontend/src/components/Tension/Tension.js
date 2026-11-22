@@ -200,8 +200,9 @@ const famIcon = (f, on, L) =>
 export function Tension({ tension }) {
   if (!tension || !Array.isArray(tension.regions) || !tension.regions.length) return null;
   const L = TENSION_L[UI_HE ? 'he' : 'ru'];
-  const active = tension.regions.filter(r => r.level > 1).sort((a, b) => b.level - a.level);
-  const quiet = tension.regions.filter(r => !(r.level > 1));
+  // Owner 22.11: every region keeps its card in a fixed order (Israel first);
+  // a region as usual shows dim icons and «как обычно».
+  const active = tension.regions;
   const missing = r => (r.coverage && r.coverage.total > r.coverage.seen ? r.coverage.total - r.coverage.seen : 0);
   return h(
     'section',
@@ -234,8 +235,7 @@ export function Tension({ tension }) {
       h(
         'div',
         { className: 'rw-tension-cards' },
-        active.length
-          ? h(
+        h(
               'ol',
               { className: 'rw-tension-list' },
               ...active.map(r => {
@@ -255,15 +255,13 @@ export function Tension({ tension }) {
                     { className: 'rw-tension-fam rw-tension-fam-sm', 'aria-label': [...lit].map(f => L.families[f] || f).join(', ') },
                     ...TENSION_FAMILIES.map(f => famIcon(f, lit.has(f), L)),
                   ),
-                  h('ul', { className: 'rw-tension-why' }, ...details.flatMap(d => tensionReasons(d, L)).map((x, i) => h('li', { key: i }, x))),
+                  details.length
+                    ? h('ul', { className: 'rw-tension-why' }, ...details.flatMap(d => tensionReasons(d, L)).map((x, i) => h('li', { key: i }, x)))
+                    : null,
                   missing(r) ? t('p', 'rw-tension-seen', L.missing(missing(r))) : null,
                 );
               }),
-            )
-          : null,
-        quiet.length
-          ? h('p', { className: 'rw-tension-quiet' }, h('b', null, L.quiet + ': '), quiet.map(r => L.regions[r.id] || r.id).join(', '))
-          : null,
+            ),
       ),
     ),
     tension.calibrating ? t('p', 'rw-tension-note', L.note(tension.baseline_days)) : null,
