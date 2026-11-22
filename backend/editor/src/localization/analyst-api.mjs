@@ -99,6 +99,8 @@ export async function readLocalizedAnalysts(request, env, analystService, lang, 
   return respond({
     requested_language: lang,
     posts: translated,
+    // 22.11: «Показать ещё» needs the source page's has_more.
+    has_more: Boolean(old.has_more),
     post_count: translated.length,
     withheld_count: shown.length - translated.length,
     localized_count: translated.filter(x => x.content_language === lang).length,
