@@ -297,3 +297,10 @@ test('displaced (22.11): «перемещённые» is a calque; пересе�
     null,
   );
 });
+
+test('IDF (22.11): «הרמטכ״ל לשעבר» carries the IDF in Hebrew', () => {
+  const src =
+    'Gadi Eisenkot, Yashar party chairman and former IDF chief of staff, condemned the arson attacks';
+  assert.equal(entityIssue(src, 'גדי איזנקוט, יו״ר מפלגת ישר והרמטכ״ל לשעבר, גינה את ההצתות'), null);
+  assert.equal(entityIssue(src, 'גדי איזנקוט, יו״ר מפלגת ישר, גינה את ההצתות'), 'idf_actor_missing');
+});
