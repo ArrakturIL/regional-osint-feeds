@@ -25,7 +25,8 @@ const db = (knownUrls = [], controls = null) => {
         },
         all: async () => {
           queries.push({ method: 'all', sql, args });
-          if (sql.includes('SELECT url FROM news_items')) return { results: knownUrls.map(url => ({ url })) };
+          if (sql.includes('FROM news_items WHERE published_ms>=?'))
+            return { results: knownUrls.map(url => ({ url })) };
           if (controls && sql.includes('FROM source_controls'))
             return { results: controls.map(source => ({ source })) };
           throw Error('Unexpected all query: ' + sql);
@@ -99,7 +100,7 @@ test('feed status writes all 12 source outcomes and keeps independent publisher 
     /utm_source=rss/,
     'store source URL, not canonical replacement',
   );
-  assert.equal(queries.filter(q => q.sql.includes('SELECT url FROM news_items')).length, 1);
+  assert.equal(queries.filter(q => q.sql.includes('FROM news_items WHERE published_ms>=?')).length, 1);
   const purge = writes.find(w => w.sql.includes('DELETE FROM news_items'));
   assert.deepEqual(purge.args, [NOW - 8 * 86400000]);
 });
@@ -220,4 +221,59 @@ test('21.11: a publication time in the future is clamped to the moment of discov
   assert.ok(insert, 'the item was stored');
   assert.equal(insert.args[5], NOW, 'published_ms is not later than discovered_ms');
   assert.equal(insert.args[6], NOW);
+});
+
+test('a rewritten headline on a known URL is retranslated once; old items and A/B flips are left alone', async () => {
+  const { newsDb, addNews } = await import('./editor-d1-fixture.mjs');
+  const db = newsDb();
+  db.raw.exec(
+    'CREATE TABLE feed_status(name TEXT PRIMARY KEY,checked_ms INTEGER,status TEXT,http_status INTEGER,items_count INTEGER,error TEXT)',
+  );
+  const url = 'https://www.maariv.co.il/news/1';
+  addNews(db, {
+    id: 'm1',
+    source: 'Maariv',
+    url,
+    headline: 'You will not believe what happened',
+    headline_ru: 'Вы не поверите',
+    summary_ru: 'x',
+    summary: 'old summary',
+    published_ms: NOW - 2 * 3600000,
+  });
+  addNews(db, {
+    id: 'old',
+    url: 'https://www.maariv.co.il/news/2',
+    headline: 'Old headline',
+    headline_ru: 'Старый',
+    published_ms: NOW - 30 * 3600000,
+  });
+  const feed = titles =>
+    rss([
+      item(titles[0], url),
+      item(titles[1], 'https://www.maariv.co.il/news/2', new Date(NOW - 30 * 3600000).toUTCString()),
+    ]);
+  const run = titles =>
+    withFeeds(
+      u => new Response(u === byName('Times of Israel') ? feed(titles) : rss(), { status: 200 }),
+      () => ingestNewsFeeds({ NEWS_DB: db }, NOW),
+    );
+  const first = await run(['Israel on the way to a deal with Greece', 'Old headline rewritten']);
+  assert.equal(first.retitled, 1);
+  const row = db.raw
+    .prepare('SELECT headline,headline_ru,summary_ru,summary FROM news_items WHERE id=?')
+    .get('m1');
+  assert.equal(row.headline, 'Israel on the way to a deal with Greece');
+  assert.equal(row.headline_ru, null, 'RU cleared, so the RU translator picks it up again');
+  assert.equal(row.summary, 'Israel Iran regional security developments and diplomatic discussions');
+  assert.equal(
+    db.raw.prepare('SELECT headline_ru FROM news_items WHERE id=?').get('old').headline_ru,
+    'Старый',
+  );
+  // Same headline again with punctuation only: nothing. A flip back: no second rewrite.
+  assert.equal((await run(['Israel on the way to a deal with Greece!', 'Old headline'])).retitled, 0);
+  assert.equal((await run(['You will not believe what happened', 'Old headline'])).retitled, 0);
+  assert.equal(
+    db.raw.prepare('SELECT headline FROM news_items WHERE id=?').get('m1').headline,
+    'Israel on the way to a deal with Greece',
+  );
 });

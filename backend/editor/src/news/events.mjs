@@ -234,7 +234,9 @@ export function analyze(a) {
         ? 'liveblog'
         : /\b(?:archive|archival|historical footage|from (?:19|20)\d{2})\b|ארכיון|أرشيف|архивн/iu.test(title)
           ? 'archive'
-          : /\b(?:daily\s+briefing|weekly\s+briefing|podcast|roundup|recap)\b|פודקאסט|подкаст/iu.test(title) ||
+          : /\b(?:daily\s+briefing|weekly\s+briefing|podcast|roundup|recap)\b|פודקאסט|подкаст/iu.test(
+                title,
+              ) ||
               PODCAST_SUMMARY.test(summary) ||
               REVIEW_TITLE.test(title)
             ? 'roundup'

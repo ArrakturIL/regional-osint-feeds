@@ -549,9 +549,12 @@ test('PIJ: the short RU form «Исламский джихад» is accepted, a 
   assert.equal(entityIssue(src, 'Армия: в машине ехали боевики «Исламского джихада»'), null);
   assert.equal(entityIssue(src, 'Армия: в машине ехали боевики «Палестинского исламского джихада»'), null);
   assert.equal(entityIssue(src, 'Армия: в машине ехали боевики'), 'pij_name_missing');
-  assert.equal(entityIssue('חוליית הג\'יהאד האסלאמי חוסלה', 'Ликвидирована ячейка «Исламского джихада»'), null);
+  assert.equal(
+    entityIssue("חוליית הג'יהאד האסלאמי חוסלה", 'Ликвидирована ячейка «Исламского джихада»'),
+    null,
+  );
   assert.equal(entityIssue('בכיר בגא"פ חוסל', 'Ликвидирован командир'), 'pij_name_missing');
-  assert.equal(entityIssue(src, 'הצבא: ברכב נסעו פעילי הג\'יהאד האסלאמי'), null);
+  assert.equal(entityIssue(src, "הצבא: ברכב נסעו פעילי הג'יהאד האסלאמי"), null);
 });
 
 test('Arrow without a number in the source does not demand "Arrow 2/3" (22.11)', () => {

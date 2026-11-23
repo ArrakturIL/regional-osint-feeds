@@ -234,7 +234,10 @@ test('podcast episodes and reviews stay normal even when the headline hides the 
       "In the fourth episode of our new podcast series, the writer talks about her new book, 'In the Belly of the Whale, Portraits from a Fractured Israel'",
   };
   assert.equal(newsTier(podcast).tier, 'normal');
-  assert.equal(newsTier({ title: 'Book review: a history of the Iran–Israel shadow war', summary: '' }).tier, 'normal');
+  assert.equal(
+    newsTier({ title: 'Book review: a history of the Iran–Israel shadow war', summary: '' }).tier,
+    'normal',
+  );
   // Real news that mentions a podcast keeps its tier.
   const news = {
     title: 'Israel and Lebanon agree to a ceasefire extension, US envoy says',
