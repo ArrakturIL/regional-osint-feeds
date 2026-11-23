@@ -1,5 +1,13 @@
 // Event-card response compatible with the legacy /api/news articles DTO.
-import { eventIndex, eventRowsByIds, reconcile, hebrew, publisher, language } from './events.mjs';
+import {
+  eventIndex,
+  eventRowsByIds,
+  reconcile,
+  hebrew,
+  publisher,
+  language,
+  NEEDS_CORROBORATION,
+} from './events.mjs';
 import { localizeNewsRow } from '../localization/localization.mjs';
 import { displayForPage } from '../localization/display-policy.mjs';
 import { newsTier } from './tier.mjs';
@@ -315,7 +323,10 @@ export async function readNewsEvents(request, env) {
         published_ms: r.last_seen_ms,
         priority: r.event_priority,
         category: r.topic,
-        ...(({ tier, reason }) => ({ tier, tier_reason: reason }))(newsTier(row)),
+        ...(({ tier, reason }) => ({ tier, tier_reason: reason }))(
+          newsTier(row, { origins: r.origin_count }),
+        ),
+        needs_corroboration: NEEDS_CORROBORATION.has(publisher(row.source)),
         content_language: t.content_language,
         language_shown: t.language_shown,
         source_language: t.source_language,

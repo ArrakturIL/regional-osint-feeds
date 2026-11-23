@@ -182,7 +182,7 @@ const LIVE = JSON.parse(
 
 test('live 18-20.11: real attacks stay urgent, calls, plots, speculation and aftermath do not', () => {
   for (const x of LIVE) {
-    const got = newsTier(x);
+    const got = newsTier(x, { origins: 2 }); // classification only; the single-outlet cap has its own test
     assert.equal(
       got.tier === 'urgent',
       x.want === 'urgent',
@@ -211,7 +211,7 @@ test('sirens count only in the headline; advocacy verbs never make a strike', ()
 // leader talking about a topic («Trump talks about Iran», «…מדבר על איראן»)
 // are not events under way. Real attacks of the same day stay urgent.
 test('live 21.11: relative-clause past, braving attacks and talk about a topic are not urgent', () => {
-  const t = (headline, source = 'Al Jazeera') => newsTier({ headline, summary: '', source });
+  const t = (headline, source = 'BBC Middle East') => newsTier({ headline, summary: '', source });
   for (const h of [
     'Netanyahu is playing with the fire that killed Rabin',
     'Swimmer braves tanker attacks to expose Hormuz contamination',
@@ -244,4 +244,18 @@ test('podcast episodes and reviews stay normal even when the headline hides the 
     summary: 'The envoy told a podcast that talks would continue next week.',
   };
   assert.notEqual(newsTier(news).reason, 'non_news_roundup');
+});
+
+test('owner 23.11: an outlet that needs corroboration gets the top tier only with a second outlet', () => {
+  const strike = {
+    source: 'Al Jazeera',
+    title: 'Israeli air strike kills three in southern Lebanon',
+    summary: 'An Israeli drone struck a car near Tyre, killing three people.',
+  };
+  const alone = newsTier(strike);
+  assert.equal(alone.tier, 'important');
+  assert.match(alone.reason, /^uncorroborated_/);
+  assert.equal(newsTier(strike, { origins: 2 }).tier, 'urgent');
+  // Other outlets are not affected.
+  assert.equal(newsTier({ ...strike, source: 'Times of Israel' }).tier, 'urgent');
 });

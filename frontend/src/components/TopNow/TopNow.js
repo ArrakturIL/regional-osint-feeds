@@ -4,8 +4,12 @@ import { GoLink } from '../Navigation/GoLink.js';
 // urgency then freshness, beside the source network strip and the reading
 // protocol. Items without a page-language title go last, not first.
 const TOP_RANK = { urgent: 0, important: 1 };
+// Owner 23.11: an outlet with a one-sided line (Al Jazeera) reaches the front
+// page only when a second, independent outlet reported the same event.
+export const corroborated = s =>
+  !s?.needs_corroboration || Number(s.reporting_origin_count || s.source_count || 1) >= 2;
 export function topStories(stories, lang, count = 5) {
-  const list = (Array.isArray(stories) ? stories : []).filter(s => s && s.title);
+  const list = (Array.isArray(stories) ? stories : []).filter(s => s && s.title && corroborated(s));
   const shown = s => s.translation_state !== 'pending' || s.content_language === lang;
   return list
     .map((s, i) => ({ s, i }))
@@ -29,7 +33,7 @@ export const sourcesOf = s =>
       ? [s.source]
       : [];
 export function topLead(items, lang, now = Date.now()) {
-  const list = Array.isArray(items) ? items : [];
+  const list = (Array.isArray(items) ? items : []).filter(corroborated);
   const fresh = s => now - Date.parse(s.time) <= LEAD_WINDOW_MS;
   const shown = s => s.translation_state !== 'pending' || s.content_language === lang;
   const confirmed = s => Number(s.reporting_origin_count || s.source_count || 1) >= 2;

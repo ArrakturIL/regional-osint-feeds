@@ -22,6 +22,7 @@ export function rwNormalizeNewsArticle(x) {
     verification_status: x.verification_status,
     source_count: x.source_count,
     reporting_origin_count: x.reporting_origin_count,
+    needs_corroboration: x.needs_corroboration === true,
     article_count: x.article_count,
     translation_state: x.translation_state,
     content_language: x.content_language,
