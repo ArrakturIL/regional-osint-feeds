@@ -1,7 +1,7 @@
 import { countUnique } from './api/uniques.js';
 import { ownership } from './routes.js';
 import { overviewFromD1 } from './api/overview.js';
-import { dataFromD1 } from './api/data.js';
+import { dataFromD1, githubJson, ucdpView } from './api/data.js';
 import { monitorPublic } from './api/monitor-public.js';
 import { opsFromD1 } from './api/ops.js';
 // Self-contained Cloudflare Pages advanced-mode Worker.
@@ -72,7 +72,13 @@ export async function handlePages(request, env, ctx) {
       const lang = url.searchParams.get('lang') === 'he' ? 'he' : 'ru';
       if (route.upstream === '/api/overview')
         return Response.json(await overviewFromD1(env, Date.now(), lang));
-      if (route.upstream === '/api/data') return Response.json(await dataFromD1(env, Date.now(), lang));
+      if (route.upstream === '/api/data') {
+        const [data, ucdp] = await Promise.all([
+          dataFromD1(env, Date.now(), lang),
+          githubJson('ucdp-context.json'),
+        ]);
+        return Response.json({ ...data, ucdp: ucdpView(ucdp) });
+      }
       if (route.upstream === '/api/ops') return await opsFromD1(request, env);
     }
     if (path.startsWith('/api/') || path === '/summary') return jsonError('not_found', 404);

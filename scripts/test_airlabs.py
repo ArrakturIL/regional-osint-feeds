@@ -80,6 +80,14 @@ class AirLabsTest(unittest.TestCase):
         self.assertLessEqual(per_day, a.DAILY_BUDGET)
         self.assertLessEqual(per_day * 31, a.MONTHLY_BUDGET)
 
+    def test_key_expiry_and_limit_are_kept_in_status(self):
+        body = {"request": {"key": {"type": "free", "expired": "2026-12-11T00:00:00.000Z", "limits_by_month": 1000, "api_key": "SECRET"}},
+                "response": []}
+        a.collect("k", Opener(body), self.now)
+        st = json.loads(a.STATUS.read_text())
+        self.assertEqual((st["key_expires"], st["limit_month"], st["key_type"]), ("2026-12-11", 1000, "free"))
+        self.assertNotIn("SECRET", a.STATUS.read_text())
+
     def test_limit_error_stops_run_and_keeps_counts(self):
         op = Opener({"error": {"code": "month_limit_exceeded", "message": "x"}})
         self.assertEqual(a.collect("k", op, self.now), 1)

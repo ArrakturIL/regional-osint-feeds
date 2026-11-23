@@ -55,7 +55,7 @@
 
 - Новый тест-файл добавь в явный список `.github/workflows/regional-watch-app-check.yml`, иначе CI его не запустит.
 - Новый или удалённый модуль меняет счётчики:
-  - `tests/architecture/arch07-integration-acceptance.test.mjs` — модули и рёбра импортов, сейчас 107 и 276; Editor — 54;
+  - `tests/architecture/arch07-integration-acceptance.test.mjs` — модули и рёбра импортов, сейчас 107 и 277; Editor — 54;
   - `editor-cross-component-acceptance`;
   - Monitor: `backend/monitor/build-order.json` и `source-parity` (44);
   - frontend: `frontend/build-order.json` и `source-parity` (61).

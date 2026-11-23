@@ -70,7 +70,20 @@ def parse(s):
         return None
 
 
-def fetch(key: str, code: str, opener=None) -> list[dict]:
+def key_info(body) -> dict:
+    """The free key's expiry and monthly limit, as the API reports them (no secrets)."""
+    k = ((body.get("request") or {}).get("key") or {}) if isinstance(body, dict) else {}
+    out = {}
+    if isinstance(k.get("expired"), str):
+        out["key_expires"] = k["expired"][:10]
+    if isinstance(k.get("limits_by_month"), int):
+        out["limit_month"] = k["limits_by_month"]
+    if isinstance(k.get("type"), str):
+        out["key_type"] = k["type"][:20]
+    return out
+
+
+def fetch(key: str, code: str, opener=None, meta: dict | None = None) -> list[dict]:
     q = urllib.parse.urlencode({"dep_iata": code, "api_key": key})
     req = urllib.request.Request(f"{URL}?{q}", headers={"User-Agent": UA, "Accept": "application/json"})
     try:
@@ -82,6 +95,8 @@ def fetch(key: str, code: str, opener=None) -> list[dict]:
         raise RuntimeError(f"HTTP {e.code}")
     except (urllib.error.URLError, TimeoutError, ValueError) as e:
         raise RuntimeError(type(e).__name__)
+    if meta is not None:
+        meta.update(key_info(body))
     err = body.get("error") if isinstance(body, dict) else None
     if err:
         code_ = str(err.get("code") or err.get("message") or "error")[:60]
@@ -158,6 +173,7 @@ def collect(key: str, opener=None, now=None) -> int:
         print("::error::AIRLABS_API_KEY not configured")
         return 1
     fetched, failed, stop = [], [], None
+    meta = {k: prev[k] for k in ("key_expires", "limit_month", "key_type") if k in prev}
     for code in due(airports, now):
         if used_day >= DAILY_BUDGET or used_month >= MONTHLY_BUDGET:
             stop = "budget"
@@ -165,7 +181,7 @@ def collect(key: str, opener=None, now=None) -> int:
         used_day += 1
         used_month += 1
         try:
-            s = summarize(fetch(key, code, opener), AIRPORTS[code][1])
+            s = summarize(fetch(key, code, opener, meta), AIRPORTS[code][1])
         except StopRun as e:
             stop = str(e)
             break
@@ -178,7 +194,7 @@ def collect(key: str, opener=None, now=None) -> int:
         airports[code] = {"checked_at": iso(now), **s, "history": hist}
         fetched.append(code)
     state = "error" if stop and stop != "budget" and not fetched else ("partial" if stop or failed else "ok")
-    status.update(state=state, used_day=used_day, used_month=used_month, fetched=fetched, failed=failed[:12])
+    status.update(state=state, used_day=used_day, used_month=used_month, fetched=fetched, failed=failed[:12], **meta)
     if stop:
         status["detail"] = stop
     data = None

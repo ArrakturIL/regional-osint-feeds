@@ -121,7 +121,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test frontend/tests/source-parity.test.mjs frontend/tests/app-render-runtime.test.mjs frontend/tests/news-archive-filters.test.mjs frontend/tests/home-analysis-state.test.mjs frontend/tests/home-hero.test.mjs frontend/tests/top-now.test.mjs frontend/tests/urgent-decay.test.mjs frontend/tests/tension.test.mjs frontend/tests/case-category-group.test.mjs frontend/tests/header-locale-switch.test.mjs
+      - run: node --test frontend/tests/source-parity.test.mjs frontend/tests/app-render-runtime.test.mjs frontend/tests/news-archive-filters.test.mjs frontend/tests/home-analysis-state.test.mjs frontend/tests/home-hero.test.mjs frontend/tests/top-now.test.mjs frontend/tests/urgent-decay.test.mjs frontend/tests/tension.test.mjs frontend/tests/ucdp.test.mjs frontend/tests/case-category-group.test.mjs frontend/tests/header-locale-switch.test.mjs
       - run: |
           node frontend/scripts/build.mjs
           node --check frontend/dist/assets/app.js
