@@ -277,3 +277,45 @@ test('a rewritten headline on a known URL is retranslated once; old items and A/
     'Israel on the way to a deal with Greece',
   );
 });
+
+test('23.11: a low-priority item outside event groups keeps its headline and RU text on a retitle', async () => {
+  const { newsDb, addNews, addGroup } = await import('./editor-d1-fixture.mjs');
+  const db = newsDb();
+  db.raw.exec(
+    'CREATE TABLE feed_status(name TEXT PRIMARY KEY,checked_ms INTEGER,status TEXT,http_status INTEGER,items_count INTEGER,error TEXT)',
+  );
+  const low = 'https://www.maariv.co.il/news/low';
+  const grouped = 'https://www.maariv.co.il/news/grouped';
+  addNews(db, {
+    id: 'low',
+    url: low,
+    headline: 'Old low',
+    headline_ru: 'Старый',
+    priority: 6,
+    published_ms: NOW - 3600000,
+  });
+  addNews(db, {
+    id: 'grp',
+    url: grouped,
+    headline: 'Old grouped',
+    headline_ru: 'Старый',
+    priority: 5,
+    published_ms: NOW - 3600000,
+  });
+  addGroup(db, { id: 'e1', rep: 'grp', priority: 4, last_seen_ms: NOW - 3600000 });
+  const out = await withFeeds(
+    u =>
+      new Response(
+        u === byName('Times of Israel')
+          ? rss([item('New low title', low), item('New grouped title', grouped)])
+          : rss(),
+        { status: 200 },
+      ),
+    () => ingestNewsFeeds({ NEWS_DB: db }, NOW),
+  );
+  assert.equal(out.retitled, 1);
+  const lowRow = db.raw.prepare('SELECT headline,headline_ru FROM news_items WHERE id=?').get('low');
+  assert.equal(lowRow.headline, 'Old low');
+  assert.equal(lowRow.headline_ru, 'Старый');
+  assert.equal(db.raw.prepare('SELECT headline_ru FROM news_items WHERE id=?').get('grp').headline_ru, null);
+});

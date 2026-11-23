@@ -19,6 +19,13 @@ async function digest(s) {
 // or punctuation), at most RETITLE_MAX_PER_RUN per run and ONE rewrite per item
 // — A/B-tested headlines must not loop the translator.
 export const RETITLE_WINDOW_MS = 24 * 3600000;
+export const KNOWN_WINDOW_MS = 72 * 3600000;
+// 23.11: a retitle clears the RU text, so it is only for items the RU
+// translator picks up again (translations/scheduled.mjs: priority ≥7, or the
+// representative of an event group with priority ≥4). Others keep the old
+// headline and translation — one item lost its RU title for 13 h otherwise.
+const RU_PRIORITY = 7;
+const GROUP_PRIORITY = 4;
 export const RETITLE_MAX_PER_RUN = 10;
 const RETITLE_TABLE =
   'CREATE TABLE IF NOT EXISTS news_retitles(id TEXT PRIMARY KEY,old_headline TEXT NOT NULL,new_headline TEXT NOT NULL,updated_ms INTEGER NOT NULL)';
@@ -30,6 +37,23 @@ function isRetitle(row, item, now) {
 }
 
 async function applyRetitles(env, retitled, now) {
+  if (!retitled.length) return 0;
+  const lowIds = retitled
+    .filter(({ row }) => !(Number(row.priority) >= RU_PRIORITY))
+    .map(({ row }) => row.id);
+  const grouped = new Set();
+  if (lowIds.length) {
+    const rows =
+      (
+        await env.NEWS_DB.prepare(
+          `SELECT representative_id FROM news_event_groups WHERE priority>=? AND representative_id IN (${lowIds.map(() => '?').join(',')})`,
+        )
+          .bind(GROUP_PRIORITY, ...lowIds)
+          .all()
+      ).results || [];
+    for (const r of rows) grouped.add(r.representative_id);
+  }
+  retitled = retitled.filter(({ row }) => Number(row.priority) >= RU_PRIORITY || grouped.has(row.id));
   if (!retitled.length) return 0;
   await env.NEWS_DB.prepare(RETITLE_TABLE).run();
   await env.NEWS_DB.prepare('DELETE FROM news_retitles WHERE updated_ms < ?')
@@ -74,11 +98,15 @@ export async function ingestNewsFeeds(env, now) {
       .run();
   all.sort((a, b) => b.score - a.score || b.pub - a.pub);
   // A canonical URL is one technical article identity, regardless of UTM order.
-  // Query existing IDs once to avoid introducing new duplicates during migration.
+  // The id is the digest of that URL and the INSERT is OR IGNORE, so this read
+  // only skips work; 23.11: 72 h instead of the whole 8-day table — RSS feeds
+  // carry 1–2 days, and the full read cost ~250k rows a day (~9% of D1 reads).
   const known =
     (
-      await env.NEWS_DB.prepare('SELECT id,url,headline,published_ms FROM news_items WHERE published_ms>=?')
-        .bind(now - 8 * 86400000)
+      await env.NEWS_DB.prepare(
+        'SELECT id,url,headline,published_ms,priority FROM news_items WHERE published_ms>=?',
+      )
+        .bind(now - KNOWN_WINDOW_MS)
         .all()
     ).results || [];
   const existingUrls = new Set(known.map(row => canonicalNewsUrl(row.url)).filter(Boolean));
