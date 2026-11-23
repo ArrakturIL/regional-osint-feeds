@@ -226,3 +226,22 @@ test('live 21.11: relative-clause past, braving attacks and talk about a topic a
   ])
     assert.equal(t(h).tier, 'urgent', h);
 });
+
+test('podcast episodes and reviews stay normal even when the headline hides the format (live 22.11)', () => {
+  const podcast = {
+    title: 'Still Life in Israel: The New Yorker’s Ruth Margalit on chronicling Israel for the world',
+    summary:
+      "In the fourth episode of our new podcast series, the writer talks about her new book, 'In the Belly of the Whale, Portraits from a Fractured Israel'",
+  };
+  assert.equal(newsTier(podcast).tier, 'normal');
+  assert.equal(
+    newsTier({ title: 'Book review: a history of the Iran–Israel shadow war', summary: '' }).tier,
+    'normal',
+  );
+  // Real news that mentions a podcast keeps its tier.
+  const news = {
+    title: 'Israel and Lebanon agree to a ceasefire extension, US envoy says',
+    summary: 'The envoy told a podcast that talks would continue next week.',
+  };
+  assert.notEqual(newsTier(news).reason, 'non_news_roundup');
+});

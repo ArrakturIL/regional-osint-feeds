@@ -874,28 +874,6 @@ export const WIKIDATA_ENTITIES = [
   ]
  },
  {
-  "id": "pij",
-  "qid": "Q117907",
-  "en": [
-   "Palestinian Islamic Jihad",
-   "PIJ",
-   "Islamic Jihad of Palestine",
-   "Islamic Jihad Movement in Palestine",
-   "IJMP"
-  ],
-  "ru": [
-   "Палестинский исламский джихад"
-  ],
-  "he": [
-   "הג'יהאד האסלאמי הפלסטיני",
-   "גא״פ",
-   "הגא\"פ",
-   "גא\"פ",
-   "הגאפ",
-   "גאפ"
-  ]
- },
- {
   "id": "isis",
   "qid": "Q2429253",
   "en": [

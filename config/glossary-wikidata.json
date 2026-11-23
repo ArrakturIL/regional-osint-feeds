@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "description": "B11 part 1: entities whose RU/HE/EN names come from Wikidata (labels + aliases), keyed by English Wikipedia title. scripts/build_wikidata_glossary.py writes backend/editor/src/translations/glossary-wikidata.mjs. Entities with hand-tuned forms (IRGC, Katz, IDF, Netanyahu, Hezbollah, Hamas, Houthis, Hormuz, Isfahan, Khamenei, West Bank, Reuters) stay in glossary.mjs and are not listed here. Israel is left out on purpose: Israeli sources name it implicitly (\"in the north of the country\"), live check 19.11. Left out after the live check of 19.11 (2 832 accepted translations): Jerusalem (metonym for the government), Amman (alias 'Philadelphia'), UN ('UN nuclear watchdog' = IAEA), Palestinian Authority (alias 'Palestine'). A third element lists forms to exclude (demonyms such as 'Saudi').",
+  "description": "B11 part 1: entities whose RU/HE/EN names come from Wikidata (labels + aliases), keyed by English Wikipedia title. scripts/build_wikidata_glossary.py writes backend/editor/src/translations/glossary-wikidata.mjs. Entities with hand-tuned forms (IRGC, Katz, IDF, Netanyahu, Hezbollah, Hamas, Palestinian Islamic Jihad, Houthis, Hormuz, Isfahan, Khamenei, West Bank, Reuters) stay in glossary.mjs and are not listed here. Israel is left out on purpose: Israeli sources name it implicitly (\"in the north of the country\"), live check 19.11. Left out after the live check of 19.11 (2 832 accepted translations): Jerusalem (metonym for the government), Amman (alias 'Philadelphia'), UN ('UN nuclear watchdog' = IAEA), Palestinian Authority (alias 'Palestine'). A third element lists forms to exclude (demonyms such as 'Saudi').",
   "entities": [
     [
       "iran",
@@ -191,10 +191,6 @@
     [
       "shin_bet",
       "Shin Bet"
-    ],
-    [
-      "pij",
-      "Palestinian Islamic Jihad"
     ],
     [
       "isis",
