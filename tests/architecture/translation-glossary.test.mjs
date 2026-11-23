@@ -543,3 +543,22 @@ test('review 22.11: CENTCOM, UNIFIL and Arrow accept common descriptive forms', 
     'centcom_name_missing',
   );
 });
+
+test('PIJ: the short RU form «Исламский джихад» is accepted, a lost name is still caught (22.11)', () => {
+  const src = 'Army says vehicle was ferrying Islamic Jihad operatives';
+  assert.equal(entityIssue(src, 'Армия: в машине ехали боевики «Исламского джихада»'), null);
+  assert.equal(entityIssue(src, 'Армия: в машине ехали боевики «Палестинского исламского джихада»'), null);
+  assert.equal(entityIssue(src, 'Армия: в машине ехали боевики'), 'pij_name_missing');
+  assert.equal(entityIssue('חוליית הג\'יהאד האסלאמי חוסלה', 'Ликвидирована ячейка «Исламского джихада»'), null);
+  assert.equal(entityIssue('בכיר בגא"פ חוסל', 'Ликвидирован командир'), 'pij_name_missing');
+  assert.equal(entityIssue(src, 'הצבא: ברכב נסעו פעילי הג\'יהאד האסלאמי'), null);
+});
+
+test('Arrow without a number in the source does not demand "Arrow 2/3" (22.11)', () => {
+  const src = 'Arrow interceptor downs missile over the Negev';
+  assert.equal(entityIssue(src, 'Перехватчик «Стрела» сбил ракету над Негевом'), null);
+  assert.equal(entityIssue(src, 'Ракету над Негевом сбил «Хец»'), null);
+  assert.equal(entityIssue(src, 'מיירט חץ יירט טיל מעל הנגב'), null);
+  assert.equal(entityIssue(src, 'Ракету над Негевом сбили'), 'arrow_missile_name_missing');
+  assert.equal(entityIssue('Arrow 3 intercepts missile', 'Хец-3 перехватил ракету'), null);
+});

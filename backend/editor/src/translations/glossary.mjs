@@ -82,6 +82,17 @@ export const ENTITIES = [
     ru: /ХАМАС/iu,
   },
   {
+    // Hand-tuned (was Wikidata): RU news write «Исламский джихад» without
+    // «Палестинский»; Wikidata has only the full RU label (live false rejects 22.11).
+    id: 'pij',
+    code: 'pij_name_missing',
+    source: src(
+      'Palestinian\\s+Islamic\\s+Jihad|Islamic\\s+Jihad|PIJ|(?:Палестинск\\p{L}*\\s+)?Исламск\\p{L}*\\s+джихад\\p{L}{0,3}|[ובהלמשכ]?ה?ג\'?יהאד\\s+ה?אסלאמי|[ובהלמשכ]?ה?גא["״]?פ',
+    ),
+    he: /ג'?יהאד\s+ה?אסלאמי|גא["״]?פ|Islamic\s+Jihad/iu,
+    ru: /Исламск\p{L}*\s+джихад/iu,
+  },
+  {
     id: 'houthis',
     code: 'houthis_name_missing',
     source: src('Houthis?|Huthis?|хусит\\p{L}{0,3}|Ansar\\s+Allah|Ансар\\s+Алл\\p{L}{0,2}'),
@@ -206,8 +217,9 @@ export const ENTITIES = [
     code: 'arrow_missile_name_missing',
     source:
       /(?<![\p{L}])(?:Arrow[\s-]?(?:2|3)\b|Arrow\s+(?:missile|interceptor|air[\s-]defen[cs]e\s+system)|Хец[\s-]?[23]\b|[ובהלמשכ]?חץ[\s-]?[23])(?![\p{L}])/iu,
-    he: /חץ[\s-]?[23]|מערכת\s+חץ|Arrow[\s-]?[23]/iu,
-    ru: /Хец[\s-]?[23]|Arrow[\s-]?[23]|Стрел\p{L}*[\s-]?[23]/iu,
+    // The source may say just "Arrow interceptor": the number is not required then.
+    he: /חץ[\s-]?[23]|(?:מערכת|טיל\p{L}*|מיירט\p{L}*)\s+ה?חץ|Arrow/iu,
+    ru: /Хец|Arrow|«Стрел|Стрел\p{L}*[\s-]?[23]/iu,
   },
   {
     id: 'khan_younis',
