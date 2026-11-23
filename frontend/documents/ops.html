@@ -154,6 +154,38 @@ function visitorsCard(v,u){
  <p class="meta" style="margin:6px 0 0">обновлено ${ago(v.collected_ms)} · без cookies</p>
  ${help('Страницы и страны за неделю','Визит — заход на сайт извне (по ссылке или вручную набранным адресом); просмотр — каждая открытая страница. Свои заходы на /ops не считаются: счётчика там нет.',`<b>Страницы:</b><br>${top}`,`<b>Страны:</b><br>${geo}`)}</div>`;
 }
+// 23.11: Cloudflare daily quotas from the usage report (usage_daily). Today =
+// the hourly run so far; yesterday = the nightly full day. UTC days, reset 02:00 Israel.
+function quotaSection(rows){
+ const DB={'d9ba2c51-d551-4615-bbe2-37e76e2d668a':'NEWS','c052acf3-b821-444a-92e4-ffd472a131f0':'CORE'};
+ const M=[['d1_rows_read','D1: прочитано строк',0.6],['d1_rows_written','D1: записано строк',0.6],['workers_requests','Запросы Workers',0.8],['ai_neurons','Нейроны AI',0.8]];
+ const big=n=>n>=1e6?(n/1e6).toFixed(2).replace('.',',')+' млн':fmt(n);
+ const dayOf=ms=>new Date(ms).toISOString().slice(0,10);
+ const today=dayOf(Date.now()), yest=dayOf(Date.now()-86400000);
+ const pick=(m,d)=>rows.find(r=>r.metric===m&&r.day===d);
+ const split=r=>{try{const x=JSON.parse(r&&r.detail||'{}');return Object.entries(x).map(([k,v])=>(DB[k]||k.slice(0,6))+' '+big(v)).join(' · ')}catch{return ''}};
+ let bad=false,warn=false,head='нет данных';
+ const items=M.map(([m,title,w])=>{
+  const t=pick(m,today),y=pick(m,yest),b=(t&&t.budget)||(y&&y.budget)||0;
+  const hist=rows.filter(r=>r.metric===m&&r.day<today).sort((a,b)=>a.day<b.day?1:-1).slice(0,7).map(r=>r.day.slice(8,10)+'.'+r.day.slice(5,7)+' '+big(r.value)).join(' · ');
+  let desc='';
+  if(t){const start=Date.parse(today+'T00:00:00Z'),frac=Math.max(0,(t.collected_ms-start)/86400000),fc=frac>0.1?t.value/frac:null;
+   desc='сегодня на '+new Date(t.collected_ms).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Jerusalem'})+(fc!==null?' · прогноз на сутки '+big(Math.round(fc))+(b?' ('+Math.round(fc/b*100)+'%)':''):'');
+   if(b&&(t.value>=w*b||(fc!==null&&fc>=b)))bad=true;else if(b&&fc!==null&&fc>=w*b)warn=true;}
+  if(y){desc+=(desc?'<br>':'')+'вчера '+big(y.value)+(b?' ('+Math.round(y.value/b*100)+'%)':'');if(b&&y.value>=w*b)warn=true;}
+  const parts=m.startsWith('d1_')?split(t||y):'';
+  if(parts)desc+='<br>по базам: '+esc(parts);
+  if(hist)desc+='<br>7 дней: '+esc(hist);
+  const used=t?t.value:y?y.value:0;
+  if(!t&&!y)return `<div class="q"><b>${esc(title)}</b><span class="n">—</span><p>нет данных</p></div>`;
+  return quota(title+(t?'':' (вчера)'),Math.round(used),b,desc);
+ });
+ const any=rows.length>0;
+ const d1=pick('d1_rows_read',today)||pick('d1_rows_read',yest);
+ if(any)head=d1&&d1.budget?'D1 чтение '+Math.round(d1.value/d1.budget*100)+'%'+(pick('d1_rows_read',today)?' сегодня':' вчера'):'есть данные';
+ return sec('quota','Квоты Cloudflare',any?(bad?'bad':warn?'warn':''):'warn',head,
+ `<p class="explain">Дневные лимиты бесплатного плана; сутки по UTC, сброс в 02:00 по Израилю. «Сегодня» — отчёт использования раз в час, «вчера» — полный ночной отчёт. Тревога D1 — с 60%: при превышении лимита запросы к базе отказывают до сброса. Прогноз — текущий темп, растянутый на сутки.</p>${items.join('')}`,bad||warn)}
+
 function extSection(x){
  const u=x.ucdp,a=x.airlabs,H=3600000,now=Date.now();
  const age=s=>s&&s.checked_at?now-Date.parse(s.checked_at):Infinity;
@@ -251,6 +283,8 @@ function render(d,error){
 
  ${sec('col','Сборщики на GitHub',lvl(late.length>2,late.length>0),late.length?late.length+' отстают из '+cols.length:'все '+cols.length+' в срок',
  `<p class="explain">Скрипты в GitHub Actions по расписанию складывают данные в базу. Полоска заполняется до конца, когда прошло вдвое больше нормы — тогда точка краснеет.</p>${colRows||'<p class="meta">Нет данных.</p>'}`,late.length>0)}
+
+ ${quotaSection(d.usage||[])}
 
  ${extSection(d.external||{})}
 

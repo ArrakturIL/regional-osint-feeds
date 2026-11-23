@@ -101,5 +101,39 @@ class UsageReport(unittest.TestCase):
         self.assertEqual(metrics, ["actions_runs", "actions_wall_minutes"])
 
 
+    def _run_today(self, rows_read):
+        import os
+        from unittest import mock
+        import scripts.usage_report as u
+        stored = []
+
+        class FakeD1:
+            def __init__(self, *a): self.database_id = None
+            def discover_database_id(self, name): return "id-" + name
+            def query(self, sql, params=()): stored.append((sql, params)); return []
+
+        acc = {**ACCOUNT, "d1": [{"dimensions": {"databaseId": "a"}, "sum": {"rowsRead": rows_read, "rowsWritten": 10}}]}
+        env = {"CLOUDFLARE_ACCOUNT_ID": "acc", "CLOUDFLARE_API_TOKEN": "t", "CLOUDFLARE_D1_API_TOKEN": "d1",
+               "GITHUB_REPOSITORY": "o/r", "GITHUB_TOKEN": "gh"}
+        runs = mock.Mock(return_value=[])
+        with mock.patch.dict(os.environ, env, clear=False), \
+             mock.patch.object(u, "_post_json", return_value={"data": {"viewer": {"accounts": [acc]}}}), \
+             mock.patch.object(u, "fetch_runs", runs), mock.patch.object(u, "D1Client", FakeD1):
+            os.environ.pop("GITHUB_STEP_SUMMARY", None)
+            code = u.main(["--today"])
+        days = {p[0] for s, p in stored if s.startswith("INSERT INTO usage_daily")}
+        return code, days, runs.called, stored
+
+    def test_today_mode_stores_today_quietly_without_actions(self):
+        from datetime import datetime, timezone
+        code, days, runs_called, stored = self._run_today(3_500_000)  # 70%: a warn, but not an alarm
+        self.assertEqual(code, 0)
+        self.assertEqual(days, {datetime.now(timezone.utc).date().isoformat()})
+        self.assertFalse(runs_called, "no Actions API paging every hour")
+
+    def test_today_mode_fails_near_the_hard_d1_limit(self):
+        self.assertEqual(self._run_today(4_100_000)[0], 2)
+
+
 if __name__ == "__main__":
     unittest.main()
