@@ -1,18 +1,18 @@
 {
  "source": "airlabs_schedules",
- "generated_at": "2026-11-23T19:17:28Z",
+ "generated_at": "2026-11-23T22:17:28Z",
  "delay_min": 15,
  "airports": {
   "TLV": {
-   "checked_at": "2026-11-23T19:17:28Z",
-   "flights": 46,
+   "checked_at": "2026-11-23T22:17:28Z",
+   "flights": 42,
    "cancelled": 0,
-   "foreign": 31,
+   "foreign": 26,
    "foreign_cancelled": 0,
-   "delayed": 2,
+   "delayed": 0,
    "rows": 100,
    "capped": true,
-   "avg_delay": 24,
+   "avg_delay": 0,
    "cancelled_by": {},
    "history": [
     [
@@ -63,6 +63,13 @@
      0,
      0,
      2
+    ],
+    [
+     "2026-11-23T22:17:28Z",
+     42,
+     0,
+     0,
+     0
     ]
    ]
   },
@@ -196,13 +203,13 @@
    ]
   },
   "THR": {
-   "checked_at": "2026-11-22T23:47:22Z",
-   "flights": 35,
+   "checked_at": "2026-11-23T22:17:28Z",
+   "flights": 25,
    "cancelled": 0,
-   "foreign": 10,
+   "foreign": 8,
    "foreign_cancelled": 0,
    "delayed": 0,
-   "rows": 35,
+   "rows": 25,
    "capped": false,
    "avg_delay": 0,
    "cancelled_by": {},
@@ -213,17 +220,24 @@
      0,
      0,
      0
+    ],
+    [
+     "2026-11-23T22:17:28Z",
+     25,
+     0,
+     0,
+     0
     ]
    ]
   },
   "BGW": {
-   "checked_at": "2026-11-22T23:47:22Z",
-   "flights": 13,
+   "checked_at": "2026-11-23T22:17:28Z",
+   "flights": 14,
    "cancelled": 0,
-   "foreign": 9,
+   "foreign": 10,
    "foreign_cancelled": 0,
    "delayed": 0,
-   "rows": 16,
+   "rows": 17,
    "capped": false,
    "avg_delay": 0,
    "cancelled_by": {},
@@ -234,17 +248,24 @@
      0,
      0,
      0
+    ],
+    [
+     "2026-11-23T22:17:28Z",
+     14,
+     0,
+     0,
+     0
     ]
    ]
   },
   "EBL": {
-   "checked_at": "2026-11-22T23:47:22Z",
-   "flights": 9,
+   "checked_at": "2026-11-23T22:17:28Z",
+   "flights": 8,
    "cancelled": 0,
-   "foreign": 9,
+   "foreign": 8,
    "foreign_cancelled": 0,
    "delayed": 0,
-   "rows": 13,
+   "rows": 11,
    "capped": false,
    "avg_delay": 0,
    "cancelled_by": {},
@@ -255,21 +276,28 @@
      0,
      0,
      0
+    ],
+    [
+     "2026-11-23T22:17:28Z",
+     8,
+     0,
+     0,
+     0
     ]
    ]
   },
   "DAM": {
-   "checked_at": "2026-11-22T23:47:22Z",
-   "flights": 11,
+   "checked_at": "2026-11-23T22:17:28Z",
+   "flights": 10,
    "cancelled": 1,
-   "foreign": 9,
+   "foreign": 7,
    "foreign_cancelled": 1,
    "delayed": 0,
-   "rows": 12,
+   "rows": 10,
    "capped": false,
    "avg_delay": 0,
    "cancelled_by": {
-    "RJ": 1
+    "TK": 1
    },
    "history": [
     [
@@ -278,19 +306,26 @@
      1,
      1,
      0
+    ],
+    [
+     "2026-11-23T22:17:28Z",
+     10,
+     1,
+     1,
+     0
     ]
    ]
   },
   "DOH": {
-   "checked_at": "2026-11-22T23:47:22Z",
-   "flights": 20,
+   "checked_at": "2026-11-23T22:17:28Z",
+   "flights": 17,
    "cancelled": 0,
-   "foreign": 5,
+   "foreign": 3,
    "foreign_cancelled": 0,
-   "delayed": 3,
+   "delayed": 2,
    "rows": 100,
    "capped": true,
-   "avg_delay": 22,
+   "avg_delay": 21,
    "cancelled_by": {},
    "history": [
     [
@@ -299,21 +334,28 @@
      0,
      0,
      3
+    ],
+    [
+     "2026-11-23T22:17:28Z",
+     17,
+     0,
+     0,
+     2
     ]
    ]
   },
   "DXB": {
-   "checked_at": "2026-11-22T23:47:22Z",
-   "flights": 48,
-   "cancelled": 1,
-   "foreign": 10,
-   "foreign_cancelled": 1,
-   "delayed": 14,
+   "checked_at": "2026-11-23T22:17:28Z",
+   "flights": 50,
+   "cancelled": 2,
+   "foreign": 11,
+   "foreign_cancelled": 2,
+   "delayed": 12,
    "rows": 100,
    "capped": true,
-   "avg_delay": 52,
+   "avg_delay": 76,
    "cancelled_by": {
-    "SG": 1
+    "SG": 2
    },
    "history": [
     [
@@ -322,22 +364,27 @@
      1,
      1,
      14
+    ],
+    [
+     "2026-11-23T22:17:28Z",
+     50,
+     2,
+     2,
+     12
     ]
    ]
   },
   "KWI": {
-   "checked_at": "2026-11-22T23:47:22Z",
-   "flights": 30,
-   "cancelled": 1,
-   "foreign": 5,
-   "foreign_cancelled": 1,
+   "checked_at": "2026-11-23T22:17:28Z",
+   "flights": 26,
+   "cancelled": 0,
+   "foreign": 7,
+   "foreign_cancelled": 0,
    "delayed": 0,
-   "rows": 43,
+   "rows": 35,
    "capped": false,
    "avg_delay": 0,
-   "cancelled_by": {
-    "MS": 1
-   },
+   "cancelled_by": {},
    "history": [
     [
      "2026-11-22T23:47:22Z",
@@ -345,12 +392,19 @@
      1,
      1,
      0
+    ],
+    [
+     "2026-11-23T22:17:28Z",
+     26,
+     0,
+     0,
+     0
     ]
    ]
   },
   "BAH": {
-   "checked_at": "2026-11-22T23:47:22Z",
-   "flights": 42,
+   "checked_at": "2026-11-23T22:17:28Z",
+   "flights": 40,
    "cancelled": 0,
    "foreign": 13,
    "foreign_cancelled": 0,
@@ -363,6 +417,13 @@
     [
      "2026-11-22T23:47:22Z",
      42,
+     0,
+     0,
+     0
+    ],
+    [
+     "2026-11-23T22:17:28Z",
+     40,
      0,
      0,
      0
