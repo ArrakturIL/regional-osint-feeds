@@ -1,21 +1,19 @@
 {
  "source": "airlabs_schedules",
- "generated_at": "2026-11-23T13:17:27Z",
+ "generated_at": "2026-11-23T16:17:28Z",
  "delay_min": 15,
  "airports": {
   "TLV": {
-   "checked_at": "2026-11-23T13:17:27Z",
-   "flights": 58,
-   "cancelled": 1,
-   "foreign": 35,
-   "foreign_cancelled": 1,
-   "delayed": 4,
+   "checked_at": "2026-11-23T16:17:28Z",
+   "flights": 51,
+   "cancelled": 0,
+   "foreign": 30,
+   "foreign_cancelled": 0,
+   "delayed": 3,
    "rows": 100,
    "capped": true,
-   "avg_delay": 76,
-   "cancelled_by": {
-    "SN": 1
-   },
+   "avg_delay": 78,
+   "cancelled_by": {},
    "history": [
     [
      "2026-11-22T23:47:22Z",
@@ -51,6 +49,13 @@
      1,
      1,
      4
+    ],
+    [
+     "2026-11-23T16:17:28Z",
+     51,
+     0,
+     0,
+     3
     ]
    ]
   },
