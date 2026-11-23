@@ -565,3 +565,11 @@ test('Arrow without a number in the source does not demand "Arrow 2/3" (22.11)',
   assert.equal(entityIssue(src, 'Ракету над Негевом сбили'), 'arrow_missile_name_missing');
   assert.equal(entityIssue('Arrow 3 intercepts missile', 'Хец-3 перехватил ракету'), null);
 });
+
+test('Arrow in Hebrew: «חץ» near a missile or defence word is accepted, a bare «חץ» is not (live 23.11)', () => {
+  const src =
+    'Czech officials toured Israel Aerospace Industries, receiving briefings on the Arrow missile defense system';
+  assert.equal(entityIssue(src, 'בכירים צ׳כים קיבלו תדריך על מערכת ההגנה מפני טילים חץ'), null);
+  assert.equal(entityIssue(src, 'הם קיבלו תדריך על החץ, מערכת ההגנה מפני טילים'), null);
+  assert.equal(entityIssue(src, 'הם ראו חץ על השלט'), 'arrow_missile_name_missing');
+});

@@ -218,7 +218,9 @@ export const ENTITIES = [
     source:
       /(?<![\p{L}])(?:Arrow[\s-]?(?:2|3)\b|Arrow\s+(?:missile|interceptor|air[\s-]defen[cs]e\s+system)|Хец[\s-]?[23]\b|[ובהלמשכ]?חץ[\s-]?[23])(?![\p{L}])/iu,
     // The source may say just "Arrow interceptor": the number is not required then.
-    he: /חץ[\s-]?[23]|(?:מערכת|טיל\p{L}*|מיירט\p{L}*)\s+ה?חץ|Arrow/iu,
+    // 23.11: «מערכת ההגנה מפני טילים חץ» — «חץ» a few words from a missile or
+    // defence word counts; a bare «חץ» (also just "arrow") does not.
+    he: /חץ[\s-]?[23]|(?:מערכת|טיל\p{L}*|מיירט\p{L}*)\s+ה?חץ|(?:טיל|יירוט|מיירט|הגנ)[\p{L}\s,־-]{0,40}?(?<!\p{L})ה?חץ(?!\p{L})|(?<!\p{L})ה?חץ(?!\p{L})[\p{L}\s,־-]{0,30}?(?:טיל|יירוט|מיירט|הגנ)|Arrow/iu,
     ru: /Хец|Arrow|«Стрел|Стрел\p{L}*[\s-]?[23]/iu,
   },
   {
