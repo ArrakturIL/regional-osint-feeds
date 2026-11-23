@@ -5,6 +5,7 @@
 // them the owner asked for admin / admin.
 import { readTension } from './tension.js';
 import { uniqueStats } from './uniques.js';
+import { githubJson } from './data.js';
 
 const LIMITS = Object.freeze({
   aiPool: 8500, // ai_daily_neurons: shared Workers AI pool (B1), Free plan 10 000
@@ -161,7 +162,13 @@ export async function opsFromD1(request, env, now = Date.now()) {
   const uniques = await uniqueStats(core, now);
   const analyst = analystRun ? { ...analystRun, stats: parse(analystRun.stats_json) } : null;
   if (analyst) delete analyst.stats_json;
+  // UCDP and AirLabs run only in GitHub Actions: their status files live in data/.
+  const [ucdpStatus, airlabsStatus] = await Promise.all([
+    githubJson('ucdp-status.json', 300),
+    githubJson('airlabs-status.json', 300),
+  ]);
   return json({
+    external: { ucdp: ucdpStatus, airlabs: airlabsStatus },
     generated_at_ms: now,
     day_utc: day,
     limits: LIMITS,

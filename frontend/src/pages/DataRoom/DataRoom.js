@@ -11,6 +11,129 @@ import { classifyMarket } from '../../utils/classifyMarket.js';
 import { MarketSeriesCard } from '../../components/MarketCard/MarketSeriesCard.js';
 import { rwMarketSeries } from '../../utils/marketSeries.js';
 import { ruPlural } from '../../utils/ruPlural.js';
+// UCDP (Uppsala Conflict Data Program): organised-violence events and deaths
+// by region and month. Weeks behind real time — background, not the current
+// picture. Collapsed by default with a warning: the content is casualty counts.
+const UCDP_L = UI_HE
+  ? {
+      nav: 'אלימות מאורגנת',
+      title: 'אלימות מאורגנת: אירועים והרוגים',
+      sub: 'נתוני UCDP (אוניברסיטת אופסלה) בפיגור של כחודש. זה רקע, לא התמונה הנוכחית.',
+      open: 'להצגת הנתונים',
+      warn: 'בפנים — מספרי הרוגים לפי אזורים.',
+      regions: {
+        israel: 'ישראל, עזה והגדה המערבית',
+        lebanon_syria: 'לבנון וסוריה',
+        iran: 'איראן',
+        gulf: 'מדינות המפרץ',
+        red_sea: 'תימן',
+        iraq: 'עיראק',
+      },
+      line: (e, d, c) => e + ' אירועים, ' + d + ' הרוגים' + (c ? ' (מהם ' + c + ' אזרחים)' : ''),
+      prev: 'בחודש הקודם',
+      none: 'אין אירועים בחודשים האחרונים',
+      latest: 'אירועים אחרונים בנתונים',
+      deaths: d => d + ' הרוגים',
+      note: 'נספרים אירועי אלימות מאורגנת עם הרוג אחד לפחות. ',
+      release: 'גרסה ',
+    }
+  : {
+      nav: 'Вооружённое насилие',
+      title: 'Вооружённое насилие: события и погибшие',
+      sub: 'Данные UCDP (Уппсальский университет) с отставанием около месяца. Это фон, а не текущая обстановка.',
+      open: 'Показать данные',
+      warn: 'Внутри — число погибших по регионам.',
+      regions: {
+        israel: 'Израиль, Газа и Западный берег',
+        lebanon_syria: 'Ливан и Сирия',
+        iran: 'Иран',
+        gulf: 'Страны Залива',
+        red_sea: 'Йемен',
+        iraq: 'Ирак',
+      },
+      line: (e, d, c) =>
+        e +
+        ' ' +
+        ruPlural(e, ['событие', 'события', 'событий']) +
+        ', ' +
+        d +
+        ' ' +
+        ruPlural(d, ['погибший', 'погибших', 'погибших']) +
+        (c ? ' (из них мирных — ' + c + ')' : ''),
+      prev: 'месяцем раньше',
+      none: 'за последние месяцы событий нет',
+      latest: 'Последние события в данных',
+      deaths: d => d + ' ' + ruPlural(d, ['погибший', 'погибших', 'погибших']),
+      note: 'Считаются события организованного насилия хотя бы с одним погибшим. ',
+      release: 'Выпуск ',
+    };
+const ucdpMonth = m => {
+  const d = new Date(m + '-15T00:00:00Z');
+  return Number.isFinite(d.getTime())
+    ? d.toLocaleString(UI_HE ? 'he-IL' : 'ru-RU', { month: 'long', timeZone: 'UTC' })
+    : m;
+};
+export function UcdpSection({ ucdp }) {
+  if (!ucdp || !Array.isArray(ucdp.regions)) return null;
+  const L = UCDP_L;
+  return h(
+    'section',
+    { className: 'section', id: 'conflict' },
+    h(Head, { title: L.title, icon: 'activity', sub: L.sub }),
+    h(
+      Card,
+      null,
+      h(
+        'details',
+        { className: 'rw-technical-details rw-ucdp' },
+        h('summary', null, t('strong', null, L.open), ' ', t('span', 'rw-ucdp-warn', L.warn)),
+        h(
+          'div',
+          { className: 'rw-technical-list' },
+          ...ucdp.regions.map(r => {
+            const [cur, prev] = r.months || [];
+            return h(
+              'div',
+              { className: 'rw-technical-row', key: r.id },
+              t('b', null, L.regions[r.id] || r.id),
+              h(
+                'span',
+                { className: 'rw-tech-meta' },
+                cur ? ucdpMonth(cur.month) + ': ' + L.line(cur.events, cur.deaths, cur.civilians) : L.none,
+                prev
+                  ? t('small', null, L.prev + ' (' + ucdpMonth(prev.month) + '): ' + L.line(prev.events, prev.deaths, 0))
+                  : null,
+              ),
+            );
+          }),
+        ),
+        ucdp.latest?.length
+          ? h(
+              'div',
+              { className: 'rw-ucdp-latest' },
+              t('h4', null, L.latest),
+              ...ucdp.latest.map((e, i) =>
+                h(
+                  'div',
+                  { className: 'rw-technical-row', key: i },
+                  h('span', null, t('small', null, e.date + (e.region ? ' · ' + (L.regions[e.region] || '') : '')), e.where),
+                  h('span', { className: 'rw-tech-meta' }, L.deaths(e.deaths), e.sides ? t('small', null, e.sides) : null),
+                ),
+              ),
+            )
+          : null,
+        h(
+          'p',
+          { className: 'rw-fineprint' },
+          L.note,
+          'UCDP GED Candidate' + (ucdp.version ? ', ' + L.release + ucdp.version : '') + ' · ',
+          h(External, { url: 'https://ucdp.uu.se/' }, 'ucdp.uu.se'),
+        ),
+      ),
+    ),
+  );
+}
+
 export function DataRoomV2({
   visible,
   data,
@@ -200,6 +323,7 @@ export function DataRoomV2({
       ...[
         ['#index', L.index],
         ['#markets', L.markets],
+        ...(data?.ucdp ? [['#conflict', UCDP_L.nav]] : []),
         ['#diagnostics', L.diagnostics],
       ].map(([href, label]) => h('a', { href, key: href }, label)),
     ),
@@ -264,6 +388,7 @@ export function DataRoomV2({
     isHe ? localized(L.aviation, aviation) : h(AviationExplainedV2, { data }),
     panelNotice('satellite', L.satellite, satellite, satelliteError, satellitePending),
     isHe ? localized(L.satellite, satellite) : h(SatelliteCatalog, { data }),
+    h(UcdpSection, { ucdp: data?.ucdp }),
     h(
       'section',
       { className: 'section', id: 'diagnostics' },

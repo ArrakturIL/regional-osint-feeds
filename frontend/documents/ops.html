@@ -154,6 +154,22 @@ function visitorsCard(v,u){
  <p class="meta" style="margin:6px 0 0">обновлено ${ago(v.collected_ms)} · без cookies</p>
  ${help('Страницы и страны за неделю','Визит — заход на сайт извне (по ссылке или вручную набранным адресом); просмотр — каждая открытая страница. Свои заходы на /ops не считаются: счётчика там нет.',`<b>Страницы:</b><br>${top}`,`<b>Страны:</b><br>${geo}`)}</div>`;
 }
+function extSection(x){
+ const u=x.ucdp,a=x.airlabs,H=3600000,now=Date.now();
+ const age=s=>s&&s.checked_at?now-Date.parse(s.checked_at):Infinity;
+ const keyDays=a&&a.key_expires?Math.ceil((Date.parse(a.key_expires+'T00:00:00Z')-now)/86400000):null;
+ const lim=(a&&a.limit_month)||1000;
+ const lvl=(bad,warn)=>bad?'bad':warn?'warn':'';
+ const uBad=!u||u.state==='error', uWarn=u&&(u.state==='partial'||age(u)>36*H);
+ const aBad=!a||a.state==='error'||(keyDays!==null&&keyDays<=0), aWarn=a&&(a.state==='partial'||age(a)>6*H||a.used_month>0.85*lim||(keyDays!==null&&keyDays<=5));
+ const stateRu=s=>s==='ok'?'норма':s==='partial'?'частично':s==='error'?'ошибка':'нет данных';
+ const row=(name,s,line,detail,k)=>`<div class="row"><span class="name"><span class="dot ${k}"></span> ${esc(name)}</span><span>${esc(stateRu(s&&s.state))}</span><span class="age">${s&&s.checked_at?esc(ago(Date.parse(s.checked_at))):'—'}</span></div><p class="meta" style="margin:0 0 8px">${esc(line)}${detail?'<br>'+esc(detail):''}</p>`;
+ const uLine=u?`выпуск ${u.version||'?'} · ${fmt(u.events||0)} событий · запросов за запуск ${u.requests??'?'} (лимит 5 000 в сутки)`:'статус не прочитан';
+ const aLine=a?`запросов сегодня ${a.used_day??0}/30 · за месяц ${a.used_month??0}/${Math.min(950,lim)} · аэропортов в последнем запуске ${(a.fetched||[]).length}`+(keyDays!==null?` · ключ до ${a.key_expires} (${keyDays} дн.)`:''):'статус не прочитан';
+ const aDetail=a?[(a.failed||[]).length?'не ответили: '+a.failed.join(', '):'',a.detail?'остановка: '+a.detail:''].filter(Boolean).join(' · '):'';
+ const bad=uBad||aBad, warn=uWarn||aWarn;
+ return sec('ext','Внешние API (UCDP, AirLabs)',lvl(bad,warn),bad?'есть ошибка':warn?'нужно внимание':'обе в норме',
+ `<p class="explain">Сборщики в GitHub Actions без зеркала в базе: статус читается из файлов data/ в репозитории (кэш 5 минут). UCDP — раз в сутки, AirLabs — аэропорты по своему графику, бесплатный ключ на 1 000 запросов в месяц.</p>${row('UCDP — вооружённое насилие',u,uLine,u&&u.detail,uBad?'bad':uWarn?'warn':'')}${row('AirLabs — табло вылетов',a,aLine,aDetail,aBad?'bad':aWarn?'warn':'')}`,bad||warn)}
 function render(d,error){
  if(!d){app.innerHTML=`<div class="card"><h2>Пульт</h2><p class="err">${esc(error)}</p></div>`;return}
  const q=d.quotas||{}, L=d.limits||{}, t=d.translations||{}, sla=t.sla?.languages||{};
@@ -235,6 +251,8 @@ function render(d,error){
 
  ${sec('col','Сборщики на GitHub',lvl(late.length>2,late.length>0),late.length?late.length+' отстают из '+cols.length:'все '+cols.length+' в срок',
  `<p class="explain">Скрипты в GitHub Actions по расписанию складывают данные в базу. Полоска заполняется до конца, когда прошло вдвое больше нормы — тогда точка краснеет.</p>${colRows||'<p class="meta">Нет данных.</p>'}`,late.length>0)}
+
+ ${extSection(d.external||{})}
 
  ${sec('ten','Необычная активность (индекс)',lvl((ten?.level||0)>=4,(ten?.level||0)>=3),ten?`максимум: ${TEN_W[ten.level]||ten.level} · ${ten.calibrating?'калибровка, норма по '+ten.baseline_days+' дн.':'норма по 14 дн.'} · ${ago(ten.hour_ms)}`:'ещё не посчитан',
  `<p class="explain">Каждый час: показатели по регионам сравниваются со своей нормой за 14 дней (без последних суток). Уровень — сколько <b>разных семейств</b> (небо, море, земля, связь, новости, официальное) одновременно вышли за норму: как обычно → одно отклонение → два → три независимых → много (четыре семейства или три с официальным). Это отклонение от обычного, а не прогноз и не опасность.</p>

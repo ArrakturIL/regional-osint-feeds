@@ -242,3 +242,51 @@ export async function dataFromD1(env, nowMs = Date.now(), lang = 'ru') {
     lang,
   });
 }
+
+// Collector JSON kept in the repository (data/), read through the edge cache.
+// UCDP and AirLabs run only in GitHub Actions (no Monitor/D1 mirror): this is
+// the one place the site reads them. A failure is null, never an error page.
+export const GITHUB_DATA = 'https://raw.githubusercontent.com/ArrakturIL/regional-osint-feeds/main/data/';
+export async function githubJson(name, ttlSeconds = 3600, fetcher = globalThis.fetch) {
+  try {
+    const r = await fetcher(GITHUB_DATA + name, {
+      cf: { cacheTtl: ttlSeconds, cacheEverything: true },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!r.ok) return null;
+    const x = await r.json();
+    return x && typeof x === 'object' && !Array.isArray(x) ? x : null;
+  } catch {
+    return null;
+  }
+}
+
+// UCDP GED Candidate: per region the last months (events, deaths), plus the
+// latest events. Weeks behind real time; the Data page shows it collapsed.
+const UCDP_REGIONS = ['israel', 'lebanon_syria', 'iran', 'gulf', 'red_sea', 'iraq'];
+export function ucdpView(raw) {
+  if (!raw || raw.source !== 'ucdp_ged_candidate' || !raw.regions || typeof raw.regions !== 'object')
+    return null;
+  const n = x => (Number.isSafeInteger(Number(x)) && Number(x) >= 0 ? Number(x) : 0);
+  const regions = UCDP_REGIONS.map(id => {
+    const months = Object.entries(raw.regions[id] || {})
+      .filter(([m]) => /^\d{4}-\d{2}$/.test(m))
+      .sort(([a], [b]) => (a < b ? 1 : -1))
+      .slice(0, 4)
+      .map(([month, v]) => ({
+        month,
+        events: n(v?.events),
+        deaths: n(v?.deaths_best),
+        civilians: n(v?.deaths_civilians),
+      }));
+    return { id, months };
+  });
+  const latest = (Array.isArray(raw.latest) ? raw.latest : []).slice(0, 6).map(e => ({
+    date: str(e?.date).slice(0, 10),
+    region: UCDP_REGIONS.includes(e?.region) ? e.region : null,
+    where: str(e?.where).slice(0, 120),
+    sides: [str(e?.side_a), str(e?.side_b)].filter(Boolean).join(' — ').slice(0, 160),
+    deaths: n(e?.deaths_best),
+  }));
+  return { version: str(raw.version), generatedAt: str(raw.generated_at), regions, latest };
+}
