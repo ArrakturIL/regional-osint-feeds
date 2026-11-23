@@ -18,7 +18,7 @@ const ctx = {
 };
 vm.runInNewContext(
   src +
-    '\nthis.topStories = topStories; this.topLead = topLead; this.sourcesOf = sourcesOf; this.networkCounts = networkCounts; this.topAge = topAge; this.leadExcerpt = leadExcerpt;',
+    '\nthis.topStories = topStories; this.topLead = topLead; this.sourcesOf = sourcesOf; this.networkCounts = networkCounts; this.topAge = topAge; this.leadExcerpt = leadExcerpt; this.trimExcerpt = trimExcerpt;',
   ctx,
 );
 const ids = list => JSON.stringify(list.map(s => s.id));
@@ -117,4 +117,18 @@ test('lead rule 22.11: fresh urgent, confirmed first; nothing fresh → no lead'
     '["Al Jazeera","Times of Israel"]',
   );
   assert.equal(JSON.stringify(ctx.sourcesOf({ source: 'BBC' })), '["BBC"]');
+});
+
+test('lead excerpt ends on a whole sentence or a whole word, never mid-word (owner 23.11)', () => {
+  const long =
+    'Американские источники полагают, что Трамп не отдаст приказ об ударе по Ирану в ближайшую неделю, несмотря на израильское давление. Решение будет принято после консультаций с союзниками в регионе и в Европе, сообщают собеседники.';
+  const a = ctx.trimExcerpt(long, 150);
+  assert.ok(a.endsWith('давление.'), a);
+  const noStop =
+    'Американские источники полагают что Трамп не отдаст приказ об ударе по Ирану в ближайшую неделю несмотря на израильское давление и позицию союзников';
+  const b = ctx.trimExcerpt(noStop, 100);
+  assert.match(b, /\S…$/);
+  assert.ok(noStop.startsWith(b.slice(0, -1)), 'whole words only: ' + b);
+  assert.equal(ctx.trimExcerpt('Источники говорят о давлении израильско…'), 'Источники говорят о давлении…');
+  assert.equal(ctx.trimExcerpt('Короткое описание.'), 'Короткое описание.');
 });

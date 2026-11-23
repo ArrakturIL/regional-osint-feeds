@@ -70,7 +70,25 @@ export function leadExcerpt(s) {
   const ex = plainText(s?.excerpt);
   const ti = plainText(s?.title);
   if (!ex || ex === ti || ti.includes(ex) || ex.includes(ti) && ex.length - ti.length < 24) return '';
-  return s.excerpt;
+  return trimExcerpt(s.excerpt);
+}
+// Owner 23.11: the excerpt ended mid-word («израильско…»): CSS clamped it at
+// the third line. Cut in code instead: whole sentences up to the limit, else
+// the last whole word plus «…»; a source summary already cut mid-word loses
+// its broken tail.
+export const EXCERPT_MAX = 220;
+export function trimExcerpt(text, max = EXCERPT_MAX) {
+  let x = String(text || '').trim();
+  const cutIn = /(?:…|\.\.\.)$/.test(x);
+  if (cutIn) x = x.replace(/(?:…|\.\.\.)$/, '').trim();
+  if (x.length <= max && !cutIn) return x;
+  const head = x.slice(0, max + 1);
+  let end = -1;
+  for (const m of head.matchAll(/[.!?](?:[»"”)])?(?=\s|$)/g)) end = m.index + m[0].length;
+  if (end >= 80 && end <= max) return head.slice(0, end);
+  const words = (x.length <= max ? x : head).split(/\s+/);
+  if (x.length > max || cutIn) words.pop();
+  return words.join(' ').replace(/[\s,;:—–-]+$/, '') + '…';
 }
 const TOP_STATES = ['ok', 'partial', 'empty', 'error'];
 export function networkCounts(sources) {
