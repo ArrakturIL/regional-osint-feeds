@@ -19,6 +19,7 @@ from scripts.neon_to_d1 import D1Client
 ROOT = Path(__file__).resolve().parents[1]
 BUDGETS = ROOT / "config/usage-budgets.json"
 GRAPHQL = "https://api.cloudflare.com/client/v4/graphql"
+TODAY_ALARM_RATIO = 0.8  # hourly run: e-mail only when D1 is this close to the hard limit
 QUERY = """query($acc:String!,$d:Date!){viewer{accounts(filter:{accountTag:$acc}){
  workers: workersInvocationsAdaptive(limit:50, filter:{date:$d}){ sum{requests errors cpuTimeUs} quantiles{cpuTimeP99} dimensions{scriptName} }
  d1: d1AnalyticsAdaptiveGroups(limit:50, filter:{date:$d}){ sum{rowsRead rowsWritten} dimensions{databaseId} }
@@ -142,8 +143,14 @@ def main(argv=None) -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--day", default="")
     p.add_argument("--no-store", action="store_true")
+    # 23.11: hourly "today so far" for /ops. Quiet: no Actions metrics, and the
+    # run fails (owner e-mail) only near the hard D1 limit, not at every warn.
+    p.add_argument("--today", action="store_true")
     a = p.parse_args(argv)
-    day = date.fromisoformat(a.day) if a.day else (datetime.now(timezone.utc).date() - timedelta(days=1))
+    if a.today:
+        day = datetime.now(timezone.utc).date()
+    else:
+        day = date.fromisoformat(a.day) if a.day else (datetime.now(timezone.utc).date() - timedelta(days=1))
     budgets = json.loads(BUDGETS.read_text(encoding="utf8"))
     account_id = os.environ["CLOUDFLARE_ACCOUNT_ID"]
     # GraphQL needs "Account Analytics: Read"; the deploy token may not have it.
@@ -158,7 +165,8 @@ def main(argv=None) -> int:
         # Actions usage is still measured and stored; the run fails visibly below.
         cf_error = "Cloudflare GraphQL unavailable: " + str(exc)
         rows = []
-    rows += actions_metrics(fetch_runs(os.environ["GITHUB_REPOSITORY"], os.environ["GITHUB_TOKEN"], day), day)
+    if not a.today:
+        rows += actions_metrics(fetch_runs(os.environ["GITHUB_REPOSITORY"], os.environ["GITHUB_TOKEN"], day), day)
     rows = evaluate(rows, budgets)
     report = markdown(day, rows, budgets.get("app_guards", {}))
     print(report)
@@ -181,6 +189,8 @@ def main(argv=None) -> int:
     if cf_error:
         print("::error::" + cf_error + " (grant Account Analytics: Read, or set CLOUDFLARE_ANALYTICS_TOKEN)")
         return 1
+    if a.today:
+        return 2 if any(r["metric"].startswith("d1_") and (r["ratio"] or 0) >= TODAY_ALARM_RATIO for r in rows) else 0
     return 2 if any(r["warn"] for r in rows) else 0
 
 

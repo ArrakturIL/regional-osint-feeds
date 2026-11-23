@@ -162,6 +162,13 @@ export async function opsFromD1(request, env, now = Date.now()) {
   const uniques = await uniqueStats(core, now);
   const analyst = analystRun ? { ...analystRun, stats: parse(analystRun.stats_json) } : null;
   if (analyst) delete analyst.stats_json;
+  // 23.11: Cloudflare quotas from the usage report (usage_daily): nightly full
+  // days plus an hourly "today so far". 8 days x 4 metrics, by primary key.
+  const usageRows = await rows(
+    core,
+    "SELECT day,metric,value,budget,detail,collected_ms FROM usage_daily WHERE day>=? AND metric IN ('d1_rows_read','d1_rows_written','workers_requests','ai_neurons') ORDER BY day DESC LIMIT 40",
+    new Date(now - 8 * 86400000).toISOString().slice(0, 10),
+  );
   // UCDP and AirLabs run only in GitHub Actions: their status files live in data/.
   const [ucdpStatus, airlabsStatus] = await Promise.all([
     githubJson('ucdp-status.json', 300),
@@ -169,6 +176,7 @@ export async function opsFromD1(request, env, now = Date.now()) {
   ]);
   return json({
     external: { ucdp: ucdpStatus, airlabs: airlabsStatus },
+    usage: usageRows,
     generated_at_ms: now,
     day_utc: day,
     limits: LIMITS,

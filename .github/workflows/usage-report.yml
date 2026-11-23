@@ -6,6 +6,8 @@ name: Regional Watch usage report (Workers / D1 / AI / Actions)
 on:
   schedule:
     - cron: '41 0 * * *'
+    # 23.11: hourly "today so far" for /ops (quiet: fails only near the D1 limit).
+    - cron: '23 * * * *'
   workflow_dispatch:
     inputs:
       day:
@@ -42,4 +44,10 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           GITHUB_TOKEN: ${{ github.token }}
           IN_DAY: ${{ inputs.day }}
-        run: python -m scripts.usage_report --day "$IN_DAY"
+          SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          if [ "$SCHEDULE" = "23 * * * *" ]; then
+            python -m scripts.usage_report --today
+          else
+            python -m scripts.usage_report --day "$IN_DAY"
+          fi
