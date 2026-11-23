@@ -22,19 +22,30 @@ export const WORKFLOW_CADENCE = [
   { workflow: 'marad.yml', source: 'marad_official', every: 360, offset: 87 }, // 27 1,7,13,19 * * *
   { workflow: 'unosat-analyses.yml', source: 'unosat_analysis', every: 720, offset: 19 }, // 19 */12 * * *
   { workflow: 'satellite.yml', source: 'satellite_context', every: 1440, offset: 197 }, // 17 3 * * *
+  // 23.11: GitHub never fired these YAML crons in their first hours.
+  { workflow: 'airlabs.yml', every: 60, offset: 17 }, // 17 * * * * (the collector picks due airports)
+  { workflow: 'ucdp.yml', every: 1440, offset: 161 }, // 41 2 * * *
+  { workflow: 'usage-report.yml', every: 60, offset: 23, inputs: { mode: 'today' } }, // 23 * * * *
+  { workflow: 'usage-report.yml', every: 1440, offset: 41, inputs: { mode: 'day' } }, // 41 0 * * *
 ];
 const REPO = 'ArrakturIL/regional-osint-feeds';
 const MINUTE_MS = 60_000;
 
-export function dueWorkflows(timeMs) {
+function dueEntries(timeMs) {
   const minute = Math.floor(timeMs / MINUTE_MS);
-  return WORKFLOW_CADENCE.filter(w => minute % w.every === w.offset).map(w => w.workflow);
+  return WORKFLOW_CADENCE.filter(w => minute % w.every === w.offset);
+}
+export function dueWorkflows(timeMs) {
+  return dueEntries(timeMs).map(w => w.workflow);
 }
 
 // Never throws: collector dispatch must not affect Monitor's own schedule.
 export async function dispatchDueWorkflows(env, timeMs, opts = {}) {
-  let due = dueWorkflows(timeMs);
+  const entries = dueEntries(timeMs);
+  let due = entries.map(w => w.workflow);
   if (!due.length) return { due, dispatched: [], failed: [] };
+  // workflow_dispatch inputs (one workflow can run in different modes).
+  const inputsOf = new Map(entries.filter(w => w.inputs).map(w => [w.workflow, w.inputs]));
   const token = env?.GITHUB_DISPATCH_TOKEN;
   if (!token) return { due, dispatched: [], failed: [], skipped: 'no_token' };
   const sourceOf = new Map(WORKFLOW_CADENCE.map(w => [w.workflow, w.source]));
@@ -59,7 +70,9 @@ export async function dispatchDueWorkflows(env, timeMs, opts = {}) {
               'User-Agent': 'regional-watch-monitor',
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ ref: 'main' }),
+            body: JSON.stringify(
+              inputsOf.has(workflow) ? { ref: 'main', inputs: inputsOf.get(workflow) } : { ref: 'main' },
+            ),
             signal: AbortSignal.timeout(10_000),
           },
         );

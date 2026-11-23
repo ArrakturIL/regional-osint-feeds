@@ -14,6 +14,10 @@ on:
         description: 'UTC day YYYY-MM-DD (empty = yesterday)'
         required: false
         default: ''
+      mode:
+        description: 'day = a full UTC day (default yesterday); today = so far today (Monitor, hourly)'
+        required: false
+        default: 'day'
 
 permissions:
   contents: read
@@ -45,8 +49,9 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           IN_DAY: ${{ inputs.day }}
           SCHEDULE: ${{ github.event.schedule }}
+          IN_MODE: ${{ inputs.mode }}
         run: |
-          if [ "$SCHEDULE" = "23 * * * *" ]; then
+          if [ "$SCHEDULE" = "23 * * * *" ] || [ "$IN_MODE" = "today" ]; then
             python -m scripts.usage_report --today
           else
             python -m scripts.usage_report --day "$IN_DAY"

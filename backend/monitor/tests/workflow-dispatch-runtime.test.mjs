@@ -192,3 +192,17 @@ test('workflow→source map is the same in Monitor and the operator config', () 
     assert.match(yml, /if: needs\.source-gate\.outputs\.enabled == 'true'/, wf + ' collector job not gated');
   }
 });
+
+test('23.11: usage report runs hourly in today mode and nightly for the full day; AirLabs and UCDP are dispatched', async () => {
+  const body = async (h, m, wf) => {
+    const f = fakeFetch();
+    await dispatchDueWorkflows({ GITHUB_DISPATCH_TOKEN: 'tok' }, at(h, m), { fetch: f.fn });
+    const call = f.calls.find(c => c.url.endsWith(`/actions/workflows/${wf}/dispatches`));
+    return call ? JSON.parse(call.init.body) : null;
+  };
+  assert.deepEqual(await body(13, 23, 'usage-report.yml'), { ref: 'main', inputs: { mode: 'today' } });
+  assert.deepEqual(await body(0, 41, 'usage-report.yml'), { ref: 'main', inputs: { mode: 'day' } });
+  assert.equal(await body(13, 41, 'usage-report.yml'), null, 'the full-day report only once a day');
+  assert.deepEqual(await body(5, 17, 'airlabs.yml'), { ref: 'main' });
+  assert.deepEqual(await body(2, 41, 'ucdp.yml'), { ref: 'main' });
+});
