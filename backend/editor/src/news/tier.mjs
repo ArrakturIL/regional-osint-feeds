@@ -5,7 +5,7 @@
 //   normal    — everything else.
 // Deterministic and explainable: every tier comes with a reason code. Builds
 // on the existing event analysis (topic, type, score) instead of a new model.
-import { analyze } from './events.mjs';
+import { analyze, publisher, NEEDS_CORROBORATION } from './events.mjs';
 
 export const TIERS = Object.freeze(['urgent', 'important', 'normal']);
 export const TIER_RANK = Object.freeze({ urgent: 0, important: 1, normal: 2 });
@@ -73,7 +73,16 @@ const MAIN_CLAUSE = title =>
     '',
   );
 
-export function newsTier(item) {
+// `origins` — independent outlets that reported the event (event group); when
+// unknown, an outlet that needs corroboration is treated as the only one.
+export function newsTier(item, { origins = 1 } = {}) {
+  const t = baseTier(item);
+  if (t.tier === 'urgent' && Number(origins) < 2 && NEEDS_CORROBORATION.has(publisher(item?.source)))
+    return { tier: 'important', reason: 'uncorroborated_' + t.reason };
+  return t;
+}
+
+function baseTier(item) {
   const a = analyze(item);
   const text = a.title + ' ' + a.summary;
   if (a.type !== 'news') return { tier: 'normal', reason: 'non_news_' + a.type };

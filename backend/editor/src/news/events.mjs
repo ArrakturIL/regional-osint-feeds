@@ -14,6 +14,10 @@ export const FEEDS = [
   ['France 24', 'https://www.france24.com/en/middle-east/rss', 'france24', 'en', 4],
   ['The Guardian', 'https://www.theguardian.com/world/israel/rss', 'guardian', 'en', 3],
 ];
+// Owner 23.11: outlets with a clear one-sided editorial line. A report seen
+// only there is not enough for the front page («Главное сейчас») or for the
+// top tier: it needs a second, independent outlet. Keyed by publisher.
+export const NEEDS_CORROBORATION = new Set(['aljazeera']);
 const META = new Map(FEEDS.map(f => [f[0], { owner: f[2], language: f[3] }]));
 export const publisher = name => META.get(name)?.owner || String(name || 'unknown');
 export const language = name => META.get(name)?.language || 'en';

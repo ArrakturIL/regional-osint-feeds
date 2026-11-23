@@ -18,7 +18,7 @@ const ctx = {
 };
 vm.runInNewContext(
   src +
-    '\nthis.topStories = topStories; this.topLead = topLead; this.sourcesOf = sourcesOf; this.networkCounts = networkCounts; this.topAge = topAge; this.leadExcerpt = leadExcerpt; this.trimExcerpt = trimExcerpt;',
+    '\nthis.topStories = topStories; this.topLead = topLead; this.sourcesOf = sourcesOf; this.networkCounts = networkCounts; this.topAge = topAge; this.leadExcerpt = leadExcerpt; this.corroborated = corroborated; this.trimExcerpt = trimExcerpt;',
   ctx,
 );
 const ids = list => JSON.stringify(list.map(s => s.id));
@@ -131,4 +131,26 @@ test('lead excerpt ends on a whole sentence or a whole word, never mid-word (own
   assert.ok(noStop.startsWith(b.slice(0, -1)), 'whole words only: ' + b);
   assert.equal(ctx.trimExcerpt('Источники говорят о давлении израильско…'), 'Источники говорят о давлении…');
   assert.equal(ctx.trimExcerpt('Короткое описание.'), 'Короткое описание.');
+});
+
+test('owner 23.11: a one-sided outlet reaches «Главное сейчас» only with a second outlet', () => {
+  const now = Date.now();
+  const base = {
+    tier: 'urgent',
+    translation_state: 'translated',
+    content_language: 'ru',
+    time: new Date(now - 600000).toISOString(),
+  };
+  const aj = {
+    ...base,
+    title: 'AJ',
+    source: 'Al Jazeera',
+    needs_corroboration: true,
+    reporting_origin_count: 1,
+  };
+  const ajBacked = { ...aj, title: 'AJ+', reporting_origin_count: 2 };
+  const toi = { ...base, tier: 'important', title: 'ToI', source: 'Times of Israel' };
+  const shown = ctx.topStories([aj, toi, ajBacked], 'ru', 5).map(s => s.title);
+  assert.deepEqual(shown, ['AJ+', 'ToI']);
+  assert.equal(ctx.topLead([aj, toi], 'ru', now).lead.title, 'ToI');
 });
