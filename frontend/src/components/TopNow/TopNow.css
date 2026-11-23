@@ -257,14 +257,10 @@ html[lang='he'] .rw-top-meta {
   white-space: normal;
 }
 .rw-top-excerpt {
-  display: -webkit-box;
   margin: 12px 0 0;
-  overflow: hidden;
   color: var(--rw7-text-2);
   font-size: 15px;
   line-height: 1.55;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
 }
 
 /* Reading protocol above the cards (owner 22.11). */
