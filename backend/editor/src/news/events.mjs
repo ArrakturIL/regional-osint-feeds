@@ -204,6 +204,16 @@ function explicitPoliticalActor(headline) {
   return m ? m[1].normalize('NFKC').toLowerCase() : null;
 }
 
+// Podcast episodes whose headline does not say so (live 22.11, ToI: «Still Life
+// in Israel: …» — "In the fourth episode of our new podcast series, the writer
+// talks about her new book") and book/film reviews: not news, so never above
+// normal. A news summary that only mentions what someone said on a podcast
+// does not match: it needs an episode or "our podcast".
+const PODCAST_SUMMARY =
+  /\bepisode\b.{0,60}\bpodcast\b|\bpodcast\b.{0,40}\bepisode\b|\bour\s+(?:\p{L}+\s+){0,3}podcast\b|(?:בפרק|פרק)\s.{0,40}פודקאסט|выпуск\p{L}*\s.{0,40}подкаст/iu;
+const REVIEW_TITLE =
+  /\b(?:book|film|movie|theater|theatre|album|TV)\s+review\b|^review:|ביקורת\s+(?:ספר|סרט|תיאטרון)|рецензи/iu;
+
 export function analyze(a) {
   const title = String(a.headline || a.title || ''),
     summary = String(a.summary || '');
@@ -224,7 +234,9 @@ export function analyze(a) {
         ? 'liveblog'
         : /\b(?:archive|archival|historical footage|from (?:19|20)\d{2})\b|ארכיון|أرشيف|архивн/iu.test(title)
           ? 'archive'
-          : /\b(?:daily\s+briefing|weekly\s+briefing|podcast|roundup|recap)\b|פודקאסט|подкаст/iu.test(title)
+          : /\b(?:daily\s+briefing|weekly\s+briefing|podcast|roundup|recap)\b|פודקאסט|подкаст/iu.test(title) ||
+              PODCAST_SUMMARY.test(summary) ||
+              REVIEW_TITLE.test(title)
             ? 'roundup'
             : /\b(?:sponsored|advertorial)\b|תוכן ממומן|إعلان/iu.test(title)
               ? 'sponsored'
