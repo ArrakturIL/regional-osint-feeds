@@ -1,18 +1,18 @@
 {
  "source": "airlabs_schedules",
- "generated_at": "2026-11-24T07:17:29Z",
+ "generated_at": "2026-11-24T10:17:36Z",
  "delay_min": 15,
  "airports": {
   "TLV": {
-   "checked_at": "2026-11-24T07:17:29Z",
-   "flights": 61,
+   "checked_at": "2026-11-24T10:17:36Z",
+   "flights": 64,
    "cancelled": 0,
-   "foreign": 42,
+   "foreign": 43,
    "foreign_cancelled": 0,
-   "delayed": 1,
+   "delayed": 4,
    "rows": 100,
    "capped": true,
-   "avg_delay": 30,
+   "avg_delay": 38,
    "cancelled_by": {},
    "history": [
     [
@@ -91,17 +91,24 @@
      0,
      0,
      1
+    ],
+    [
+     "2026-11-24T10:17:36Z",
+     64,
+     0,
+     0,
+     4
     ]
    ]
   },
   "IKA": {
-   "checked_at": "2026-11-24T04:48:50Z",
-   "flights": 16,
+   "checked_at": "2026-11-24T10:17:36Z",
+   "flights": 11,
    "cancelled": 0,
-   "foreign": 6,
+   "foreign": 3,
    "foreign_cancelled": 0,
    "delayed": 0,
-   "rows": 16,
+   "rows": 11,
    "capped": false,
    "avg_delay": 0,
    "cancelled_by": {},
@@ -147,17 +154,24 @@
      0,
      0,
      0
+    ],
+    [
+     "2026-11-24T10:17:36Z",
+     11,
+     0,
+     0,
+     0
     ]
    ]
   },
   "BEY": {
-   "checked_at": "2026-11-24T04:48:50Z",
-   "flights": 36,
+   "checked_at": "2026-11-24T10:17:36Z",
+   "flights": 33,
    "cancelled": 1,
-   "foreign": 14,
+   "foreign": 19,
    "foreign_cancelled": 1,
    "delayed": 0,
-   "rows": 65,
+   "rows": 62,
    "capped": false,
    "avg_delay": 0,
    "cancelled_by": {
@@ -205,22 +219,30 @@
      1,
      1,
      0
+    ],
+    [
+     "2026-11-24T10:17:36Z",
+     33,
+     1,
+     1,
+     0
     ]
    ]
   },
   "AMM": {
-   "checked_at": "2026-11-24T04:48:50Z",
-   "flights": 50,
+   "checked_at": "2026-11-24T10:17:36Z",
+   "flights": 45,
    "cancelled": 3,
-   "foreign": 20,
+   "foreign": 25,
    "foreign_cancelled": 2,
-   "delayed": 1,
-   "rows": 91,
+   "delayed": 2,
+   "rows": 92,
    "capped": false,
-   "avg_delay": 15,
+   "avg_delay": 20,
    "cancelled_by": {
-    "TK": 2,
-    "RJ": 1
+    "TK": 1,
+    "RJ": 1,
+    "XY": 1
    },
    "history": [
     [
@@ -264,6 +286,13 @@
      3,
      2,
      1
+    ],
+    [
+     "2026-11-24T10:17:36Z",
+     45,
+     3,
+     2,
+     2
     ]
    ]
   },
