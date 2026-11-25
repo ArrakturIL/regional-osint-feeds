@@ -1,20 +1,13 @@
 {
   "source": "airlabs_schedules",
-  "checked_at": "2026-11-25T18:17:26Z",
+  "checked_at": "2026-11-25T19:17:26Z",
   "day": "2026-11-25",
   "month": "2026-11",
   "state": "ok",
-  "used_day": 23,
-  "used_month": 90,
+  "used_day": 24,
+  "used_month": 91,
   "fetched": [
-    "BAH",
-    "BGW",
-    "DAM",
-    "DOH",
-    "DXB",
-    "EBL",
-    "KWI",
-    "THR"
+    "TLV"
   ],
   "failed": [],
   "key_expires": "2026-12-11",
