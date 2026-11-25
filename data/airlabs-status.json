@@ -1,14 +1,12 @@
 {
   "source": "airlabs_schedules",
-  "checked_at": "2026-11-25T10:17:27Z",
+  "checked_at": "2026-11-25T11:17:27Z",
   "day": "2026-11-25",
   "month": "2026-11",
   "state": "ok",
   "used_day": 10,
   "used_month": 77,
-  "fetched": [
-    "TLV"
-  ],
+  "fetched": [],
   "failed": [],
   "key_expires": "2026-12-11",
   "limit_month": 1000,
