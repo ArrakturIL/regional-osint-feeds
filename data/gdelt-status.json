@@ -1,9 +1,9 @@
 {
   "source": "gdelt_context",
-  "checked_at": "2026-11-15T17:39:05Z",
-  "state": "ok",
-  "last_batch": "20261115174500",
-  "detail": null,
+  "checked_at": "2026-11-26T14:37:42Z",
+  "state": "partial",
+  "last_batch": "20261126144500",
+  "detail": "GDELT exports not yet downloadable (4 batches); cursor kept",
   "provider": "GDELT Project",
   "source_url": "https://www.gdeltproject.org/"
 }
