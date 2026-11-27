@@ -1,10 +1,17 @@
 {
   "source": "centcom_dvids",
   "source_feed": "https://www.dvidshub.net/rss/unit/72",
-  "fetched_at": "2026-11-25T12:00:37.132522Z",
-  "count": 2,
+  "fetched_at": "2026-11-27T22:30:36.802140Z",
+  "count": 3,
   "coverage": "DVIDS unit news only; not all CENTCOM public releases",
   "items": [
+    {
+      "url": "https://www.dvidshub.net/news/580348/us-forces-disable-commercial-vessel-during-blockade-enforcement-against-iran",
+      "title": "U.S. Forces Disable Commercial Vessel During Blockade Enforcement Against Iran",
+      "published_at": "2026-11-27T16:14:21Z",
+      "source": "DVIDS U.S. Central Command Public Affairs",
+      "source_feed": "https://www.dvidshub.net/rss/unit/72"
+    },
     {
       "url": "https://www.dvidshub.net/news/578872/us-forces-disable-cargo-vessel-attempting-violate-naval-blockade",
       "title": "U.S. Forces Disable Cargo Vessel Attempting to Violate Naval Blockade",
