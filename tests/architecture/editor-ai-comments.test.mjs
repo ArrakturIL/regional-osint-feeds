@@ -229,3 +229,46 @@ test('two pending rows do not bypass remaining daily generation slot', async () 
   assert.equal(ai, 1);
   assert.equal(writes.filter(w => w.sql.includes('UPDATE news_items SET comment=')).length, 1);
 });
+
+test('owner 23.11: no irony at Israel or the IDF — security-force stories are skipped before AI, bad lines are hidden', async () => {
+  const { shouldSuppressComment, safePublishedComment } = await import(
+    '../../backend/editor/src/editorial/comment-policy.mjs'
+  );
+  const beating = {
+    source: 'Al Jazeera',
+    headline: 'Israeli soldiers beat Palestinian man after raiding his home',
+    headline_ru: 'Израильские солдаты избили палестинца после рейда на его дом',
+  };
+  assert.equal(shouldSuppressComment(beating), true);
+  let calls = 0;
+  const out = await writeComment(
+    { AI: { run: async () => (calls++, { response: '{"comment":"x"}' }) } },
+    beating,
+  );
+  assert.equal(out.skip, true);
+  assert.equal(calls, 0, 'no AI request for such a story');
+  // A stored line that mocks the army is hidden on read, even under a neutral story.
+  assert.equal(
+    safePublishedComment(political, 'И ещё один мирный визит израильской армии, как всегда.'),
+    null,
+  );
+  assert.equal(
+    safePublishedComment(political, 'Сроки опять сдвинули: бюрократия непобедима.'),
+    'Сроки опять сдвинули: бюрократия непобедима.',
+  );
+  // Ordinary politics stays commentable.
+  assert.equal(shouldSuppressComment(political), false);
+  assert.equal(shouldSuppressComment({ headline: 'Knesset committee delays budget vote again' }), false);
+});
+
+test('a model line about the IDF is dropped even when the story passed the filter', async () => {
+  const env = {
+    AI: {
+      run: async () => ({
+        response: '{"comment":"ЦАХАЛ снова объявил, что всё под контролем, — как удобно для пресс-релиза."}',
+      }),
+    },
+  };
+  const out = await writeComment(env, political);
+  assert.equal(out.skip, true);
+});

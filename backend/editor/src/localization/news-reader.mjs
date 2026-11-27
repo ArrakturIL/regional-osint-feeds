@@ -1,6 +1,6 @@
 import { translationIssue } from '../translations/verify.mjs';
 import { semanticMeaningIssue } from '../translations/semantic-meaning.mjs';
-import { shouldSuppressComment, safePublishedComment } from '../editorial/comment-policy.mjs';
+import { safePublishedComment } from '../editorial/comment-policy.mjs';
 import { DAY, val, sourceText, newsHebrewSource } from './shared.mjs';
 import { respond, localized } from './read-core.mjs';
 import { displayForPage } from './display-policy.mjs';
@@ -85,7 +85,8 @@ export async function localizeNewsRow(db, row, lang) {
       review_reason: issue,
     };
   return {
-    ...(shouldSuppressComment(row) ? { ...result, comment: '' } : result),
+    // The HE line is a translation of the RU one: hidden whenever the RU one is.
+    ...(safePublishedComment(row, row.comment) === null ? { ...result, comment: '' } : result),
     source_language: originalLanguage,
   };
 }

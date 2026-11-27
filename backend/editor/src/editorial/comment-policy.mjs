@@ -43,13 +43,33 @@ function isViolentMilitaryNews(text) {
     (ARMED_ACTION_HE.test(text) && ARMED_TARGET_HE.test(text))
   );
 }
+// Owner 23.11: the site is Israeli; an ironic line must never smear Israel or
+// the IDF. Live miss 23.11: Al Jazeera «Israeli soldiers beat a Palestinian after
+// raiding his home» → «И ещё один мирный визит израильской армии». Any story
+// about Israeli security forces or settlers acting toward Palestinians (raids,
+// arrests, beatings, demolitions, the West Bank, Gaza) gets no irony at all.
+const ISRAELI_FORCES =
+  /(?:\b(?:idf|israeli\s+(?:soldiers?|troops|forces|army|military|police|border\s+police|settlers?)|settlers?|shin\s+bet)\b|ЦАХАЛ|израильск\p{L}*\s+(?:солдат|военн|сил|арми|полиц|пограничн|поселенц)\p{L}*|поселенц\p{L}*|ШАБАК|צה["״']?ל|חייל[\p{L}]*|מתנחל[\p{L}]*|שוטר[\p{L}]*|מג["״']?ב)/iu;
+const PALESTINIAN_CONTEXT =
+  /(?:\b(?:palestinians?|west\s+bank|gaza|jenin|nablus|hebron|ramallah|tulkarm|qalqilya|jericho|bethlehem|raid(?:s|ed)?|detain(?:s|ed)?|arrest(?:s|ed)?|beat(?:s|en|ing)?|demolish(?:es|ed)?|demolitions?|abuse[sd]?)\b|палестин\p{L}*|Западн\p{L}*\s+берег\p{L}*|Газ[аеуыой]\b|Дженин\p{L}*|Наблус\p{L}*|Хеврон\p{L}*|Рамалл\p{L}*|рейд\p{L}*|задерж\p{L}*|арест\p{L}*|избил\p{L}*|избиени\p{L}*|снос\p{L}*|פלסטינ[\p{L}]*|יהודה\s+ושומרון|עזה|ג['׳]נין|שכם|חברון|רמאללה|מעצר|פשיטה|הריסת)/iu;
+// The comment itself must not make Israel or the IDF the butt of the joke.
+const COMMENT_ABOUT_ISRAEL =
+  /(?:ЦАХАЛ|израильск\p{L}*\s+(?:арми|солдат|военн|сил|полиц)\p{L}*|\b(?:idf|israeli\s+(?:army|soldiers|troops|forces))\b|צה["״']?ל)/iu;
+export function israelSecurityStory(text) {
+  return ISRAELI_FORCES.test(text) && PALESTINIAN_CONTEXT.test(text);
+}
+export function commentTargetsIsrael(comment) {
+  return typeof comment === 'string' && COMMENT_ABOUT_ISRAEL.test(comment);
+}
 export function shouldSuppressComment(row) {
   const text = ['headline', 'summary', 'headline_ru', 'summary_ru', 'title', 'excerpt']
     .map(k => row?.[k])
     .filter(v => typeof v === 'string' && v.trim())
     .join(' ');
-  return SENSITIVE_NEWS.some(rule => rule.test(text)) || isViolentMilitaryNews(text);
+  return (
+    SENSITIVE_NEWS.some(rule => rule.test(text)) || isViolentMilitaryNews(text) || israelSecurityStory(text)
+  );
 }
 export function safePublishedComment(row, comment) {
-  return shouldSuppressComment(row) ? null : (comment ?? null);
+  return shouldSuppressComment(row) || commentTargetsIsrael(comment) ? null : (comment ?? null);
 }
