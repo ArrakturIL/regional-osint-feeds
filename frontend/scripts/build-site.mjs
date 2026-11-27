@@ -77,10 +77,25 @@ for (const lang of ['ru', 'he'])
   write(
     'sitemap.xml',
     '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
-      urls.map(u => '  <url><loc>' + u + '</loc><changefreq>hourly</changefreq></url>').join('\n') +
+      urls
+        .map(
+          u =>
+            '  <url><loc>' +
+            u +
+            '</loc><lastmod>' +
+            new Date().toISOString().slice(0, 10) +
+            '</lastmod><changefreq>hourly</changefreq></url>',
+        )
+        .join('\n') +
       '\n</urlset>\n',
   );
 }
+// 27.11: our own robots.txt — the sitemap and the owner-only /ops. Cloudflare may
+// prepend its content-signals comment block; that does not change these rules.
+write(
+  'robots.txt',
+  'User-agent: *\nAllow: /\nDisallow: /ops\nDisallow: /api/\n\nSitemap: https://regional-watch.pages.dev/sitemap.xml\n',
+);
 console.log(
   'Built standalone static Pages payload: 10 locale routes + /ops + 404 + modular frontend assets.',
 );

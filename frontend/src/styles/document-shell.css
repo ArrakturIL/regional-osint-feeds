@@ -51,3 +51,20 @@ html[dir="rtl"] .rw-home-news-editorial>.rw-editorial-section{direction:rtl}
  width:100%;
  max-width:none;
 }
+
+/* 27.11 SEO: the crawlable static shell inside #root, visible only until React mounts
+   (or without JS). Kept quiet so the brief pre-mount frame does not flash. */
+.rw-static-shell {
+  max-width: 72ch;
+  margin: 0 auto;
+  padding: 24px 16px;
+  font: 15px/1.55 system-ui, sans-serif;
+  color: #9aa3ad;
+}
+.rw-static-shell h1 {
+  font-size: 20px;
+  margin: 0 0 8px;
+}
+.rw-static-shell a {
+  color: inherit;
+}
