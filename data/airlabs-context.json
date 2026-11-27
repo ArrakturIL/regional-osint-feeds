@@ -1,6 +1,6 @@
 {
  "source": "airlabs_schedules",
- "generated_at": "2026-11-27T01:17:26Z",
+ "generated_at": "2026-11-27T02:17:25Z",
  "delay_min": 15,
  "airports": {
   "TLV": {
@@ -249,13 +249,13 @@
    ]
   },
   "IKA": {
-   "checked_at": "2026-11-26T20:17:28Z",
-   "flights": 12,
+   "checked_at": "2026-11-27T02:17:25Z",
+   "flights": 13,
    "cancelled": 0,
-   "foreign": 2,
+   "foreign": 4,
    "foreign_cancelled": 0,
    "delayed": 0,
-   "rows": 12,
+   "rows": 13,
    "capped": false,
    "avg_delay": 0,
    "cancelled_by": {},
@@ -378,17 +378,24 @@
      0,
      0,
      0
+    ],
+    [
+     "2026-11-27T02:17:25Z",
+     13,
+     0,
+     0,
+     0
     ]
    ]
   },
   "BEY": {
-   "checked_at": "2026-11-26T20:17:28Z",
-   "flights": 28,
+   "checked_at": "2026-11-27T02:17:25Z",
+   "flights": 37,
    "cancelled": 1,
-   "foreign": 16,
+   "foreign": 17,
    "foreign_cancelled": 1,
    "delayed": 0,
-   "rows": 49,
+   "rows": 68,
    "capped": false,
    "avg_delay": 0,
    "cancelled_by": {
@@ -513,21 +520,28 @@
      1,
      1,
      0
+    ],
+    [
+     "2026-11-27T02:17:25Z",
+     37,
+     1,
+     1,
+     0
     ]
    ]
   },
   "AMM": {
-   "checked_at": "2026-11-26T20:17:28Z",
-   "flights": 42,
-   "cancelled": 3,
-   "foreign": 17,
-   "foreign_cancelled": 3,
+   "checked_at": "2026-11-27T02:17:25Z",
+   "flights": 55,
+   "cancelled": 2,
+   "foreign": 21,
+   "foreign_cancelled": 2,
    "delayed": 0,
-   "rows": 73,
+   "rows": 97,
    "capped": false,
    "avg_delay": 0,
    "cancelled_by": {
-    "MS": 2,
+    "MS": 1,
     "TK": 1
    },
    "history": [
@@ -648,6 +662,13 @@
      42,
      3,
      3,
+     0
+    ],
+    [
+     "2026-11-27T02:17:25Z",
+     55,
+     2,
+     2,
      0
     ]
    ]
