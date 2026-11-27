@@ -153,3 +153,9 @@ html[dir="rtl"] :is(.news-card,.rw-story-teaser,.rw-dossier,.rw-situation,.panel
    browser's grey. */
 main :where(button){background:transparent;color:var(--rw7-mint,#9ff5c6);border:1px solid var(--rw7-line-strong,#3d7058);font:600 13px var(--rw7-mono,monospace);letter-spacing:.04em;padding:0 16px;min-height:44px;cursor:pointer;transition:background .2s,border-color .2s}
 main :where(button):hover{background:var(--rw7-hover,#15291f);border-color:var(--rw7-mint-dim,#5f927a)}
+
+/* 27.11 owner (23.11): article text «ярче, белее». Body copy of cards, teasers and
+   dossiers moves from the grey-green #bad2be…#d1e1d3 to one near-white token
+   (≈14:1 on the card surface, WCAG AAA); meta lines and labels keep their mutes. */
+:root{--rw7-article:#e3f2e9}
+.news-card p,.news-detail,.rw-story-teaser>p,.rw-dossier>p,.rw-dossier-insight p,.rw-dossier-detail>p{color:var(--rw7-article)!important}
