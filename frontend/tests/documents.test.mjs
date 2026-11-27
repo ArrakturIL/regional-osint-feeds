@@ -12,7 +12,8 @@ for (const lang of ['ru', 'he'])
       assert.ok(s.startsWith('<!DOCTYPE html>'));
       assert.match(s, new RegExp('<html lang="' + lang + '"'));
       assert.equal(/<html\b[^>]*\bdir="rtl"/.test(s), lang === 'he');
-      assert.ok(s.includes('<div id="root"></div>'));
+      // 27.11 SEO: #root carries a crawlable static shell; React replaces it on mount.
+      assert.ok(s.includes('<div id="root"><main class="rw-static-shell">'));
       for (const script of ['react.js', 'react-dom.js', 'app.js'])
         assert.ok(s.includes('/assets/' + script), lang + '/' + page + ': ' + script);
       assert.ok(s.includes('/assets/app.css'));

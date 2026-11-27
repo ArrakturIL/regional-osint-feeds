@@ -77,3 +77,28 @@ test('Web Analytics beacon: on the 8 public pages, not on /ops', () => {
     );
   assert.doesNotMatch(load('ops/index.html'), /cloudflareinsights/);
 });
+
+// 27.11 SEO: Google lists the site but does not index it — every locale page needs
+// its own title/description, a full hreflang set and crawlable text before JS runs.
+test('locale pages ship unique SEO metadata, full hreflang and a static shell', () => {
+  const seen = new Set();
+  for (const lang of ['ru', 'he'])
+    for (const page of ['home', 'feed', 'events', 'data', 'analysts']) {
+      const html = readFileSync(resolve(root, 'documents', lang, page + '.html'), 'utf8');
+      const description = html.match(/<meta name="description" content="([^"]*)">/)[1];
+      const title = html.match(/<title>([^<]*)<\/title>/)[1];
+      assert.ok(!seen.has(description) && !seen.has(title), lang + '/' + page + ' repeats metadata');
+      seen.add(description).add(title);
+      for (const code of ['ru', 'he', 'x-default'])
+        assert.ok(html.includes('hreflang="' + code + '"'), lang + '/' + page + ' lacks hreflang ' + code);
+      assert.match(html, /<div id="root"><main class="rw-static-shell"><h1>[^<]+<\/h1><p>[^<]+<\/p><nav>/);
+    }
+});
+
+test('robots.txt allows crawling, hides /ops and names the sitemap', () => {
+  const robots = load('robots.txt');
+  assert.match(robots, /^User-agent: \*$/m);
+  assert.match(robots, /^Disallow: \/ops$/m);
+  assert.match(robots, /^Sitemap: https:\/\/regional-watch\.pages\.dev\/sitemap\.xml$/m);
+  assert.match(load('sitemap.xml'), /<lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/);
+});
