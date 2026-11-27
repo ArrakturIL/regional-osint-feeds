@@ -30,8 +30,12 @@ const UCDP_L = UI_HE
         iraq: 'עיראק',
       },
       line: (e, d, c) => e + ' אירועים, ' + d + ' הרוגים' + (c ? ' (מהם ' + c + ' אזרחים)' : ''),
-      prev: 'בחודש הקודם',
-      none: 'אין אירועים בחודשים האחרונים',
+      region: 'אזור',
+      caption: 'הרוגים לפי חודש ואזור',
+      ev: e => e + ' אירועים',
+      civ: c => c + ' אזרחים',
+      legend: 'המספר הגדול — הרוגים (ההערכה המרכזית של UCDP); מתחתיו — אירועים ואזרחים. גוון הרקע — גודל יחסי בטבלה.',
+      unknown: 'צד לא מזוהה',
       latest: 'אירועים אחרונים בנתונים',
       deaths: d => d + ' הרוגים',
       note: 'נספרים אירועי אלימות מאורגנת עם הרוג אחד לפחות. ',
@@ -60,19 +64,42 @@ const UCDP_L = UI_HE
         ' ' +
         ruPlural(d, ['погибший', 'погибших', 'погибших']) +
         (c ? ' (из них мирных — ' + c + ')' : ''),
-      prev: 'месяцем раньше',
-      none: 'за последние месяцы событий нет',
+      region: 'Регион',
+      caption: 'Погибшие по месяцам и регионам',
+      ev: e => e + ' ' + ruPlural(e, ['событие', 'события', 'событий']),
+      civ: c => 'мирных ' + c,
+      legend:
+        'Крупное число — погибшие (основная оценка UCDP), под ним — события и мирные жители. Оттенок — относительная величина в таблице.',
+      unknown: 'неустановленная сторона',
       latest: 'Последние события в данных',
       deaths: d => d + ' ' + ruPlural(d, ['погибший', 'погибших', 'погибших']),
       note: 'Считаются события организованного насилия хотя бы с одним погибшим. ',
       release: 'Выпуск ',
     };
-const ucdpMonth = m => {
+const ucdpMonth = (m, month = 'long') => {
   const d = new Date(m + '-15T00:00:00Z');
   return Number.isFinite(d.getTime())
-    ? d.toLocaleString(UI_HE ? 'he-IL' : 'ru-RU', { month: 'long', timeZone: 'UTC' })
+    ? d.toLocaleString(UI_HE ? 'he-IL' : 'ru-RU', { month, timeZone: 'UTC' }).replace(/\.$/, '')
     : m;
 };
+// UCDP marks actors it has not identified as «XXX123»: say so in words.
+const ucdpSides = (s, unknown) => String(s || '').replace(/\bXXX\d+\b/g, unknown);
+// 27.11 owner: a real table — regions by the last four months, deaths first.
+export function ucdpTable(regions) {
+  const months = [...new Set(regions.flatMap(r => (r.months || []).map(m => m.month)))]
+    .sort()
+    .reverse()
+    .slice(0, 4);
+  const max = Math.max(1, ...regions.flatMap(r => (r.months || []).map(m => m.deaths || 0)));
+  return {
+    months,
+    rows: regions.map(r => ({
+      id: r.id,
+      cells: months.map(month => (r.months || []).find(m => m.month === month) || null),
+    })),
+    heat: d => Math.round((Math.sqrt((d || 0) / max) * 0.34 + (d ? 0.04 : 0)) * 100) / 100,
+  };
+}
 export function UcdpSection({ ucdp }) {
   if (!ucdp || !Array.isArray(ucdp.regions)) return null;
   const L = UCDP_L;
@@ -87,37 +114,70 @@ export function UcdpSection({ ucdp }) {
         'details',
         { className: 'rw-technical-details rw-ucdp' },
         h('summary', null, t('strong', null, L.open), ' ', t('span', 'rw-ucdp-warn', L.warn)),
-        h(
-          'div',
-          { className: 'rw-technical-list' },
-          ...ucdp.regions.map(r => {
-            const [cur, prev] = r.months || [];
-            return h(
-              'div',
-              { className: 'rw-technical-row', key: r.id },
-              t('b', null, L.regions[r.id] || r.id),
+        (() => {
+          const T = ucdpTable(ucdp.regions);
+          return h(
+            'div',
+            { className: 'rw-ucdp-scroll', tabIndex: 0, role: 'region', 'aria-label': L.caption },
+            h(
+              'table',
+              { className: 'rw-ucdp-table' },
+              t('caption', 'rw-visually-hidden', L.caption),
               h(
-                'span',
-                { className: 'rw-tech-meta' },
-                cur ? ucdpMonth(cur.month) + ': ' + L.line(cur.events, cur.deaths, cur.civilians) : L.none,
-                prev
-                  ? t('small', null, L.prev + ' (' + ucdpMonth(prev.month) + '): ' + L.line(prev.events, prev.deaths, 0))
-                  : null,
+                'thead',
+                null,
+                h(
+                  'tr',
+                  null,
+                  h('th', { scope: 'col' }, L.region),
+                  ...T.months.map(m => h('th', { scope: 'col', key: m }, ucdpMonth(m, 'short'))),
+                ),
               ),
-            );
-          }),
-        ),
+              h(
+                'tbody',
+                null,
+                ...T.rows.map(r =>
+                  h(
+                    'tr',
+                    { key: r.id },
+                    h('th', { scope: 'row' }, L.regions[r.id] || r.id),
+                    ...r.cells.map((c, i) =>
+                      h(
+                        'td',
+                        { key: i, style: c ? { '--rw-ucdp-heat': T.heat(c.deaths) } : undefined },
+                        c ? t('strong', null, String(c.deaths)) : t('span', 'rw-ucdp-empty', '—'),
+                        c ? t('small', null, L.ev(c.events)) : null,
+                        c && c.civilians ? t('small', null, L.civ(c.civilians)) : null,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            t('p', 'rw-ucdp-legend', L.legend),
+          );
+        })(),
         ucdp.latest?.length
           ? h(
               'div',
               { className: 'rw-ucdp-latest' },
               t('h4', null, L.latest),
-              ...ucdp.latest.map((e, i) =>
-                h(
-                  'div',
-                  { className: 'rw-technical-row', key: i },
-                  h('span', null, t('small', null, e.date + (e.region ? ' · ' + (L.regions[e.region] || '') : '')), e.where),
-                  h('span', { className: 'rw-tech-meta' }, L.deaths(e.deaths), e.sides ? t('small', null, e.sides) : null),
+              h(
+                'ol',
+                null,
+                ...ucdp.latest.map((e, i) =>
+                  h(
+                    'li',
+                    { key: i },
+                    h(
+                      'span',
+                      { className: 'rw-ucdp-event' },
+                      t('small', null, e.date + (e.region ? ' · ' + (L.regions[e.region] || '') : '')),
+                      h('span', { className: 'rw-ucdp-where', dir: 'auto' }, e.where),
+                      e.sides ? h('small', { className: 'rw-ucdp-sides', dir: 'auto' }, ucdpSides(e.sides, L.unknown)) : null,
+                    ),
+                    t('strong', 'rw-ucdp-deaths', L.deaths(e.deaths)),
+                  ),
                 ),
               ),
             )

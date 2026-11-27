@@ -76,7 +76,8 @@ const render = (he, ucdp) => {
     fmtTime: () => '',
   };
   ctx.__u = ucdp;
-  vm.runInNewContext(src + '\nthis.out = UcdpSection({ ucdp: this.__u });', ctx);
+  vm.runInNewContext(src + '\nthis.out = UcdpSection({ ucdp: this.__u }); this.ucdpTable = ucdpTable;', ctx);
+  globalThis.ucdpTable = ctx.ucdpTable;
   return ctx.out;
 };
 const find = (node, pred) =>
@@ -104,4 +105,37 @@ test('UCDP block is collapsed, warns about casualties and names Yemen, not the R
     assert.doesNotMatch(text(details), /Красное море|ים סוף/);
   }
   assert.equal(render(false, null), null, 'no data, no block');
+});
+
+test('UCDP renders a regions × months table, newest month first, deaths in every cell', () => {
+  const out = render(false, ucdpView(raw));
+  const table = find(out, n => n.tag === 'table');
+  assert.ok(table, 'a <table>');
+  const head = find(table, n => n.tag === 'thead');
+  assert.equal(find(head, n => n.tag === 'tr').children.length, 3, 'region + two months');
+  const body = find(table, n => n.tag === 'tbody');
+  assert.equal(body.children.length, 6, 'six regions');
+  assert.match(text(body.children[0]), /147[\s\S]*131/, 'Israel: October before September');
+  assert.match(text(body.children[1]), /—/, 'empty months are a dash');
+});
+
+test('ucdpTable keeps four months at most and scales the heat tint', () => {
+  const months = ['2026-06', '2026-07', '2026-08', '2026-09', '2026-10'].map((month, i) => ({
+    month,
+    deaths: i * 10,
+  }));
+  render(false, null);
+  const T = globalThis.ucdpTable([{ id: 'israel', months }]);
+  assert.deepEqual([...T.months], ['2026-10', '2026-09', '2026-08', '2026-07']);
+  assert.equal(T.heat(0), 0);
+  assert.ok(T.heat(40) > T.heat(10) && T.heat(40) <= 0.38);
+});
+
+test('unidentified UCDP actors are named in words', () => {
+  const data = {
+    ...ucdpView(raw),
+    latest: [{ date: '2026-10-31', where: 'Manbij', sides: 'XXX652 — Civilians', deaths: 2 }],
+  };
+  assert.match(text(render(false, data)), /неустановленная сторона — Civilians/);
+  assert.doesNotMatch(text(render(true, data)), /XXX652/);
 });
